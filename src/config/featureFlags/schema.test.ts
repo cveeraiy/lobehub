@@ -107,6 +107,12 @@ describe('mapFeatureFlagsEnvToState', () => {
     expect(mappedState.enableAuthCaptcha).toBe(true);
   });
 
+  it('should enable bot channels by default', () => {
+    const mappedState = mapFeatureFlagsEnvToState(DEFAULT_FEATURE_FLAGS);
+
+    expect(mappedState.enableBotChannels).toBe(false);
+  });
+
   it('should correctly map boolean feature flags to state', () => {
     const config = {
       provider_settings: true,

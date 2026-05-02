@@ -40,6 +40,8 @@ const InputArea = () => {
   );
   const chatInputRef = useRef<HTMLDivElement>(null);
 
+  const { enableAgentTask, enableBotChannels } = useServerConfigStore(featureFlagsSelectors);
+
   // Wait for both stores to finish hydrating before drawing — server config
   // (skill flags) and the agent store (inboxAgentId) hydrate at different
   // times, and picking too early biases the draw toward whichever arrived
@@ -56,12 +58,13 @@ const InputArea = () => {
     if ((isLobehubSkillEnabled || isKlavisEnabled) && !isSkillBannerDismissed) {
       candidates.push('skill');
     }
-    if (!isBotIntegrationBannerDismissed) candidates.push('botIntegration');
+    if (enableBotChannels && !isBotIntegrationBannerDismissed) candidates.push('botIntegration');
     if (candidates.length === 0) return;
 
     hasPickedRef.current = true;
     setActiveBanner(candidates[Math.floor(Math.random() * candidates.length)]);
   }, [
+    enableBotChannels,
     inboxAgentId,
     isBotIntegrationBannerDismissed,
     isKlavisEnabled,
@@ -99,7 +102,6 @@ const InputArea = () => {
     [],
   );
 
-  const { enableAgentTask } = useServerConfigStore(featureFlagsSelectors);
   // Whitelist users get DailyBrief + an upcoming auto-generated module instead.
   const showSuggestQuestions = !enableAgentTask;
 
