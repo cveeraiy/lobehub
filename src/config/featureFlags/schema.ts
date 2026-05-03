@@ -39,6 +39,7 @@ export const FeatureFlagsSchema = z.object({
   bot_channels: FeatureFlagValue.optional(),
   resources: FeatureFlagValue.optional(),
   starter_list: FeatureFlagValue.optional(),
+  admin_panel: FeatureFlagValue.optional(),
 
   // the flags below can only be used with commercial license
   // if you want to use it in the commercial usage
@@ -96,6 +97,7 @@ export const DEFAULT_FEATURE_FLAGS: IFeatureFlags = {
   bot_channels: false,
   resources: false,
   starter_list: false,
+  admin_panel: isDev,
 
   // the flags below can only be used with commercial license
   // if you want to use it in the commercial usage
@@ -135,6 +137,7 @@ export const mapFeatureFlagsEnvToState = (config: IFeatureFlags, userId?: string
     enableBotChannels: evaluateFeatureFlag(config.bot_channels, userId),
     enableResources: evaluateFeatureFlag(config.resources, userId),
     showStarterList: evaluateFeatureFlag(config.starter_list, userId),
+    showAdminPanel: evaluateFeatureFlag(config.admin_panel, userId),
 
     hideGitHub: evaluateFeatureFlag(config.commercial_hide_github, userId),
     hideDocs: evaluateFeatureFlag(config.commercial_hide_docs, userId),

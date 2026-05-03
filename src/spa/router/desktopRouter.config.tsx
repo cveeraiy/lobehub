@@ -447,6 +447,22 @@ export const desktopRoutes: RouteObject[] = [
         path: 'memory',
       },
 
+      // Admin routes
+      {
+        children: [
+          {
+            element: dynamicElement(() => import('@/routes/(main)/admin'), 'Desktop > Admin'),
+            index: true,
+          },
+        ],
+        element: dynamicLayout(
+          () => import('@/routes/(main)/admin/_layout'),
+          'Desktop > Admin > Layout',
+        ),
+        errorElement: <ErrorBoundary />,
+        path: 'admin',
+      },
+
       // Video routes
       {
         children: [

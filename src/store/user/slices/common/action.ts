@@ -145,6 +145,10 @@ export class CommonActionImpl {
                 preference,
                 referralStatus: data.referralStatus,
                 settings: data.settings || {},
+                settingsPermissions: data.settingsPermissions ?? {
+                  agentSettings: false,
+                  systemSettings: false,
+                },
                 subscriptionPlan: data.subscriptionPlan,
                 user,
               },

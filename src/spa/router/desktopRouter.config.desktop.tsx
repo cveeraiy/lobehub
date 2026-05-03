@@ -13,6 +13,8 @@ import ImagePage from '@/routes/(main)/(create)/image';
 import DesktopImageLayout from '@/routes/(main)/(create)/image/_layout';
 import VideoPage from '@/routes/(main)/(create)/video';
 import DesktopVideoLayout from '@/routes/(main)/(create)/video/_layout';
+import AdminPage from '@/routes/(main)/admin';
+import AdminLayout from '@/routes/(main)/admin/_layout';
 // Pages — sync import
 import AgentPage from '@/routes/(main)/agent';
 import DesktopChatLayout from '@/routes/(main)/agent/_layout';
@@ -376,6 +378,19 @@ export const desktopRoutes: RouteObject[] = [
         element: <DesktopMemoryLayout />,
         errorElement: <ErrorBoundary />,
         path: 'memory',
+      },
+
+      // Admin routes
+      {
+        children: [
+          {
+            element: <AdminPage />,
+            index: true,
+          },
+        ],
+        element: <AdminLayout />,
+        errorElement: <ErrorBoundary />,
+        path: 'admin',
       },
 
       // Video routes

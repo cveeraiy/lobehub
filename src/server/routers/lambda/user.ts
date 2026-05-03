@@ -105,14 +105,21 @@ export const userRouter = router({
     }
 
     // Run user state fetch and count queries in parallel
-    const [state, messageCount, hasExtraSession, referralStatus, subscriptionPlan] =
-      await Promise.all([
-        ctx.userModel.getUserState(KeyVaultsGateKeeper.getUserKeyVaults),
-        ctx.messageModel.countUpTo(5),
-        ctx.sessionModel.hasMoreThanN(1),
-        getReferralStatus(ctx.userId),
-        getSubscriptionPlan(ctx.userId),
-      ]);
+    const [
+      state,
+      messageCount,
+      hasExtraSession,
+      referralStatus,
+      subscriptionPlan,
+      settingsPermissions,
+    ] = await Promise.all([
+      ctx.userModel.getUserState(KeyVaultsGateKeeper.getUserKeyVaults),
+      ctx.messageModel.countUpTo(5),
+      ctx.sessionModel.hasMoreThanN(1),
+      getReferralStatus(ctx.userId),
+      getSubscriptionPlan(ctx.userId),
+      ctx.userModel.getUserSettingsPermissions(),
+    ]);
 
     const hasMoreThan4Messages = messageCount > 4;
     const hasAnyMessages = messageCount > 0;
@@ -135,6 +142,7 @@ export const userRouter = router({
       lastName: state.lastName,
       onboarding: state.onboarding,
       preference: state.preference as UserPreference,
+      settingsPermissions,
       settings: state.settings,
       userId: ctx.userId,
       username: state.username,

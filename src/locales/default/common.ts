@@ -520,6 +520,7 @@ export default {
   'tab.resource': 'Resources',
   'tab.search': 'Search',
   'tab.setting': 'Settings',
+  'tab.admin': 'Admin',
   'tab.tasks': 'Tasks',
   'tab.video': 'Video',
   'telemetry.allow': 'Allow',

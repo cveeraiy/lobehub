@@ -24,6 +24,7 @@ import {
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useSession } from '@/libs/better-auth/auth-client';
 import { useElectronStore } from '@/store/electron';
 import { electronSyncSelectors } from '@/store/electron/selectors';
 import { SettingsTabs } from '@/store/global/initialState';
@@ -34,7 +35,10 @@ import {
 } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/slices/auth/selectors';
-import { userGeneralSettingsSelectors } from '@/store/user/slices/settings/selectors';
+import {
+  settingsSelectors,
+  userGeneralSettingsSelectors,
+} from '@/store/user/slices/settings/selectors';
 
 export enum SettingsGroupKey {
   Agent = 'agent',
@@ -67,6 +71,10 @@ export const useCategory = () => {
   ]);
   const remoteServerUrl = useElectronStore(electronSyncSelectors.remoteServerUrl);
   const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
+  const hasAgentPermission = useUserStore(settingsSelectors.hasAgentSettingsPermission);
+  const hasSystemPermission = useUserStore(settingsSelectors.hasSystemSettingsPermission);
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
 
   const avatarUrl = useMemo(() => {
     if (!avatar) return undefined;
@@ -131,85 +139,89 @@ export const useCategory = () => {
       });
     }
 
-    // Agent group
-    const agentItems: CategoryItem[] = [
-      (!enableBusinessFeatures || isDevMode) && {
-        icon: Brain,
-        key: SettingsTabs.Provider,
-        label: t('tab.provider'),
-      },
-      {
-        icon: Sparkles,
-        key: SettingsTabs.ServiceModel,
-        label: t('tab.serviceModel'),
-      },
-      {
-        icon: SkillsIcon,
-        key: SettingsTabs.Skill,
-        label: t('tab.skill'),
-      },
-      {
-        icon: BrainCircuit,
-        key: SettingsTabs.Memory,
-        label: t('tab.memory'),
-      },
-      {
-        icon: KeyRound,
-        key: SettingsTabs.Creds,
-        label: t('tab.creds'),
-      },
-      showApiKeyManage && {
-        icon: KeyIcon,
-        key: SettingsTabs.APIKey,
-        label: tAuth('tab.apikey'),
-      },
-    ].filter(Boolean) as CategoryItem[];
+    // Agent group (visible to admins or users with agentSettings permission)
+    if (isAdmin || hasAgentPermission) {
+      const agentItems: CategoryItem[] = [
+        (!enableBusinessFeatures || isDevMode) && {
+          icon: Brain,
+          key: SettingsTabs.Provider,
+          label: t('tab.provider'),
+        },
+        {
+          icon: Sparkles,
+          key: SettingsTabs.ServiceModel,
+          label: t('tab.serviceModel'),
+        },
+        {
+          icon: SkillsIcon,
+          key: SettingsTabs.Skill,
+          label: t('tab.skill'),
+        },
+        {
+          icon: BrainCircuit,
+          key: SettingsTabs.Memory,
+          label: t('tab.memory'),
+        },
+        {
+          icon: KeyRound,
+          key: SettingsTabs.Creds,
+          label: t('tab.creds'),
+        },
+        showApiKeyManage && {
+          icon: KeyIcon,
+          key: SettingsTabs.APIKey,
+          label: tAuth('tab.apikey'),
+        },
+      ].filter(Boolean) as CategoryItem[];
 
-    groups.push({
-      items: agentItems,
-      key: SettingsGroupKey.Agent,
-      title: t('group.aiConfig'),
-    });
+      groups.push({
+        items: agentItems,
+        key: SettingsGroupKey.Agent,
+        title: t('group.aiConfig'),
+      });
+    }
 
-    // System group
-    const systemItems: CategoryItem[] = [
-      isDesktop && {
-        icon: EthernetPort,
-        key: SettingsTabs.Proxy,
-        label: t('tab.proxy'),
-      },
-      isDesktop && {
-        icon: TerminalSquare,
-        key: SettingsTabs.SystemTools,
-        label: t('tab.systemTools'),
-      },
-      {
-        icon: Database,
-        key: SettingsTabs.Storage,
-        label: t('tab.storage'),
-      },
-      isDevMode && {
-        icon: KeyIcon,
-        key: SettingsTabs.APIKey,
-        label: tAuth('tab.apikey'),
-      },
-      {
-        icon: EllipsisIcon,
-        key: SettingsTabs.Advanced,
-        label: t('tab.advanced'),
-      },
-      !hideDocs && {
-        icon: Info,
-        key: SettingsTabs.About,
-        label: t('tab.about'),
-      },
-    ].filter(Boolean) as CategoryItem[];
+    // System group (visible to admins or users with systemSettings permission)
+    if (isAdmin || hasSystemPermission) {
+      const systemItems: CategoryItem[] = [
+        isDesktop && {
+          icon: EthernetPort,
+          key: SettingsTabs.Proxy,
+          label: t('tab.proxy'),
+        },
+        isDesktop && {
+          icon: TerminalSquare,
+          key: SettingsTabs.SystemTools,
+          label: t('tab.systemTools'),
+        },
+        {
+          icon: Database,
+          key: SettingsTabs.Storage,
+          label: t('tab.storage'),
+        },
+        isDevMode && {
+          icon: KeyIcon,
+          key: SettingsTabs.APIKey,
+          label: tAuth('tab.apikey'),
+        },
+        {
+          icon: EllipsisIcon,
+          key: SettingsTabs.Advanced,
+          label: t('tab.advanced'),
+        },
+        !hideDocs && {
+          icon: Info,
+          key: SettingsTabs.About,
+          label: t('tab.about'),
+        },
+      ].filter(Boolean) as CategoryItem[];
 
-    groups.push({
-      items: systemItems,
-      key: SettingsGroupKey.System,
-      title: t('group.system'),
-    });
+      groups.push({
+        items: systemItems,
+        key: SettingsGroupKey.System,
+        title: t('group.system'),
+      });
+    }
 
     return groups;
   }, [
@@ -223,6 +235,9 @@ export const useCategory = () => {
     isDevMode,
     avatarUrl,
     username,
+    isAdmin,
+    hasAgentPermission,
+    hasSystemPermission,
   ]);
 
   return categoryGroups;

@@ -48,6 +48,9 @@ const currentSystemAgent = (s: UserStore) =>
 const getHotkeyById = (id: HotkeyId) => (s: UserStore) =>
   merge(DEFAULT_HOTKEY_CONFIG, currentSettings(s).hotkey)[id];
 
+const hasAgentSettingsPermission = (s: UserStore) => s.settingsPermissions.agentSettings;
+const hasSystemSettingsPermission = (s: UserStore) => s.settingsPermissions.systemSettings;
+
 export const settingsSelectors = {
   currentImageSettings,
   currentMemorySettings,
@@ -59,6 +62,8 @@ export const settingsSelectors = {
   defaultAgentMeta,
   exportSettings,
   getHotkeyById,
+  hasAgentSettingsPermission,
+  hasSystemSettingsPermission,
   memoryEnabled,
   providerConfig: getProviderConfigById,
 };

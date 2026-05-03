@@ -114,6 +114,7 @@ export interface UserInitializationState {
    */
   referralStatus?: ReferralStatusString;
   settings: PartialDeep<UserSettings>;
+  settingsPermissions?: { agentSettings: boolean; systemSettings: boolean };
   subscriptionPlan?: Plans;
   userId?: string;
   username?: string;

@@ -1,8 +1,9 @@
-import { HomeIcon, SearchIcon } from 'lucide-react';
+import { HomeIcon, SearchIcon, ShieldCheck } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getRouteById } from '@/config/routes';
+import { useSession } from '@/libs/better-auth/auth-client';
 import { useGlobalStore } from '@/store/global';
 import { SidebarTabKey } from '@/store/global/initialState';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
@@ -35,8 +36,10 @@ export interface NavLayout {
 export const useNavLayout = (): NavLayout => {
   const { t } = useTranslation('common');
   const toggleCommandMenu = useGlobalStore((s) => s.toggleCommandMenu);
-  const { showMarket, hideGitHub, enableAgentTask, enableResources, showAiImage } =
+  const { showMarket, hideGitHub, enableAgentTask, enableResources, showAiImage, showAdminPanel } =
     useServerConfigStore(featureFlagsSelectors);
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
 
   const topNavItems = useMemo(
     () =>
@@ -100,8 +103,15 @@ export const useNavLayout = (): NavLayout => {
           title: t('tab.memory'),
           url: '/memory',
         },
+        {
+          hidden: !showAdminPanel || !isAdmin,
+          icon: ShieldCheck,
+          key: SidebarTabKey.Admin,
+          title: t('tab.admin'),
+          url: '/admin',
+        },
       ] as NavItem[],
-    [t, showMarket, enableResources, showAiImage],
+    [t, showMarket, enableResources, showAiImage, showAdminPanel, isAdmin],
   );
 
   const footer = useMemo(

@@ -88,6 +88,10 @@ export const userSettings = pgTable('user_settings', {
   tool: jsonb('tool'),
   image: jsonb('image'),
   notification: jsonb('notification'),
+  settingsPermissions: jsonb('settings_permissions').$defaultFn(() => ({
+    agentSettings: false,
+    systemSettings: false,
+  })),
 });
 export type UserSettingsItem = typeof userSettings.$inferSelect;
 

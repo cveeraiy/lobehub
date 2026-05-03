@@ -171,6 +171,21 @@ export class UserModel {
     return this.db.query.userSettings.findFirst({ where: eq(userSettings.id, this.userId) });
   };
 
+  getUserSettingsPermissions = async () => {
+    const result = await this.db
+      .select({ settingsPermissions: userSettings.settingsPermissions })
+      .from(userSettings)
+      .where(eq(userSettings.id, this.userId))
+      .limit(1);
+
+    return (
+      (result[0]?.settingsPermissions as {
+        agentSettings: boolean;
+        systemSettings: boolean;
+      }) ?? { agentSettings: false, systemSettings: false }
+    );
+  };
+
   getUserPreference = async (): Promise<UserPreference | undefined> => {
     const user = await this.db.query.users.findFirst({
       columns: { preference: true },
