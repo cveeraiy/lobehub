@@ -25,7 +25,7 @@ const AdminPanel = memo(() => {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await admin.listUsers({ query: { limit: 100 } });
+      const res = await admin.listUsers({ query: { limit: '100' } });
       if (res.data) {
         setUsers(
           res.data.users.map((u: any) => ({
@@ -51,7 +51,7 @@ const AdminPanel = memo(() => {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      await admin.setRole({ body: { role: newRole, userId } });
+      await admin.setRole({ role: newRole, userId });
       message.success('Role updated');
       fetchUsers();
     } catch {
@@ -61,7 +61,7 @@ const AdminPanel = memo(() => {
 
   const handleBan = async (userId: string) => {
     try {
-      await admin.banUser({ body: { userId } });
+      await admin.banUser({ userId });
       message.success('User banned');
       fetchUsers();
     } catch {
@@ -71,7 +71,7 @@ const AdminPanel = memo(() => {
 
   const handleUnban = async (userId: string) => {
     try {
-      await admin.unbanUser({ body: { userId } });
+      await admin.unbanUser({ userId });
       message.success('User unbanned');
       fetchUsers();
     } catch {
@@ -81,7 +81,7 @@ const AdminPanel = memo(() => {
 
   const handleRemove = async (userId: string) => {
     try {
-      await admin.removeUser({ body: { userId } });
+      await admin.removeUser({ userId });
       message.success('User removed');
       fetchUsers();
     } catch {
