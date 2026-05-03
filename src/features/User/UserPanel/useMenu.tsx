@@ -15,6 +15,7 @@ import { OFFICIAL_URL } from '@/const/url';
 import DataImporter from '@/features/DataImporter';
 import { useNavLayout } from '@/hooks/useNavLayout';
 import { usePlatform } from '@/hooks/usePlatform';
+import { useSession } from '@/libs/better-auth/auth-client';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/selectors';
@@ -56,6 +57,8 @@ export const useMenu = () => {
   const { userPanel } = useNavLayout();
   const businessMenuItems = useBusinessMenuItems(isLogin);
   const { isIOS, isAndroid } = usePlatform();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
 
   const downloadUrl = useMemo(() => {
     if (isIOS) return DOWNLOAD_URL.ios;
@@ -78,7 +81,7 @@ export const useMenu = () => {
         </Link>
       ),
     },
-    ...(userPanel.showMemory
+    ...(isAdmin && userPanel.showMemory
       ? [
           {
             icon: <Icon icon={BrainCircuit} />,
@@ -123,9 +126,9 @@ export const useMenu = () => {
     },
 
     ...(isLogin ? settings : []),
-    ...businessMenuItems,
-    ...(!isDesktop ? [{ type: 'divider' as const }, ...getDesktopApp] : []),
-    ...(userPanel.showDataImporter && isLogin
+    ...(isAdmin ? businessMenuItems : []),
+    ...(isAdmin && !isDesktop ? [{ type: 'divider' as const }, ...getDesktopApp] : []),
+    ...(isAdmin && userPanel.showDataImporter && isLogin
       ? [
           {
             icon: <Icon icon={HardDriveDownload} />,
@@ -137,7 +140,7 @@ export const useMenu = () => {
           },
         ]
       : []),
-    ...(!hideDocs ? helps : []),
+    ...(isAdmin && !hideDocs ? helps : []),
   ]
     .filter(Boolean)
     // Remove consecutive dividers to prevent double divider lines

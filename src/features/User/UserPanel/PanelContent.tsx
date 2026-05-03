@@ -7,6 +7,7 @@ import BusinessPanelContent from '@/business/client/features/User/BusinessPanelC
 import Menu from '@/components/Menu';
 import { isDesktop } from '@/const/version';
 import UserInfo from '@/features/User/UserInfo';
+import { useSession } from '@/libs/better-auth/auth-client';
 import { navigateToDesktopOnboarding } from '@/routes/(desktop)/desktop-onboarding/navigation';
 import { DesktopOnboardingScreen } from '@/routes/(desktop)/desktop-onboarding/types';
 import { useUserStore } from '@/store/user';
@@ -21,6 +22,8 @@ const PanelContent: FC<{ closePopover: () => void }> = ({ closePopover }) => {
   const isLoginWithAuth = useUserStore(authSelectors.isLoginWithAuth);
   const [openSignIn, signOut] = useUserStore((s) => [s.openLogin, s.logout]);
   const { mainItems, logoutItems } = useMenu();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
 
   const handleSignIn = () => {
     openSignIn();
@@ -52,17 +55,19 @@ const PanelContent: FC<{ closePopover: () => void }> = ({ closePopover }) => {
       {isDesktop || isLoginWithAuth ? (
         <>
           <UserInfo avatarProps={{ clickable: false }} />
-          <Link style={{ color: 'inherit' }} to={'/settings/stats'}>
-            <DataStatistics />
-          </Link>
-          {ENABLE_BUSINESS_FEATURES && <BusinessPanelContent />}
+          {isAdmin && (
+            <Link style={{ color: 'inherit' }} to={'/settings/stats'}>
+              <DataStatistics />
+            </Link>
+          )}
+          {isAdmin && ENABLE_BUSINESS_FEATURES && <BusinessPanelContent />}
         </>
       ) : (
         <UserLoginOrSignup onClick={handleSignIn} />
       )}
 
       <Menu items={mainItems} onClick={closePopover} />
-      <LangButton placement={'right' as any} />
+      {isAdmin && <LangButton placement={'right' as any} />}
       <Menu items={logoutItems} onClick={handleSignOut} />
     </Flexbox>
   );
