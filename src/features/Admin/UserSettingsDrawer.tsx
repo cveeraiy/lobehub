@@ -1,4 +1,6 @@
 import { App, Descriptions, Drawer, Spin, Switch } from 'antd';
+import { createStaticStyles } from 'antd-style';
+import { Bot, Monitor, Settings } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 
 import { lambdaClient } from '@/libs/trpc/client';
@@ -13,6 +15,54 @@ interface SettingsPermissions {
   agentSettings: boolean;
   systemSettings: boolean;
 }
+
+const styles = createStaticStyles(({ css, cssVar }) => ({
+  section: css`
+    margin-block-end: 24px;
+  `,
+  sectionTitle: css`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    margin-block: 0 12px;
+    margin-inline: 0;
+
+    font-size: 15px;
+    font-weight: 600;
+    color: ${cssVar.colorText};
+  `,
+  permRow: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-block-end: 8px;
+    padding-block: 14px;
+    padding-inline: 16px;
+    border-radius: 10px;
+
+    background: ${cssVar.colorFillQuaternary};
+  `,
+  permInfo: css`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  `,
+  permLabel: css`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    font-size: 14px;
+    font-weight: 500;
+    color: ${cssVar.colorText};
+  `,
+  permDesc: css`
+    font-size: 12px;
+    color: ${cssVar.colorTextTertiary};
+  `,
+}));
 
 const UserSettingsDrawer = memo<UserSettingsDrawerProps>(({ open, onClose, userId }) => {
   const [loading, setLoading] = useState(false);
@@ -60,43 +110,65 @@ const UserSettingsDrawer = memo<UserSettingsDrawerProps>(({ open, onClose, userI
   };
 
   return (
-    <Drawer open={open} title="User Settings" width={520} onClose={onClose}>
+    <Drawer open={open} title="User Settings" width={480} onClose={onClose}>
       {loading ? (
         <Spin style={{ display: 'block', marginTop: 40, textAlign: 'center' }} />
       ) : (
         <>
-          <Descriptions bordered column={1} size="small" title="General Settings">
-            <Descriptions.Item label="Language">
-              {settings?.general?.language || 'auto'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Font Size">
-              {settings?.general?.fontSize ?? 14}
-            </Descriptions.Item>
-            <Descriptions.Item label="Theme Mode">
-              {settings?.general?.themeMode || 'auto'}
-            </Descriptions.Item>
-          </Descriptions>
+          <div className={styles.section}>
+            <h4 className={styles.sectionTitle}>
+              <Settings size={16} />
+              General Settings
+            </h4>
+            <Descriptions bordered column={1} size="small">
+              <Descriptions.Item label="Language">
+                {settings?.general?.language || 'auto'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Font Size">
+                {settings?.general?.fontSize ?? 14}
+              </Descriptions.Item>
+              <Descriptions.Item label="Theme Mode">
+                {settings?.general?.themeMode || 'auto'}
+              </Descriptions.Item>
+            </Descriptions>
+          </div>
 
-          <Descriptions
-            bordered
-            column={1}
-            size="small"
-            style={{ marginTop: 24 }}
-            title="Settings Permissions"
-          >
-            <Descriptions.Item label="Agent Settings">
+          <div className={styles.section}>
+            <h4 className={styles.sectionTitle}>
+              <Settings size={16} />
+              Settings Permissions
+            </h4>
+            <div className={styles.permRow}>
+              <div className={styles.permInfo}>
+                <span className={styles.permLabel}>
+                  <Bot size={16} />
+                  Agent Settings
+                </span>
+                <span className={styles.permDesc}>
+                  Allow this user to access and modify agent configuration settings.
+                </span>
+              </div>
               <Switch
                 checked={permissions.agentSettings}
                 onChange={(v) => handlePermissionChange('agentSettings', v)}
               />
-            </Descriptions.Item>
-            <Descriptions.Item label="System Settings">
+            </div>
+            <div className={styles.permRow}>
+              <div className={styles.permInfo}>
+                <span className={styles.permLabel}>
+                  <Monitor size={16} />
+                  System Settings
+                </span>
+                <span className={styles.permDesc}>
+                  Allow this user to access and modify system-level settings.
+                </span>
+              </div>
               <Switch
                 checked={permissions.systemSettings}
                 onChange={(v) => handlePermissionChange('systemSettings', v)}
               />
-            </Descriptions.Item>
-          </Descriptions>
+            </div>
+          </div>
         </>
       )}
     </Drawer>

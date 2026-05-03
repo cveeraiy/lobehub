@@ -22,7 +22,7 @@ import SkillInstallBanner, { SKILL_INSTALL_BANNER_ID } from './SkillInstallBanne
 import StarterList from './StarterList';
 import { useSend } from './useSend';
 
-const leftActions: ActionKeys[] = ['model', 'search', 'fileUpload', 'tools'];
+const leftActions: ActionKeys[] = ['model', 'search', 'fileUpload', 'tools', 'stt'];
 
 type BannerKind = 'skill' | 'botIntegration';
 
