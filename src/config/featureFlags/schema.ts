@@ -37,6 +37,8 @@ export const FeatureFlagsSchema = z.object({
   auth_captcha: FeatureFlagValue.optional(),
   cloud_promotion: FeatureFlagValue.optional(),
   bot_channels: FeatureFlagValue.optional(),
+  resources: FeatureFlagValue.optional(),
+  starter_list: FeatureFlagValue.optional(),
 
   // the flags below can only be used with commercial license
   // if you want to use it in the commercial usage
@@ -73,7 +75,7 @@ export const DEFAULT_FEATURE_FLAGS: IFeatureFlags = {
   api_key_manage: false,
   edit_agent: true,
 
-  ai_image: true,
+  ai_image: false,
 
   check_updates: true,
   welcome_suggest: true,
@@ -88,10 +90,12 @@ export const DEFAULT_FEATURE_FLAGS: IFeatureFlags = {
   auth_captcha: true,
   cloud_promotion: false,
 
-  market: true,
+  market: false,
   speech_to_text: true,
   changelog: true,
   bot_channels: false,
+  resources: false,
+  starter_list: false,
 
   // the flags below can only be used with commercial license
   // if you want to use it in the commercial usage
@@ -129,6 +133,8 @@ export const mapFeatureFlagsEnvToState = (config: IFeatureFlags, userId?: string
     enableSTT: evaluateFeatureFlag(config.speech_to_text, userId),
 
     enableBotChannels: evaluateFeatureFlag(config.bot_channels, userId),
+    enableResources: evaluateFeatureFlag(config.resources, userId),
+    showStarterList: evaluateFeatureFlag(config.starter_list, userId),
 
     hideGitHub: evaluateFeatureFlag(config.commercial_hide_github, userId),
     hideDocs: evaluateFeatureFlag(config.commercial_hide_docs, userId),

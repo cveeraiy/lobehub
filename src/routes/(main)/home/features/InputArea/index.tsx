@@ -40,7 +40,8 @@ const InputArea = () => {
   );
   const chatInputRef = useRef<HTMLDivElement>(null);
 
-  const { enableAgentTask, enableBotChannels } = useServerConfigStore(featureFlagsSelectors);
+  const { enableAgentTask, enableBotChannels, showStarterList } =
+    useServerConfigStore(featureFlagsSelectors);
 
   // Wait for both stores to finish hydrating before drawing — server config
   // (skill flags) and the agent store (inboxAgentId) hydrate at different
@@ -146,7 +147,7 @@ const InputArea = () => {
         </DragUploadZone>
       </Flexbox>
 
-      <StarterList />
+      {showStarterList && <StarterList />}
       {showSuggestQuestions && (
         <Flexbox style={{ marginTop: 24 }}>
           <SuggestQuestions />

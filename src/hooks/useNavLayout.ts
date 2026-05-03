@@ -35,7 +35,8 @@ export interface NavLayout {
 export const useNavLayout = (): NavLayout => {
   const { t } = useTranslation('common');
   const toggleCommandMenu = useGlobalStore((s) => s.toggleCommandMenu);
-  const { showMarket, hideGitHub, enableAgentTask } = useServerConfigStore(featureFlagsSelectors);
+  const { showMarket, hideGitHub, enableAgentTask, enableResources, showAiImage } =
+    useServerConfigStore(featureFlagsSelectors);
 
   const topNavItems = useMemo(
     () =>
@@ -73,6 +74,7 @@ export const useNavLayout = (): NavLayout => {
     () =>
       [
         {
+          hidden: !showAiImage,
           icon: getRouteById('image')!.icon,
           key: SidebarTabKey.Image,
           title: t('tab.generation'),
@@ -86,6 +88,7 @@ export const useNavLayout = (): NavLayout => {
           url: '/community',
         },
         {
+          hidden: !enableResources,
           icon: getRouteById('resource')!.icon,
           key: SidebarTabKey.Resource,
           title: t('tab.resource'),
@@ -98,7 +101,7 @@ export const useNavLayout = (): NavLayout => {
           url: '/memory',
         },
       ] as NavItem[],
-    [t, showMarket],
+    [t, showMarket, enableResources, showAiImage],
   );
 
   const footer = useMemo(
