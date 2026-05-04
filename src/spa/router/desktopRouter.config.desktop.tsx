@@ -15,6 +15,7 @@ import VideoPage from '@/routes/(main)/(create)/video';
 import DesktopVideoLayout from '@/routes/(main)/(create)/video/_layout';
 import AdminPage from '@/routes/(main)/admin';
 import AdminLayout from '@/routes/(main)/admin/_layout';
+import AdminUserSettings from '@/routes/(main)/admin/user-settings';
 // Pages — sync import
 import AgentPage from '@/routes/(main)/agent';
 import DesktopChatLayout from '@/routes/(main)/agent/_layout';
@@ -386,6 +387,10 @@ export const desktopRoutes: RouteObject[] = [
           {
             element: <AdminPage />,
             index: true,
+          },
+          {
+            element: <AdminUserSettings />,
+            path: 'users/:userId/settings/:tab?',
           },
         ],
         element: <AdminLayout />,

@@ -3,10 +3,9 @@ import { App, Button, Input, Popconfirm, Select, Table, type TableColumnType } f
 import { createStaticStyles } from 'antd-style';
 import { Ban, CheckCircle, Search, Shield, ShieldCheck, Users } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { admin, useSession } from '@/libs/better-auth/auth-client';
-
-import UserSettingsDrawer from './UserSettingsDrawer';
 
 interface UserRecord {
   banned: boolean;
@@ -103,12 +102,11 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 const AdminPanel = memo(() => {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { message } = App.useApp();
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
+  const navigate = useNavigate();
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -195,8 +193,7 @@ const AdminPanel = memo(() => {
   };
 
   const handleRowClick = (record: UserRecord) => {
-    setSelectedUserId(record.id);
-    setDrawerOpen(true);
+    navigate(`/admin/users/${record.id}/settings/profile`);
   };
 
   const columns: TableColumnType<UserRecord>[] = [
@@ -343,11 +340,6 @@ const AdminPanel = memo(() => {
           onClick: () => handleRowClick(record),
           style: { cursor: 'pointer' },
         })}
-      />
-      <UserSettingsDrawer
-        open={drawerOpen}
-        userId={selectedUserId}
-        onClose={() => setDrawerOpen(false)}
       />
     </div>
   );

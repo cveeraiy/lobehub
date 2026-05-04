@@ -454,6 +454,13 @@ export const desktopRoutes: RouteObject[] = [
             element: dynamicElement(() => import('@/routes/(main)/admin'), 'Desktop > Admin'),
             index: true,
           },
+          {
+            element: dynamicElement(
+              () => import('@/routes/(main)/admin/user-settings'),
+              'Desktop > Admin > UserSettings',
+            ),
+            path: 'users/:userId/settings/:tab?',
+          },
         ],
         element: dynamicLayout(
           () => import('@/routes/(main)/admin/_layout'),
