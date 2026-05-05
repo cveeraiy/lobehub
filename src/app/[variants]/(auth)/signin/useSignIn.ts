@@ -1,21 +1,29 @@
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
 import { Form } from 'antd';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { CheckUserResponseData } from '@/app/(backend)/api/auth/check-user/route';
-import type { ResolveUsernameResponseData } from '@/app/(backend)/api/auth/resolve-username/route';
 import { useBusinessSignin } from '@/business/client/hooks/useBusinessSignin';
 import { message } from '@/components/AntdStaticMethods';
 import { trackLoginOrSignupClicked } from '@/features/User/UserLoginOrSignup/trackLoginOrSignupClicked';
 import { requestPasswordReset, signIn } from '@/libs/better-auth/auth-client';
 import { isBuiltinProvider, normalizeProviderId } from '@/libs/better-auth/utils/client';
+import { useRouter, useSearchParams } from '@/libs/next/navigation';
 
 import { useAuthServerConfigStore } from '../_layout/AuthServerConfigProvider';
 import type { AuthFetchOptions } from '../utils/authFetchOptions';
 import { withCaptchaToken } from '../utils/authFetchOptions';
 import { EMAIL_REGEX, USERNAME_REGEX } from './SignInEmailStep';
+
+interface CheckUserResponseData {
+  exists: boolean;
+  hasPassword?: boolean;
+}
+
+interface ResolveUsernameResponseData {
+  email?: string | null;
+  exists: boolean;
+}
 
 const LAST_AUTH_PROVIDER_KEY = 'lobehub:auth:last-provider:v1';
 

@@ -5,7 +5,6 @@ import {
 } from '@lobechat/types';
 import { cleanObject } from '@lobechat/utils';
 import { eq, inArray } from 'drizzle-orm';
-import { after } from 'next/server';
 import { z } from 'zod';
 
 import { MessageModel } from '@/database/models/message';
@@ -16,6 +15,7 @@ import { TopicImporterRepo } from '@/database/repositories/topicImporter';
 import { agents, chatGroups, chatGroupsAgents } from '@/database/schemas';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
+import { afterResponse } from '@/server/utils/afterResponse';
 import { type BatchTaskResult } from '@/types/service';
 
 import {
@@ -312,8 +312,8 @@ export const topicRouter = router({
         }
       };
 
-      // Use Next.js after() for non-blocking execution
-      after(runMigration);
+      // Use afterResponse() for non-blocking execution
+      afterResponse(runMigration);
 
       return { items: result.items, total: result.total };
     }),
@@ -462,8 +462,8 @@ export const topicRouter = router({
         }
       };
 
-      // Use Next.js after() for non-blocking execution
-      after(runMigration);
+      // Use afterResponse() for non-blocking execution
+      afterResponse(runMigration);
 
       // Assemble final result
       return recentTopics.map((topic) => {

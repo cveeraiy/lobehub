@@ -1,11 +1,11 @@
-import { redirect } from 'next/navigation';
 import { type PropsWithChildren } from 'react';
+import { Navigate } from 'react-router-dom';
 
 import { authEnv } from '@/envs/auth';
 
 const ResetPasswordLayout = ({ children }: PropsWithChildren) => {
   if (authEnv.AUTH_DISABLE_EMAIL_PASSWORD) {
-    redirect('/signin');
+    return <Navigate replace to="/signin" />;
   }
 
   return children;

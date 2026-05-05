@@ -1,8 +1,8 @@
 import { CURRENT_VERSION } from '@lobechat/const';
 import { type CallReportRequest } from '@lobehub/market-types';
-import { after } from 'next/server';
 
 import { DiscoverService } from '@/server/services/discover';
+import { afterResponse } from '@/server/utils/afterResponse';
 
 /**
  * Calculate byte size of object
@@ -77,8 +77,8 @@ export function scheduleToolCallReport(params: ScheduleToolCallReportParams): vo
   // Only report when telemetry is enabled and marketAccessToken exists
   if (!telemetryEnabled || !marketAccessToken) return;
 
-  // Use Next.js after() to report after response is sent
-  after(async () => {
+  // Use afterResponse() to report after response is sent
+  afterResponse(async () => {
     try {
       const callDurationMs = Date.now() - startTime;
       const requestSizeBytes = calculateObjectSizeBytes(requestPayload);

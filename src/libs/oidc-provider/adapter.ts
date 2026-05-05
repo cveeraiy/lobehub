@@ -178,8 +178,10 @@ class OIDCAdapter {
     } else {
       try {
         const { getUserAuth } = await import('@lobechat/utils/server');
+        const { oidcRequestStorage } = await import('@/libs/oidc-provider/requestContext');
+        const currentRequest = oidcRequestStorage.getStore();
         try {
-          const { userId } = await getUserAuth();
+          const { userId } = await getUserAuth(currentRequest);
           if (userId) {
             // For DeviceCode, only set record.userId (DB column) without modifying payload.
             // oidc-provider uses payload.accountId to track authorization state:

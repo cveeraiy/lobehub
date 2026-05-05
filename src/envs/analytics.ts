@@ -20,9 +20,6 @@ export const getAnalyticsConfig = () => {
       ENABLED_CLARITY_ANALYTICS: z.boolean(),
       CLARITY_PROJECT_ID: z.string().optional(),
 
-      ENABLE_VERCEL_ANALYTICS: z.boolean(),
-      DEBUG_VERCEL_ANALYTICS: z.boolean(),
-
       ENABLE_GOOGLE_ANALYTICS: z.boolean(),
       GOOGLE_ANALYTICS_MEASUREMENT_ID: z.string().optional(),
 
@@ -54,10 +51,6 @@ export const getAnalyticsConfig = () => {
       // Clarity Analytics
       ENABLED_CLARITY_ANALYTICS: !!process.env.CLARITY_PROJECT_ID,
       CLARITY_PROJECT_ID: process.env.CLARITY_PROJECT_ID,
-
-      // Vercel Analytics
-      ENABLE_VERCEL_ANALYTICS: process.env.ENABLE_VERCEL_ANALYTICS === '1',
-      DEBUG_VERCEL_ANALYTICS: process.env.DEBUG_VERCEL_ANALYTICS === '1',
 
       // Google Analytics
       ENABLE_GOOGLE_ANALYTICS: !!process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID,

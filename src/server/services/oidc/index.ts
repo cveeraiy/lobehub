@@ -19,18 +19,18 @@ export class OIDCService {
     return new OIDCService(provider);
   }
 
-  async getInteractionDetails(uid: string) {
-    const { req, res } = await createContextForInteractionDetails(uid);
+  async getInteractionDetails(uid: string, request: Request) {
+    const { req, res } = await createContextForInteractionDetails(uid, request);
     return this.provider.interactionDetails(req, res);
   }
 
-  async getInteractionResult(uid: string, result: any) {
-    const { req, res } = await createContextForInteractionDetails(uid);
+  async getInteractionResult(uid: string, result: any, request: Request) {
+    const { req, res } = await createContextForInteractionDetails(uid, request);
     return this.provider.interactionResult(req, res, result);
   }
 
-  async finishInteraction(uid: string, result: any) {
-    const { req, res } = await createContextForInteractionDetails(uid);
+  async finishInteraction(uid: string, result: any, request: Request) {
+    const { req, res } = await createContextForInteractionDetails(uid, request);
     return this.provider.interactionFinished(req, res, result, { mergeWithLastSubmission: true });
   }
 

@@ -2,9 +2,10 @@
 
 import { Button, Flexbox, FluentEmoji, Highlighter, Text } from '@lobehub/ui';
 import { Result } from 'antd';
-import Link from 'next/link';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
+
+import Link from '@/libs/next/Link';
 
 const FailedPage = () => {
   const { t } = useTranslation('oauth');

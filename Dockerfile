@@ -30,39 +30,15 @@ RUN set -e && \
 FROM base AS builder
 
 ARG USE_CN_MIRROR
-ARG NEXT_PUBLIC_BASE_PATH
-ARG NEXT_PUBLIC_SENTRY_DSN
-ARG NEXT_PUBLIC_ANALYTICS_POSTHOG
-ARG NEXT_PUBLIC_POSTHOG_HOST
-ARG NEXT_PUBLIC_POSTHOG_KEY
-ARG NEXT_PUBLIC_ANALYTICS_UMAMI
-ARG NEXT_PUBLIC_UMAMI_SCRIPT_URL
-ARG NEXT_PUBLIC_UMAMI_WEBSITE_ID
 ARG FEATURE_FLAGS
 
-ENV NEXT_PUBLIC_BASE_PATH="${NEXT_PUBLIC_BASE_PATH}" \
-    FEATURE_FLAGS="${FEATURE_FLAGS}"
+ENV FEATURE_FLAGS="${FEATURE_FLAGS}"
 
 ENV APP_URL="http://app.com" \
     DATABASE_DRIVER="node" \
     DATABASE_URL="postgres://postgres:password@localhost:5432/postgres" \
     KEY_VAULTS_SECRET="use-for-build" \
     AUTH_SECRET="use-for-build"
-
-# Sentry
-ENV NEXT_PUBLIC_SENTRY_DSN="${NEXT_PUBLIC_SENTRY_DSN}" \
-    SENTRY_ORG="" \
-    SENTRY_PROJECT=""
-
-# Posthog
-ENV NEXT_PUBLIC_ANALYTICS_POSTHOG="${NEXT_PUBLIC_ANALYTICS_POSTHOG}" \
-    NEXT_PUBLIC_POSTHOG_HOST="${NEXT_PUBLIC_POSTHOG_HOST}" \
-    NEXT_PUBLIC_POSTHOG_KEY="${NEXT_PUBLIC_POSTHOG_KEY}"
-
-# Umami
-ENV NEXT_PUBLIC_ANALYTICS_UMAMI="${NEXT_PUBLIC_ANALYTICS_UMAMI}" \
-    NEXT_PUBLIC_UMAMI_SCRIPT_URL="${NEXT_PUBLIC_UMAMI_SCRIPT_URL}" \
-    NEXT_PUBLIC_UMAMI_WEBSITE_ID="${NEXT_PUBLIC_UMAMI_WEBSITE_ID}"
 
 # Node
 ENV NODE_OPTIONS="--max-old-space-size=8192"
@@ -106,12 +82,11 @@ FROM busybox:latest AS app
 
 COPY --from=base /distroless/ /
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder /app/.next/standalone /app/
-COPY --from=builder /app/.next/static /app/.next/static
+# Copy Hono server bundle
+COPY --from=builder /app/dist/hono-server/server.mjs /app/server.mjs
 # Copy SPA assets (Vite build output)
-COPY --from=builder /app/public/_spa /app/public/_spa
+COPY --from=builder /app/dist/desktop /app/dist/desktop
+COPY --from=builder /app/dist/mobile /app/dist/mobile
 # Copy database migrations
 COPY --from=builder /app/packages/database/migrations /app/migrations
 COPY --from=builder /app/scripts/migrateServerDB/docker.cjs /app/docker.cjs
@@ -128,10 +103,10 @@ COPY --from=builder /app/scripts/_shared /app/scripts/_shared
 
 RUN set -e && \
     addgroup -S -g 1001 nodejs && \
-    adduser -D -G nodejs -H -S -h /app -u 1001 nextjs && \
-    chown -R nextjs:nodejs /app /etc/proxychains4.conf
+    adduser -D -G nodejs -H -S -h /app -u 1001 appuser && \
+    chown -R appuser:nodejs /app /etc/proxychains4.conf
 
-## Production image, copy all the files and run next
+## Production image
 FROM scratch
 
 # Copy all the files from app, set the correct permission for prerender cache
@@ -142,10 +117,6 @@ ENV NODE_ENV="production" \
     NODE_EXTRA_CA_CERTS="" \
     NODE_TLS_REJECT_UNAUTHORIZED="" \
     SSL_CERT_FILE="/etc/ssl/certs/ca-certificates.crt"
-
-# Make the middleware rewrite through local as default
-# refs: https://github.com/lobehub/lobehub/issues/5876
-ENV MIDDLEWARE_REWRITE_THROUGH_LOCAL="1"
 
 # set hostname to localhost
 ENV HOSTNAME="0.0.0.0" \
@@ -201,7 +172,7 @@ ENV EMAIL_SERVICE_PROVIDER="" \
     RESEND_FROM=""
 
 # S3
-ENV NEXT_PUBLIC_S3_DOMAIN="" \
+ENV S3_DOMAIN="" \
     S3_PUBLIC_DOMAIN="" \
     S3_ACCESS_KEY_ID="" \
     S3_BUCKET="" \
@@ -334,7 +305,7 @@ ENV \
     # Cerebras
     CEREBRAS_API_KEY="" CEREBRAS_MODEL_LIST=""
 
-USER nextjs
+USER appuser
 
 EXPOSE 3210/tcp
 

@@ -1,6 +1,5 @@
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
 import { form } from 'motion/react-m';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -9,6 +8,7 @@ import { useBusinessSignup } from '@/business/client/hooks/useBusinessSignup';
 import { message } from '@/components/AntdStaticMethods';
 import { trackLoginOrSignupClicked } from '@/features/User/UserLoginOrSignup/trackLoginOrSignupClicked';
 import { signUp } from '@/libs/better-auth/auth-client';
+import { useRouter, useSearchParams } from '@/libs/next/navigation';
 
 import { useAuthServerConfigStore } from '../../_layout/AuthServerConfigProvider';
 import type { AuthFetchOptions } from '../../utils/authFetchOptions';

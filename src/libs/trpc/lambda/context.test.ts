@@ -1,4 +1,3 @@
-import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiKeyModel } from '@/database/models/apiKey';
@@ -184,7 +183,7 @@ describe('createLambdaContext', () => {
 
     vi.mocked(ApiKeyModel.findByKey).mockResolvedValue(apiKeyRecord);
 
-    const request = new NextRequest('https://example.com/trpc/lambda', {
+    const request = new Request('https://example.com/trpc/lambda', {
       headers: {
         'X-API-Key': 'sk-lh-aaaaaaaaaaaaaaaa',
       },
@@ -200,7 +199,7 @@ describe('createLambdaContext', () => {
   it('should reject invalid API key without falling back to OIDC or session', async () => {
     vi.mocked(ApiKeyModel.findByKey).mockResolvedValue(null);
 
-    const request = new NextRequest('https://example.com/trpc/lambda', {
+    const request = new Request('https://example.com/trpc/lambda', {
       headers: {
         'Oidc-Auth': 'oidc-token',
         'X-API-Key': 'sk-lh-bbbbbbbbbbbbbbbb',
@@ -215,7 +214,7 @@ describe('createLambdaContext', () => {
   });
 
   it('should use session auth when no API key header is present', async () => {
-    const request = new NextRequest('https://example.com/trpc/lambda');
+    const request = new Request('https://example.com/trpc/lambda');
 
     const context = await createLambdaContext(request);
 

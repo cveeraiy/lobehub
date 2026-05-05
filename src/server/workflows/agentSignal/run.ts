@@ -397,7 +397,7 @@ export const runAgentSignalWorkflow = async (
   // We must extract `traceparent` / `tracestate` from the workflow request headers manually before
   // opening the top-level workflow span, otherwise each workflow run starts a fresh trace.
   // Source/context:
-  // - `src/app/(backend)/middleware/auth/index.ts` performs extract/inject for normal backend APIs
+  // - `src/handlers/middleware/auth/index.ts` performs extract/inject for normal backend APIs
   // - `src/server/workflows-hono/agent-signal/index.ts` wires `serve(...)` directly to
   //   `runAgentSignalWorkflow(...)`
   // Removal condition:

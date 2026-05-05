@@ -1,4 +1,6 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { Navigate, useSearchParams } from 'react-router-dom';
 
 import { authEnv } from '@/envs/auth';
 
@@ -22,18 +24,16 @@ const getErrorMessage = (error?: string): string | undefined => {
   return 'device.error.unknown';
 };
 
-const DeviceInputPage = async (props: {
-  searchParams: Promise<{ error?: string; user_code?: string; xsrf?: string }>;
-}) => {
-  if (!authEnv.ENABLE_OIDC) return notFound();
+const DeviceInputPage = () => {
+  const [searchParams] = useSearchParams();
 
-  const searchParams = await props.searchParams;
+  if (!authEnv.ENABLE_OIDC) return <Navigate replace to="/" />;
 
   return (
     <DeviceCodeInput
-      errorKey={getErrorMessage(searchParams.error)}
-      userCode={searchParams.user_code}
-      xsrf={searchParams.xsrf}
+      errorKey={getErrorMessage(searchParams.get('error') || undefined)}
+      userCode={searchParams.get('user_code') || undefined}
+      xsrf={searchParams.get('xsrf') || undefined}
     />
   );
 };

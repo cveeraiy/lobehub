@@ -19,7 +19,6 @@ import {
   UserSettingsSchema,
 } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
-import { after } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
@@ -34,6 +33,7 @@ import { FileS3 } from '@/server/modules/S3';
 import { AgentDocumentsService } from '@/server/services/agentDocuments';
 import { FileService } from '@/server/services/file';
 import { OnboardingService } from '@/server/services/onboarding';
+import { afterResponse } from '@/server/utils/afterResponse';
 
 const usernameSchema = z
   .string()
@@ -88,7 +88,7 @@ export const userRouter = router({
 
   getUserState: userProcedure.query(async ({ ctx }): Promise<UserInitializationState> => {
     try {
-      after(async () => {
+      afterResponse(async () => {
         try {
           await ctx.userModel.updateUser({ lastActiveAt: new Date() });
         } catch (err) {

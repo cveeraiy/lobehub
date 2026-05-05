@@ -1,6 +1,6 @@
 export async function register() {
   // In local development, write debug logs to logs/server.log
-  if (process.env.NODE_ENV !== 'production' && process.env.NEXT_RUNTIME === 'nodejs') {
+  if (process.env.NODE_ENV !== 'production') {
     await import('./libs/debug-file-logger');
   }
 
@@ -10,7 +10,6 @@ export async function register() {
   // In local dev, opt-in via ENABLE_BOT_IN_DEV to avoid clobbering a shared bot binding.
   const isDev = process.env.NODE_ENV !== 'production';
   if (
-    process.env.NEXT_RUNTIME === 'nodejs' &&
     process.env.DATABASE_URL &&
     !process.env.VERCEL_ENV &&
     (!isDev || process.env.ENABLE_BOT_IN_DEV === '1')
@@ -26,7 +25,7 @@ export async function register() {
     return;
   }
 
-  const shouldEnable = process.env.ENABLE_TELEMETRY && process.env.NEXT_RUNTIME === 'nodejs';
+  const shouldEnable = !!process.env.ENABLE_TELEMETRY;
   if (!shouldEnable) {
     return;
   }

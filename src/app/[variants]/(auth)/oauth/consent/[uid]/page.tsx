@@ -1,68 +1,66 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { Skeleton } from 'antd';
+import { useEffect, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
 
 import { authEnv } from '@/envs/auth';
-import { defaultClients } from '@/libs/oidc-provider/config';
-import { OIDCService } from '@/server/services/oidc';
 
 import ConsentClientError from './ClientError';
 import Consent from './Consent';
 import Login from './Login';
 
-const InteractionPage = async (props: { params: Promise<{ uid: string }> }) => {
-  if (!authEnv.ENABLE_OIDC) return notFound();
+interface InteractionData {
+  clientId: string;
+  clientMetadata: {
+    clientName?: string;
+    isFirstParty?: boolean;
+    logo?: string;
+  };
+  error?: string;
+  promptName: string;
+  redirectUri: string;
+  scopes: string[];
+}
 
-  const params = await props.params;
-  const uid = params.uid;
+const InteractionPage = () => {
+  const { uid } = useParams<{ uid: string }>();
+  const [data, setData] = useState<InteractionData | null>(null);
+  const [error, setError] = useState<{ message?: string; type?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    const oidcService = await OIDCService.initialize();
+  useEffect(() => {
+    if (!uid) return;
 
-    // Get interaction details, passing request and response objects
-    const details = await oidcService.getInteractionDetails(uid);
+    fetch(`/oidc/interaction?uid=${encodeURIComponent(uid)}`, { credentials: 'include' })
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok) {
+          if (json.error === 'session_invalid') {
+            setError({ type: 'session_invalid' });
+          } else {
+            setError({ message: json.message, type: 'server_error' });
+          }
+        } else if (json.error === 'unsupported_interaction') {
+          setError({ message: json.promptName, type: 'unsupported_interaction' });
+        } else {
+          setData(json);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching OIDC interaction:', err);
+        setError({ message: err.message, type: 'fetch_error' });
+      })
+      .finally(() => setLoading(false));
+  }, [uid]);
 
-    // Support login and consent type interactions
-    if (details.prompt.name !== 'consent' && details.prompt.name !== 'login') {
-      return (
-        <ConsentClientError
-          error={{
-            messageKey: 'consent.error.unsupportedInteraction.message',
-            titleKey: 'consent.error.unsupportedInteraction.title',
-            values: { promptName: details.prompt.name },
-          }}
-        />
-      );
-    }
+  if (!authEnv.ENABLE_OIDC) return <Navigate replace to="/" />;
+  if (!uid) return <Navigate replace to="/" />;
 
-    // Get client ID and authorization scopes
-    const clientId = (details.params.client_id as string) || 'unknown';
-    const scopes = (details.params.scope as string)?.split(' ') || [];
+  if (loading) return <Skeleton active />;
 
-    const clientDetail = await oidcService.getClientMetadata(clientId);
-
-    const clientMetadata = {
-      clientName: clientDetail?.client_name,
-      isFirstParty: defaultClients.map((c) => c.client_id).includes(clientId),
-      logo: clientDetail?.logo_uri,
-    };
-    // Render client component regardless of login or consent type
-    if (details.prompt.name === 'login')
-      return <Login clientMetadata={clientMetadata} uid={params.uid} />;
-
-    return (
-      <Consent
-        clientId={clientId}
-        clientMetadata={clientMetadata}
-        redirectUri={details.params.redirect_uri as string}
-        scopes={scopes}
-        uid={params.uid}
-      />
-    );
-  } catch (error) {
-    console.error('Error handling OIDC interaction:', error);
-    // Ensure error handling can display correctly
-    const errorMessage = error instanceof Error ? error.message : undefined;
-    // Check if it is an 'interaction session not found' error for a more user-friendly message
-    if (errorMessage?.includes('interaction session not found')) {
+  if (error) {
+    if (error.type === 'session_invalid') {
       return (
         <ConsentClientError
           error={{
@@ -73,16 +71,44 @@ const InteractionPage = async (props: { params: Promise<{ uid: string }> }) => {
       );
     }
 
+    if (error.type === 'unsupported_interaction') {
+      return (
+        <ConsentClientError
+          error={{
+            messageKey: 'consent.error.unsupportedInteraction.message',
+            titleKey: 'consent.error.unsupportedInteraction.title',
+            values: { promptName: error.message || '' },
+          }}
+        />
+      );
+    }
+
     return (
       <ConsentClientError
         error={{
-          message: errorMessage,
-          messageKey: errorMessage ? undefined : 'consent.error.unknown.message',
+          message: error.message,
+          messageKey: error.message ? undefined : 'consent.error.unknown.message',
           titleKey: 'consent.error.title',
         }}
       />
     );
   }
+
+  if (!data) return null;
+
+  if (data.promptName === 'login') {
+    return <Login clientMetadata={data.clientMetadata} uid={uid} />;
+  }
+
+  return (
+    <Consent
+      clientId={data.clientId}
+      clientMetadata={data.clientMetadata}
+      redirectUri={data.redirectUri}
+      scopes={data.scopes}
+      uid={uid}
+    />
+  );
 };
 
 export default InteractionPage;

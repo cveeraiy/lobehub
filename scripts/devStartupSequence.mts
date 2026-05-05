@@ -4,13 +4,13 @@ import net from 'node:net';
 
 dotenv.config();
 
-const NEXT_HOST = 'localhost';
+const HONO_HOST = 'localhost';
 
 /**
- * Resolve the Next.js dev port.
+ * Resolve the Hono dev port.
  * Priority: -p CLI flag > PORT env var > 3010.
  */
-const resolveNextPort = (): number => {
+const resolveHonoPort = (): number => {
   const pIndex = process.argv.indexOf('-p');
   if (pIndex !== -1 && process.argv[pIndex + 1]) {
     return Number(process.argv[pIndex + 1]);
@@ -19,14 +19,14 @@ const resolveNextPort = (): number => {
   return 3010;
 };
 
-const NEXT_PORT = resolveNextPort();
-const NEXT_ROOT_URL = `http://${NEXT_HOST}:${NEXT_PORT}/`;
-const NEXT_READY_TIMEOUT_MS = 180_000;
-const NEXT_READY_RETRY_MS = 400;
+const HONO_PORT = resolveHonoPort();
+const HONO_ROOT_URL = `http://${HONO_HOST}:${HONO_PORT}/`;
+const HONO_READY_TIMEOUT_MS = 60_000;
+const HONO_READY_RETRY_MS = 400;
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
-let nextProcess: ChildProcess | undefined;
+let honoProcess: ChildProcess | undefined;
 let viteProcess: ChildProcess | undefined;
 let shuttingDown = false;
 
@@ -53,37 +53,30 @@ const isPortOpen = (host: string, port: number) =>
     socket.setTimeout(1_000, () => onDone(false));
   });
 
-const waitForNextReady = async () => {
+const waitForHonoReady = async () => {
   const startedAt = Date.now();
 
-  while (Date.now() - startedAt < NEXT_READY_TIMEOUT_MS) {
-    if (await isPortOpen(NEXT_HOST, NEXT_PORT)) return;
-    await wait(NEXT_READY_RETRY_MS);
+  while (Date.now() - startedAt < HONO_READY_TIMEOUT_MS) {
+    if (await isPortOpen(HONO_HOST, HONO_PORT)) return;
+    await wait(HONO_READY_RETRY_MS);
   }
 
   throw new Error(
-    `Next server was not ready within ${NEXT_READY_TIMEOUT_MS / 1000}s on ${NEXT_HOST}:${NEXT_PORT}`,
+    `Hono server was not ready within ${HONO_READY_TIMEOUT_MS / 1000}s on ${HONO_HOST}:${HONO_PORT}`,
   );
 };
 
-const prewarmNextRootCompile = async () => {
-  const startedAt = Date.now();
-  const response = await fetch(NEXT_ROOT_URL, { signal: AbortSignal.timeout(120_000) });
-  const elapsed = ((Date.now() - startedAt) / 1000).toFixed(2);
-  console.log(`✅ Next prewarm request finished (${response.status}) in ${elapsed}s ${NEXT_ROOT_URL}`);
-};
-
-const runNextBackgroundTasks = () => {
+const runHonoBackgroundTasks = () => {
   setTimeout(() => {
-    console.log(`🔁 Next server URL: ${NEXT_ROOT_URL}`);
+    console.log(`🔁 Hono server URL: ${HONO_ROOT_URL}`);
   }, 2_000);
 
   void (async () => {
     try {
-      await waitForNextReady();
-      await prewarmNextRootCompile();
+      await waitForHonoReady();
+      console.log(`✅ Hono server ready at ${HONO_ROOT_URL}`);
     } catch (error) {
-      console.warn('⚠️ Next prewarm skipped:', error);
+      console.warn('⚠️ Hono readiness check skipped:', error);
     }
   })();
 };
@@ -98,12 +91,12 @@ const shutdownAll = (signal: NodeJS.Signals) => {
   shuttingDown = true;
 
   terminateChild(viteProcess);
-  terminateChild(nextProcess);
+  terminateChild(honoProcess);
 
   process.exitCode = signal === 'SIGINT' ? 130 : 143;
 };
 
-const watchChildExit = (child: ChildProcess, name: 'next' | 'vite') => {
+const watchChildExit = (child: ChildProcess, name: 'hono' | 'vite') => {
   child.once('exit', (code, signal) => {
     if (!shuttingDown) {
       console.error(
@@ -118,19 +111,15 @@ const main = async () => {
   process.once('SIGINT', () => shutdownAll('SIGINT'));
   process.once('SIGTERM', () => shutdownAll('SIGTERM'));
 
-  nextProcess = spawn('npx', ['next', 'dev', '-p', String(NEXT_PORT)], {
-    env: process.env,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
-  watchChildExit(nextProcess, 'next');
+  honoProcess = runNpmScript('dev:hono');
+  watchChildExit(honoProcess, 'hono');
 
   viteProcess = runNpmScript('dev:spa');
   watchChildExit(viteProcess, 'vite');
-  runNextBackgroundTasks();
+  runHonoBackgroundTasks();
 
   await Promise.race([
-    new Promise((resolve) => nextProcess?.once('exit', resolve)),
+    new Promise((resolve) => honoProcess?.once('exit', resolve)),
     new Promise((resolve) => viteProcess?.once('exit', resolve)),
   ]);
 };

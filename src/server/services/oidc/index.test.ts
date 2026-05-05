@@ -13,6 +13,10 @@ vi.mock('./oidcProvider', () => ({
   getOIDCProvider: vi.fn(),
 }));
 
+const mockRequest = new Request('http://localhost', {
+  headers: { cookie: '_session=abc123' },
+});
+
 const createMockProvider = () => {
   const grantCtor = Object.assign(
     vi.fn().mockImplementation((payload) => ({
@@ -59,9 +63,9 @@ describe('OIDCService', () => {
     } as any);
 
     const service = new OIDCService(provider as any);
-    const result = await service.getInteractionDetails('uid-1');
+    const result = await service.getInteractionDetails('uid-1', mockRequest);
 
-    expect(createContextForInteractionDetails).toHaveBeenCalledWith('uid-1');
+    expect(createContextForInteractionDetails).toHaveBeenCalledWith('uid-1', mockRequest);
     expect(provider.interactionDetails).toHaveBeenCalledWith({ id: 'req' }, { id: 'res' });
     expect(result).toEqual({ prompt: 'login' });
   });
@@ -76,7 +80,7 @@ describe('OIDCService', () => {
 
     const service = new OIDCService(provider as any);
     const payload = { login: true };
-    const result = await service.getInteractionResult('uid-2', payload);
+    const result = await service.getInteractionResult('uid-2', payload, mockRequest);
 
     expect(provider.interactionResult).toHaveBeenCalledWith({ id: 'req' }, { id: 'res' }, payload);
     expect(result).toEqual({ ok: true });
@@ -92,7 +96,7 @@ describe('OIDCService', () => {
 
     const service = new OIDCService(provider as any);
     const payload = { consent: true };
-    await service.finishInteraction('uid-3', payload);
+    await service.finishInteraction('uid-3', payload, mockRequest);
 
     expect(provider.interactionFinished).toHaveBeenCalledWith(
       { id: 'req' },

@@ -1,26 +1,28 @@
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { NuqsAdapter } from 'nuqs/adapters/react-router/v6';
 import { type PropsWithChildren } from 'react';
+import { Outlet } from 'react-router-dom';
 
 import BusinessAuthProvider from '@/business/client/BusinessAuthProvider';
-import ClientOnly from '@/components/client/ClientOnly';
-import { type DynamicLayoutProps } from '@/types/next';
+import type { SPAServerConfig } from '@/types/spaServerConfig';
 
 import AuthContainer from './_layout';
-import AuthGlobalProvider from './_layout/AuthGlobalProvider';
+import { AuthServerConfigProvider } from './_layout/AuthServerConfigProvider';
 
-const AuthLayout = async ({ children, params }: PropsWithChildren<DynamicLayoutProps>) => {
-  const { variants } = await params;
+const AuthLayout = ({ children }: PropsWithChildren) => {
+  const serverConfig: SPAServerConfig | undefined = window.__SERVER_CONFIG__;
 
   return (
-    <AuthGlobalProvider variants={variants}>
-      <ClientOnly>
-        <NuqsAdapter>
-          <BusinessAuthProvider>
-            <AuthContainer>{children}</AuthContainer>
-          </BusinessAuthProvider>
-        </NuqsAdapter>
-      </ClientOnly>
-    </AuthGlobalProvider>
+    <NuqsAdapter>
+      <BusinessAuthProvider>
+        <AuthServerConfigProvider
+          featureFlags={serverConfig?.featureFlags}
+          isMobile={serverConfig?.isMobile}
+          serverConfig={serverConfig?.config}
+        >
+          <AuthContainer>{children || <Outlet />}</AuthContainer>
+        </AuthServerConfigProvider>
+      </BusinessAuthProvider>
+    </NuqsAdapter>
   );
 };
 

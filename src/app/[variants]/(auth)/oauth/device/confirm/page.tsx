@@ -1,28 +1,26 @@
-import { notFound } from 'next/navigation';
+'use client';
+
+import { Navigate, useSearchParams } from 'react-router-dom';
 
 import { authEnv } from '@/envs/auth';
 
 import DeviceCodeConfirm from './DeviceCodeConfirm';
 
-const DeviceConfirmPage = async (props: {
-  searchParams: Promise<{
-    client_id?: string;
-    client_name?: string;
-    user_code?: string;
-    xsrf?: string;
-  }>;
-}) => {
-  if (!authEnv.ENABLE_OIDC) return notFound();
+const DeviceConfirmPage = () => {
+  const [searchParams] = useSearchParams();
 
-  const searchParams = await props.searchParams;
+  if (!authEnv.ENABLE_OIDC) return <Navigate replace to="/" />;
 
-  if (!searchParams.user_code) return notFound();
+  const userCode = searchParams.get('user_code');
+  if (!userCode) return <Navigate replace to="/" />;
 
   return (
     <DeviceCodeConfirm
-      clientName={searchParams.client_name || searchParams.client_id || 'Unknown Application'}
-      userCode={searchParams.user_code}
-      xsrf={searchParams.xsrf}
+      clientName={
+        searchParams.get('client_name') || searchParams.get('client_id') || 'Unknown Application'
+      }
+      userCode={userCode}
+      xsrf={searchParams.get('xsrf') || undefined}
     />
   );
 };

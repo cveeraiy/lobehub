@@ -1,8 +1,6 @@
 import { type IncomingMessage, type ServerResponse } from 'node:http';
 
 import debug from 'debug';
-import { cookies } from 'next/headers';
-import { type NextRequest } from 'next/server';
 import urlJoin from 'url-join';
 
 import { appEnv } from '@/envs/app';
@@ -10,11 +8,11 @@ import { appEnv } from '@/envs/app';
 const log = debug('lobe-oidc:http-adapter');
 
 /**
- * Convert Next.js request headers to standard Node.js HTTP header format
+ * Convert Web API Headers to standard Node.js HTTP header format
  */
-export const convertHeadersToNodeHeaders = (nextHeaders: Headers): Record<string, string> => {
+export const convertHeadersToNodeHeaders = (webHeaders: Headers): Record<string, string> => {
   const headers: Record<string, string> = {};
-  nextHeaders.forEach((value, key) => {
+  webHeaders.forEach((value, key) => {
     headers[key] = value;
   });
   return headers;
@@ -22,9 +20,9 @@ export const convertHeadersToNodeHeaders = (nextHeaders: Headers): Record<string
 
 /**
  * Create a Node.js HTTP request object for OIDC Provider
- * @param req Next.js request object
+ * @param req Web API Request object
  */
-export const createNodeRequest = async (req: NextRequest): Promise<IncomingMessage> => {
+export const createNodeRequest = async (req: Request): Promise<IncomingMessage> => {
   // Build URL object
   const url = new URL(req.url);
 
@@ -230,6 +228,7 @@ export const createNodeResponse = (resolvePromise: () => void): ResponseCollecto
  */
 export const createContextForInteractionDetails = async (
   uid: string,
+  request: Request,
 ): Promise<{ req: IncomingMessage; res: ServerResponse }> => {
   log('Creating context for interaction details for uid: %s', uid);
   const baseUrl = appEnv.APP_URL!;
@@ -240,12 +239,18 @@ export const createContextForInteractionDetails = async (
   const hostName = parsedUrl.host;
   const protocol = parsedUrl.protocol.replace(':', '');
 
-  // 1. Get real cookies
-  const cookieStore = await cookies();
+  // 1. Get real cookies from the request
   const realCookies: Record<string, string> = {};
-  cookieStore.getAll().forEach((cookie) => {
-    realCookies[cookie.name] = cookie.value;
-  });
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    for (const pair of cookieHeader.split(';')) {
+      const eqIdx = pair.indexOf('=');
+      if (eqIdx === -1) continue;
+      const key = pair.slice(0, eqIdx).trim();
+      const value = pair.slice(eqIdx + 1).trim();
+      realCookies[key] = value;
+    }
+  }
   log('Real cookies found: %o', Object.keys(realCookies));
 
   // Specifically check for interaction session cookie
@@ -280,10 +285,9 @@ export const createContextForInteractionDetails = async (
 
   const mockNextRequest = {
     cookies: {
-      // Simulate NextRequestCookies interface
-      get: (name: string) => cookieStore.get(name)?.value,
-      getAll: () => cookieStore.getAll(),
-      has: (name: string) => cookieStore.has(name),
+      get: (name: string) => realCookies[name],
+      getAll: () => Object.entries(realCookies).map(([name, value]) => ({ name, value })),
+      has: (name: string) => name in realCookies,
     },
     geo: {},
     headers,
@@ -293,8 +297,8 @@ export const createContextForInteractionDetails = async (
     page: { name: undefined, params: undefined },
     ua: undefined,
     url: new URL(interactionUrl),
-  } as unknown as NextRequest;
-  log('Mock NextRequest created for url: %s', mockNextRequest.url);
+  } as unknown as Request;
+  log('Mock Request created for url: %s', mockNextRequest.url);
 
   // 4. Use createNodeRequest to create a mock Node.js IncomingMessage
   // pathPrefix is set to '/' because our URL is already in the path format expected by the Provider: /interaction/:uid

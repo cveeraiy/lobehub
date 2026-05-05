@@ -5,13 +5,13 @@ import 'antd/dist/reset.css';
 import { ConfigProvider, ThemeProvider } from '@lobehub/ui';
 import { App } from 'antd';
 import * as m from 'motion/react-m';
-import Link from 'next/link';
 import { type PropsWithChildren } from 'react';
 import { memo } from 'react';
 
 import AntdStaticMethods from '@/components/AntdStaticMethods';
 import { useIsDark } from '@/hooks/useIsDark';
 import Image from '@/libs/next/Image';
+import Link from '@/libs/next/Link';
 
 interface AuthThemeLiteProps extends PropsWithChildren {
   globalCDN?: boolean;

@@ -727,3 +727,119 @@ desktopRoutes.push({
   errorElement: <ErrorBoundary />,
   path: '/onboarding/classic',
 });
+
+// ============ Auth Routes ============ //
+// Auth pages migrated from Next.js SSR to SPA client components.
+// Wrapped in AuthLayout which provides NuqsAdapter + BusinessAuthProvider + AuthContainer shell.
+const authLayout = dynamicLayout(() => import('@/app/[variants]/(auth)/layout'), 'Auth > Layout');
+
+const authRoutes: RouteObject[] = [
+  {
+    children: [
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/signin/page'),
+          'Auth > Signin',
+        ),
+        path: '/signin',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/signup/[[...signup]]/page'),
+          'Auth > Signup',
+        ),
+        path: '/signup/*',
+      },
+      {
+        children: [
+          {
+            element: dynamicElement(
+              () => import('@/app/[variants]/(auth)/reset-password/page'),
+              'Auth > Reset Password',
+            ),
+            index: true,
+          },
+        ],
+        element: dynamicLayout(
+          () => import('@/app/[variants]/(auth)/reset-password/layout'),
+          'Auth > Reset Password > Layout',
+        ),
+        path: '/reset-password',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/verify-email/page'),
+          'Auth > Verify Email',
+        ),
+        path: '/verify-email',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/auth-error/page'),
+          'Auth > Error',
+        ),
+        path: '/auth-error',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/market-auth-callback/page'),
+          'Auth > Market Callback',
+        ),
+        path: '/market-auth-callback',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/oauth/callback/error/page'),
+          'Auth > OAuth Callback Error',
+        ),
+        path: '/oauth/callback/error',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/oauth/callback/social/page'),
+          'Auth > OAuth Callback Social',
+        ),
+        path: '/oauth/callback/social',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/oauth/callback/success/page'),
+          'Auth > OAuth Callback Success',
+        ),
+        path: '/oauth/callback/success',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/oauth/consent/[uid]/page'),
+          'Auth > OAuth Consent',
+        ),
+        path: '/oauth/consent/:uid',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/oauth/device/page'),
+          'Auth > OAuth Device',
+        ),
+        path: '/oauth/device',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/oauth/device/confirm/page'),
+          'Auth > OAuth Device Confirm',
+        ),
+        path: '/oauth/device/confirm',
+      },
+      {
+        element: dynamicElement(
+          () => import('@/app/[variants]/(auth)/oauth/device/success/page'),
+          'Auth > OAuth Device Success',
+        ),
+        path: '/oauth/device/success',
+      },
+    ],
+    element: authLayout,
+    errorElement: <ErrorBoundary />,
+  },
+];
+
+desktopRoutes.push(...authRoutes);
