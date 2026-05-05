@@ -1,81 +1,26 @@
 /**
- * Navigation utilities - SPA implementation via react-router-dom.
+ * Next.js navigation compat layer.
  *
- * Provides the same API surface as the previous Next.js navigation wrapper
- * so that existing consumer code does not need to change.
+ * Thin wrapper around `@/libs/router/navigation` that provides a
+ * Next.js-compatible API surface (e.g. `useSearchParams` returns
+ * `URLSearchParams` directly instead of a `[params, setter]` tuple).
+ *
+ * Auth pages and legacy code import from here; new code should use
+ * `@/libs/router/navigation` directly.
  */
 
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams as useRRSearchParams,
-  useSearchParams,
-} from 'react-router-dom';
+import { useSearchParams as useReactRouterSearchParams } from 'react-router-dom';
 
-// ---------------------------------------------------------------------------
-// useRouter — compat wrapper around useNavigate
-// ---------------------------------------------------------------------------
-export function useRouter() {
-  const navigate = useNavigate();
-  return {
-    back: () => navigate(-1),
-    forward: () => navigate(1),
-    push: (href: string) => navigate(href),
-    refresh: () => navigate(0),
-    replace: (href: string) => navigate(href, { replace: true }),
-  };
-}
+export { useParams, usePathname, useRouter } from '@/libs/router/navigation';
 
-// ---------------------------------------------------------------------------
-// usePathname
-// ---------------------------------------------------------------------------
-export function usePathname(): string {
-  return useLocation().pathname;
-}
-
-// ---------------------------------------------------------------------------
-// Re-exports that have the same shape in react-router-dom
-// ---------------------------------------------------------------------------
-export { useParams };
-
-// ---------------------------------------------------------------------------
-// useSearchParams — compat wrapper
-// Next.js returns URLSearchParams directly; react-router-dom returns [params, setter].
-// ---------------------------------------------------------------------------
+/**
+ * Next.js-compat `useSearchParams`.
+ * Returns `URLSearchParams` directly (Next.js API), unlike react-router-dom
+ * which returns a `[searchParams, setSearchParams]` tuple.
+ */
 export function useSearchParams(): URLSearchParams {
-  const [searchParams] = useRRSearchParams();
+  const [searchParams] = useReactRouterSearchParams();
   return searchParams;
-}
-
-// ---------------------------------------------------------------------------
-// redirect — imperative navigation (works only inside components / loaders)
-// For non-component contexts, callers should throw a Response or use navigate.
-// ---------------------------------------------------------------------------
-export function redirect(url: string): never {
-  throw new RedirectError(url);
-}
-
-class RedirectError extends Error {
-  url: string;
-  constructor(url: string) {
-    super(`Redirect to ${url}`);
-    this.url = url;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// notFound — throw to be caught by an ErrorBoundary
-// ---------------------------------------------------------------------------
-export function notFound(): never {
-  throw new NotFoundError();
-}
-
-class NotFoundError extends Error {
-  digest = 'NEXT_NOT_FOUND';
-  constructor() {
-    super('Not Found');
-  }
 }
 
 // ---------------------------------------------------------------------------

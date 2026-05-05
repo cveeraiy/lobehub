@@ -16,9 +16,18 @@ const mockSignInMagicLink = vi.hoisted(() => vi.fn());
 const mockRequestPasswordReset = vi.hoisted(() => vi.fn());
 const mockGetCaptchaTokenOnError = vi.hoisted(() => vi.fn());
 
-vi.mock('next/navigation', () => ({
+vi.mock('@/libs/router/navigation', () => ({
+  useParams: () => ({}),
+  usePathname: () => '/',
   useRouter: () => ({ push: mockPush }),
-  useSearchParams: () => ({ get: mockSearchParamsGet }),
+  useSearchParams: () => [{ get: mockSearchParamsGet, toString: () => '' }],
+}));
+
+vi.mock('@/libs/next/navigation', () => ({
+  useParams: () => ({}),
+  usePathname: () => '/',
+  useRouter: () => ({ push: mockPush }),
+  useSearchParams: () => ({ get: mockSearchParamsGet, toString: () => '' }),
 }));
 
 vi.mock('@/components/AntdStaticMethods', () => ({

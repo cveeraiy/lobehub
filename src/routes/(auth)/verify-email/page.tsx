@@ -4,10 +4,10 @@ import { Button } from '@lobehub/ui';
 import { ChevronLeftIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import AuthCard from '@/features/AuthCard';
 import Link from '@/libs/next/Link';
 import { useSearchParams } from '@/libs/next/navigation';
 
-import AuthCard from '../../../../features/AuthCard';
 import { VerifyEmailContent } from './VerifyEmailContent';
 
 const VerifyEmailPage = () => {

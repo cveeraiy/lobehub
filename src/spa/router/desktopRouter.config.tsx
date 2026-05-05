@@ -731,21 +731,18 @@ desktopRoutes.push({
 // ============ Auth Routes ============ //
 // Auth pages migrated from Next.js SSR to SPA client components.
 // Wrapped in AuthLayout which provides NuqsAdapter + BusinessAuthProvider + AuthContainer shell.
-const authLayout = dynamicLayout(() => import('@/app/[variants]/(auth)/layout'), 'Auth > Layout');
+const authLayout = dynamicLayout(() => import('@/routes/(auth)/layout'), 'Auth > Layout');
 
 const authRoutes: RouteObject[] = [
   {
     children: [
       {
-        element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/signin/page'),
-          'Auth > Signin',
-        ),
+        element: dynamicElement(() => import('@/routes/(auth)/signin/page'), 'Auth > Signin'),
         path: '/signin',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/signup/[[...signup]]/page'),
+          () => import('@/routes/(auth)/signup/[[...signup]]/page'),
           'Auth > Signup',
         ),
         path: '/signup/*',
@@ -754,84 +751,81 @@ const authRoutes: RouteObject[] = [
         children: [
           {
             element: dynamicElement(
-              () => import('@/app/[variants]/(auth)/reset-password/page'),
+              () => import('@/routes/(auth)/reset-password/page'),
               'Auth > Reset Password',
             ),
             index: true,
           },
         ],
         element: dynamicLayout(
-          () => import('@/app/[variants]/(auth)/reset-password/layout'),
+          () => import('@/routes/(auth)/reset-password/layout'),
           'Auth > Reset Password > Layout',
         ),
         path: '/reset-password',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/verify-email/page'),
+          () => import('@/routes/(auth)/verify-email/page'),
           'Auth > Verify Email',
         ),
         path: '/verify-email',
       },
       {
-        element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/auth-error/page'),
-          'Auth > Error',
-        ),
+        element: dynamicElement(() => import('@/routes/(auth)/auth-error/page'), 'Auth > Error'),
         path: '/auth-error',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/market-auth-callback/page'),
+          () => import('@/routes/(auth)/market-auth-callback/page'),
           'Auth > Market Callback',
         ),
         path: '/market-auth-callback',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/oauth/callback/error/page'),
+          () => import('@/routes/(auth)/oauth/callback/error/page'),
           'Auth > OAuth Callback Error',
         ),
         path: '/oauth/callback/error',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/oauth/callback/social/page'),
+          () => import('@/routes/(auth)/oauth/callback/social/page'),
           'Auth > OAuth Callback Social',
         ),
         path: '/oauth/callback/social',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/oauth/callback/success/page'),
+          () => import('@/routes/(auth)/oauth/callback/success/page'),
           'Auth > OAuth Callback Success',
         ),
         path: '/oauth/callback/success',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/oauth/consent/[uid]/page'),
+          () => import('@/routes/(auth)/oauth/consent/[uid]/page'),
           'Auth > OAuth Consent',
         ),
         path: '/oauth/consent/:uid',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/oauth/device/page'),
+          () => import('@/routes/(auth)/oauth/device/page'),
           'Auth > OAuth Device',
         ),
         path: '/oauth/device',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/oauth/device/confirm/page'),
+          () => import('@/routes/(auth)/oauth/device/confirm/page'),
           'Auth > OAuth Device Confirm',
         ),
         path: '/oauth/device/confirm',
       },
       {
         element: dynamicElement(
-          () => import('@/app/[variants]/(auth)/oauth/device/success/page'),
+          () => import('@/routes/(auth)/oauth/device/success/page'),
           'Auth > OAuth Device Success',
         ),
         path: '/oauth/device/success',

@@ -1,4 +1,4 @@
-import type { BaseSignUpFormValues } from '@/app/[variants]/(auth)/signup/[[...signup]]/types';
+import type { BaseSignUpFormValues } from '@/routes/(auth)/signup/[[...signup]]/types';
 
 export interface BusinessSignupFomData {}
 

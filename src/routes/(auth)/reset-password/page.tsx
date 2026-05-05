@@ -4,10 +4,10 @@ import { Button } from '@lobehub/ui';
 import { ChevronLeftIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+import AuthCard from '@/features/AuthCard';
 import Link from '@/libs/next/Link';
 import { useRouter, useSearchParams } from '@/libs/next/navigation';
 
-import AuthCard from '../../../../features/AuthCard';
 import { ResetPasswordContent } from './ResetPasswordContent';
 
 const ResetPasswordPage = () => {

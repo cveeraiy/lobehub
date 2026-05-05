@@ -6,11 +6,11 @@ import { Lock, Mail } from 'lucide-react';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AuthCard } from '@/features/AuthCard';
+import { trackLoginOrSignupClicked } from '@/features/User/UserLoginOrSignup/trackLoginOrSignupClicked';
 import Link from '@/libs/next/Link';
 import { useSearchParams } from '@/libs/next/navigation';
 
-import { AuthCard } from '../../../../../features/AuthCard';
-import { trackLoginOrSignupClicked } from '../../../../../features/User/UserLoginOrSignup/trackLoginOrSignupClicked';
 import { type SignUpFormValues } from './useSignUp';
 import { useSignUp } from './useSignUp';
 

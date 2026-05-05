@@ -16,11 +16,11 @@ const DeviceConfirmPage = () => {
 
   return (
     <DeviceCodeConfirm
+      userCode={userCode}
+      xsrf={searchParams.get('xsrf') || undefined}
       clientName={
         searchParams.get('client_name') || searchParams.get('client_id') || 'Unknown Application'
       }
-      userCode={userCode}
-      xsrf={searchParams.get('xsrf') || undefined}
     />
   );
 };
