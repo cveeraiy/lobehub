@@ -36,7 +36,7 @@ export interface NavLayout {
 export const useNavLayout = (): NavLayout => {
   const { t } = useTranslation('common');
   const toggleCommandMenu = useGlobalStore((s) => s.toggleCommandMenu);
-  const { showMarket, hideGitHub, enableAgentTask, enableResources, showAiImage, showAdminPanel } =
+  const { hideGitHub, enableAgentTask, enableResources, showAdminPanel } =
     useServerConfigStore(featureFlagsSelectors);
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === 'admin';
@@ -77,20 +77,6 @@ export const useNavLayout = (): NavLayout => {
     () =>
       [
         {
-          hidden: !showAiImage,
-          icon: getRouteById('image')!.icon,
-          key: SidebarTabKey.Image,
-          title: t('tab.generation'),
-          url: '/image',
-        },
-        {
-          hidden: !showMarket,
-          icon: getRouteById('community')!.icon,
-          key: SidebarTabKey.Community,
-          title: t('tab.community'),
-          url: '/community',
-        },
-        {
           hidden: !enableResources,
           icon: getRouteById('resource')!.icon,
           key: SidebarTabKey.Resource,
@@ -111,7 +97,7 @@ export const useNavLayout = (): NavLayout => {
           url: '/admin',
         },
       ] as NavItem[],
-    [t, showMarket, enableResources, showAiImage, showAdminPanel, isAdmin],
+    [t, enableResources, showAdminPanel, isAdmin],
   );
 
   const footer = useMemo(

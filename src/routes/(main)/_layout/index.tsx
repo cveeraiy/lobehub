@@ -1,7 +1,6 @@
 'use client';
 
 import { HotkeyScopeEnum } from '@lobechat/const/hotkeys';
-import { TITLE_BAR_HEIGHT } from '@lobechat/desktop-bridge';
 import { Flexbox } from '@lobehub/ui';
 import { cx } from 'antd-style';
 import { type FC } from 'react';
@@ -10,15 +9,7 @@ import { HotkeysProvider } from 'react-hotkeys-hook';
 import { Outlet } from 'react-router-dom';
 
 import Loading from '@/components/Loading/BrandTextLoading';
-import { isDesktop } from '@/const/version';
 import { BANNER_HEIGHT } from '@/features/AlertBanner/CloudBanner';
-import DesktopFileMenuBridge from '@/features/DesktopFileMenuBridge';
-import DesktopNavigationBridge from '@/features/DesktopNavigationBridge';
-import AuthRequiredModal from '@/features/Electron/AuthRequiredModal';
-import OverlayCaptureUploader from '@/features/Electron/ScreenCapture/OverlayCaptureUploader';
-import OverlayMessageDispatcher from '@/features/Electron/ScreenCapture/OverlayMessageDispatcher';
-import OverlaySnapshotPublisher from '@/features/Electron/ScreenCapture/OverlaySnapshotPublisher';
-import TitleBar from '@/features/Electron/titlebar/TitleBar';
 import HotkeyHelperPanel from '@/features/HotkeyHelperPanel';
 import NavPanel from '@/features/NavPanel';
 import { useFeedbackModal } from '@/hooks/useFeedbackModal';
@@ -31,7 +22,6 @@ import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfi
 
 import DesktopHome from '../home';
 import DesktopHomeLayout from '../home/_layout';
-import DesktopAutoOidcOnFirstOpen from './DesktopAutoOidcOnFirstOpen';
 import DesktopLayoutContainer from './DesktopLayoutContainer';
 import RegisterHotkeys from './RegisterHotkeys';
 import { styles } from './style';
@@ -51,34 +41,17 @@ const Layout: FC = () => {
 
   return (
     <HotkeysProvider initiallyActiveScopes={[HotkeyScopeEnum.Global]}>
-      <Suspense fallback={null}>
-        {isDesktop && <DesktopAutoOidcOnFirstOpen />}
-        {isDesktop && <DesktopNavigationBridge />}
-        {isDesktop && <DesktopFileMenuBridge />}
-        {isDesktop && <OverlaySnapshotPublisher />}
-        {isDesktop && <OverlayCaptureUploader />}
-        {isDesktop && <OverlayMessageDispatcher />}
-        {showCloudPromotion && <CloudBanner />}
-      </Suspense>
-      {isDesktop && <AuthRequiredModal />}
-
-      <Suspense fallback={null}>{isDesktop && <TitleBar />}</Suspense>
+      <Suspense fallback={null}>{showCloudPromotion && <CloudBanner />}</Suspense>
       <DndContextWrapper>
         <Flexbox
           horizontal
           className={cx(isPWA ? styles.mainContainerPWA : styles.mainContainer)}
           width={'100%'}
-          height={
-            isDesktop
-              ? `calc(100% - ${TITLE_BAR_HEIGHT}px)`
-              : showCloudPromotion
-                ? `calc(100% - ${BANNER_HEIGHT}px)`
-                : '100%'
-          }
+          height={showCloudPromotion ? `calc(100% - ${BANNER_HEIGHT}px)` : '100%'}
         >
           <NavPanel />
           <DesktopLayoutContainer>
-            <MarketAuthProvider isDesktop={isDesktop}>
+            <MarketAuthProvider isDesktop={false}>
               <DesktopHomeLayout>
                 <DesktopHome />
               </DesktopHomeLayout>

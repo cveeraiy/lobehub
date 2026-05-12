@@ -10,7 +10,6 @@ import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/slices/auth/selectors';
 
 import AgentSelect from './AgentSelect';
-import CommunityAgents from './CommunityAgents';
 import InputArea from './InputArea';
 import WelcomeText from './WelcomeText';
 
@@ -34,7 +33,6 @@ const Home = memo(() => {
           <RecommendTaskTemplates />
         </Flexbox>
       )}
-      {!enableAgentTask && <CommunityAgents />}
     </Flexbox>
   );
 });

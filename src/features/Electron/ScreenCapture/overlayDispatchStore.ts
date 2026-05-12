@@ -1,22 +1,6 @@
-import { createWithEqualityFn } from 'zustand/traditional';
+// Stub: Electron desktop features removed for enterprise web-only build
+import { create } from 'zustand';
 
-import { type PendingOverlayDispatch } from './overlayDispatch';
-
-interface OverlayDispatchStore {
-  clearPendingDispatch: (dispatchId?: string) => void;
-  pendingDispatch: PendingOverlayDispatch | null;
-  setPendingDispatch: (pendingDispatch: PendingOverlayDispatch) => void;
-}
-
-export const useOverlayDispatchStore = createWithEqualityFn<OverlayDispatchStore>()((set) => ({
-  clearPendingDispatch: (dispatchId) =>
-    set((state) => {
-      if (dispatchId && state.pendingDispatch?.dispatchId !== dispatchId) return state;
-
-      return { pendingDispatch: null };
-    }),
+export const useOverlayDispatchStore = create(() => ({
   pendingDispatch: null,
-  setPendingDispatch: (pendingDispatch) => set({ pendingDispatch }),
 }));
-
-export const getOverlayDispatchStoreState = () => useOverlayDispatchStore.getState();

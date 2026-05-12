@@ -26,17 +26,7 @@
     },
     "plugins": []
   },
-  "exclude": [
-    "node_modules",
-    "apps/desktop/**",
-    "apps/device-gateway/**",
-    "apps/mobile/**",
-    "tmp",
-    "temp",
-    ".temp",
-    "e2e/**",
-    "knip.ts"
-  ],
+  "exclude": ["node_modules", "apps/**", "tmp", "temp", ".temp", "e2e/**", "knip.ts"],
   "include": [
     "src/**/*.d.ts",
     "src/**/*.ts",
@@ -54,9 +44,5 @@
     "*.mts",
     "*.cts"
   ],
-  "references": [
-    {
-      "path": "./apps/desktop"
-    }
-  ]
+  "references": []
 }
