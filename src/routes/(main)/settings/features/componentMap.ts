@@ -34,9 +34,6 @@ export const componentMap = {
   [SettingsTabs.Hotkey]: dynamic(() => import('../hotkey'), {
     loading: loading('Settings > Hotkey'),
   }),
-  [SettingsTabs.Proxy]: dynamic(() => import('../proxy'), {
-    loading: loading('Settings > Proxy'),
-  }),
   [SettingsTabs.SystemTools]: dynamic(() => import('../system-tools'), {
     loading: loading('Settings > SystemTools'),
   }),

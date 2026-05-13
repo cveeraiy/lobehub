@@ -1,44 +1,21 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { filterBuiltinSkills, shouldEnableBuiltinSkill } from './skillFilters';
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.resetModules();
-});
-
 describe('skillFilters', () => {
-  it('should disable agent-browser on web environment', () => {
-    expect(shouldEnableBuiltinSkill('lobe-agent-browser', { isDesktop: false })).toBe(false);
+  it('should disable desktop-only agent-browser skill', () => {
+    expect(shouldEnableBuiltinSkill('lobe-agent-browser')).toBe(false);
   });
 
-  it('should disable task builtin skill globally', () => {
-    expect(shouldEnableBuiltinSkill('task', { isDesktop: false })).toBe(false);
-    expect(shouldEnableBuiltinSkill('task', { isDesktop: true })).toBe(false);
-  });
-
-  it('should enable agent-browser on desktop (non-Windows) environment', () => {
-    expect(shouldEnableBuiltinSkill('lobe-agent-browser', { isDesktop: true })).toBe(true);
-  });
-
-  it('should enable agent-browser on desktop Windows', () => {
-    expect(shouldEnableBuiltinSkill('lobe-agent-browser', { isDesktop: true })).toBe(true);
-  });
-
-  it('should not be affected by Windows platform detection when desktop is enabled', async () => {
-    vi.stubGlobal('process', { ...process, platform: 'win32' });
-    vi.resetModules();
-
-    const { shouldEnableBuiltinSkill } = await import('./skillFilters');
-
-    expect(shouldEnableBuiltinSkill('lobe-agent-browser', { isDesktop: true })).toBe(true);
+  it('should disable task builtin skill', () => {
+    expect(shouldEnableBuiltinSkill('task')).toBe(false);
   });
 
   it('should keep non-desktop-only skills enabled', () => {
-    expect(shouldEnableBuiltinSkill('lobe-artifacts', { isDesktop: false })).toBe(true);
+    expect(shouldEnableBuiltinSkill('lobe-artifacts')).toBe(true);
   });
 
-  it('should filter builtin skills by platform context', () => {
+  it('should filter builtin skills by availability', () => {
     const skills = [
       {
         content: 'agent-browser',
@@ -63,7 +40,7 @@ describe('skillFilters', () => {
       },
     ];
 
-    const filtered = filterBuiltinSkills(skills, { isDesktop: false });
+    const filtered = filterBuiltinSkills(skills);
 
     expect(filtered).toHaveLength(1);
     expect(filtered[0].identifier).toBe('lobe-artifacts');

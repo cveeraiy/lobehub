@@ -1,10 +1,9 @@
 import { LOBE_CHAT_CLOUD, UTM_SOURCE } from '@lobechat/business-const';
-import { DOWNLOAD_URL } from '@lobechat/const';
 import { Flexbox, Icon, Tag } from '@lobehub/ui';
 import { type ItemType } from 'antd/es/menu/interface';
-import { BrainCircuit, Cloudy, Download, HardDriveDownload, LogOut, Settings2 } from 'lucide-react';
+import { BrainCircuit, Cloudy, HardDriveDownload, LogOut, Settings2 } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
@@ -13,7 +12,6 @@ import { type MenuProps } from '@/components/Menu';
 import { OFFICIAL_URL } from '@/const/url';
 import DataImporter from '@/features/DataImporter';
 import { useNavLayout } from '@/hooks/useNavLayout';
-import { usePlatform } from '@/hooks/usePlatform';
 import { useSession } from '@/libs/better-auth/auth-client';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
@@ -55,15 +53,8 @@ export const useMenu = () => {
   ]);
   const { userPanel } = useNavLayout();
   const businessMenuItems = useBusinessMenuItems(isLogin);
-  const { isIOS, isAndroid } = usePlatform();
   const { data: session } = useSession();
   const isAdmin = session?.user?.role === 'admin';
-
-  const downloadUrl = useMemo(() => {
-    if (isIOS) return DOWNLOAD_URL.ios;
-    if (isAndroid) return DOWNLOAD_URL.android;
-    return DOWNLOAD_URL.default;
-  }, [isIOS, isAndroid]);
 
   const settings: MenuProps['items'] = [
     {
@@ -85,18 +76,6 @@ export const useMenu = () => {
           },
         ]
       : []),
-  ];
-
-  const getDesktopApp: MenuProps['items'] = [
-    {
-      icon: <Icon icon={Download} />,
-      key: 'get-desktop-app',
-      label: (
-        <a href={downloadUrl} rel="noopener noreferrer" target="_blank">
-          {t('getDesktopApp')}
-        </a>
-      ),
-    },
   ];
 
   const helps: MenuProps['items'] = [
@@ -122,7 +101,6 @@ export const useMenu = () => {
 
     ...(isLogin ? settings : []),
     ...(isAdmin ? businessMenuItems : []),
-    ...(isAdmin ? [{ type: 'divider' as const }, ...getDesktopApp] : []),
     ...(isAdmin && userPanel.showDataImporter && isLogin
       ? [
           {

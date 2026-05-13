@@ -8,7 +8,6 @@ import { topicSelectors } from '@/store/chat/selectors';
 import { useSessionStore } from '@/store/session';
 import { sessionSelectors } from '@/store/session/selectors';
 
-import FolderTag from './FolderTag';
 import MemberCountTag from './MemberCountTag';
 
 const TitleTags = memo(() => {
@@ -50,7 +49,6 @@ const TitleTags = memo(() => {
       >
         {displayTitle}
       </span>
-      <FolderTag />
     </Flexbox>
   );
 });
