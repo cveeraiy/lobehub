@@ -1,14 +1,6 @@
 import { LOBE_CHAT_CLOUD, UTM_SOURCE } from '@lobechat/business-const';
 import { DOWNLOAD_URL, OFFICIAL_URL } from '@lobechat/const';
-import {
-  Book,
-  CircleUserRound,
-  Cloudy,
-  Download,
-  Feather,
-  FileClockIcon,
-  Settings2,
-} from 'lucide-react';
+import { Book, CircleUserRound, Cloudy, Download, Feather, Settings2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +13,7 @@ import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfi
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/selectors';
 
-export const useCategory = (onOpenChangelogModal: () => void) => {
+export const useCategory = () => {
   const navigate = useNavigate();
   const { t } = useTranslation(['common', 'setting', 'auth']);
   const { showCloudPromotion, hideDocs } = useServerConfigStore(featureFlagsSelectors);
@@ -86,12 +78,6 @@ export const useCategory = (onOpenChangelogModal: () => void) => {
       key: 'feedback',
       label: t('feedback'),
       onClick: () => window.open(FEEDBACK, '__blank'),
-    },
-    {
-      icon: FileClockIcon,
-      key: 'changelog',
-      label: t('changelog'),
-      onClick: onOpenChangelogModal,
     },
   ].filter(Boolean) as CellProps[];
 

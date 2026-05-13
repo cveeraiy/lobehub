@@ -1,8 +1,9 @@
-import { AUTH_REQUIRED_HEADER } from '@lobechat/desktop-bridge';
 import { type ILobeAgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { type ErrorResponse, type ErrorType } from '@lobechat/types';
 import { ChatErrorType } from '@lobechat/types';
+
+const AUTH_REQUIRED_HEADER = 'X-Auth-Required';
 
 /**
  * Error types that indicate a real authentication failure.

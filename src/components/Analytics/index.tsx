@@ -1,8 +1,6 @@
-import { isDesktop } from '@/const/version';
 import { analyticsEnv } from '@/envs/analytics';
 import dynamic from '@/libs/next/dynamic';
 
-import Desktop from './Desktop';
 import Google from './Google';
 import X from './X';
 
@@ -45,7 +43,6 @@ const Analytics = () => {
       {!!analyticsEnv.REACT_SCAN_MONITOR_API_KEY && (
         <ReactScan apiKey={analyticsEnv.REACT_SCAN_MONITOR_API_KEY} />
       )}
-      {isDesktop && <Desktop />}
     </>
   );
 };

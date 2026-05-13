@@ -1,6 +1,15 @@
-import { type NetworkProxySettings } from '@lobechat/electron-client-ipc';
 import { Form as AntdForm, type FormInstance } from 'antd';
 import { useMemo } from 'react';
+
+interface NetworkProxySettings {
+  enableProxy?: boolean;
+  proxyPassword?: string;
+  proxyPort?: number;
+  proxyRequireAuth?: boolean;
+  proxyServer?: string;
+  proxyType?: string;
+  proxyUsername?: string;
+}
 
 const WATCH_FIELDS: readonly (keyof NetworkProxySettings)[] = [
   'enableProxy',

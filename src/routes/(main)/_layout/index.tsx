@@ -20,9 +20,8 @@ import dynamic from '@/libs/next/dynamic';
 import { DndContextWrapper } from '@/routes/(main)/resource/features/DndContextWrapper';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 
-import DesktopHome from '../home';
-import DesktopHomeLayout from '../home/_layout';
-import DesktopLayoutContainer from './DesktopLayoutContainer';
+import Home from '../home';
+import HomeLayout from '../home/_layout';
 import RegisterHotkeys from './RegisterHotkeys';
 import { styles } from './style';
 
@@ -46,20 +45,18 @@ const Layout: FC = () => {
         <Flexbox
           horizontal
           className={cx(isPWA ? styles.mainContainerPWA : styles.mainContainer)}
-          width={'100%'}
           height={showCloudPromotion ? `calc(100% - ${BANNER_HEIGHT}px)` : '100%'}
+          width={'100%'}
         >
           <NavPanel />
-          <DesktopLayoutContainer>
-            <MarketAuthProvider isDesktop={false}>
-              <DesktopHomeLayout>
-                <DesktopHome />
-              </DesktopHomeLayout>
-              <Suspense fallback={<Loading debugId="DesktopMainLayout > Outlet" />}>
-                <Outlet />
-              </Suspense>
-            </MarketAuthProvider>
-          </DesktopLayoutContainer>
+          <MarketAuthProvider>
+            <HomeLayout>
+              <Home />
+            </HomeLayout>
+            <Suspense fallback={<Loading debugId="MainLayout > Outlet" />}>
+              <Outlet />
+            </Suspense>
+          </MarketAuthProvider>
         </Flexbox>
       </DndContextWrapper>
       <Suspense fallback={null}>

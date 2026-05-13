@@ -1,5 +1,4 @@
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
-import { HeterogeneousAgentSessionErrorCode } from '@lobechat/electron-client-ipc';
 import { type ILobeAgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { type ChatMessageError, type ErrorType, type IToolErrorType } from '@lobechat/types';
@@ -8,13 +7,11 @@ import { type AlertProps } from '@lobehub/ui';
 import { Block, Highlighter, Skeleton } from '@lobehub/ui';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import useBusinessErrorAlertConfig from '@/business/client/hooks/useBusinessErrorAlertConfig';
 import useBusinessErrorContent from '@/business/client/hooks/useBusinessErrorContent';
 import useRenderBusinessChatErrorMessageExtra from '@/business/client/hooks/useRenderBusinessChatErrorMessageExtra';
 import ErrorContent from '@/features/Conversation/ChatItem/components/ErrorContent';
-import HeterogeneousAgentStatusGuide from '@/features/Electron/HeterogeneousAgent/StatusGuide';
 import { useProviderName } from '@/hooks/useProviderName';
 import dynamic from '@/libs/next/dynamic';
 
@@ -154,32 +151,11 @@ interface ErrorExtraProps {
 
 const ErrorMessageExtra = memo<ErrorExtraProps>(({ error: alertError, data }) => {
   const error = data.error;
-  const navigate = useNavigate();
   const businessChatErrorMessageExtra = useRenderBusinessChatErrorMessageExtra(error, data.id);
-  const sessionErrorCode = error?.body?.code;
-  const sessionAgentType = error?.body?.agentType;
-  const sessionErrorBody = error?.body;
   const rawErrorMessage = getRawErrorMessage(error) || alertError?.message;
 
   if (ENABLE_BUSINESS_FEATURES && businessChatErrorMessageExtra)
     return businessChatErrorMessageExtra;
-
-  if (
-    (error?.type === AgentRuntimeErrorType.AgentRuntimeError || !error?.type) &&
-    !!sessionErrorBody &&
-    (sessionErrorCode === HeterogeneousAgentSessionErrorCode.AuthRequired ||
-      sessionErrorCode === HeterogeneousAgentSessionErrorCode.CliNotFound ||
-      sessionErrorCode === HeterogeneousAgentSessionErrorCode.RateLimit) &&
-    (sessionAgentType === 'claude-code' || sessionAgentType === 'codex')
-  ) {
-    return (
-      <HeterogeneousAgentStatusGuide
-        agentType={sessionAgentType}
-        error={sessionErrorBody}
-        onOpenSystemTools={() => navigate('/settings/system-tools')}
-      />
-    );
-  }
 
   switch (error?.type) {
     case AgentRuntimeErrorType.OllamaServiceUnavailable: {

@@ -1,4 +1,3 @@
-import { isDesktop } from '@lobechat/const';
 import { TRPCError } from '@trpc/server';
 import { serialize } from 'cookie';
 import debug from 'debug';
@@ -795,7 +794,7 @@ export const marketRouter = router({
       try {
         await ctx.discoverService.reportCall({
           ...input,
-          platform: isDesktop ? process.platform : 'web',
+          platform: 'web',
           userAgent: ctx.userAgent,
         });
         return { success: true };

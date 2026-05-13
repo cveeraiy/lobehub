@@ -1,4 +1,3 @@
-import { isDesktop } from '@lobechat/const';
 import { type MenuProps } from '@lobehub/ui';
 import { ActionIcon, DropdownMenu, Flexbox, Text } from '@lobehub/ui';
 import { ArrowRight, Plus, Unlink } from 'lucide-react';
@@ -28,7 +27,7 @@ export const SSOProvidersList = memo(() => {
 
   // Allow unlink if user has multiple SSO providers OR has email/password login
   const allowUnlink = providers.length > 1 || hasPasswordAccount;
-  const enableAuthActions = !isDesktop && isLogin;
+  const enableAuthActions = isLogin;
 
   // Get linked provider IDs for filtering
   const linkedProviderIds = useMemo(() => {
@@ -44,9 +43,6 @@ export const SSOProvidersList = memo(() => {
   }, [oAuthSSOProviders, linkedProviderIds]);
 
   const handleUnlinkSSO = async (provider: string) => {
-    // Better-auth link/unlink operations are not available on desktop
-    if (isDesktop) return;
-
     // Prevent unlink if this is the only login method
     if (!allowUnlink) {
       notification.error({
@@ -116,14 +112,14 @@ export const SSOProvidersList = memo(() => {
               </Text>
             )}
           </Flexbox>
-          {!isDesktop && (
+          {
             <ActionIcon
               disabled={!allowUnlink}
               icon={Unlink}
               size={'small'}
               onClick={() => handleUnlinkSSO(item.provider)}
             />
-          )}
+          }
         </Flexbox>
       ))}
 

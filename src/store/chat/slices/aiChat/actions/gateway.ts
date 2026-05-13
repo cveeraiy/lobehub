@@ -6,7 +6,6 @@ import {
 } from '@lobechat/agent-gateway-client';
 import type { ConversationContext, ExecAgentResult } from '@lobechat/types';
 
-import { isDesktop } from '@/const/version';
 import { aiAgentService, type ResumeApprovalParam } from '@/services/aiAgent';
 import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
@@ -247,7 +246,7 @@ export class GatewayActionImpl {
       // Tell the server this caller is a desktop Electron client so it can
       // enable `executor: 'client'` tools (local-system, stdio MCP) and
       // dispatch them back over the Agent Gateway WS.
-      clientRuntime: isDesktop ? 'desktop' : 'web',
+      clientRuntime: 'web',
       fileIds,
       parentMessageId,
       prompt: message,

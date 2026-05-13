@@ -1,4 +1,3 @@
-import { isDesktop } from '@lobechat/const';
 import { t } from 'i18next';
 
 import {
@@ -80,11 +79,8 @@ const currentActiveTopicSummary = (s: ChatStoreState): ChatTopicSummary | undefi
  * Get current active topic's working directory
  * Returns undefined if no topic is active or no working directory is set
  */
-const currentTopicWorkingDirectory = (s: ChatStoreState): string | undefined => {
-  if (!isDesktop) return;
-
-  const activeTopic = currentActiveTopic(s);
-  return activeTopic?.metadata?.workingDirectory;
+const currentTopicWorkingDirectory = (_s: ChatStoreState): string | undefined => {
+  return undefined;
 };
 
 const isCreatingTopic = (s: ChatStoreState) => s.creatingTopic;

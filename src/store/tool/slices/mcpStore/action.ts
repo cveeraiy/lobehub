@@ -1,4 +1,4 @@
-import { CURRENT_VERSION, isDesktop } from '@lobechat/const';
+import { CURRENT_VERSION } from '@lobechat/const';
 import { type ToolManifest } from '@lobechat/types';
 import { type PluginItem, type PluginListResponse } from '@lobehub/market-sdk';
 import { type TRPCClientError } from '@trpc/client';
@@ -861,9 +861,7 @@ export class PluginMCPStoreActionImpl {
 
   useFetchMCPPluginList = (params: MCPPluginListParams): SWRResponse<PluginListResponse> => {
     const locale = globalHelpers.getCurrentLanguage();
-    const requestParams = isDesktop
-      ? params
-      : { ...params, connectionType: McpConnectionType.http };
+    const requestParams = { ...params, connectionType: McpConnectionType.http };
     const swrKeyParts = [
       'useFetchMCPPluginList',
       locale,

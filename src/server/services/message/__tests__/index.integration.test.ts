@@ -11,7 +11,6 @@ import {
   users,
 } from '@lobechat/database/schemas';
 import { getTestDB } from '@lobechat/database/test-utils';
-import { HeterogeneousAgentSessionErrorCode } from '@lobechat/electron-client-ipc';
 import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
 import { MessageGroupType } from '@lobechat/types';
 import { eq } from 'drizzle-orm';
@@ -285,7 +284,7 @@ describe('MessageService Integration Tests', () => {
       const messageError = {
         body: {
           agentType: 'claude-code',
-          code: HeterogeneousAgentSessionErrorCode.AuthRequired,
+          code: 'auth_required',
           message: 'Failed to authenticate. API Error: 401',
         },
         message: 'Failed to authenticate. API Error: 401',

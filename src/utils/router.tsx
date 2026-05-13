@@ -147,7 +147,7 @@ RouterRoot.displayName = 'RouterRoot';
  * Use with <RouterProvider router={router} />.
  *
  * @example
- * const router = createAppRouter(desktopRoutes, { basename: '/app' });
+ * const router = createAppRouter(webRoutes, { basename: '/app' });
  * createRoot(document.getElementById('root')!).render(
  *   <RouterProvider router={router} />
  * );

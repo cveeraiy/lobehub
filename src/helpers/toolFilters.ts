@@ -3,7 +3,6 @@
  * and display layer (selectors)
  */
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
-import { isDesktop } from '@lobechat/const';
 
 /**
  * Check if a tool should be enabled based on platform-specific constraints
@@ -13,7 +12,7 @@ import { isDesktop } from '@lobechat/const';
 export const shouldEnableTool = (toolId: string): boolean => {
   // Filter LocalSystem tool in non-desktop environment
   if (toolId === LocalSystemManifest.identifier) {
-    return isDesktop;
+    return false;
   }
 
   return true;

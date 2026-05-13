@@ -1,5 +1,3 @@
-import { isDesktop } from '@lobechat/const';
-import { TITLE_BAR_HEIGHT } from '@lobechat/desktop-bridge';
 import { type LobeToolCustomPlugin } from '@lobechat/types';
 import { Button, Drawer, Flexbox } from '@lobehub/ui';
 import { App, Form, Popconfirm } from 'antd';
@@ -116,7 +114,7 @@ const DevModal = memo<DevModalProps>(
           destroyOnHidden
           containerMaxWidth={'auto'}
           footer={footer}
-          height={isDesktop ? `calc(100vh - ${TITLE_BAR_HEIGHT}px)` : '100vh'}
+          height={'100vh'}
           open={open}
           placement={'bottom'}
           push={false}

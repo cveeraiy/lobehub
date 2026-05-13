@@ -5,7 +5,6 @@ import { shallow } from 'zustand/shallow';
 
 import { DEFAULT_AVATAR } from '@/const/meta';
 import { INBOX_SESSION_ID } from '@/const/session';
-import { isDesktop } from '@/const/version';
 import { useChatStore } from '@/store/chat';
 import { operationSelectors } from '@/store/chat/selectors';
 import { useGlobalStore } from '@/store/global';
@@ -56,11 +55,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
   // Only hide the model tag for the inbox session itself (Lobe AI)
   const showModel = sessionType === 'agent' && model && id !== INBOX_SESSION_ID;
 
-  const handleDoubleClick = () => {
-    if (isDesktop) {
-      openAgentInNewWindow(id);
-    }
-  };
+  const handleDoubleClick = () => {};
 
   const handleDragStart = (e: React.DragEvent) => {
     // Set drag data to identify the session being dragged
@@ -68,10 +63,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
   };
 
   const handleDragEnd = (e: React.DragEvent) => {
-    // If drag ends without being dropped in a valid target, open in new window
-    if (isDesktop && e.dataTransfer.dropEffect === 'none') {
-      openAgentInNewWindow(id);
-    }
+    // no-op in web mode
   };
 
   const actions = useMemo(
@@ -125,7 +117,7 @@ const SessionItem = memo<SessionItemProps>(({ id }) => {
         avatar={sessionAvatar as any} // Fix: Bypass complex intersection type ReactNode & avatar type
         avatarBackground={avatarBackground}
         date={updateAt?.valueOf()}
-        draggable={isDesktop}
+        draggable={false}
         key={id}
         loading={loading}
         pin={pin}

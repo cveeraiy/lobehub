@@ -1,4 +1,3 @@
-import { isDesktop } from '@lobechat/const';
 import { type RuntimeEnvMode } from '@lobechat/types';
 import { Github } from '@lobehub/icons';
 import { Flexbox, Icon, Popover, Skeleton, Tooltip } from '@lobehub/ui';
@@ -128,7 +127,7 @@ const RuntimeConfig = memo(() => {
     async (mode: RuntimeEnvMode) => {
       if (mode === runtimeMode) return;
 
-      const platform = isDesktop ? 'desktop' : 'web';
+      const platform = 'web';
 
       await updateAgentChatConfig({
         runtimeEnv: { runtimeMode: { [platform]: mode } },
@@ -155,17 +154,6 @@ const RuntimeConfig = memo(() => {
     : tPlugin('localSystem.workingDirectory.notSet');
 
   const modes: { desc: string; icon: typeof LaptopIcon; label: string; mode: RuntimeEnvMode }[] = [
-    // Local mode is desktop-only
-    ...(isDesktop
-      ? [
-          {
-            desc: t('runtimeEnv.mode.localDesc'),
-            icon: LaptopIcon,
-            label: t('runtimeEnv.mode.local'),
-            mode: 'local' as RuntimeEnvMode,
-          },
-        ]
-      : []),
     {
       desc: t('runtimeEnv.mode.cloudDesc'),
       icon: CloudIcon,

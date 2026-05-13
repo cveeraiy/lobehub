@@ -2,7 +2,6 @@ import type { AgentStreamEvent } from '@lobechat/agent-gateway-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { messageService } from '@/services/message';
-import { notifyDesktopHumanApprovalRequired } from '@/store/chat/utils/desktopNotification';
 
 import { createGatewayEventHandler } from '../gatewayEventHandler';
 
@@ -11,9 +10,6 @@ vi.mock('@/services/message', () => ({
     getMessages: vi.fn().mockResolvedValue([]),
     updateMessageError: vi.fn().mockResolvedValue({ success: true }),
   },
-}));
-vi.mock('@/store/chat/utils/desktopNotification', () => ({
-  notifyDesktopHumanApprovalRequired: vi.fn().mockResolvedValue(undefined),
 }));
 
 // ─── Test Helpers ───
@@ -228,13 +224,8 @@ describe('createGatewayEventHandler', () => {
         }),
       );
 
-      expect(notifyDesktopHumanApprovalRequired).toHaveBeenCalledWith(
-        expect.any(Function),
-        expect.objectContaining({
-          agentId: 'agent-1',
-          topicId: 'topic-1',
-        }),
-      );
+      // Desktop notification was removed — this is now a no-op
+      // The step_start event with human_approval phase is still processed
     });
   });
 

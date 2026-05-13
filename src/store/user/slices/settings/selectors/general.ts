@@ -1,5 +1,3 @@
-import { isDesktop } from '@lobechat/const';
-
 import { DEFAULT_LANG } from '@/const/locale';
 import { type Locales, normalizeLocale } from '@/locales/resources';
 import { isOnServerSide } from '@/utils/env';
@@ -19,7 +17,7 @@ const animationMode = (s: UserStore) => generalConfig(s).animationMode;
 const contextMenuMode = (s: UserStore) => {
   const config = generalConfig(s).contextMenuMode;
   if (config !== undefined) return config;
-  return isDesktop ? 'default' : 'disabled';
+  return 'disabled';
 };
 const responseLanguage = (s: UserStore) => generalConfig(s).responseLanguage;
 const currentResponseLanguage = (s: UserStore): Locales => {

@@ -7,7 +7,6 @@ import { lazy, memo, type PropsWithChildren, Suspense, useLayoutEffect } from 'r
 
 import { LobeAnalyticsProviderWrapper } from '@/components/Analytics/LobeAnalyticsProviderWrapper';
 import { DragUploadProvider } from '@/components/DragUploadZone/DragUploadProvider';
-import { isDesktop } from '@/const/version';
 import AuthProvider from '@/layout/AuthProvider';
 import AppTheme from '@/layout/GlobalProvider/AppTheme';
 import DynamicFavicon from '@/layout/GlobalProvider/DynamicFavicon';
@@ -16,7 +15,6 @@ import { GroupWizardProvider } from '@/layout/GlobalProvider/GroupWizardProvider
 import ImportSettings from '@/layout/GlobalProvider/ImportSettings';
 import NextThemeProvider from '@/layout/GlobalProvider/NextThemeProvider';
 import QueryProvider from '@/layout/GlobalProvider/Query';
-import ServerVersionOutdatedAlert from '@/layout/GlobalProvider/ServerVersionOutdatedAlert';
 import StoreInitialization from '@/layout/GlobalProvider/StoreInitialization';
 import { ServerConfigStoreProvider } from '@/store/serverConfig/Provider';
 import type { SPAServerConfig } from '@/types/spaServerConfig';
@@ -56,7 +54,6 @@ const SPAGlobalProvider = memo<PropsWithChildren>(({ children }) => {
               <AuthProvider>
                 <StoreInitialization />
 
-                {isDesktop && <ServerVersionOutdatedAlert />}
                 <FaviconProvider>
                   <DynamicFavicon />
                   <GroupWizardProvider>

@@ -4,7 +4,6 @@ import { FolderClosedIcon, PlusIcon } from 'lucide-react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { isDesktop } from '@/const/version';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
 
@@ -31,7 +30,7 @@ const GroupItem = memo<GroupItemComponentProps>(({ group, activeTopicId, activeT
     useChatStore.getState().switchTopic(null, { skipRefreshMessage: true });
   }, [workingDirectory]);
 
-  const canAddTopic = isDesktop && !!workingDirectory;
+  const canAddTopic = false;
 
   return (
     <AccordionItem

@@ -2,7 +2,6 @@ import {
   EMPTY_DOCUMENT_MESSAGES,
   formatWebOnboardingStateMessage,
 } from '@lobechat/builtin-tool-web-onboarding/utils';
-import { isDesktop } from '@lobechat/const';
 import { applyMarkdownPatch, formatMarkdownPatchError } from '@lobechat/markdown-patch';
 import {
   type UserInitializationState,
@@ -97,11 +96,6 @@ export const userRouter = router({
       });
     } catch {
       // `after` may fail outside request scope (e.g., in tests), ignore silently
-    }
-
-    // For desktop mode, ensure user exists before getting state
-    if (isDesktop) {
-      await UserModel.makeSureUserExist(ctx.serverDB, ctx.userId);
     }
 
     // Run user state fetch and count queries in parallel

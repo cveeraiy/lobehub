@@ -72,12 +72,12 @@ app.route('/', oidcRoutes);
 
 // ============ Static Assets ============ //
 if (process.env.NODE_ENV !== 'development') {
-  // Serve Vite-built SPA assets (JS, CSS, images) from dist/desktop and dist/mobile
-  app.use('/assets/*', serveStatic({ root: './dist/desktop' }));
+  // Serve Vite-built SPA assets (JS, CSS, images) from dist/web and dist/mobile
+  app.use('/assets/*', serveStatic({ root: './dist/web' }));
   // Serve legacy /_spa/ assets if any remain
   app.use('/_spa/*', serveStatic({ root: './public' }));
-  // Serve other static files from dist/desktop (favicon, manifest, etc.)
-  app.use('/favicon.ico', serveStatic({ root: './dist/desktop', path: '/favicon.ico' }));
+  // Serve other static files from dist/web (favicon, manifest, etc.)
+  app.use('/favicon.ico', serveStatic({ root: './dist/web', path: '/favicon.ico' }));
 }
 
 // ============ API 404 — catch unmatched /api, /trpc, /webapi, /oidc, /market ============ //

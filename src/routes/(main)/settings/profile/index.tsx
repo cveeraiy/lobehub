@@ -1,6 +1,5 @@
 'use client';
 
-import { isDesktop } from '@lobechat/const';
 import { Flexbox, FormGroup, Skeleton } from '@lobehub/ui';
 import { Divider } from 'antd';
 import { useEffect } from 'react';
@@ -92,7 +91,7 @@ const ProfileSetting = () => {
 
           <InterestsRow />
 
-          {!isDesktop && isLogin && !disableEmailPassword && (
+          {isLogin && !disableEmailPassword && (
             <>
               <Divider style={{ margin: 0 }} />
               <PasswordRow />
@@ -106,7 +105,7 @@ const ProfileSetting = () => {
             </>
           )}
 
-          {isLogin && !isDesktop && (
+          {isLogin && (
             <>
               <Divider style={{ margin: 0 }} />
               <ProfileRow label={t('profile.sso.providers')}>

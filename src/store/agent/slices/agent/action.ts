@@ -1,4 +1,3 @@
-import { isDesktop } from '@lobechat/const';
 import { type AgentContextDocument } from '@lobechat/context-engine';
 import { isChatGroupSessionId } from '@lobechat/types';
 import { getSingletonAnalyticsOptional } from '@lobehub/analytics';
@@ -29,7 +28,6 @@ import type {
 import { merge } from '@/utils/merge';
 
 import type { AgentStore } from '../../store';
-import { setLocalAgentWorkingDirectory } from '../../utils/localAgentWorkingDirectoryStorage';
 import type { AgentSliceState, LoadingState, SaveStatus } from './initialState';
 
 const FETCH_AGENT_CONFIG_KEY = 'FETCH_AGENT_CONFIG';
@@ -224,10 +222,6 @@ export class AgentSliceActionImpl {
     config: Partial<RuntimeEnvConfig>,
   ): Promise<void> => {
     if (!agentId) return;
-
-    if (isDesktop && 'workingDirectory' in config) {
-      setLocalAgentWorkingDirectory(agentId, config.workingDirectory);
-    }
 
     const restConfig = { ...config };
     delete restConfig.workingDirectory;

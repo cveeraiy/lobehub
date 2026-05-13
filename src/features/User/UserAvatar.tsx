@@ -7,9 +7,6 @@ import { createStaticStyles, cssVar } from 'antd-style';
 import { useMemo } from 'react';
 
 import { DEFAULT_USER_AVATAR_URL } from '@/const/meta';
-import { isDesktop } from '@/const/version';
-import { useElectronStore } from '@/store/electron';
-import { electronSyncSelectors } from '@/store/electron/selectors';
 import { useUserStore } from '@/store/user';
 import { authSelectors, userProfileSelectors } from '@/store/user/selectors';
 
@@ -65,20 +62,12 @@ const UserAvatar = ({
   ]);
 
   const isSignedIn = useUserStore(authSelectors.isLogin);
-  const remoteServerUrl = useElectronStore(electronSyncSelectors.remoteServerUrl);
 
-  // Process avatar URL for desktop environment
   const avatarUrl = useMemo(() => {
     if (!isSignedIn) return DEFAULT_USER_AVATAR_URL;
     if (!avatar) return;
-
-    // If in desktop environment and avatar starts with /, prepend the remote server URL
-    if (isDesktop && avatar.startsWith('/') && remoteServerUrl) {
-      return remoteServerUrl + avatar;
-    }
-
     return avatar;
-  }, [isSignedIn, avatar, remoteServerUrl]);
+  }, [isSignedIn, avatar]);
 
   return (
     <Avatar

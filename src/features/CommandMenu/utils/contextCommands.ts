@@ -1,12 +1,10 @@
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
-import { isDesktop } from '@lobechat/const';
 import { type LucideIcon } from 'lucide-react';
 import {
   Brain,
   ChartColumnBigIcon,
   Coins,
   CreditCard,
-  EthernetPort,
   Gift,
   Image as ImageIcon,
   Info,
@@ -92,20 +90,6 @@ export const CONTEXT_COMMANDS: Record<ContextType, ContextCommand[]> = {
       path: '/settings/image',
       subPath: 'image',
     },
-    ...(isDesktop
-      ? [
-          {
-            icon: EthernetPort,
-            keywords: ['proxy', 'network', 'connection'],
-            keywordsKey: 'cmdk.keywords.proxy',
-            label: 'Proxy',
-            labelKey: 'tab.proxy',
-            labelNamespace: 'setting' as const,
-            path: '/settings/proxy',
-            subPath: 'proxy',
-          },
-        ]
-      : []),
     {
       icon: ChartColumnBigIcon,
       keywords: ['stats', 'statistics', 'analytics'],

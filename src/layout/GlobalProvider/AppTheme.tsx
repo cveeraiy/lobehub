@@ -2,10 +2,8 @@
 
 import 'antd/dist/reset.css';
 
-import { TITLE_BAR_HEIGHT } from '@lobechat/desktop-bridge';
 import { type NeutralColors, type PrimaryColors } from '@lobehub/ui';
 import { ConfigProvider, FontLoader, ThemeProvider } from '@lobehub/ui';
-import { message as antdMessage } from 'antd';
 import { AppConfigContext } from 'antd/es/app/context';
 import { createStaticStyles, cx, useTheme } from 'antd-style';
 import * as m from 'motion/react-m';
@@ -15,7 +13,6 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import AntdStaticMethods from '@/components/AntdStaticMethods';
 import Link from '@/components/Link';
 import { LOBE_THEME_NEUTRAL_COLOR, LOBE_THEME_PRIMARY_COLOR } from '@/const/theme';
-import { isDesktop } from '@/const/version';
 import { useIsDark } from '@/hooks/useIsDark';
 import { getUILocaleAndResources } from '@/libs/getUILocaleAndResources';
 import Image from '@/libs/next/Image';
@@ -109,11 +106,7 @@ const AppTheme = memo<AppThemeProps>(
       userGeneralSettingsSelectors.neutralColor(s),
       userGeneralSettingsSelectors.animationMode(s),
     ]);
-    const messageTop = isDesktop ? TITLE_BAR_HEIGHT + 8 : undefined;
-    const appConfig = useMemo(
-      () => (messageTop === undefined ? {} : { message: { top: messageTop } }),
-      [messageTop],
-    );
+    const appConfig = useMemo(() => ({}), []);
 
     const [uiResources, setUIResources] = useState<any>(null);
     const uiLocale = useMemo(() => {
@@ -141,11 +134,6 @@ const AppTheme = memo<AppThemeProps>(
     useEffect(() => {
       setCookie(LOBE_THEME_NEUTRAL_COLOR, neutralColor);
     }, [neutralColor]);
-
-    useEffect(() => {
-      if (messageTop === undefined) return;
-      antdMessage.config({ top: messageTop });
-    }, [messageTop]);
 
     const currentAppearence = isDark ? 'dark' : 'light';
 

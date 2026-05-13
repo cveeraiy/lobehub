@@ -2,11 +2,8 @@ import { Block } from '@lobehub/ui';
 import { memo } from 'react';
 
 import OllamaSetupGuide from '@/components/OllamaSetupGuide';
-import { isDesktop } from '@/const/version';
 
-import OllamaDesktopSetupGuide from './Desktop';
-
-const SetupGuide = memo<{ id?: string }>(({ id }) => {
+const SetupGuide = memo<{ id?: string }>(() => {
   return (
     <Block
       align={'center'}
@@ -19,7 +16,7 @@ const SetupGuide = memo<{ id?: string }>(({ id }) => {
         width: '100%',
       }}
     >
-      {isDesktop ? <OllamaDesktopSetupGuide id={id} /> : <OllamaSetupGuide />}
+      <OllamaSetupGuide />
     </Block>
   );
 });

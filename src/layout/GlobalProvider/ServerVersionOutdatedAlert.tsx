@@ -8,8 +8,6 @@ import { useTranslation } from 'react-i18next';
 
 import { MANUAL_UPGRADE_URL } from '@/const/url';
 import { CURRENT_VERSION } from '@/const/version';
-import { useElectronStore } from '@/store/electron';
-import { electronSyncSelectors } from '@/store/electron/selectors';
 import { useGlobalStore } from '@/store/global';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
@@ -87,7 +85,6 @@ const ServerVersionOutdatedAlert = () => {
   const { t } = useTranslation('common');
   const [dismissed, setDismissed] = useState(false);
   const isServerVersionOutdated = useGlobalStore((s) => s.isServerVersionOutdated);
-  const storageMode = useElectronStore(electronSyncSelectors.storageMode);
 
   const cssVariables = useMemo<Record<string, string>>(
     () => ({
@@ -97,8 +94,6 @@ const ServerVersionOutdatedAlert = () => {
     [theme.yellowBorder, theme.yellowBg],
   );
 
-  // Only show alert when using self-hosted server, not cloud
-  if (storageMode !== 'selfHost') return null;
   if (!isServerVersionOutdated || dismissed) return null;
 
   return (

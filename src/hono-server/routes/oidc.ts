@@ -7,7 +7,6 @@ import {
   POST as oidcPost,
   PUT as oidcPut,
 } from '@/handlers/oidc/[...oidc]/route';
-import { GET as desktopCallback } from '@/handlers/oidc/callback/desktop/route';
 import { POST as clearSession } from '@/handlers/oidc/clear-session/route';
 import { POST as consent } from '@/handlers/oidc/consent/route';
 import { GET as handoff } from '@/handlers/oidc/handoff/route';
@@ -30,7 +29,6 @@ oidc.patch('/oidc/*', (c) => oidcPatch(c.req.raw));
 
 const oidcSpecific = new Hono();
 
-oidcSpecific.get('/oidc/callback/desktop', (c) => desktopCallback(c.req.raw) as any);
 oidcSpecific.post('/oidc/clear-session', (c) => clearSession(c.req.raw) as any);
 oidcSpecific.post('/oidc/consent', (c) => consent(c.req.raw));
 oidcSpecific.get('/oidc/handoff', (c) => handoff(c.req.raw));

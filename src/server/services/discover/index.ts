@@ -3,7 +3,6 @@ import {
   DEFAULT_DISCOVER_ASSISTANT_ITEM,
   DEFAULT_DISCOVER_PLUGIN_ITEM,
   DEFAULT_DISCOVER_PROVIDER_ITEM,
-  isDesktop,
   KLAVIS_SERVER_TYPES,
 } from '@lobechat/const';
 import {
@@ -108,27 +107,16 @@ export class DiscoverService {
         return process.env.VERCEL_PROJECT_ID;
       }
 
-      // 2. Use machine-id for desktop
-      if (isDesktop) {
-        try {
-          // Dynamic import
-          const { machineId } = await import('node-machine-id');
-          return await machineId();
-        } catch (error) {
-          console.error('Failed to get machine-id:', error);
-        }
-      }
-
       return 'unknown-device';
     };
 
     const deviceId = await getDeviceId();
 
     const { client_id, client_secret } = await this.market.registerClient({
-      clientName: `LobeHub ${isDesktop ? 'Desktop' : 'Web'}`,
-      clientType: isDesktop ? 'desktop' : 'web',
+      clientName: 'LobeHub Web',
+      clientType: 'web',
       deviceId,
-      platform: isDesktop ? process.platform : userAgent,
+      platform: userAgent,
       version: CURRENT_VERSION,
     });
 

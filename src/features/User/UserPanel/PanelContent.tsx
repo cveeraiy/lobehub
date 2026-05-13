@@ -5,11 +5,8 @@ import { Link } from 'react-router-dom';
 
 import BusinessPanelContent from '@/business/client/features/User/BusinessPanelContent';
 import Menu from '@/components/Menu';
-import { isDesktop } from '@/const/version';
 import UserInfo from '@/features/User/UserInfo';
 import { useSession } from '@/libs/better-auth/auth-client';
-import { navigateToDesktopOnboarding } from '@/routes/(desktop)/desktop-onboarding/navigation';
-import { DesktopOnboardingScreen } from '@/routes/(desktop)/desktop-onboarding/types';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/selectors';
 
@@ -30,29 +27,14 @@ const PanelContent: FC<{ closePopover: () => void }> = ({ closePopover }) => {
     closePopover();
   };
 
-  const handleSignOut = async () => {
-    if (isDesktop) {
-      closePopover();
-
-      try {
-        const { remoteServerService } = await import('@/services/electron/remoteServer');
-        await remoteServerService.clearRemoteServerConfig();
-      } catch (error) {
-        console.error(error);
-      } finally {
-        signOut();
-        navigateToDesktopOnboarding(DesktopOnboardingScreen.Login);
-      }
-      return;
-    }
-
+  const handleSignOut = () => {
     signOut();
     closePopover();
   };
 
   return (
     <Flexbox gap={2} style={{ minWidth: 300 }}>
-      {isDesktop || isLoginWithAuth ? (
+      {isLoginWithAuth ? (
         <>
           <UserInfo avatarProps={{ clickable: false }} />
           {isAdmin && (

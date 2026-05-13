@@ -3,11 +3,9 @@ import { createTRPCClient, httpBatchLink, httpLink, splitLink } from '@trpc/clie
 import { createTRPCReact } from '@trpc/react-query';
 import { observable } from '@trpc/server/observable';
 import debug from 'debug';
-import { type ModelProvider } from 'model-bank';
 import superjson from 'superjson';
 
 import { withElectronProtocolIfElectron } from '@/const/protocol';
-import { isDesktop } from '@/const/version';
 import { type LambdaRouter } from '@/server/routers/lambda';
 
 const log = debug('lobe-image:lambda-client');
@@ -62,18 +60,16 @@ const errorHandlingLink: TRPCLink<LambdaRouter> = () => {
                     last401Time = now;
                     // Desktop app doesn't have the web auth routes like `/signin`,
                     // so skip the login redirect/notification there.
-                    if (!isDesktop) {
-                      const { getUserStoreState } = await import('@/store/user/store');
-                      const { isSignedIn, logout } = getUserStoreState();
-                      // If user is still marked as signed in but got 401,
-                      // session is invalid - clear client state first
-                      if (isSignedIn) {
-                        await logout();
-                      }
-                      const { loginRequired } =
-                        await import('@/components/Error/loginRequiredNotification');
-                      loginRequired.redirect();
+                    const { getUserStoreState } = await import('@/store/user/store');
+                    const { isSignedIn, logout } = getUserStoreState();
+                    // If user is still marked as signed in but got 401,
+                    // session is invalid - clear client state first
+                    if (isSignedIn) {
+                      await logout();
                     }
+                    const { loginRequired } =
+                      await import('@/components/Error/loginRequiredNotification');
+                    loginRequired.redirect();
                   }
                 }
                 // Mark error as non-retryable to prevent SWR infinite retry loop
@@ -104,32 +100,13 @@ const linkOptions = {
       credentials: 'include',
     };
 
-    if (isDesktop) {
-      const res = await fetch(input as string, fetchOptions);
-
-      if (res) return res;
-    }
-
     return await fetch(input, fetchOptions);
   },
   headers: async () => {
     // dynamic import to avoid circular dependency
     const { createHeaderWithAuth } = await import('@/services/_auth');
 
-    let provider: ModelProvider | undefined;
-    // for image page, we need to get the provider from the store
-    log('Getting provider from store for image page: %s', location.pathname);
-    if (location.pathname === '/image') {
-      const { getImageStoreState } = await import('@/store/image');
-      const { imageGenerationConfigSelectors } =
-        await import('@/store/image/slices/generationConfig/selectors');
-      provider = imageGenerationConfigSelectors.provider(getImageStoreState()) as ModelProvider;
-      log('Getting provider from store for image page: %s', provider);
-    }
-
-    // Only include provider in JWT for image operations
-    // For other operations (like knowledge base embedding), let server use its own config
-    const headers = await createHeaderWithAuth(provider ? { provider } : undefined);
+    const headers = await createHeaderWithAuth();
     log('Headers: %O', headers);
     return headers;
   },

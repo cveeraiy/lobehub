@@ -31,7 +31,7 @@ const MobileMainLayout: FC = () => {
   return (
     <>
       <Suspense fallback={null}>{showCloudPromotion && <CloudBanner mobile />}</Suspense>
-      <MarketAuthProvider isDesktop={false}>
+      <MarketAuthProvider>
         <Suspense fallback={<Loading debugId="MobileMainLayout > Outlet" />}>
           <Outlet />
           {showNav && <NavBar />}

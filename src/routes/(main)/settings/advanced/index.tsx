@@ -1,23 +1,19 @@
 'use client';
 
-import { isDesktop } from '@lobechat/const';
 import { type FormGroupItemType, type FormItemProps } from '@lobehub/ui';
 import { Form, Icon, Skeleton } from '@lobehub/ui';
-import { Select, Switch } from '@lobehub/ui/base-ui';
+import { Switch } from '@lobehub/ui/base-ui';
 import { createStaticStyles } from 'antd-style';
 import isEqual from 'fast-deep-equal';
 import { Loader2Icon } from 'lucide-react';
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { FORM_STYLE } from '@/const/layoutTokens';
 import SettingHeader from '@/routes/(main)/settings/features/SettingHeader';
-import { autoUpdateService } from '@/services/electron/autoUpdate';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
 import { labPreferSelectors, preferenceSelectors, settingsSelectors } from '@/store/user/selectors';
-
-type UpdateChannelValue = 'canary' | 'stable';
 
 const styles = createStaticStyles(({ css }) => ({
   labItem: css`
@@ -53,21 +49,6 @@ const Page = memo(() => {
     useServerConfigStore(featureFlagsSelectors);
   const hasGatewayUrl = useServerConfigStore((s) => !!s.serverConfig.agentGatewayUrl);
 
-  const [channel, setChannel] = useState<UpdateChannelValue>('stable');
-
-  useEffect(() => {
-    if (!isDesktop) return;
-    autoUpdateService
-      .getUpdateChannel()
-      .then(setChannel)
-      .catch(() => {});
-  }, []);
-
-  const handleChannelChange = useCallback((value: UpdateChannelValue) => {
-    setChannel(value);
-    autoUpdateService.setUpdateChannel(value);
-  }, []);
-
   if (!isUserStateInit) return <Skeleton active paragraph={{ rows: 5 }} title={false} />;
 
   const advancedGroup: FormGroupItemType = {
@@ -83,24 +64,6 @@ const Page = memo(() => {
     ],
     extra: loading && <Icon spin icon={Loader2Icon} size={16} style={{ opacity: 0.5 }} />,
     title: t('tab.advanced'),
-  };
-
-  const channelOptions = [
-    { label: t('tab.advanced.updateChannel.stable'), value: 'stable' as const },
-    { label: t('tab.advanced.updateChannel.canary'), value: 'canary' as const },
-  ];
-
-  const updateChannelGroup: FormGroupItemType = {
-    children: [
-      {
-        children: (
-          <Select options={channelOptions} value={channel} onChange={handleChannelChange} />
-        ),
-        desc: t('tab.advanced.updateChannel.desc'),
-        label: t('tab.advanced.updateChannel.title'),
-      },
-    ],
-    title: t('tab.advanced.updateChannel.title'),
   };
 
   const labItems: FormItemProps[] = [
@@ -165,9 +128,7 @@ const Page = memo(() => {
     title: tLabs('title'),
   };
 
-  const items = isDesktop
-    ? [advancedGroup, updateChannelGroup, labsGroup]
-    : [advancedGroup, labsGroup];
+  const items = [advancedGroup, labsGroup];
 
   return (
     <>

@@ -1,8 +1,10 @@
-import { AUTH_REQUIRED_HEADER, TRPC_ERROR_CODE_UNAUTHORIZED } from '@lobechat/desktop-bridge';
 import { TRPCError } from '@trpc/server';
 import { describe, expect, it } from 'vitest';
 
 import { createResponseMeta } from './responseMeta';
+
+const AUTH_REQUIRED_HEADER = 'X-Auth-Required';
+const TRPC_ERROR_CODE_UNAUTHORIZED = 'UNAUTHORIZED';
 
 describe('createResponseMeta', () => {
   it('should return undefined headers when no errors and no resHeaders', () => {

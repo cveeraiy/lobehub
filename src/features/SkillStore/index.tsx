@@ -3,7 +3,6 @@
 import { createModal, LOBE_THEME_APP_ID } from '@lobehub/ui';
 import { t } from 'i18next';
 
-import { isDesktop } from '@/const/version';
 import { MarketAuthProvider } from '@/layout/AuthProvider/MarketAuth';
 
 import { SkillStoreContent } from './SkillStoreContent';
@@ -12,7 +11,7 @@ export const createSkillStoreModal = () =>
   createModal({
     allowFullscreen: true,
     children: (
-      <MarketAuthProvider isDesktop={isDesktop}>
+      <MarketAuthProvider>
         <SkillStoreContent />
       </MarketAuthProvider>
     ),

@@ -1,5 +1,4 @@
-import { isDesktop } from '@lobechat/const';
-import { HETEROGENEOUS_AGENT_CLIENT_CONFIGS } from '@lobechat/heterogeneous-agents/client';
+import type { HETEROGENEOUS_AGENT_CLIENT_CONFIGS } from '@lobechat/heterogeneous-agents/client';
 import { Icon } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { App } from 'antd';
@@ -255,24 +254,10 @@ export const useCreateMenuItems = () => {
    * Create heterogeneous agent menu items (Desktop only)
    */
   const createHeterogeneousAgentMenuItems = useCallback(
-    (options?: CreateAgentOptions): ItemType[] => {
-      if (!isDesktop) return [];
-
-      return HETEROGENEOUS_AGENT_CLIENT_CONFIGS.map((definition) => {
-        const AgentIcon = definition.icon;
-
-        return {
-          icon: <AgentIcon size={'1em'} />,
-          key: definition.menuKey,
-          label: t(definition.menuLabelKey),
-          onClick: async (info) => {
-            info.domEvent?.stopPropagation();
-            await createHeterogeneousAgent(definition, options);
-          },
-        };
-      });
+    (_options?: CreateAgentOptions): ItemType[] => {
+      return [];
     },
-    [t, createHeterogeneousAgent],
+    [],
   );
 
   /**

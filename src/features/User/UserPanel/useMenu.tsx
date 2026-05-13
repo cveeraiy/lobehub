@@ -1,6 +1,6 @@
 import { LOBE_CHAT_CLOUD, UTM_SOURCE } from '@lobechat/business-const';
-import { DOWNLOAD_URL, isDesktop } from '@lobechat/const';
-import { Flexbox, Hotkey, Icon, Tag } from '@lobehub/ui';
+import { DOWNLOAD_URL } from '@lobechat/const';
+import { Flexbox, Icon, Tag } from '@lobehub/ui';
 import { type ItemType } from 'antd/es/menu/interface';
 import { BrainCircuit, Cloudy, Download, HardDriveDownload, LogOut, Settings2 } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
@@ -10,7 +10,6 @@ import { Link } from 'react-router-dom';
 
 import useBusinessMenuItems from '@/business/client/features/User/useBusinessMenuItems';
 import { type MenuProps } from '@/components/Menu';
-import { DEFAULT_DESKTOP_HOTKEY_CONFIG } from '@/const/desktop';
 import { OFFICIAL_URL } from '@/const/url';
 import DataImporter from '@/features/DataImporter';
 import { useNavLayout } from '@/hooks/useNavLayout';
@@ -68,11 +67,7 @@ export const useMenu = () => {
 
   const settings: MenuProps['items'] = [
     {
-      extra: isDesktop ? (
-        <div>
-          <Hotkey keys={DEFAULT_DESKTOP_HOTKEY_CONFIG.openSettings} />
-        </div>
-      ) : undefined,
+      extra: undefined,
       icon: <Icon icon={Settings2} />,
       key: 'setting',
       label: (
@@ -127,7 +122,7 @@ export const useMenu = () => {
 
     ...(isLogin ? settings : []),
     ...(isAdmin ? businessMenuItems : []),
-    ...(isAdmin && !isDesktop ? [{ type: 'divider' as const }, ...getDesktopApp] : []),
+    ...(isAdmin ? [{ type: 'divider' as const }, ...getDesktopApp] : []),
     ...(isAdmin && userPanel.showDataImporter && isLogin
       ? [
           {

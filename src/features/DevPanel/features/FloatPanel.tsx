@@ -7,9 +7,6 @@ import { XIcon } from 'lucide-react';
 import { memo, type ReactNode, useEffect, useState } from 'react';
 import { Rnd } from 'react-rnd';
 
-import { isDesktop } from '@/const/version';
-import { usePathname } from '@/libs/next/navigation';
-
 // Define styles
 const styles = createStaticStyles(({ css }) => {
   return {
@@ -84,7 +81,6 @@ const CollapsibleFloatPanel = memo<CollapsibleFloatPanelProps>(({ items }) => {
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const [size, setSize] = useState({ height: minHeight, width: minWidth });
 
-  const pathname = usePathname();
   useEffect(() => {
     try {
       const localStoragePosition = localStorage.getItem('debug-panel-position');
@@ -107,26 +103,6 @@ const CollapsibleFloatPanel = memo<CollapsibleFloatPanelProps>(({ items }) => {
 
   return (
     <>
-      {
-        // Hide under desktop devtools
-        pathname !== '/desktop/devtools' && isDesktop && (
-          <div
-            className={styles.debugButton}
-            onClick={async () => {
-              if (isDesktop) {
-                const { electronDevtoolsService } = await import('@/services/electron/devtools');
-
-                await electronDevtoolsService.openDevtools();
-
-                return;
-              }
-              setIsExpanded(!isExpanded);
-            }}
-          >
-            DEV
-          </div>
-        )
-      }
       {isExpanded && (
         <Rnd
           bounds="window"

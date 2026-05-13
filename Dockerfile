@@ -85,7 +85,7 @@ COPY --from=base /distroless/ /
 # Copy Hono server bundle
 COPY --from=builder /app/dist/hono-server/server.mjs /app/server.mjs
 # Copy SPA assets (Vite build output)
-COPY --from=builder /app/dist/desktop /app/dist/desktop
+COPY --from=builder /app/dist/web /app/dist/web
 COPY --from=builder /app/dist/mobile /app/dist/mobile
 # Copy database migrations
 COPY --from=builder /app/packages/database/migrations /app/migrations

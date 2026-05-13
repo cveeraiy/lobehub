@@ -1,11 +1,19 @@
 'use client';
 
-import type { GitFileDiffStatus } from '@lobechat/electron-client-ipc';
 import { PatchDiff } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
 import path from 'path-browserify-esm';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+
+type GitFileDiffStatus =
+  | 'added'
+  | 'copied'
+  | 'deleted'
+  | 'modified'
+  | 'renamed'
+  | 'unmerged'
+  | 'untracked';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   additions: css`

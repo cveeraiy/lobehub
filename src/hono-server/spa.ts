@@ -28,7 +28,7 @@ let cachedAnalyticsConfig: AnalyticsConfig | undefined;
 let cachedClientEnv: SPAClientEnv | undefined;
 let cachedFeatureFlags: Partial<IFeatureFlags> | undefined;
 let cachedServerConfig: Awaited<ReturnType<typeof getServerGlobalConfig>> | undefined;
-let cachedDesktopTemplate: string | undefined;
+let cachedWebTemplate: string | undefined;
 let cachedMobileTemplate: string | undefined;
 const seoMetaCache = new Map<string, string>();
 
@@ -97,12 +97,12 @@ async function getTemplate(isMobile: boolean): Promise<string> {
 
   // In production, return cached templates (read once at startup)
   if (isMobile && cachedMobileTemplate) return cachedMobileTemplate;
-  if (!isMobile && cachedDesktopTemplate) return cachedDesktopTemplate;
+  if (!isMobile && cachedWebTemplate) return cachedWebTemplate;
 
   const { readFileSync, existsSync } = await import('node:fs');
   const { resolve } = await import('node:path');
 
-  cachedDesktopTemplate = readFileSync(resolve('dist/desktop/index.html'), 'utf8');
+  cachedWebTemplate = readFileSync(resolve('dist/web/index.html'), 'utf8');
 
   const mobileHtmlPath = resolve('dist/mobile/index.mobile.html');
   const mobileHtmlFallback = resolve('dist/mobile/index.html');
@@ -111,7 +111,7 @@ async function getTemplate(isMobile: boolean): Promise<string> {
     'utf8',
   );
 
-  return isMobile ? cachedMobileTemplate : cachedDesktopTemplate;
+  return isMobile ? cachedMobileTemplate! : cachedWebTemplate!;
 }
 
 function buildAnalyticsConfig(): AnalyticsConfig {

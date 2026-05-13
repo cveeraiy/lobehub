@@ -2,28 +2,13 @@ import type { ChatTopicStatus } from '@lobechat/types';
 import { type MenuProps } from '@lobehub/ui';
 import { Icon } from '@lobehub/ui';
 import { App } from 'antd';
-import {
-  CheckCircle2,
-  Circle,
-  ExternalLink,
-  Link2,
-  LucideCopy,
-  PanelTop,
-  PencilLine,
-  Trash,
-  Wand2,
-} from 'lucide-react';
+import { CheckCircle2, Circle, Link2, LucideCopy, PencilLine, Trash, Wand2 } from 'lucide-react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
-import { isDesktop } from '@/const/version';
-import { pluginRegistry } from '@/features/Electron/titlebar/RecentlyViewed/plugins';
 import { useAppOrigin } from '@/hooks/useAppOrigin';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { useChatStore } from '@/store/chat';
-import { useElectronStore } from '@/store/electron';
-import { useGlobalStore } from '@/store/global';
 
 interface TopicItemDropdownMenuProps {
   id?: string;
@@ -38,11 +23,8 @@ export const useTopicItemDropdownMenu = ({
 }: TopicItemDropdownMenuProps): (() => MenuProps['items']) => {
   const { t } = useTranslation(['topic', 'common']);
   const { modal, message } = App.useApp();
-  const navigate = useNavigate();
 
-  const openGroupTopicInNewWindow = useGlobalStore((s) => s.openGroupTopicInNewWindow);
   const activeGroupId = useAgentGroupStore((s) => s.activeGroupId);
-  const addTab = useElectronStore((s) => s.addTab);
   const appOrigin = useAppOrigin();
 
   const [
@@ -99,35 +81,6 @@ export const useTopicItemDropdownMenu = ({
       {
         type: 'divider' as const,
       },
-      ...(isDesktop
-        ? [
-            {
-              icon: <Icon icon={PanelTop} />,
-              key: 'openInNewTab',
-              label: t('actions.openInNewTab'),
-              onClick: () => {
-                if (!activeGroupId) return;
-                const url = `/group/${activeGroupId}?topic=${id}`;
-                const reference = pluginRegistry.parseUrl(`/group/${activeGroupId}`, `topic=${id}`);
-                if (reference) {
-                  addTab(reference);
-                  navigate(url);
-                }
-              },
-            },
-            {
-              icon: <Icon icon={ExternalLink} />,
-              key: 'openInNewWindow',
-              label: t('actions.openInNewWindow'),
-              onClick: () => {
-                if (activeGroupId) openGroupTopicInNewWindow(activeGroupId, id);
-              },
-            },
-            {
-              type: 'divider' as const,
-            },
-          ]
-        : []),
       {
         icon: <Icon icon={Link2} />,
         key: 'copyLink',
@@ -177,9 +130,6 @@ export const useTopicItemDropdownMenu = ({
     markTopicCompleted,
     unmarkTopicCompleted,
     removeTopic,
-    openGroupTopicInNewWindow,
-    addTab,
-    navigate,
     toggleEditing,
     t,
     modal,

@@ -1,5 +1,7 @@
-import { AUTH_REQUIRED_HEADER, TRPC_ERROR_CODE_UNAUTHORIZED } from '@lobechat/desktop-bridge';
 import { type TRPCError } from '@trpc/server';
+
+const AUTH_REQUIRED_HEADER = 'X-Auth-Required';
+const TRPC_ERROR_CODE_UNAUTHORIZED = 'UNAUTHORIZED';
 
 interface ResponseMetaParams {
   ctx?: unknown;

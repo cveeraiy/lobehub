@@ -1,4 +1,3 @@
-import { isDesktop } from '@/const/version';
 import { MARKET_OIDC_ENDPOINTS } from '@/services/_url';
 
 import { MarketAuthError } from './errors';
@@ -197,46 +196,18 @@ export class MarketOIDC {
       });
     }
 
-    // Open authorization page in a new window
-    let popup: Window | null = null;
-    if (isDesktop) {
-      // Electron desktop: use IPC to call the main process to open the system browser
-      console.info('[MarketOIDC] Desktop app detected, opening system browser via IPC');
-      const { remoteServerService } = await import('@/services/electron/remoteServer');
+    // Open authorization page in a popup
+    const popup = window.open(
+      authUrl,
+      'market_auth',
+      'width=580,height=720,scrollbars=yes,resizable=yes',
+    );
 
-      try {
-        const result = await remoteServerService.requestMarketAuthorization({ authUrl });
-        if (!result.success) {
-          console.error('[MarketOIDC] Failed to open system browser:', result.error);
-          throw new MarketAuthError('openBrowserFailed', {
-            message: result.error || 'Failed to open system browser',
-            meta: { error: result.error },
-          });
-        }
-        console.info('[MarketOIDC] System browser opened successfully');
-      } catch (error) {
-        console.error('[MarketOIDC] Exception opening system browser:', error);
-        throw new MarketAuthError('openBrowserFailed', {
-          cause: error,
-          message: 'Failed to open system browser. Please try again.',
-        });
-      }
-
-      return this.pollDesktopHandoff(state);
-    } else {
-      // Browser environment: use window.open to open a popup
-      popup = window.open(
-        authUrl,
-        'market_auth',
-        'width=580,height=720,scrollbars=yes,resizable=yes',
-      );
-
-      if (!popup) {
-        console.error('[MarketOIDC] Failed to open authorization popup');
-        throw new MarketAuthError('openPopupFailed', {
-          message: 'Failed to open authorization popup. Please check popup blocker settings.',
-        });
-      }
+    if (!popup) {
+      console.error('[MarketOIDC] Failed to open authorization popup');
+      throw new MarketAuthError('openPopupFailed', {
+        message: 'Failed to open authorization popup. Please check popup blocker settings.',
+      });
     }
 
     clearMarketAuthResult(state);

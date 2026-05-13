@@ -1,12 +1,8 @@
-import { Button, Flexbox, Popover } from '@lobehub/ui';
-import { Space } from 'antd';
+import { Flexbox } from '@lobehub/ui';
 import { createStaticStyles, cssVar } from 'antd-style';
-import { ExternalLink, FolderOpen } from 'lucide-react';
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 
 import FileIcon from '@/components/FileIcon';
-import { localFileService } from '@/services/electron/localFileService';
 
 const styles = createStaticStyles(({ css }) => ({
   container: css`
@@ -38,78 +34,22 @@ interface LocalFileProps {
   isDirectory?: boolean;
   name: string;
   path?: string;
-  /**
-   * When true, disable interactive actions (Open / Show in Folder).
-   * Used in share pages where local file operations are not available.
-   */
   readonly?: boolean;
 }
 
-export const LocalFile = ({ name, path, isDirectory = false, readonly = false }: LocalFileProps) => {
-  const { t } = useTranslation('components');
-
-  const handleOpenFile = () => {
-    if (!path) return;
-    localFileService.openLocalFileOrFolder(path, isDirectory);
-  };
-
-  const handleOpenFolder = () => {
-    if (!path) return;
-    localFileService.openFileFolder(path);
-  };
-
-  const fileContent = (
+export const LocalFile = ({ name, isDirectory = false }: LocalFileProps) => {
+  return (
     <Flexbox
       horizontal
       align={'center'}
       className={styles.container}
       gap={4}
       style={{ display: 'inline-flex', verticalAlign: 'middle' }}
-      onClick={isDirectory ? handleOpenFile : undefined}
     >
       <FileIcon fileName={name} isDirectory={isDirectory} size={22} variant={'raw'} />
       <Flexbox horizontal align={'baseline'} gap={4} style={{ overflow: 'hidden', width: '100%' }}>
         <div className={styles.title}>{name}</div>
       </Flexbox>
     </Flexbox>
-  );
-
-  // Directory or readonly mode (e.g. share page): no popover, just display
-  if (isDirectory || readonly) {
-    return fileContent;
-  }
-
-  // File: show popover with two actions
-  const popoverContent = (
-    <Space.Compact>
-      <Button
-        icon={ExternalLink}
-        size="small"
-        title={t('LocalFile.action.open')}
-        onClick={handleOpenFile}
-      >
-        {t('LocalFile.action.open')}
-      </Button>
-      <Button
-        icon={FolderOpen}
-        size="small"
-        title={t('LocalFile.action.showInFolder')}
-        onClick={handleOpenFolder}
-      >
-        {t('LocalFile.action.showInFolder')}
-      </Button>
-    </Space.Compact>
-  );
-
-  return (
-    <Popover
-      content={popoverContent}
-      trigger="hover"
-      styles={{
-        content: { padding: 0 },
-      }}
-    >
-      {fileContent}
-    </Popover>
   );
 };

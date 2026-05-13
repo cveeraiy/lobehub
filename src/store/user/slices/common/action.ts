@@ -1,4 +1,3 @@
-import { isDesktop } from '@lobechat/const';
 import type { UserGeneralConfig } from '@lobechat/types';
 import { getSingletonAnalyticsOptional } from '@lobehub/analytics';
 import { type SWRResponse } from 'swr';
@@ -93,7 +92,7 @@ export class CommonActionImpl {
     },
   ): SWRResponse => {
     return useOnlyFetchOnceSWR<UserInitializationState>(
-      !!isLogin || isDesktop ? GET_USER_STATE_KEY : null,
+      !!isLogin ? GET_USER_STATE_KEY : null,
       () => userService.getUserState(),
       {
         onError: (error) => {
