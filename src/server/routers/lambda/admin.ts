@@ -24,7 +24,7 @@ const adminAuth = trpc.middleware(async ({ ctx, next }) => {
     .where(eq(users.id, userId))
     .then((r: any[]) => r[0]);
 
-  if (row?.role !== 'admin') {
+  if (row?.role !== 'admin' && row?.role !== 'super_admin') {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
   }
   return next();

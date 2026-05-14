@@ -3,7 +3,6 @@
 import { Flexbox } from '@lobehub/ui';
 import { memo } from 'react';
 
-import { RecommendTaskTemplates } from '@/business/client/RecommendTaskTemplates';
 import DailyBrief from '@/features/DailyBrief';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
@@ -30,7 +29,6 @@ const Home = memo(() => {
       {isLogin && enableAgentTask && (
         <Flexbox gap={40}>
           <DailyBrief />
-          <RecommendTaskTemplates />
         </Flexbox>
       )}
     </Flexbox>

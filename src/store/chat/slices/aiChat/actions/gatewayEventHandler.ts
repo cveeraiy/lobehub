@@ -209,16 +209,6 @@ export const createGatewayEventHandler = (
       }
 
       case 'step_start': {
-        const data = event.data as {
-          pendingToolsCalling?: unknown[];
-          phase?: string;
-          requiresApproval?: boolean;
-        };
-
-        if (data?.phase === 'human_approval' && data.requiresApproval && data.pendingToolsCalling) {
-          // Desktop notification removed — web-only now
-        }
-
         break;
       }
 

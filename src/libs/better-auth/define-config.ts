@@ -215,6 +215,56 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
           },
         },
       },
+      session: {
+        create: {
+          after: async (session) => {
+            // Sync role and organization from Keycloak on every login.
+            // Reads the idToken from the linked Keycloak account, decodes the
+            // JWT payload, and updates:
+            //   - users.role from realm_access.roles (super_admin > admin > user > viewer)
+            //   - users.organization from groups[0]
+            try {
+              const { account: accountTable, users: usersTable } = schema;
+              const { eq, and, desc } = await import('drizzle-orm');
+
+              const linkedAccount = await serverDB
+                .select({ idToken: accountTable.idToken, providerId: accountTable.providerId })
+                .from(accountTable)
+                .where(
+                  and(
+                    eq(accountTable.userId, session.userId),
+                    eq(accountTable.providerId, 'keycloak'),
+                  ),
+                )
+                .orderBy(desc(accountTable.createdAt))
+                .then((rows: any[]) => rows[0]);
+
+              if (!linkedAccount?.idToken) return;
+
+              // Decode the JWT payload (base64url) without crypto verification
+              const payload = JSON.parse(
+                Buffer.from(linkedAccount.idToken.split('.')[1], 'base64url').toString(),
+              );
+
+              // Resolve role: pick the highest-privilege role present
+              const roles: string[] = payload?.realm_access?.roles ?? [];
+              const rolePriority = ['super_admin', 'admin', 'user', 'viewer'] as const;
+              const newRole = rolePriority.find((r) => roles.includes(r)) ?? 'user';
+
+              // Resolve organization from group membership (first group)
+              const groups: string[] = payload?.groups ?? [];
+              const organization = groups[0] ?? null;
+
+              await serverDB
+                .update(usersTable)
+                .set({ role: newRole, organization })
+                .where(eq(usersTable.id, session.userId));
+            } catch {
+              // Non-fatal: role sync failure should not block login
+            }
+          },
+        },
+      },
     },
     user: {
       changeEmail: {

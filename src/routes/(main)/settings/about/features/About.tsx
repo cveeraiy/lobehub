@@ -8,12 +8,11 @@ import { createStaticStyles } from 'antd-style';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { BLOG, mailTo,OFFICIAL_SITE, PRIVACY_URL, TERMS_URL } from '@/const/url';
+import { BLOG, mailTo, OFFICIAL_SITE, PRIVACY_URL, TERMS_URL } from '@/const/url';
 
 import AboutList from './AboutList';
 import ItemCard from './ItemCard';
 import ItemLink from './ItemLink';
-import Version from './Version';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   title: css`
@@ -23,7 +22,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   `,
 }));
 
-const About = memo<{ mobile?: boolean }>(({ mobile }) => {
+const About = memo<{ mobile?: boolean }>(() => {
   const { t } = useTranslation('common');
 
   return (
@@ -35,9 +34,6 @@ const About = memo<{ mobile?: boolean }>(({ mobile }) => {
       variant={'filled'}
     >
       <Flexbox gap={20} paddingBlock={20} width={'100%'}>
-        <div className={styles.title}>{t('version')}</div>
-        <Version mobile={mobile} />
-        <Divider style={{ marginBlock: 0 }} />
         <div className={styles.title}>{t('contact')}</div>
         <AboutList
           ItemRender={ItemLink}

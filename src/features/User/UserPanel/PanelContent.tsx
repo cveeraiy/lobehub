@@ -20,7 +20,7 @@ const PanelContent: FC<{ closePopover: () => void }> = ({ closePopover }) => {
   const [openSignIn, signOut] = useUserStore((s) => [s.openLogin, s.logout]);
   const { mainItems, logoutItems } = useMenu();
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'super_admin';
 
   const handleSignIn = () => {
     openSignIn();

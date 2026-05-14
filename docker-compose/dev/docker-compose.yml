@@ -5,9 +5,9 @@ services:
     container_name: lobe-network
     restart: always
     ports:
-      - "${RUSTFS_PORT}:9000" # RustFS API
-      - "9001:9001" # RustFS Console
-      - "${LOBE_PORT}:3210" # LobeChat
+      - '${RUSTFS_PORT}:9000' # RustFS API
+      - '9001:9001' # RustFS Console
+      - '${LOBE_PORT}:3210' # LobeChat
     command: tail -f /dev/null
     networks:
       - lobe-network
@@ -18,14 +18,14 @@ services:
     image: paradedb/paradedb:latest-pg17
     container_name: lobe-postgres
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
-      - "pgdata:/var/lib/postgresql/data"
+      - 'pgdata:/var/lib/postgresql/data'
     environment:
-      - "POSTGRES_DB=${LOBE_DB_NAME}"
-      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+      - 'POSTGRES_DB=${LOBE_DB_NAME}'
+      - 'POSTGRES_PASSWORD=${POSTGRES_PASSWORD}'
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,12 +39,12 @@ services:
     image: redis:7-alpine
     container_name: lobe-redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
     command: redis-server --save 60 1000 --appendonly yes
     volumes:
-      - "redis_data:/data"
+      - 'redis_data:/data'
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -55,7 +55,7 @@ services:
   rustfs:
     image: rustfs/rustfs:latest
     container_name: lobe-rustfs
-    network_mode: "service:network-service"
+    network_mode: 'service:network-service'
     environment:
       - RUSTFS_CONSOLE_ENABLE=true
       - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
@@ -65,19 +65,19 @@ services:
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "wget -qO- http://localhost:9000/health >/dev/null 2>&1 || exit 1",
+          'CMD-SHELL',
+          'wget -qO- http://localhost:9000/health >/dev/null 2>&1 || exit 1',
         ]
       interval: 5s
       timeout: 3s
       retries: 30
     command:
       [
-        "--access-key",
-        "${RUSTFS_ACCESS_KEY}",
-        "--secret-key",
-        "${RUSTFS_SECRET_KEY}",
-        "/data",
+        '--access-key',
+        '${RUSTFS_ACCESS_KEY}',
+        '--secret-key',
+        '${RUSTFS_SECRET_KEY}',
+        '/data',
       ]
     env_file:
       - .env
@@ -97,21 +97,36 @@ services:
       "${RUSTFS_SECRET_KEY}"; mc ls rustfs || true; mc mb "rustfs/lobe"
       --ignore-existing; mc admin info rustfs || true; mc anonymous set-json
       "/bucket.config.json" "rustfs/lobe"; '
-    restart: "no"
+    restart: 'no'
     networks:
       - lobe-network
     env_file:
       - .env
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: lobe-keycloak
+    ports:
+      - '8080:8080'
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=cisco
+    command: start-dev
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    restart: always
+    networks:
+      - lobe-network
+
   searxng:
     image: searxng/searxng
     container_name: lobe-searxng
     ports:
-      - "8180:8080"
+      - '8180:8080'
     volumes:
-      - "./searxng-settings.yml:/etc/searxng/settings.yml"
+      - './searxng-settings.yml:/etc/searxng/settings.yml'
     environment:
-      - "SEARXNG_SETTINGS_FILE=/etc/searxng/settings.yml"
+      - 'SEARXNG_SETTINGS_FILE=/etc/searxng/settings.yml'
     restart: always
     networks:
       - lobe-network
@@ -122,6 +137,8 @@ volumes:
   redis_data:
     driver: local
   rustfs-data:
+    driver: local
+  keycloak-data:
     driver: local
 
 networks:

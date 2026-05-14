@@ -196,4 +196,21 @@ api.get('/webapi/user/avatar/:id/:image', async (c) => {
 // ============ Dev: Benchmark LoCoMo ============ //
 api.post('/api/dev/memory-user-memory/benchmark-locomo', (c) => benchmarkLocomo(c.req.raw));
 
+// ============ Server Config (consumed by Vite dev transformIndexHtml plugin) ============ //
+// Exposes the SPAServerConfig as JSON so the Vite dev server can inject it into index.html.
+api.get('/api/__server_config__', async (c) => {
+  const { getServerGlobalConfig } = await import('@/server/globalConfig');
+  const { getServerFeatureFlagsValue } = await import('@/config/featureFlags');
+  const config = await getServerGlobalConfig();
+  const featureFlags = getServerFeatureFlagsValue();
+
+  return c.json({
+    analyticsConfig: {},
+    clientEnv: {},
+    config,
+    featureFlags,
+    isMobile: false,
+  });
+});
+
 export default api;

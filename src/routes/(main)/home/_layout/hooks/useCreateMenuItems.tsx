@@ -1,4 +1,3 @@
-import type { HETEROGENEOUS_AGENT_CLIENT_CONFIGS } from '@lobechat/heterogeneous-agents/client';
 import { Icon } from '@lobehub/ui';
 import { GroupBotSquareIcon } from '@lobehub/ui/icons';
 import { App } from 'antd';
@@ -193,38 +192,6 @@ export const useCreateMenuItems = () => {
     [mutateGroup],
   );
 
-  /**
-   * Create a heterogeneous agent with CLI provider pre-configured.
-   *
-   * Bypasses `mutateAgent` so we skip its default /profile redirect —
-   * external CLI agents land straight on the chat page since their config is fixed.
-   */
-  const createHeterogeneousAgent = useCallback(
-    async (
-      definition: (typeof HETEROGENEOUS_AGENT_CLIENT_CONFIGS)[number],
-      options?: CreateAgentOptions,
-    ) => {
-      const result = await storeCreateAgent({
-        config: {
-          agencyConfig: {
-            heterogeneousProvider: {
-              command: definition.command,
-              type: definition.type,
-            },
-          },
-          avatar: definition.avatar,
-          systemRole: '',
-          title: definition.title,
-        },
-        groupId: options?.groupId,
-      });
-      await refreshAgentList();
-      navigate(`/agent/${result.agentId}`);
-      options?.onSuccess?.();
-    },
-    [storeCreateAgent, refreshAgentList, navigate],
-  );
-
   const agentModal = useOptionalAgentModal();
   const openCreateModal = agentModal?.openCreateModal;
 
@@ -248,16 +215,6 @@ export const useCreateMenuItems = () => {
       },
     }),
     [t, createAgent, openCreateModal],
-  );
-
-  /**
-   * Create heterogeneous agent menu items (Desktop only)
-   */
-  const createHeterogeneousAgentMenuItems = useCallback(
-    (_options?: CreateAgentOptions): ItemType[] => {
-      return [];
-    },
-    [],
   );
 
   /**
@@ -354,8 +311,6 @@ export const useCreateMenuItems = () => {
     createEmptyGroup,
     createGroupChatMenuItem,
     createGroupFromTemplate,
-    createHeterogeneousAgent,
-    createHeterogeneousAgentMenuItems,
     createGroupWithMembers,
     createPage,
     createPageMenuItem,

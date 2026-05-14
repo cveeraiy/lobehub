@@ -39,7 +39,7 @@ export const useNavLayout = (): NavLayout => {
   const { hideGitHub, enableAgentTask, enableResources, showAdminPanel } =
     useServerConfigStore(featureFlagsSelectors);
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'super_admin';
 
   const topNavItems = useMemo(
     () =>

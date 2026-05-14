@@ -145,7 +145,7 @@ const AdminPanel = memo(() => {
 
   const stats = useMemo(
     () => ({
-      admins: users.filter((u) => u.role === 'admin').length,
+      admins: users.filter((u) => u.role === 'admin' || u.role === 'super_admin').length,
       banned: users.filter((u) => u.banned).length,
       total: users.length,
     }),

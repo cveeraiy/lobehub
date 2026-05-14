@@ -41,6 +41,8 @@ export const users = pgTable(
 
     // better-auth admin
     role: text('role'),
+    // Organization synced from Keycloak group membership
+    organization: text('organization'),
     banned: boolean('banned').default(false),
     banReason: text('ban_reason'),
     banExpires: timestamptz('ban_expires'),

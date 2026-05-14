@@ -68,7 +68,7 @@ export const useCategory = () => {
   const hasAgentPermission = useUserStore(settingsSelectors.hasAgentSettingsPermission);
   const hasSystemPermission = useUserStore(settingsSelectors.hasSystemSettingsPermission);
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'super_admin';
 
   const avatarUrl = avatar || undefined;
   const enableBusinessFeatures = useServerConfigStore(serverConfigSelectors.enableBusinessFeatures);
