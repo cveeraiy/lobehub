@@ -54,7 +54,7 @@ export const VARIABLE_GENERATORS = {
    * |-------|---------|
    * | `{{email}}` | demo@lobehub.com |
    * | `{{nickname}}` | Community User |
-   * | `{{username}}` | LobeChat |
+   * | `{{username}}` | Ethos |
    *
    */
   email: () => userProfileSelectors.email(useUserStore.getState()) ?? '',
@@ -138,7 +138,7 @@ export const VARIABLE_GENERATORS = {
    * | `{{musicPath}}` | /Users/username/Music |
    * | `{{picturesPath}}` | /Users/username/Pictures |
    * | `{{videosPath}}` | /Users/username/Videos |
-   * | `{{userDataPath}}` | /Users/username/Library/Application Support/LobeChat |
+   * | `{{userDataPath}}` | /Users/username/Library/Application Support/Ethos |
    * | `{{workingDirectory}}` | /Users/username/Projects/my-project |
    *
    */

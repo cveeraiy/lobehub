@@ -10,7 +10,7 @@ import type { CreateImagePayload, CreateImageResponse } from '../../types/image'
 import { AgentRuntimeError } from '../../utils/createError';
 
 // Create debug logger
-const log = debug('lobe-image:fal');
+const log = debug('ethos-image:fal');
 
 type FluxDevOutput = Awaited<ReturnType<typeof fal.subscribe<'fal-ai/flux/dev'>>>['data'];
 

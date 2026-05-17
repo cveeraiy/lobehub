@@ -10,7 +10,7 @@ import { validateApiKeyFormat } from '@/utils/apiKey';
 import { extractBearerToken } from '@/utils/server/auth';
 
 // Create context logger namespace
-const log = debug('lobe-hono:auth-middleware');
+const log = debug('ethos-hono:auth-middleware');
 
 // API Key cache configuration
 const API_KEY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds

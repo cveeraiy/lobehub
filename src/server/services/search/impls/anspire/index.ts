@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type AnspireResponse, type AnspireSearchParameters } from './type';
 
-const log = debug('lobe-search:Anspire');
+const log = debug('ethos-search:Anspire');
 
 /**
  * Anspire implementation of the search service

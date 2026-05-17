@@ -31,7 +31,7 @@ import { sanitizeFileName } from '@/utils/sanitizeFileName';
 
 import { getContentPolicyErrorMessage } from './contentPolicyError';
 
-const log = debug('lobe-image:async');
+const log = debug('ethos-image:async');
 
 const IMAGE_URL_PREVIEW_LENGTH = 100;
 

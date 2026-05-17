@@ -5,7 +5,7 @@ description: Python FastAPI backend development guide. Use when adding/modifying
 
 # Python Backend Development Skill
 
-The Python FastAPI backend (`python-backend/`) serves as the REST API layer for the LobeHub SPA. It replaces the TypeScript TRPC backend for all data operations.
+The Python FastAPI backend (`python-backend/`) serves as the REST API layer for the Ethos SPA. It replaces the TypeScript TRPC backend for all data operations.
 
 ## Project Structure
 

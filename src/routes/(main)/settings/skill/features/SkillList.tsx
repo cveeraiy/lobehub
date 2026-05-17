@@ -109,7 +109,7 @@ const SkillList = memo(() => {
   };
 
   // Separate skills into three categories:
-  // 1. Integrations (Builtin, LobeHub and Klavis skills)
+  // 1. Integrations (Builtin, Ethos and Klavis skills)
   // 2. Community MCP Tools (type === 'plugin')
   // 3. Custom MCP Tools (type === 'customPlugin')
   const { integrations, communityMCPs, customMCPs } = useMemo(() => {

@@ -4,7 +4,7 @@ import { buildOidcConfig } from '../helpers';
 import { type GenericProviderDefinition } from '../types';
 
 /**
- * Extract LobeHub role from Keycloak realm roles.
+ * Extract Ethos role from Keycloak realm roles.
  * Keycloak includes `realm_access.roles` in the OIDC profile when
  * the client has a realm-role mapper configured.
  */

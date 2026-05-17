@@ -4,7 +4,7 @@ import debug from 'debug';
 import { type AgentOperationMetadata, type StepResult } from './AgentStateManager';
 import { type IAgentStateManager } from './types';
 
-const log = debug('lobe-server:agent-runtime:in-memory-state-manager');
+const log = debug('ethos-server:agent-runtime:in-memory-state-manager');
 
 /**
  * In-Memory Agent State Manager

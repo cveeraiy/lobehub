@@ -2,10 +2,10 @@
 
 [![][image-banner]][vercel-link]
 
-# LobeHub
+# Ethos
 
-LobeHub 是一个工作与生活空间，用于发现、构建并与会随着您一起成长的 Agent 队友协作。<br/>
-在 LobeHub 中，我们将 **Agent 视为工作单元**，提供一个让人类与 Agent 共同进化的基础设施。
+Ethos 是一个工作与生活空间，用于发现、构建并与会随着您一起成长的 Agent 队友协作。<br/>
+在 Ethos 中，我们将 **Agent 视为工作单元**，提供一个让人类与 Agent 共同进化的基础设施。
 
 [English](./README.md) · **简体中文** · [官网][official-site] · [更新日志][changelog] · [文档][docs] · [博客][blog] · [反馈问题][github-issues-link]
 
@@ -26,7 +26,7 @@ LobeHub 是一个工作与生活空间，用于发现、构建并与会随着您
 [![][github-license-shield]][github-license-link]<br>
 [![][sponsor-shield]][sponsor-link]
 
-**分享 LobeHub 给你的好友**
+**分享 Ethos 给你的好友**
 
 [![][share-x-shield]][share-x-link]
 [![][share-telegram-shield]][share-telegram-link]
@@ -100,11 +100,11 @@ LobeHub 是一个工作与生活空间，用于发现、构建并与会随着您
 我们是一群充满热情的设计工程师，希望为 AIGC 提供现代化的设计组件和工具，并以开源的方式分享。
 同时通过 Bootstrapping 的方式，我们希望能够为开发者和用户提供一个更加开放、更加透明友好的产品生态。
 
-不论普通用户与专业开发者，LobeHub 旨在成为所有人的 AI Agent 实验场。LobeHub 目前正在积极开发中，有任何需求或者问题，欢迎提交 [issues][issues-link]
+不论普通用户与专业开发者，Ethos 旨在成为所有人的 AI Agent 实验场。Ethos 目前正在积极开发中，有任何需求或者问题，欢迎提交 [issues][issues-link]
 
-| [![](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1065874&theme=light&t=1769347414733)](https://www.producthunt.com/products/lobehub?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-lobehub) | 我们已在 Product Hunt 上线！我们很高兴将 LobeHub 推向世界。如果您相信人类与 Agent 共同进化的未来，请支持我们的旅程。 |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------- |
-| [![][discord-shield-badge]][discord-link]                                                                                                                                                                                                         | 加入我们的 Discord 社区！这是你可以与开发者和其他 LobeHub 热衷用户交流的地方                                         |
+| [![](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1065874&theme=light&t=1769347414733)](https://www.producthunt.com/products/lobehub?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-lobehub) | 我们已在 Product Hunt 上线！我们很高兴将 Ethos 推向世界。如果您相信人类与 Agent 共同进化的未来，请支持我们的旅程。 |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------- |
+| [![][discord-shield-badge]][discord-link]                                                                                                                                                                                                         | 加入我们的 Discord 社区！这是你可以与开发者和其他 Ethos 热衷用户交流的地方                                         |
 
 > \[!IMPORTANT]
 >
@@ -123,9 +123,9 @@ LobeHub 是一个工作与生活空间，用于发现、构建并与会随着您
 
 现有的 Agent 大多是一次性、以任务为驱动的工具。它们缺乏上下文，孤立运行，并且需要在不同窗口和模型之间手动交接。即使有记忆，也往往是全局的、浅层的且缺乏个性。在这种模式下，用户被迫在分散的对话之间来回切换，难以形成结构化的生产流程。
 
-**LobeHub 改变一切。**
+**Ethos 改变一切。**
 
-LobeHub 是一个工作与生活空间，用于发现、构建并与会随着您一起成长的 Agent 队友协作。在 LobeHub 中，我们将 **Agent 视为工作单元**，提供一个让人类与 Agent 共同进化的基础设施。
+Ethos 是一个工作与生活空间，用于发现、构建并与会随着您一起成长的 Agent 队友协作。在 Ethos 中，我们将 **Agent 视为工作单元**，提供一个让人类与 Agent 共同进化的基础设施。
 
 ![](https://hub-apac-1.lobeobjects.space/blog/assets/2204cde2228fb3f583f3f2c090bc49fb.webp)
 
@@ -148,7 +148,7 @@ LobeHub 是一个工作与生活空间，用于发现、构建并与会随着您
 
 ### 协作：扩展新型协作网络
 
-LobeHub 引入了 **Agent Groups**，让您可以像对待真实队友一样与 Agent 协同工作。系统会为任务组装合适的 Agent，支持并行协作与迭代改进。
+Ethos 引入了 **Agent Groups**，让您可以像对待真实队友一样与 Agent 协同工作。系统会为任务组装合适的 Agent，支持并行协作与迭代改进。
 
 - **页面（Pages）**：在同一位置与多个 Agent 共同撰写和润色内容，共享上下文。
 - **日程（Schedule）**：安排运行，让 Agent 在合适的时间完成工作，即使您不在也能继续执行。
@@ -167,7 +167,7 @@ LobeHub 引入了 **Agent Groups**，让您可以像对待真实队友一样与 
 
 ### 进化：人类与 Agent 的共生进化
 
-最好的 AI 是能深入理解您的那一种。LobeHub 提供了构建清晰用户理解的 **个人记忆（Personal Memory）**。
+最好的 AI 是能深入理解您的那一种。Ethos 提供了构建清晰用户理解的 **个人记忆（Personal Memory）**。
 
 - **持续学习**：您的 Agent 会从您的工作方式中学习，调整其行为以在恰当时刻采取行动。
 - **白盒记忆**：我们相信透明性。您的 Agent 使用结构化、可编辑的记忆，让您完全掌控它们记住的内容。
@@ -205,7 +205,7 @@ LobeHub 引入了 **Agent Groups**，让您可以像对待真实队友一样与 
 
 ### 巅峰性能，零干扰
 
-获得完整的 LobeHub 体验，摆脱浏览器限制 —— 轻量级、专注且随时就绪。我们的桌面应用程序为你的 AI 交互提供专用环境，确保最佳性能和最小干扰。
+获得完整的 Ethos 体验，摆脱浏览器限制 —— 轻量级、专注且随时就绪。我们的桌面应用程序为你的 AI 交互提供专用环境，确保最佳性能和最小干扰。
 
 体验更快的响应时间、更好的资源管理和与 AI 助手的更稳定连接。桌面应用专为要求 AI 工具最佳性能的用户设计。
 
@@ -250,7 +250,7 @@ LobeHub 引入了 **Agent Groups**，让您可以像对待真实队友一样与 
 
 ### [支持白板 (Artifacts)][docs-feat-artifacts]
 
-体验集成于 LobeHub 的 Claude Artifacts 能力。这项革命性功能突破了 AI 人机交互的边界，让您能够实时创建和可视化各种格式的内容。
+体验集成于 Ethos 的 Claude Artifacts 能力。这项革命性功能突破了 AI 人机交互的边界，让您能够实时创建和可视化各种格式的内容。
 
 以前所未有的灵活度进行创作与可视化：
 
@@ -264,13 +264,13 @@ LobeHub 引入了 **Agent Groups**，让您可以像对待真实队友一样与 
 
 ### [文件上传 / 知识库][docs-feat-knowledgebase]
 
-LobeHub 支持文件上传与知识库功能，你可以上传文件、图片、音频、视频等多种类型的文件，以及创建知识库，方便用户管理和查找文件。同时在对话中使用文件和知识库功能，实现更加丰富的对话体验。
+Ethos 支持文件上传与知识库功能，你可以上传文件、图片、音频、视频等多种类型的文件，以及创建知识库，方便用户管理和查找文件。同时在对话中使用文件和知识库功能，实现更加丰富的对话体验。
 
 <https://github.com/user-attachments/assets/faa8cf67-e743-4590-8bf6-ebf6ccc34175>
 
 > \[!TIP]
 >
-> 查阅 [📘 LobeHub 知识库上线 —— 此刻起，跬步千里](https://lobehub.com/zh/blog/knowledge-base) 了解详情。
+> 查阅 [📘 Ethos 知识库上线 —— 此刻起，跬步千里](https://lobehub.com/zh/blog/knowledge-base) 了解详情。
 
 <div align="right">
 
@@ -282,9 +282,9 @@ LobeHub 支持文件上传与知识库功能，你可以上传文件、图片、
 
 ### [多模型服务商支持][docs-feat-provider]
 
-在 LobeHub 的不断发展过程中，我们深刻理解到在提供 AI 会话服务时模型服务商的多样性对于满足社区需求的重要性。因此，我们不再局限于单一的模型服务商，而是拓展了对多种模型服务商的支持，以便为用户提供更为丰富和多样化的会话选择。
+在 Ethos 的不断发展过程中，我们深刻理解到在提供 AI 会话服务时模型服务商的多样性对于满足社区需求的重要性。因此，我们不再局限于单一的模型服务商，而是拓展了对多种模型服务商的支持，以便为用户提供更为丰富和多样化的会话选择。
 
-通过这种方式，LobeHub 能够更灵活地适应不同用户的需求，同时也为开发者提供了更为广泛的选择空间。
+通过这种方式，Ethos 能够更灵活地适应不同用户的需求，同时也为开发者提供了更为广泛的选择空间。
 
 #### 已支持的模型服务商
 
@@ -300,7 +300,7 @@ LobeHub 支持文件上传与知识库功能，你可以上传文件、图片、
 
  <!-- PROVIDER LIST -->
 
-同时，我们也在计划支持更多的模型服务商，以进一步丰富我们的服务商库。如果你希望让 LobeHub 支持你喜爱的服务商，欢迎加入我们的 [💬 社区讨论](https://github.com/lobehub/lobehub/discussions/6157)。
+同时，我们也在计划支持更多的模型服务商，以进一步丰富我们的服务商库。如果你希望让 Ethos 支持你喜爱的服务商，欢迎加入我们的 [💬 社区讨论](https://github.com/lobehub/lobehub/discussions/6157)。
 
 <div align="right">
 
@@ -312,11 +312,11 @@ LobeHub 支持文件上传与知识库功能，你可以上传文件、图片、
 
 ### [支持本地大语言模型 (LLM)][docs-feat-local]
 
-为了满足特定用户的需求，LobeHub 还基于 [Ollama](https://ollama.ai) 支持了本地模型的使用，让用户能够更灵活地使用自己的或第三方的模型。
+为了满足特定用户的需求，Ethos 还基于 [Ollama](https://ollama.ai) 支持了本地模型的使用，让用户能够更灵活地使用自己的或第三方的模型。
 
 > \[!TIP]
 >
-> 查阅 [📘 在 LobeHub 中使用 Ollama][docs-usage-ollama] 获得更多信息
+> 查阅 [📘 在 Ethos 中使用 Ollama][docs-usage-ollama] 获得更多信息
 
 <div align="right">
 
@@ -328,7 +328,7 @@ LobeHub 支持文件上传与知识库功能，你可以上传文件、图片、
 
 ### [模型视觉识别 (Model Visual)][docs-feat-vision]
 
-LobeHub 已经支持 OpenAI 最新的 [`gpt-4-vision`](https://platform.openai.com/docs/guides/vision) 支持视觉识别的模型，这是一个具备视觉识别能力的多模态应用。
+Ethos 已经支持 OpenAI 最新的 [`gpt-4-vision`](https://platform.openai.com/docs/guides/vision) 支持视觉识别的模型，这是一个具备视觉识别能力的多模态应用。
 用户可以轻松上传图片或者拖拽图片到对话框中，助手将能够识别图片内容，并在此基础上进行智能对话，构建更智能、更多元化的聊天场景。
 
 这一特性打开了新的互动方式，使得交流不再局限于文字，而是可以涵盖丰富的视觉元素。无论是日常使用中的图片分享，还是在特定行业内的图像解读，助手都能提供出色的对话体验。
@@ -343,10 +343,10 @@ LobeHub 已经支持 OpenAI 最新的 [`gpt-4-vision`](https://platform.openai.c
 
 ### [TTS & STT 语音会话][docs-feat-tts]
 
-LobeHub 支持文字转语音（Text-to-Speech，TTS）和语音转文字（Speech-to-Text，STT）技术，这使得我们的应用能够将文本信息转化为清晰的语音输出，用户可以像与真人交谈一样与我们的对话助手进行交流。
+Ethos 支持文字转语音（Text-to-Speech，TTS）和语音转文字（Speech-to-Text，STT）技术，这使得我们的应用能够将文本信息转化为清晰的语音输出，用户可以像与真人交谈一样与我们的对话助手进行交流。
 用户可以从多种声音中选择，给助手搭配合适的音源。 同时，对于那些倾向于听觉学习或者想要在忙碌中获取信息的用户来说，TTS 提供了一个极佳的解决方案。
 
-在 LobeHub 中，我们精心挑选了一系列高品质的声音选项 (OpenAI Audio, Microsoft Edge Speech)，以满足不同地域和文化背景用户的需求。用户可以根据个人喜好或者特定场景来选择合适的语音，从而获得个性化的交流体验。
+在 Ethos 中，我们精心挑选了一系列高品质的声音选项 (OpenAI Audio, Microsoft Edge Speech)，以满足不同地域和文化背景用户的需求。用户可以根据个人喜好或者特定场景来选择合适的语音，从而获得个性化的交流体验。
 
 <div align="right">
 
@@ -358,7 +358,7 @@ LobeHub 支持文字转语音（Text-to-Speech，TTS）和语音转文字（Spee
 
 ### [Text to Image 文生图][docs-feat-t2i]
 
-支持最新的文本到图片生成技术，LobeHub 现在能够让用户在与助手对话中直接调用文生图工具进行创作。
+支持最新的文本到图片生成技术，Ethos 现在能够让用户在与助手对话中直接调用文生图工具进行创作。
 通过利用 [`DALL-E 3`](https://openai.com/dall-e-3)、[`MidJourney`](https://www.midjourney.com/) 和 [`Pollinations`](https://pollinations.ai/) 等 AI 工具的能力， 助手们现在可以将你的想法转化为图像。
 同时可以更私密和沉浸式地完成你的创作过程。
 
@@ -372,7 +372,7 @@ LobeHub 支持文字转语音（Text-to-Speech，TTS）和语音转文字（Spee
 
 ### [插件系统 (Tools Calling)][docs-feat-plugin]
 
-LobeHub 的插件生态系统是其核心功能的重要扩展，它极大地增强了 ChatGPT 的实用性和灵活性。
+Ethos 的插件生态系统是其核心功能的重要扩展，它极大地增强了 ChatGPT 的实用性和灵活性。
 
 <video controls src="https://github.com/lobehub/lobehub/assets/28616219/f29475a3-f346-4196-a435-41a6373ab9e2" muted="false"></video>
 
@@ -405,12 +405,12 @@ LobeHub 的插件生态系统是其核心功能的重要扩展，它极大地增
 
 ### [助手市场 (GPTs)][docs-feat-agent]
 
-在 LobeHub 的助手市场中，创作者们可以发现一个充满活力和创新的社区，它汇聚了众多精心设计的助手，这些助手不仅在工作场景中发挥着重要作用，也在学习过程中提供了极大的便利。
+在 Ethos 的助手市场中，创作者们可以发现一个充满活力和创新的社区，它汇聚了众多精心设计的助手，这些助手不仅在工作场景中发挥着重要作用，也在学习过程中提供了极大的便利。
 我们的市场不仅是一个展示平台，更是一个协作的空间。在这里，每个人都可以贡献自己的智慧，分享个人开发的助手。
 
 > \[!TIP]
 >
-> 通过 [🤖/🏪 提交助手][submit-agents-link] ，你可以轻松地将你的助手作品提交到我们的平台。我们特别强调的是，LobeHub 建立了一套精密的自动化国际化（i18n）工作流程， 它的强大之处在于能够无缝地将你的助手转化为多种语言版本。
+> 通过 [🤖/🏪 提交助手][submit-agents-link] ，你可以轻松地将你的助手作品提交到我们的平台。我们特别强调的是，Ethos 建立了一套精密的自动化国际化（i18n）工作流程， 它的强大之处在于能够无缝地将你的助手转化为多种语言版本。
 > 这意味着，不论你的用户使用何种语言，他们都能无障碍地体验到你的助手。
 
 > \[!IMPORTANT]
@@ -440,12 +440,12 @@ LobeHub 的插件生态系统是其核心功能的重要扩展，它极大地增
 
 ### [支持本地 / 远程数据库][docs-feat-database]
 
-LobeHub 支持同时使用服务端数据库和本地数据库。根据您的需求，您可以选择合适的部署方案：
+Ethos 支持同时使用服务端数据库和本地数据库。根据您的需求，您可以选择合适的部署方案：
 
-- 本地数据库：适合希望对数据有更多掌控感和隐私保护的用户。LobeHub 采用了 CRDT (Conflict-Free Replicated Data Type) 技术，实现了多端同步功能。这是一项实验性功能，旨在提供无缝的数据同步体验。
-- 服务端数据库：适合希望更便捷使用体验的用户。LobeHub 支持 PostgreSQL 作为服务端数据库。关于如何配置服务端数据库的详细文档，请前往 [配置服务端数据库](https://lobehub.com/zh/docs/self-hosting/advanced/server-database)。
+- 本地数据库：适合希望对数据有更多掌控感和隐私保护的用户。Ethos 采用了 CRDT (Conflict-Free Replicated Data Type) 技术，实现了多端同步功能。这是一项实验性功能，旨在提供无缝的数据同步体验。
+- 服务端数据库：适合希望更便捷使用体验的用户。Ethos 支持 PostgreSQL 作为服务端数据库。关于如何配置服务端数据库的详细文档，请前往 [配置服务端数据库](https://lobehub.com/zh/docs/self-hosting/advanced/server-database)。
 
-无论您选择哪种数据库，LobeHub 都能为您提供卓越的用户体验。
+无论您选择哪种数据库，Ethos 都能为您提供卓越的用户体验。
 
 <div align="right">
 
@@ -457,9 +457,9 @@ LobeHub 支持同时使用服务端数据库和本地数据库。根据您的需
 
 ### [支持多用户管理][docs-feat-auth]
 
-LobeHub 支持多用户管理，提供了灵活的用户认证方案：
+Ethos 支持多用户管理，提供了灵活的用户认证方案：
 
-- **Better Auth**：LobeHub 集成了 `Better Auth`，一个现代化且灵活的身份验证库，支持多种身份验证方式，包括 OAuth、邮件登录、凭证登录、魔法链接等。通过 `Better Auth`，您可以轻松实现用户的注册、登录、会话管理、社交登录、多因素认证 (MFA) 等功能，确保用户数据的安全性和隐私性。
+- **Better Auth**：Ethos 集成了 `Better Auth`，一个现代化且灵活的身份验证库，支持多种身份验证方式，包括 OAuth、邮件登录、凭证登录、魔法链接等。通过 `Better Auth`，您可以轻松实现用户的注册、登录、会话管理、社交登录、多因素认证 (MFA) 等功能，确保用户数据的安全性和隐私性。
 
 <div align="right">
 
@@ -472,15 +472,15 @@ LobeHub 支持多用户管理，提供了灵活的用户认证方案：
 ### [渐进式 Web 应用 (PWA)][docs-feat-pwa]
 
 我们深知在当今多设备环境下为用户提供无缝体验的重要性。为此，我们采用了渐进式 Web 应用 [PWA](https://support.google.com/chrome/answer/9658361) 技术，
-这是一种能够将网页应用提升至接近原生应用体验的现代 Web 技术。通过 PWA，LobeHub 能够在桌面和移动设备上提供高度优化的用户体验，同时保持轻量级和高性能的特点。
+这是一种能够将网页应用提升至接近原生应用体验的现代 Web 技术。通过 PWA，Ethos 能够在桌面和移动设备上提供高度优化的用户体验，同时保持轻量级和高性能的特点。
 在视觉和感觉上，我们也经过精心设计，以确保它的界面与原生应用无差别，提供流畅的动画、响应式布局和适配不同设备的屏幕分辨率。
 
 > \[!NOTE]
 >
-> 若您未熟悉 PWA 的安装过程，您可以按照以下步骤将 LobeHub 添加为您的桌面应用（也适用于移动设备）：
+> 若您未熟悉 PWA 的安装过程，您可以按照以下步骤将 Ethos 添加为您的桌面应用（也适用于移动设备）：
 >
 > - 在电脑上运行 Chrome 或 Edge 浏览器 .
-> - 访问 LobeHub 网页 .
+> - 访问 Ethos 网页 .
 > - 在地址栏的右上角，单击 <kbd>安装</kbd> 图标 .
 
 <div align="right">
@@ -505,12 +505,12 @@ LobeHub 支持多用户管理，提供了灵活的用户认证方案：
 
 ### [自定义主题][docs-feat-theme]
 
-作为设计工程师出身，LobeHub 在界面设计上充分考虑用户的个性化体验，因此引入了灵活多变的主题模式，其中包括日间的亮色模式和夜间的深色模式。
-除了主题模式的切换，还提供了一系列的颜色定制选项，允许用户根据自己的喜好来调整应用的主题色彩。无论是想要沉稳的深蓝，还是希望活泼的桃粉，或者是专业的灰白，用户都能够在 LobeHub 中找到匹配自己风格的颜色选择。
+作为设计工程师出身，Ethos 在界面设计上充分考虑用户的个性化体验，因此引入了灵活多变的主题模式，其中包括日间的亮色模式和夜间的深色模式。
+除了主题模式的切换，还提供了一系列的颜色定制选项，允许用户根据自己的喜好来调整应用的主题色彩。无论是想要沉稳的深蓝，还是希望活泼的桃粉，或者是专业的灰白，用户都能够在 Ethos 中找到匹配自己风格的颜色选择。
 
 > \[!TIP]
 >
-> 默认配置能够智能地识别用户系统的颜色模式，自动进行主题切换，以确保应用界面与操作系统保持一致的视觉体验。对于喜欢手动调控细节的用户，LobeHub 同样提供了直观的设置选项，针对聊天场景也提供了对话气泡模式和文档模式的选择。
+> 默认配置能够智能地识别用户系统的颜色模式，自动进行主题切换，以确保应用界面与操作系统保持一致的视觉体验。对于喜欢手动调控细节的用户，Ethos 同样提供了直观的设置选项，针对聊天场景也提供了对话气泡模式和文档模式的选择。
 
 <div align="right">
 
@@ -524,7 +524,7 @@ LobeHub 支持多用户管理，提供了灵活的用户认证方案：
 
 ### `*` 更多特性
 
-除了上述功能特性以外，LobeHub 所具有的设计和技术能力将为你带来更多使用保障：
+除了上述功能特性以外，Ethos 所具有的设计和技术能力将为你带来更多使用保障：
 
 - [x] 💎 **精致 UI 设计**：经过精心设计的界面，具有优雅的外观和流畅的交互效果，支持亮暗色主题，适配移动端。支持 PWA，提供更加接近原生应用的体验。
 - [x] 🗣️ **流畅的对话体验**：流式响应带来流畅的对话体验，并且支持完整的 Markdown 渲染，包括代码高亮、LaTex 公式、Mermaid 流程图等。
@@ -544,11 +544,11 @@ LobeHub 支持多用户管理，提供了灵活的用户认证方案：
 
 ## 🛳 开箱即用
 
-LobeHub 提供了 Vercel 的 自托管版本 和 [Docker 镜像][docker-release-link]，这使你可以在几分钟内构建自己的聊天机器人，无需任何基础知识。
+Ethos 提供了 Vercel 的 自托管版本 和 [Docker 镜像][docker-release-link]，这使你可以在几分钟内构建自己的聊天机器人，无需任何基础知识。
 
 > \[!TIP]
 >
-> 完整教程请查阅 [📘 构建属于自己的 LobeHub][docs-self-hosting]
+> 完整教程请查阅 [📘 构建属于自己的 Ethos][docs-self-hosting]
 
 ### `A` 使用 Vercel、Zeabur 、Sealos 或 阿里云计算巢 部署
 
@@ -587,7 +587,7 @@ LobeHub 提供了 Vercel 的 自托管版本 和 [Docker 镜像][docker-release-
 [![][docker-size-shield]][docker-size-link]
 [![][docker-pulls-shield]][docker-pulls-link]
 
-我们提供了一个用于在您自己的私有设备上部署 LobeHub 服务的 Docker 镜像。请使用以下命令启动 LobeHub 服务：
+我们提供了一个用于在您自己的私有设备上部署 Ethos 服务的 Docker 镜像。请使用以下命令启动 Ethos 服务：
 
 1. 创建一个用于存储文件的文件夹
 
@@ -601,7 +601,7 @@ $ mkdir lobehub-db && cd lobehub-db
 bash <(curl -fsSL https://lobe.li/setup.sh) -l zh_CN
 ```
 
-3. 启动 LobeHub
+3. 启动 Ethos
 
 ```fish
 docker compose up -d
@@ -631,7 +631,7 @@ docker compose up -d
 
 ### 获取 OpenAI API Key
 
-API Key 是使用 LobeHub 进行大语言模型会话的必要信息，本节以 OpenAI 模型服务商为例，简要介绍获取 API Key 的方式。
+API Key 是使用 Ethos 进行大语言模型会话的必要信息，本节以 OpenAI 模型服务商为例，简要介绍获取 API Key 的方式。
 
 #### `A` 通过 OpenAI 官方渠道
 
@@ -642,7 +642,7 @@ API Key 是使用 LobeHub 进行大语言模型会话的必要信息，本节以
 | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/28616219/296253192-ff2193dd-f125-4e58-82e8-91bc376c0d68.png" height="200"/> | <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/28616219/296254170-803bacf0-4471-4171-ae79-0eab08d621d1.png" height="200"/> | <img src="https://github-production-user-asset-6210df.s3.amazonaws.com/28616219/296255167-f2745f2b-f083-4ba8-bc78-9b558e0002de.png" height="200"/> |
 
-- 将此 API Key 填写到 LobeHub 的 API Key 配置中，即可开始使用。
+- 将此 API Key 填写到 Ethos 的 API Key 配置中，即可开始使用。
 
 > \[!TIP]
 >
@@ -676,12 +676,12 @@ API Key 是使用 LobeHub 进行大语言模型会话的必要信息，本节以
 
 ## 📦 生态系统
 
-| NPM                               | 仓库                                    | 描述                                                                                     | 版本                                      |
-| --------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------- |
-| [@lobehub/ui][lobe-ui-link]       | [lobehub/lobe-ui][lobe-ui-github]       | 构建 AIGC 网页应用程序而设计的开源 UI 组件库                                             | [![][lobe-ui-shield]][lobe-ui-link]       |
-| [@lobehub/icons][lobe-icons-link] | [lobehub/lobe-icons][lobe-icons-github] | 主流 AI / LLM 模型和公司 SVG Logo 与 Icon 合集                                           | [![][lobe-icons-shield]][lobe-icons-link] |
-| [@lobehub/tts][lobe-tts-link]     | [lobehub/lobe-tts][lobe-tts-github]     | AI TTS / STT 语音合成 / 识别 React Hooks 库                                              | [![][lobe-tts-shield]][lobe-tts-link]     |
-| [@lobehub/lint][lobe-lint-link]   | [lobehub/lobe-lint][lobe-lint-github]   | LobeHub 代码样式规范 ESlint，Stylelint，Commitlint，Prettier，Remark 和 Semantic Release | [![][lobe-lint-shield]][lobe-lint-link]   |
+| NPM                               | 仓库                                    | 描述                                                                                   | 版本                                      |
+| --------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------- | ----------------------------------------- |
+| [@lobehub/ui][lobe-ui-link]       | [lobehub/lobe-ui][lobe-ui-github]       | 构建 AIGC 网页应用程序而设计的开源 UI 组件库                                           | [![][lobe-ui-shield]][lobe-ui-link]       |
+| [@lobehub/icons][lobe-icons-link] | [lobehub/lobe-icons][lobe-icons-github] | 主流 AI / LLM 模型和公司 SVG Logo 与 Icon 合集                                         | [![][lobe-icons-shield]][lobe-icons-link] |
+| [@lobehub/tts][lobe-tts-link]     | [lobehub/lobe-tts][lobe-tts-github]     | AI TTS / STT 语音合成 / 识别 React Hooks 库                                            | [![][lobe-tts-shield]][lobe-tts-link]     |
+| [@lobehub/lint][lobe-lint-link]   | [lobehub/lobe-lint][lobe-lint-github]   | Ethos 代码样式规范 ESlint，Stylelint，Commitlint，Prettier，Remark 和 Semantic Release | [![][lobe-lint-shield]][lobe-lint-link]   |
 
 <div align="right">
 
@@ -691,12 +691,12 @@ API Key 是使用 LobeHub 进行大语言模型会话的必要信息，本节以
 
 ## 🧩 插件体系
 
-插件提供了扩展 LobeHub [Function Calling][docs-function-call] 能力的方法。可以用于引入新的 Function Calling，甚至是新的消息结果渲染方式。如果你对插件开发感兴趣，请在 Wiki 中查阅我们的 [📘 插件开发指引][docs-plugin-dev] 。
+插件提供了扩展 Ethos [Function Calling][docs-function-call] 能力的方法。可以用于引入新的 Function Calling，甚至是新的消息结果渲染方式。如果你对插件开发感兴趣，请在 Wiki 中查阅我们的 [📘 插件开发指引][docs-plugin-dev] 。
 
 - [lobe-chat-plugins][lobe-chat-plugins]：插件索引从该仓库的 index.json 中获取插件列表并显示给用户。
 - [chat-plugin-template][chat-plugin-template]：插件开发模版，你可以通过项目模版快速新建插件项目。
-- [@lobehub/chat-plugin-sdk][chat-plugin-sdk]：插件 SDK 可帮助您创建出色的 LobeHub 插件。
-- [@lobehub/chat-plugins-gateway][chat-plugins-gateway]：插件网关是一个后端服务，作为 LobeHub 插件的网关。我们使用 Vercel 部署此服务。主要的 API POST /api/v1/runner 被部署为 Edge Function。
+- [@lobehub/chat-plugin-sdk][chat-plugin-sdk]：插件 SDK 可帮助您创建出色的 Ethos 插件。
+- [@lobehub/chat-plugins-gateway][chat-plugins-gateway]：插件网关是一个后端服务，作为 Ethos 插件的网关。我们使用 Vercel 部署此服务。主要的 API POST /api/v1/runner 被部署为 Edge Function。
 
 > \[!NOTE]
 >
@@ -747,7 +747,7 @@ $ bun run dev:spa       # 仅 SPA 前端（端口 9876）
 > \[!TIP]
 >
 > 我们希望创建一个技术分享型社区，一个可以促进知识共享、想法交流，激发彼此鼓励和协作的环境。
-> 同时欢迎联系我们提供产品功能和使用体验反馈，帮助我们将 LobeHub 建设得更好。
+> 同时欢迎联系我们提供产品功能和使用体验反馈，帮助我们将 Ethos 建设得更好。
 >
 > **组织维护者:** [@arvinxx](https://github.com/arvinxx) [@canisminor1990](https://github.com/canisminor1990)
 
@@ -831,8 +831,8 @@ $ bun run dev:spa       # 仅 SPA 前端（端口 9876）
 
 </details>
 
-Copyright © 2025 [LobeHub][profile-link]. <br />
-This project is [LobeHub Community License](./LICENSE) licensed.
+Copyright © 2025 [Ethos][profile-link]. <br />
+This project is [Ethos Community License](./LICENSE) licensed.
 
 <!-- LINK GROUP -->
 
@@ -849,7 +849,7 @@ This project is [LobeHub Community License](./LICENSE) licensed.
 [deploy-button-image]: https://vercel.com/button
 [deploy-link]: https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Flobehub%2Flobehub&env=OPENAI_API_KEY&envDescription=Find%20your%20OpenAI%20API%20Key%20by%20click%20the%20right%20Learn%20More%20button.&envLink=https%3A%2F%2Fplatform.openai.com%2Faccount%2Fapi-keys&project-name=lobehub&repository-name=lobehub
 [deploy-on-alibaba-cloud-button-image]: https://service-info-public.oss-cn-hangzhou.aliyuncs.com/computenest-en.svg
-[deploy-on-alibaba-cloud-link]: https://computenest.console.aliyun.com/service/instance/create/default?type=user&ServiceName=LobeHub%E7%A4%BE%E5%8C%BA%E7%89%88
+[deploy-on-alibaba-cloud-link]: https://computenest.console.aliyun.com/service/instance/create/default?type=user&ServiceName=Ethos%E7%A4%BE%E5%8C%BA%E7%89%88
 [deploy-on-sealos-button-image]: https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg
 [deploy-on-sealos-link]: https://template.hzh.sealos.run/deploy?templateName=lobehub-db
 [deploy-on-zeabur-button-image]: https://zeabur.com/button.svg
@@ -969,7 +969,7 @@ This project is [LobeHub Community License](./LICENSE) licensed.
 [share-whatsapp-shield]: https://img.shields.io/badge/-share%20on%20whatsapp-black?labelColor=black&logo=whatsapp&logoColor=white&style=flat-square
 [share-x-link]: https://x.com/intent/tweet?hashtags=chatbot%2CchatGPT%2CopenAI&text=%E6%8E%A8%E8%8D%90%E4%B8%80%E4%B8%AA%20GitHub%20%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%20%F0%9F%A4%AF%20LobeHub%20-%20%E5%BC%80%E6%BA%90%E7%9A%84%E3%80%81%E5%8F%AF%E6%89%A9%E5%B1%95%E7%9A%84%EF%BC%88Function%20Calling%EF%BC%89%E9%AB%98%E6%80%A7%E8%83%BD%E8%81%8A%E5%A4%A9%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%A1%86%E6%9E%B6%E3%80%82%0A%E5%AE%83%E6%94%AF%E6%8C%81%E4%B8%80%E9%94%AE%E5%85%8D%E8%B4%B9%E9%83%A8%E7%BD%B2%E7%A7%81%E4%BA%BA%20ChatGPT%2FLLM%20%E7%BD%91%E9%A1%B5%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F&url=https%3A%2F%2Fgithub.com%2Flobehub%2Flobehub
 [share-x-shield]: https://img.shields.io/badge/-share%20on%20x-black?labelColor=black&logo=x&logoColor=white&style=flat-square
-[sponsor-link]: https://opencollective.com/lobehub 'Become ❤ LobeHub Sponsor'
+[sponsor-link]: https://opencollective.com/lobehub 'Become ❤ Ethos Sponsor'
 [sponsor-shield]: https://img.shields.io/badge/-Sponsor%20LobeHub-f04f88?logo=opencollective&logoColor=white&style=flat-square
 [submit-agents-link]: https://github.com/lobehub/lobe-chat-agents
 [submit-agents-shield]: https://img.shields.io/badge/🤖/🏪_submit_agent-%E2%86%92-c4f042?labelColor=black&style=for-the-badge

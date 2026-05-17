@@ -12,7 +12,7 @@ import {
   MODEL_REGISTRY,
 } from '@/server/services/comfyui/config/modelRegistry';
 
-const log = debug('lobe-image:comfyui:static-model-lookup');
+const log = debug('ethos-image:comfyui:static-model-lookup');
 
 /**
  * Resolve a model name to its configuration

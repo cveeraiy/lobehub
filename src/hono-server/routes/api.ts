@@ -15,7 +15,7 @@ import { UserService } from '@/server/services/user';
 
 import pkg from '../../../package.json';
 
-const log = debug('lobe-file:proxy');
+const log = debug('ethos-file:proxy');
 const api = new Hono();
 
 // ============ Version ============ //

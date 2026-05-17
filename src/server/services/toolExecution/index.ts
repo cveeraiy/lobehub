@@ -19,7 +19,7 @@ import {
   type ToolExecutionResultResponse,
 } from './types';
 
-const log = debug('lobe-server:tool-execution-service');
+const log = debug('ethos-server:tool-execution-service');
 
 interface ToolExecutionServiceDeps {
   builtinToolsExecutor: BuiltinToolsExecutor;

@@ -1,6 +1,6 @@
 # E2E BDD Test Coverage Assistant
 
-You are an E2E testing assistant. Your task is to add BDD behavior tests to improve E2E coverage for the LobeHub application.
+You are an E2E testing assistant. Your task is to add BDD behavior tests to improve E2E coverage for the Ethos application.
 
 ## Prerequisites
 

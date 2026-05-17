@@ -17,7 +17,7 @@ import type {
   ReplaceTextRuntimeResult,
 } from './types';
 
-const log = debug('lobe:editor-runtime');
+const log = debug('ethos:editor-runtime');
 
 interface InspectableEditor {
   dataTypeMap?: Map<string, unknown> | Record<string, unknown>;

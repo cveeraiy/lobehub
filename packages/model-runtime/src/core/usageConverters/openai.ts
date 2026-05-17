@@ -6,7 +6,7 @@ import type OpenAI from 'openai';
 import type { ChatPayloadForTransformStream } from '../streams/protocol';
 import { withUsageCost } from './utils/withUsageCost';
 
-const log = debug('lobe-cost:convertOpenAIUsage');
+const log = debug('ethos-cost:convertOpenAIUsage');
 
 // Keep the reference implementation's behavior of filtering out zero/falsy values,
 // except for inputCacheMissTokens where 0 is semantically meaningful for fully cached prompts.

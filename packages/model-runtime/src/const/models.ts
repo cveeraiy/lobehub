@@ -124,7 +124,7 @@ export const hasTemperatureTopPConflict = (model: string): boolean => {
  * Ref: https://platform.claude.com/docs/en/about-claude/models/migration-guide
  */
 export const omitSamplingParamsModelPatterns: RegExp[] = [
-  // Claude Opus 4.7 - Anthropic API (also LobeHub provider pass-through)
+  // Claude Opus 4.7 - Anthropic API (also Ethos provider pass-through)
   /^claude-opus-4-7/,
   // OpenRouter formats use dot notation (e.g. anthropic/claude-opus-4.7)
   /^anthropic\/claude-opus-4\.7/,

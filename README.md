@@ -2,9 +2,9 @@
 
 [![][image-banner]][vercel-link]
 
-# LobeHub
+# Ethos
 
-LobeHub is the ultimate space for work and life: <br/>
+Ethos is the ultimate space for work and life: <br/>
 to find, build, and collaborate with agent teammates that grow with you.<br/>
 We’re building the world’s largest human–agent co-evolving network.
 
@@ -27,7 +27,7 @@ We’re building the world’s largest human–agent co-evolving network.
 [![][github-license-shield]][github-license-link]<br>
 [![][sponsor-shield]][sponsor-link]
 
-**Share LobeHub Repository**
+**Share Ethos Repository**
 
 [![][share-x-shield]][share-x-link]
 [![][share-telegram-shield]][share-telegram-link]
@@ -102,11 +102,11 @@ We’re building the world’s largest human–agent co-evolving network.
 We are a group of e/acc design-engineers, hoping to provide modern design components and tools for AIGC.
 By adopting the Bootstrapping approach, we aim to provide developers and users with a more open, transparent, and user-friendly product ecosystem.
 
-Whether for users or professional developers, LobeHub will be your AI Agent playground. Please be aware that LobeHub is currently under active development, and feedback is welcome for any [issues][issues-link] encountered.
+Whether for users or professional developers, Ethos will be your AI Agent playground. Please be aware that Ethos is currently under active development, and feedback is welcome for any [issues][issues-link] encountered.
 
-| [![](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1065874&theme=light&t=1769347414733)](https://www.producthunt.com/products/lobehub?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-lobehub) | We are live on Product Hunt! We are thrilled to bring LobeHub to the world. If you believe in a future where humans and agents co-evolve, please support our journey. |
-| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [![][discord-shield-badge]][discord-link]                                                                                                                                                                                                         | Join our Discord community! This is where you can connect with developers and other enthusiastic users of LobeHub.                                                    |
+| [![](https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1065874&theme=light&t=1769347414733)](https://www.producthunt.com/products/lobehub?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-lobehub) | We are live on Product Hunt! We are thrilled to bring Ethos to the world. If you believe in a future where humans and agents co-evolve, please support our journey. |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [![][discord-shield-badge]][discord-link]                                                                                                                                                                                                         | Join our Discord community! This is where you can connect with developers and other enthusiastic users of Ethos.                                                    |
 
 > \[!IMPORTANT]
 >
@@ -126,9 +126,9 @@ Whether for users or professional developers, LobeHub will be your AI Agent play
 
 Today’s agents are one-off, task-driven tools. They lack context, live in isolation, and require manual hand-offs between different windows and models. While some maintain memory, it is often global, shallow, and impersonal. In this mode, users are forced to toggle between fragmented conversations, making it difficult to form structured productivity.
 
-**LobeHub changes everything.**
+**Ethos changes everything.**
 
-LobeHub is a work-and-lifestyle space to find, build, and collaborate with agent teammates that grow with you. In LobeHub, we treat **Agents as the unit of work**, providing an infrastructure where humans and agents co-evolve.
+Ethos is a work-and-lifestyle space to find, build, and collaborate with agent teammates that grow with you. In Ethos, we treat **Agents as the unit of work**, providing an infrastructure where humans and agents co-evolve.
 
 ![](https://hub-apac-1.lobeobjects.space/blog/assets/2204cde2228fb3f583f3f2c090bc49fb.webp)
 
@@ -151,7 +151,7 @@ Building a personalized AI team starts with the **Agent Builder**. You can descr
 
 ### Collaborate: Scale New Forms of Collaboration Networks
 
-LobeHub introduces **Agent Groups**, allowing you to work with agents like real teammates. The system assembles the right agents for the task, enabling parallel collaboration and iterative improvement.
+Ethos introduces **Agent Groups**, allowing you to work with agents like real teammates. The system assembles the right agents for the task, enabling parallel collaboration and iterative improvement.
 
 - **Pages**: Write and refine content with multiple agents in one place with a shared context.
 - **Schedule**: Schedule runs and let agents do the work at the right time, even while you are away.
@@ -170,7 +170,7 @@ LobeHub introduces **Agent Groups**, allowing you to work with agents like real 
 
 ### Evolve: Co-evolution of Humans and Agents
 
-The best AI is one that understands you deeply. LobeHub features **Personal Memory** that builds a clear understanding of your needs.
+The best AI is one that understands you deeply. Ethos features **Personal Memory** that builds a clear understanding of your needs.
 
 - **Continual Learning**: Your agents learn from how you work, adapting their behavior to act at the right moment.
 - **White-Box Memory**: We believe in transparency. Your agents use structured, editable memory, giving you full control over what they remember.
@@ -190,7 +190,7 @@ The best AI is one that understands you deeply. LobeHub features **Personal Memo
 
 **Seamlessly Connect Your AI to the World**
 
-Unlock the full potential of your AI by enabling smooth, secure, and dynamic interactions with external tools, data sources, and services. LobeHub's MCP (Model Context Protocol) plugin system breaks down the barriers between your AI and the digital ecosystem, allowing for unprecedented connectivity and functionality.
+Unlock the full potential of your AI by enabling smooth, secure, and dynamic interactions with external tools, data sources, and services. Ethos's MCP (Model Context Protocol) plugin system breaks down the barriers between your AI and the digital ecosystem, allowing for unprecedented connectivity and functionality.
 
 Transform your conversations into powerful workflows by connecting to databases, APIs, file systems, and more. Experience the freedom of AI that truly understands and interacts with your world.
 
@@ -214,7 +214,7 @@ From productivity tools to development environments, discover new ways to extend
 
 **Peak Performance, Zero Distractions**
 
-Get the full LobeHub experience without browser limitations—comprehensive, focused, and always ready to go. Our desktop application provides a dedicated environment for your AI interactions, ensuring optimal performance and minimal distractions.
+Get the full Ethos experience without browser limitations—comprehensive, focused, and always ready to go. Our desktop application provides a dedicated environment for your AI interactions, ensuring optimal performance and minimal distractions.
 
 Experience faster response times, better resource management, and a more stable connection to your AI assistant. The desktop app is designed for users who demand the best performance from their AI tools.
 
@@ -261,7 +261,7 @@ This groundbreaking feature transforms linear conversations into dynamic, tree-l
 
 ### [Artifacts Support][docs-feat-artifacts]
 
-Experience the power of Claude Artifacts, now integrated into LobeHub. This revolutionary feature expands the boundaries of AI-human interaction, enabling real-time creation and visualization of diverse content formats.
+Experience the power of Claude Artifacts, now integrated into Ethos. This revolutionary feature expands the boundaries of AI-human interaction, enabling real-time creation and visualization of diverse content formats.
 
 Create and visualize with unprecedented flexibility:
 
@@ -275,13 +275,13 @@ Create and visualize with unprecedented flexibility:
 
 ### [File Upload /Knowledge Base][docs-feat-knowledgebase]
 
-LobeHub supports file upload and knowledge base functionality. You can upload various types of files including documents, images, audio, and video, as well as create knowledge bases, making it convenient for users to manage and search for files. Additionally, you can utilize files and knowledge base features during conversations, enabling a richer dialogue experience.
+Ethos supports file upload and knowledge base functionality. You can upload various types of files including documents, images, audio, and video, as well as create knowledge bases, making it convenient for users to manage and search for files. Additionally, you can utilize files and knowledge base features during conversations, enabling a richer dialogue experience.
 
 <https://github.com/user-attachments/assets/faa8cf67-e743-4590-8bf6-ebf6ccc34175>
 
 > \[!TIP]
 >
-> Learn more on [📘 LobeHub Knowledge Base Launch — From Now On, Every Step Counts](https://lobehub.com/blog/knowledge-base)
+> Learn more on [📘 Ethos Knowledge Base Launch — From Now On, Every Step Counts](https://lobehub.com/blog/knowledge-base)
 
 <div align="right">
 
@@ -293,9 +293,9 @@ LobeHub supports file upload and knowledge base functionality. You can upload va
 
 ### [Multi-Model Service Provider Support][docs-feat-provider]
 
-In the continuous development of LobeHub, we deeply understand the importance of diversity in model service providers for meeting the needs of the community when providing AI conversation services. Therefore, we have expanded our support to multiple model service providers, rather than being limited to a single one, in order to offer users a more diverse and rich selection of conversations.
+In the continuous development of Ethos, we deeply understand the importance of diversity in model service providers for meeting the needs of the community when providing AI conversation services. Therefore, we have expanded our support to multiple model service providers, rather than being limited to a single one, in order to offer users a more diverse and rich selection of conversations.
 
-In this way, LobeHub can more flexibly adapt to the needs of different users, while also providing developers with a wider range of choices.
+In this way, Ethos can more flexibly adapt to the needs of different users, while also providing developers with a wider range of choices.
 
 #### Supported Model Service Providers
 
@@ -311,7 +311,7 @@ We have implemented support for the following model service providers:
 
  <!-- PROVIDER LIST -->
 
-At the same time, we are also planning to support more model service providers. If you would like LobeHub to support your favorite service provider, feel free to join our [💬 community discussion](https://github.com/lobehub/lobehub/discussions/1284).
+At the same time, we are also planning to support more model service providers. If you would like Ethos to support your favorite service provider, feel free to join our [💬 community discussion](https://github.com/lobehub/lobehub/discussions/1284).
 
 <div align="right">
 
@@ -323,11 +323,11 @@ At the same time, we are also planning to support more model service providers. 
 
 ### [Local Large Language Model (LLM) Support][docs-feat-local]
 
-To meet the specific needs of users, LobeHub also supports the use of local models based on [Ollama](https://ollama.ai), allowing users to flexibly use their own or third-party models.
+To meet the specific needs of users, Ethos also supports the use of local models based on [Ollama](https://ollama.ai), allowing users to flexibly use their own or third-party models.
 
 > \[!TIP]
 >
-> Learn more about [📘 Using Ollama in LobeHub][docs-usage-ollama] by checking it out.
+> Learn more about [📘 Using Ollama in Ethos][docs-usage-ollama] by checking it out.
 
 <div align="right">
 
@@ -339,7 +339,7 @@ To meet the specific needs of users, LobeHub also supports the use of local mode
 
 ### [Model Visual Recognition][docs-feat-vision]
 
-LobeHub now supports OpenAI's latest [`gpt-4-vision`](https://platform.openai.com/docs/guides/vision) model with visual recognition capabilities,
+Ethos now supports OpenAI's latest [`gpt-4-vision`](https://platform.openai.com/docs/guides/vision) model with visual recognition capabilities,
 a multimodal intelligence that can perceive visuals. Users can easily upload or drag and drop images into the dialogue box,
 and the agent will be able to recognize the content of the images and engage in intelligent conversation based on this,
 creating smarter and more diversified chat scenarios.
@@ -357,11 +357,11 @@ Whether it's sharing images in daily use or interpreting images within specific 
 
 ### [TTS & STT Voice Conversation][docs-feat-tts]
 
-LobeHub supports Text-to-Speech (TTS) and Speech-to-Text (STT) technologies, enabling our application to convert text messages into clear voice outputs,
+Ethos supports Text-to-Speech (TTS) and Speech-to-Text (STT) technologies, enabling our application to convert text messages into clear voice outputs,
 allowing users to interact with our conversational agent as if they were talking to a real person. Users can choose from a variety of voices to pair with the agent.
 
 Moreover, TTS offers an excellent solution for those who prefer auditory learning or desire to receive information while busy.
-In LobeHub, we have meticulously selected a range of high-quality voice options (OpenAI Audio, Microsoft Edge Speech) to meet the needs of users from different regions and cultural backgrounds.
+In Ethos, we have meticulously selected a range of high-quality voice options (OpenAI Audio, Microsoft Edge Speech) to meet the needs of users from different regions and cultural backgrounds.
 Users can choose the voice that suits their personal preferences or specific scenarios, resulting in a personalized communication experience.
 
 <div align="right">
@@ -374,7 +374,7 @@ Users can choose the voice that suits their personal preferences or specific sce
 
 ### [Text to Image Generation][docs-feat-t2i]
 
-With support for the latest text-to-image generation technology, LobeHub now allows users to invoke image creation tools directly within conversations with the agent. By leveraging the capabilities of AI tools such as [`DALL-E 3`](https://openai.com/dall-e-3), [`MidJourney`](https://www.midjourney.com/), and [`Pollinations`](https://pollinations.ai/), the agents are now equipped to transform your ideas into images.
+With support for the latest text-to-image generation technology, Ethos now allows users to invoke image creation tools directly within conversations with the agent. By leveraging the capabilities of AI tools such as [`DALL-E 3`](https://openai.com/dall-e-3), [`MidJourney`](https://www.midjourney.com/), and [`Pollinations`](https://pollinations.ai/), the agents are now equipped to transform your ideas into images.
 
 This enables a more private and immersive creative process, allowing for the seamless integration of visual storytelling into your personal dialogue with the agent.
 
@@ -388,11 +388,11 @@ This enables a more private and immersive creative process, allowing for the sea
 
 ### [Plugin System (Function Calling)][docs-feat-plugin]
 
-The plugin ecosystem of LobeHub is an important extension of its core functionality, greatly enhancing the practicality and flexibility of the LobeHub assistant.
+The plugin ecosystem of Ethos is an important extension of its core functionality, greatly enhancing the practicality and flexibility of the Ethos assistant.
 
 <video controls src="https://github.com/lobehub/lobehub/assets/28616219/f29475a3-f346-4196-a435-41a6373ab9e2" muted="false"></video>
 
-By utilizing plugins, LobeHub assistants can obtain and process real-time information, such as searching for web information and providing users with instant and relevant news.
+By utilizing plugins, Ethos assistants can obtain and process real-time information, such as searching for web information and providing users with instant and relevant news.
 
 In addition, these plugins are not limited to news aggregation, but can also extend to other practical functions, such as quickly searching documents, generating images, obtaining data from various platforms like Bilibili, Steam, and interacting with various third-party services.
 
@@ -423,14 +423,14 @@ In addition, these plugins are not limited to news aggregation, but can also ext
 
 ### [Agent Market (GPTs)][docs-feat-agent]
 
-In LobeHub Agent Marketplace, creators can discover a vibrant and innovative community that brings together a multitude of well-designed agents,
+In Ethos Agent Marketplace, creators can discover a vibrant and innovative community that brings together a multitude of well-designed agents,
 which not only play an important role in work scenarios but also offer great convenience in learning processes.
 Our marketplace is not just a showcase platform but also a collaborative space. Here, everyone can contribute their wisdom and share the agents they have developed.
 
 > \[!TIP]
 >
 > By [🤖/🏪 Submit Agents][submit-agents-link], you can easily submit your agent creations to our platform.
-> Importantly, LobeHub has established a sophisticated automated internationalization (i18n) workflow,
+> Importantly, Ethos has established a sophisticated automated internationalization (i18n) workflow,
 > capable of seamlessly translating your agent into multiple language versions.
 > This means that no matter what language your users speak, they can experience your agent without barriers.
 
@@ -462,12 +462,12 @@ Our marketplace is not just a showcase platform but also a collaborative space. 
 
 ### [Support Local / Remote Database][docs-feat-database]
 
-LobeHub supports the use of both server-side and local databases. Depending on your needs, you can choose the appropriate deployment solution:
+Ethos supports the use of both server-side and local databases. Depending on your needs, you can choose the appropriate deployment solution:
 
-- **Local database**: suitable for users who want more control over their data and privacy protection. LobeHub uses CRDT (Conflict-Free Replicated Data Type) technology to achieve multi-device synchronization. This is an experimental feature aimed at providing a seamless data synchronization experience.
-- **Server-side database**: suitable for users who want a more convenient user experience. LobeHub supports PostgreSQL as a server-side database. For detailed documentation on how to configure the server-side database, please visit [Configure Server-side Database](https://lobehub.com/docs/self-hosting/advanced/server-database).
+- **Local database**: suitable for users who want more control over their data and privacy protection. Ethos uses CRDT (Conflict-Free Replicated Data Type) technology to achieve multi-device synchronization. This is an experimental feature aimed at providing a seamless data synchronization experience.
+- **Server-side database**: suitable for users who want a more convenient user experience. Ethos supports PostgreSQL as a server-side database. For detailed documentation on how to configure the server-side database, please visit [Configure Server-side Database](https://lobehub.com/docs/self-hosting/advanced/server-database).
 
-Regardless of which database you choose, LobeHub can provide you with an excellent user experience.
+Regardless of which database you choose, Ethos can provide you with an excellent user experience.
 
 <div align="right">
 
@@ -479,9 +479,9 @@ Regardless of which database you choose, LobeHub can provide you with an excelle
 
 ### [Support Multi-User Management][docs-feat-auth]
 
-LobeHub supports multi-user management and provides flexible user authentication solutions:
+Ethos supports multi-user management and provides flexible user authentication solutions:
 
-- **Better Auth**: LobeHub integrates `Better Auth`, a modern and flexible authentication library that supports multiple authentication methods, including OAuth, email login, credential login, magic links, and more. With `Better Auth`, you can easily implement user registration, login, session management, social login, multi-factor authentication (MFA), and other functions to ensure the security and privacy of user data.
+- **Better Auth**: Ethos integrates `Better Auth`, a modern and flexible authentication library that supports multiple authentication methods, including OAuth, email login, credential login, magic links, and more. With `Better Auth`, you can easily implement user registration, login, session management, social login, multi-factor authentication (MFA), and other functions to ensure the security and privacy of user data.
 
 <div align="right">
 
@@ -497,16 +497,16 @@ We deeply understand the importance of providing a seamless experience for users
 Therefore, we have adopted Progressive Web Application ([PWA](https://support.google.com/chrome/answer/9658361)) technology,
 a modern web technology that elevates web applications to an experience close to that of native apps.
 
-Through PWA, LobeHub can offer a highly optimized user experience on both desktop and mobile devices while maintaining high-performance characteristics.
+Through PWA, Ethos can offer a highly optimized user experience on both desktop and mobile devices while maintaining high-performance characteristics.
 Visually and in terms of feel, we have also meticulously designed the interface to ensure it is indistinguishable from native apps,
 providing smooth animations, responsive layouts, and adapting to different device screen resolutions.
 
 > \[!NOTE]
 >
-> If you are unfamiliar with the installation process of PWA, you can add LobeHub as your desktop application (also applicable to mobile devices) by following these steps:
+> If you are unfamiliar with the installation process of PWA, you can add Ethos as your desktop application (also applicable to mobile devices) by following these steps:
 >
 > - Launch the Chrome or Edge browser on your computer.
-> - Visit the LobeHub webpage.
+> - Visit the Ethos webpage.
 > - In the upper right corner of the address bar, click on the <kbd>Install</kbd> icon.
 > - Follow the instructions on the screen to complete the PWA Installation.
 
@@ -532,15 +532,15 @@ We have carried out a series of optimization designs for mobile devices to enhan
 
 ### [Custom Themes][docs-feat-theme]
 
-As a design-engineering-oriented application, LobeHub places great emphasis on users' personalized experiences,
+As a design-engineering-oriented application, Ethos places great emphasis on users' personalized experiences,
 hence introducing flexible and diverse theme modes, including a light mode for daytime and a dark mode for nighttime.
 Beyond switching theme modes, a range of color customization options allow users to adjust the application's theme colors according to their preferences.
-Whether it's a desire for a sober dark blue, a lively peach pink, or a professional gray-white, users can find their style of color choices in LobeHub.
+Whether it's a desire for a sober dark blue, a lively peach pink, or a professional gray-white, users can find their style of color choices in Ethos.
 
 > \[!TIP]
 >
 > The default configuration can intelligently recognize the user's system color mode and automatically switch themes to ensure a consistent visual experience with the operating system.
-> For users who like to manually control details, LobeHub also offers intuitive setting options and a choice between chat bubble mode and document mode for conversation scenarios.
+> For users who like to manually control details, Ethos also offers intuitive setting options and a choice between chat bubble mode and document mode for conversation scenarios.
 
 <div align="right">
 
@@ -550,7 +550,7 @@ Whether it's a desire for a sober dark blue, a lively peach pink, or a professio
 
 ### `*` What's more
 
-Beside these features, LobeHub also have much better basic technique underground:
+Beside these features, Ethos also have much better basic technique underground:
 
 - [x] 💨 **Quick Deployment**: Using the Vercel platform or docker image, you can deploy with just one click and complete the process within 1 minute without any complex configuration.
 - [x] 🌐 **Custom Domain**: If users have their own domain, they can bind it to the platform for quick access to the dialogue agent from anywhere.
@@ -560,7 +560,7 @@ Beside these features, LobeHub also have much better basic technique underground
 
 </details>
 
-> ✨ more features will be added when LobeHub evolve.
+> ✨ more features will be added when Ethos evolve.
 
 <div align="right">
 
@@ -570,11 +570,11 @@ Beside these features, LobeHub also have much better basic technique underground
 
 ## 🛳 Self Hosting
 
-LobeHub provides Self-Hosted Version with Vercel, Alibaba Cloud, and [Docker Image][docker-release-link]. This allows you to deploy your own chatbot within a few minutes without any prior knowledge.
+Ethos provides Self-Hosted Version with Vercel, Alibaba Cloud, and [Docker Image][docker-release-link]. This allows you to deploy your own chatbot within a few minutes without any prior knowledge.
 
 > \[!TIP]
 >
-> Learn more about [📘 Build your own LobeHub][docs-self-hosting] by checking it out.
+> Learn more about [📘 Build your own Ethos][docs-self-hosting] by checking it out.
 
 ### `A` Deploying with Vercel, Zeabur , Sealos or Alibaba Cloud
 
@@ -613,7 +613,7 @@ If you have deployed your own project following the one-click deployment steps i
 [![][docker-size-shield]][docker-size-link]
 [![][docker-pulls-shield]][docker-pulls-link]
 
-We provide a Docker image for deploying the LobeHub service on your own private device. Use the following command to start the LobeHub service:
+We provide a Docker image for deploying the Ethos service on your own private device. Use the following command to start the Ethos service:
 
 1. create a folder to for storage files
 
@@ -621,13 +621,13 @@ We provide a Docker image for deploying the LobeHub service on your own private 
 $ mkdir lobehub-db && cd lobehub-db
 ```
 
-2. init the LobeHub infrastructure
+2. init the Ethos infrastructure
 
 ```fish
 bash <(curl -fsSL https://lobe.li/setup.sh)
 ```
 
-3. Start the LobeHub service
+3. Start the Ethos service
 
 ```fish
 docker compose up -d
@@ -661,12 +661,12 @@ This project provides some additional configuration items set with environment v
 
 ## 📦 Ecosystem
 
-| NPM                               | Repository                              | Description                                                                                           | Version                                   |
-| --------------------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| [@lobehub/ui][lobe-ui-link]       | [lobehub/lobe-ui][lobe-ui-github]       | Open-source UI component library dedicated to building AIGC web applications.                         | [![][lobe-ui-shield]][lobe-ui-link]       |
-| [@lobehub/icons][lobe-icons-link] | [lobehub/lobe-icons][lobe-icons-github] | Popular AI / LLM Model Brand SVG Logo and Icon Collection.                                            | [![][lobe-icons-shield]][lobe-icons-link] |
-| [@lobehub/tts][lobe-tts-link]     | [lobehub/lobe-tts][lobe-tts-github]     | High-quality & reliable TTS/STT React Hooks library                                                   | [![][lobe-tts-shield]][lobe-tts-link]     |
-| [@lobehub/lint][lobe-lint-link]   | [lobehub/lobe-lint][lobe-lint-github]   | Configurations for ESlint, Stylelint, Commitlint, Prettier, Remark, and Semantic Release for LobeHub. | [![][lobe-lint-shield]][lobe-lint-link]   |
+| NPM                               | Repository                              | Description                                                                                         | Version                                   |
+| --------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| [@lobehub/ui][lobe-ui-link]       | [lobehub/lobe-ui][lobe-ui-github]       | Open-source UI component library dedicated to building AIGC web applications.                       | [![][lobe-ui-shield]][lobe-ui-link]       |
+| [@lobehub/icons][lobe-icons-link] | [lobehub/lobe-icons][lobe-icons-github] | Popular AI / LLM Model Brand SVG Logo and Icon Collection.                                          | [![][lobe-icons-shield]][lobe-icons-link] |
+| [@lobehub/tts][lobe-tts-link]     | [lobehub/lobe-tts][lobe-tts-github]     | High-quality & reliable TTS/STT React Hooks library                                                 | [![][lobe-tts-shield]][lobe-tts-link]     |
+| [@lobehub/lint][lobe-lint-link]   | [lobehub/lobe-lint][lobe-lint-github]   | Configurations for ESlint, Stylelint, Commitlint, Prettier, Remark, and Semantic Release for Ethos. | [![][lobe-lint-shield]][lobe-lint-link]   |
 
 <div align="right">
 
@@ -676,12 +676,12 @@ This project provides some additional configuration items set with environment v
 
 ## 🧩 Plugins
 
-Plugins provide a means to extend the [Function Calling][docs-function-call] capabilities of LobeHub. They can be used to introduce new function calls and even new ways to render message results. If you are interested in plugin development, please refer to our [📘 Plugin Development Guide][docs-plugin-dev] in the Wiki.
+Plugins provide a means to extend the [Function Calling][docs-function-call] capabilities of Ethos. They can be used to introduce new function calls and even new ways to render message results. If you are interested in plugin development, please refer to our [📘 Plugin Development Guide][docs-plugin-dev] in the Wiki.
 
-- [lobe-chat-plugins][lobe-chat-plugins]: This is the plugin index for LobeHub. It accesses index.json from this repository to display a list of available plugins for LobeHub to the user.
-- [chat-plugin-template][chat-plugin-template]: This is the plugin template for LobeHub plugin development.
-- [@lobehub/chat-plugin-sdk][chat-plugin-sdk]: The LobeHub Plugin SDK assists you in creating exceptional chat plugins for LobeHub.
-- [@lobehub/chat-plugins-gateway][chat-plugins-gateway]: The LobeHub Plugins Gateway is a backend service that provides a gateway for LobeHub plugins. We deploy this service using Vercel. The primary API POST /api/v1/runner is deployed as an Edge Function.
+- [lobe-chat-plugins][lobe-chat-plugins]: This is the plugin index for Ethos. It accesses index.json from this repository to display a list of available plugins for Ethos to the user.
+- [chat-plugin-template][chat-plugin-template]: This is the plugin template for Ethos plugin development.
+- [@lobehub/chat-plugin-sdk][chat-plugin-sdk]: The Ethos Plugin SDK assists you in creating exceptional chat plugins for Ethos.
+- [@lobehub/chat-plugins-gateway][chat-plugins-gateway]: The Ethos Plugins Gateway is a backend service that provides a gateway for Ethos plugins. We deploy this service using Vercel. The primary API POST /api/v1/runner is deployed as an Edge Function.
 
 > \[!NOTE]
 >
@@ -733,7 +733,7 @@ Contributions of all types are more than welcome; if you are interested in contr
 >
 > We are creating a technology-driven forum, fostering knowledge interaction and the exchange of ideas that may culminate in mutual inspiration and collaborative innovation.
 >
-> Help us make LobeHub better. Welcome to provide product design feedback, user experience discussions directly to us.
+> Help us make Ethos better. Welcome to provide product design feedback, user experience discussions directly to us.
 >
 > **Principal Maintainers:** [@arvinxx](https://github.com/arvinxx) [@canisminor1990](https://github.com/canisminor1990)
 
@@ -817,8 +817,8 @@ Every bit counts and your one-time donation sparkles in our galaxy of support! Y
 
 </details>
 
-Copyright © 2026 [LobeHub][profile-link]. <br />
-This project is [LobeHub Community License](./LICENSE) licensed.
+Copyright © 2026 [Ethos][profile-link]. <br />
+This project is [Ethos Community License](./LICENSE) licensed.
 
 <!-- LINK GROUP -->
 
@@ -835,7 +835,7 @@ This project is [LobeHub Community License](./LICENSE) licensed.
 [deploy-button-image]: https://vercel.com/button
 [deploy-link]: https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Flobehub%2Flobehub&env=OPENAI_API_KEY&envDescription=Find%20your%20OpenAI%20API%20Key%20by%20click%20the%20right%20Learn%20More%20button.&envLink=https%3A%2F%2Fplatform.openai.com%2Faccount%2Fapi-keys&project-name=lobehub&repository-name=lobehub
 [deploy-on-alibaba-cloud-button-image]: https://service-info-public.oss-cn-hangzhou.aliyuncs.com/computenest-en.svg
-[deploy-on-alibaba-cloud-link]: https://computenest.console.aliyun.com/service/instance/create/default?type=user&ServiceName=LobeHub%E7%A4%BE%E5%8C%BA%E7%89%88
+[deploy-on-alibaba-cloud-link]: https://computenest.console.aliyun.com/service/instance/create/default?type=user&ServiceName=Ethos%E7%A4%BE%E5%8C%BA%E7%89%88
 [deploy-on-repocloud-button-image]: https://d16t0pc4846x52.cloudfront.net/deploylobe.svg
 [deploy-on-repocloud-link]: https://repocloud.io/details/?app_id=248
 [deploy-on-sealos-button-image]: https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg
@@ -958,7 +958,7 @@ This project is [LobeHub Community License](./LICENSE) licensed.
 [share-whatsapp-shield]: https://img.shields.io/badge/-share%20on%20whatsapp-black?labelColor=black&logo=whatsapp&logoColor=white&style=flat-square
 [share-x-link]: https://x.com/intent/tweet?hashtags=chatbot%2CchatGPT%2CopenAI&text=Check%20this%20GitHub%20repository%20out%20%F0%9F%A4%AF%20LobeHub%20-%20An%20open-source%2C%20extensible%20%28Function%20Calling%29%2C%20high-performance%20chatbot%20framework.%20It%20supports%20one-click%20free%20deployment%20of%20your%20private%20ChatGPT%2FLLM%20web%20application.&url=https%3A%2F%2Fgithub.com%2Flobehub%2Flobehub
 [share-x-shield]: https://img.shields.io/badge/-share%20on%20x-black?labelColor=black&logo=x&logoColor=white&style=flat-square
-[sponsor-link]: https://opencollective.com/lobehub 'Become ❤️ LobeHub Sponsor'
+[sponsor-link]: https://opencollective.com/lobehub 'Become ❤️ Ethos Sponsor'
 [sponsor-shield]: https://img.shields.io/badge/-Sponsor%20LobeHub-f04f88?logo=opencollective&logoColor=white&style=flat-square
 [submit-agents-link]: https://github.com/lobehub/lobe-chat-agents
 [submit-agents-shield]: https://img.shields.io/badge/🤖/🏪_submit_agent-%E2%86%92-c4f042?labelColor=black&style=for-the-badge

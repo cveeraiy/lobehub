@@ -7,7 +7,7 @@ import { validateInternalJWT } from '@/libs/trpc/utils/internalJwt';
 
 import { asyncTrpc } from './init';
 
-const log = debug('lobe-async:auth');
+const log = debug('ethos-async:auth');
 
 export const asyncAuth = asyncTrpc.middleware(async (opts) => {
   const { ctx } = opts;

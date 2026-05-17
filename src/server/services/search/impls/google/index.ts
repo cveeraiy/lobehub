@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type GoogleResponse, type GoogleSearchParameters } from './type';
 
-const log = debug('lobe-search:Google');
+const log = debug('ethos-search:Google');
 
 const timeRangeMapping = {
   day: 'd1',

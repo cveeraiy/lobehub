@@ -29,7 +29,7 @@ interface Search1APIQueryParams {
   time_range?: string;
 }
 
-const log = debug('lobe-search:search1api');
+const log = debug('ethos-search:search1api');
 
 /**
  * Search1API implementation of the search service

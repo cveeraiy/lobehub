@@ -7,7 +7,7 @@ import { createNodeRequest, createNodeResponse } from '@/libs/oidc-provider/http
 import { oidcRequestStorage } from '@/libs/oidc-provider/requestContext';
 import { getOIDCProvider } from '@/server/services/oidc/oidcProvider';
 
-const log = debug('lobe-oidc:route'); // Create a debug instance with a namespace
+const log = debug('ethos-oidc:route'); // Create a debug instance with a namespace
 
 const handler = async (req: Request) =>
   oidcRequestStorage.run(req, async () => {

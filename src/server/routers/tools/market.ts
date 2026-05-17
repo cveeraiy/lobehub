@@ -22,7 +22,7 @@ import {
 
 import { scheduleToolCallReport } from './_helpers';
 
-const log = debug('lobe-server:tools:market');
+const log = debug('ethos-server:tools:market');
 
 // ============================== Common Procedure ==============================
 const marketToolProcedure = authedProcedure
@@ -49,9 +49,9 @@ const marketToolProcedure = authedProcedure
     });
   });
 
-// ============================== LobeHub Skill Procedures ==============================
+// ============================== Ethos Skill Procedures ==============================
 /**
- * LobeHub Skill procedure with SDK and optional auth
+ * Ethos Skill procedure with SDK and optional auth
  * Used for routes that may work without auth (like listing providers)
  */
 const lobehubSkillBaseProcedure = authedProcedure
@@ -61,7 +61,7 @@ const lobehubSkillBaseProcedure = authedProcedure
   .use(marketSDK);
 
 /**
- * LobeHub Skill procedure with required auth
+ * Ethos Skill procedure with required auth
  * Used for routes that require user authentication
  */
 const lobehubSkillAuthProcedure = lobehubSkillBaseProcedure.use(requireMarketAuth);
@@ -388,9 +388,9 @@ export const marketRouter = router({
     .input(execInSandboxSchema)
     .mutation(({ input, ctx }) => execInSandboxHandler({ ctx, input })),
 
-  // ============================== LobeHub Skill ==============================
+  // ============================== Ethos Skill ==============================
   /**
-   * Call a LobeHub Skill tool
+   * Call an Ethos Skill tool
    */
   connectCallTool: lobehubSkillAuthProcedure
     .input(

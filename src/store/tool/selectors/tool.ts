@@ -87,7 +87,7 @@ const getRenderDisplayControl =
     )?.renderDisplayControl;
     if (manifestControl) return manifestControl;
 
-    // Fallback for packages that don't ship a LobeChat manifest (e.g. Claude Code —
+    // Fallback for packages that don't ship an Ethos manifest (e.g. Claude Code —
     // its tools come from Anthropic tool_use blocks at runtime).
     return getBuiltinRenderDisplayControl(identifier, apiName) ?? 'collapsed';
   };
@@ -104,9 +104,9 @@ export interface AvailableToolForDiscovery {
  *
  * Sources:
  * 1. Builtin tools (from s.builtinTools) — exclude non-discoverable, skills, platform-unavailable
- * 2. User-installed plugins (from s.installedPlugins) — exclude Klavis/LobeHub Skill/agent skill overlap
+ * 2. User-installed plugins (from s.installedPlugins) — exclude Klavis/Ethos Skill/agent skill overlap
  * 3. Klavis MCP servers (connected) — description from KLAVIS_SERVER_TYPES
- * 4. LobeHub Skill servers (connected) — description from LOBEHUB_SKILL_PROVIDERS
+ * 4. Ethos Skill servers (connected) — description from LOBEHUB_SKILL_PROVIDERS
  */
 const availableToolsForDiscovery = (s: ToolStoreState): AvailableToolForDiscovery[] => {
   // Build exclusion sets for deduplication
@@ -127,7 +127,7 @@ const availableToolsForDiscovery = (s: ToolStoreState): AvailableToolForDiscover
     }));
 
   // 2. User-installed plugins — directly from s.installedPlugins
-  //    Exclude Klavis, LobeHub Skill, and agent skill entries (they are handled in dedicated sources)
+  //    Exclude Klavis, Ethos Skill, and agent skill entries (they are handled in dedicated sources)
   const pluginItems = s.installedPlugins
     .filter((p) => !klavisIds.has(p.identifier))
     .filter((p) => !lobehubSkillIds.has(p.identifier))
@@ -155,7 +155,7 @@ const availableToolsForDiscovery = (s: ToolStoreState): AvailableToolForDiscover
       };
     });
 
-  // 4. LobeHub Skill servers (connected only)
+  // 4. Ethos Skill servers (connected only)
   const lobehubSkillItems = (s.lobehubSkillServers || [])
     .filter((server) => server.status === LobehubSkillStatus.CONNECTED)
     .map((server) => {

@@ -3,11 +3,11 @@ import { type LobehubSkillServer } from './types';
 import { LobehubSkillStatus } from './types';
 
 /**
- * LobeHub Skill Store Selectors
+ * Ethos Skill Store Selectors
  */
 export const lobehubSkillStoreSelectors = {
   /**
-   * Get all LobeHub Skill server identifiers as a set
+   * Get all Ethos Skill server identifiers as a set
    */
   getAllServerIdentifiers: (s: ToolStoreState): Set<string> => {
     const servers = s.lobehubSkillServers || [];
@@ -43,12 +43,12 @@ export const lobehubSkillStoreSelectors = {
     s.lobehubSkillServers?.find((server) => server.identifier === identifier),
 
   /**
-   * Get all LobeHub Skill servers
+   * Get all Ethos Skill servers
    */
   getServers: (s: ToolStoreState): LobehubSkillServer[] => s.lobehubSkillServers || [],
 
   /**
-   * Check if the given identifier is a LobeHub Skill server
+   * Check if the given identifier is an Ethos Skill server
    * @param identifier - Provider identifier (e.g., 'linear')
    */
   isLobehubSkillServer:
@@ -74,8 +74,8 @@ export const lobehubSkillStoreSelectors = {
   },
 
   /**
-   * Get all LobeHub Skill tools as LobeTool format for agent use
-   * Converts LobeHub Skill tools into the format expected by ToolNameResolver
+   * Get all Ethos Skill tools as LobeTool format for agent use
+   * Converts Ethos Skill tools into the format expected by ToolNameResolver
    */
   lobehubSkillAsLobeTools: (s: ToolStoreState) => {
     const servers = s.lobehubSkillServers || [];
@@ -116,7 +116,7 @@ export const lobehubSkillStoreSelectors = {
   },
 
   /**
-   * Get metadata list for all connected LobeHub Skill servers
+   * Get metadata list for all connected Ethos Skill servers
    * Used by toolSelectors.metaList for unified tool metadata resolution
    */
   metaList: (s: ToolStoreState) => {

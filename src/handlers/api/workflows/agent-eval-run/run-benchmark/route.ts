@@ -6,7 +6,7 @@ import { getServerDB } from '@/database/server';
 import { qstashClient } from '@/libs/qstash';
 import { AgentEvalRunWorkflow, type RunBenchmarkPayload } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:run-benchmark');
+const log = debug('ethos-server:workflows:run-benchmark');
 
 /**
  * Run benchmark workflow - entry point for agent eval run execution

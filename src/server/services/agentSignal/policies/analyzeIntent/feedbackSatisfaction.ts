@@ -18,7 +18,7 @@ import { defineSourceHandler } from '../../runtime/middleware';
 import type { ClassifierDiagnosticsService, SatisfactionClassifierService } from '../../services';
 import type { AgentSignalFeedbackSatisfactionStagePayload } from '../types';
 
-const log = debug('lobe-server:agent-signal:feedback-satisfaction:agent');
+const log = debug('ethos-server:agent-signal:feedback-satisfaction:agent');
 
 const FeedbackEvidenceSchema = z.object({
   cue: z.string(),

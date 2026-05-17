@@ -5,7 +5,7 @@ import debug from 'debug';
 import { type TrustedClientUserInfo } from '@/libs/trusted-client';
 import { generateTrustedClientToken, getTrustedClientTokenForSession } from '@/libs/trusted-client';
 
-const log = debug('lobe-server:market-service');
+const log = debug('ethos-server:market-service');
 
 const MARKET_BASE_URL = process.env.MARKET_BASE_URL || 'https://market.lobehub.com';
 
@@ -122,7 +122,7 @@ export class MarketService {
   // ============================== Feedback Methods ==============================
 
   /**
-   * Submit feedback to LobeHub
+   * Submit feedback to Ethos
    */
   async submitFeedback(params: {
     clientInfo?: {
@@ -390,7 +390,7 @@ export class MarketService {
   // ============================== Skills Methods (using SDK) ==============================
 
   /**
-   * Search for skills in the LobeHub Market
+   * Search for skills in the Ethos Market
    */
   async searchSkill(params: {
     category?: string;
@@ -457,7 +457,7 @@ export class MarketService {
   }
 
   /**
-   * Execute a LobeHub Skill tool
+   * Execute an Ethos Skill tool
    * @param params - The skill execution parameters (provider, toolName, args)
    * @returns Execution result with content and success status
    */
@@ -482,7 +482,7 @@ export class MarketService {
       };
     } catch (error) {
       const err = error as Error;
-      console.error('MarketService.executeLobehubSkill error %s/%s: %O', provider, toolName, err);
+      console.error('MarketService.executeEthosSkill error %s/%s: %O', provider, toolName, err);
 
       // MarketAPIError carries the full error response body from the API,
       // including structured details (command, exitCode, stdout, stderr).
@@ -503,7 +503,7 @@ export class MarketService {
   }
 
   /**
-   * Fetch LobeHub Skills manifests from Market API
+   * Fetch Ethos Skills manifests from Market API
    * Gets user's connected skills and builds tool manifests for agent execution
    *
    * @returns Array of tool manifests for connected skills

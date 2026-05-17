@@ -7,7 +7,7 @@ import { qstashClient } from '@/libs/qstash';
 import { AgentEvalRunService } from '@/server/services/agentEvalRun';
 import { type FinalizeRunPayload } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:finalize-run');
+const log = debug('ethos-server:workflows:finalize-run');
 
 /**
  * Finalize run workflow - aggregates per-case evaluation results and updates run metrics

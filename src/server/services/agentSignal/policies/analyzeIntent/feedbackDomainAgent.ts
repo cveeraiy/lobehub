@@ -14,7 +14,7 @@ import type {
   AgentSignalFeedbackSatisfactionResult,
 } from '../types';
 
-const log = debug('lobe-server:agent-signal:feedback-domain:agent');
+const log = debug('ethos-server:agent-signal:feedback-domain:agent');
 
 type FeedbackDomainJudgeTarget = AgentSignalFeedbackPhase1DomainTarget | 'none';
 

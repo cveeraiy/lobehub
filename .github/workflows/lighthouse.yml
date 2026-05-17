@@ -13,7 +13,7 @@ env:
 on:
   schedule:
     - cron: '0 0 * * *' # every day
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   lighthouse-badger-advanced:
@@ -24,11 +24,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - NAME: 'LobeChat | Chat'
+          - NAME: 'Ethos | Chat'
             URLS: 'https://lobechat.com/chat'
             BADGES_ARGS: '-b pagespeed -o lighthouse/chat -r'
             COMMIT_MESSAGE: '🤖 chore: Lighthouse Results | Chat'
-          - NAME: 'LobeChat | Market'
+          - NAME: 'Ethos | Market'
             URLS: 'https://lobechat.com/discover'
             BADGES_ARGS: '-b pagespeed -o lighthouse/discover -r'
             COMMIT_MESSAGE: '🤖 chore: Lighthouse Results | Discover'

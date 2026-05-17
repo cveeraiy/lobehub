@@ -459,7 +459,7 @@ async function main(): Promise<void> {
   }
 
   console.log(`
-${colors.cyan('🤯 LobeHub E2E Environment Setup')}
+${colors.cyan('🤯 Ethos E2E Environment Setup')}
 ${'─'.repeat(50)}
 `);
 

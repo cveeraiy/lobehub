@@ -52,7 +52,7 @@ import {
   renderSenderRejected,
 } from './replyTemplate';
 
-const log = debug('lobe-server:bot:message-router');
+const log = debug('ethos-server:bot:message-router');
 
 /**
  * Compact summary of a Chat SDK Message's attachments for debug logging.

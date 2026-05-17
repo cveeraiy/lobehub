@@ -25,7 +25,7 @@ import { generateUniqueSeeds } from '@/utils/number';
 
 import { validateNoUrlsInConfig } from './utils';
 
-const log = debug('lobe-image:lambda');
+const log = debug('ethos-image:lambda');
 
 const imageProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

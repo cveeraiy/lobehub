@@ -25,7 +25,7 @@ import {
   splitMessage,
 } from './replyTemplate';
 
-const log = debug('lobe-server:bot:callback');
+const log = debug('ethos-server:bot:callback');
 
 // --------------- Callback body types ---------------
 

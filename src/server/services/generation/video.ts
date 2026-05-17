@@ -16,7 +16,7 @@ import { FileService } from '@/server/services/file';
 import { calculateThumbnailDimensions } from '@/utils/number';
 import { getYYYYmmddHHMMss } from '@/utils/time';
 
-const log = debug('lobe-video:generation-service');
+const log = debug('ethos-video:generation-service');
 const execFileAsync = promisify(execFile);
 
 let _ffmpegPath: string | null = null;

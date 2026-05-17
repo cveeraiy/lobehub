@@ -2,7 +2,7 @@ import debug from 'debug';
 
 import { getBotMessageRouter } from '@/server/services/bot';
 
-const log = debug('lobe-server:bot:webhook-route');
+const log = debug('ethos-server:bot:webhook-route');
 
 /**
  * Unified webhook endpoint for Chat SDK bot platforms.

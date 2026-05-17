@@ -10,7 +10,7 @@ import { FileS3 } from '@/server/modules/S3';
 
 import { type FileServiceImpl } from './type';
 
-const log = debug('lobe-file:s3');
+const log = debug('ethos-file:s3');
 
 const PRESIGNED_PREVIEW_CACHE_SAFETY_SECONDS = 60;
 const PRESIGNED_PREVIEW_CACHE_MAX_SECONDS = 3600;

@@ -13,7 +13,7 @@ import { type MessageDispatch } from './reducer';
 import { messagesReducer } from './reducer';
 import { dataSelectors } from './selectors';
 
-const log = debug('lobe-render:features:Conversation');
+const log = debug('ethos-render:features:Conversation');
 
 const mergeFetchedMessagesWithLocalState = (
   fetchedMessages: UIChatMessage[],

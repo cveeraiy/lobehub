@@ -15,7 +15,7 @@ import debug from 'debug';
 
 import { ServicesError } from '@/server/services/comfyui/errors';
 
-const log = debug('lobe-image:comfyui:auth');
+const log = debug('ethos-image:comfyui:auth');
 
 export class ComfyUIAuthService {
   private credentials: BasicCredentials | BearerTokenCredentials | CustomCredentials | undefined;

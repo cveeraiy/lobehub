@@ -36,7 +36,7 @@ import { AsyncTaskStatus, AsyncTaskType } from '@/types/asyncTask';
 
 import { createVideoTaskSubmitError } from './error';
 
-const log = debug('lobe-video:lambda');
+const log = debug('ethos-video:lambda');
 
 const videoProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

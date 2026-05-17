@@ -207,8 +207,12 @@ export class MarketApiService {
 
   // ==================== Skills API ====================
 
+  async listCreds() {
+    return lambdaClient.market.creds.list.query();
+  }
+
   /**
-   * Search for skills in the LobeHub Market
+   * Search for skills in the Ethos Market
    */
   async searchSkill(params: {
     category?: string;

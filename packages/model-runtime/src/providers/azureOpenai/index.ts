@@ -11,7 +11,7 @@ import type { CreateImagePayload } from '../../types/image';
 import { AgentRuntimeError } from '../../utils/createError';
 import { sanitizeError } from '../../utils/sanitizeError';
 
-const azureImageLogger = debug('lobe-image:azure');
+const azureImageLogger = debug('ethos-image:azure');
 const azureSearchContextSize = process.env.OPENAI_SEARCH_CONTEXT_SIZE;
 
 const isAzureReasoningModel = (model: string) =>

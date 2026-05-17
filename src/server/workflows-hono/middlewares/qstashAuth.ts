@@ -3,7 +3,7 @@ import type { MiddlewareHandler } from 'hono';
 
 import { verifyQStashSignature } from '@/libs/qstash';
 
-const log = debug('lobe-server:workflows:qstash-auth');
+const log = debug('ethos-server:workflows:qstash-auth');
 
 /**
  * Hono middleware that verifies the `Upstash-Signature` header on incoming

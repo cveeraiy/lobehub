@@ -18,7 +18,7 @@ import { normalizeListTasksParams } from '../listTasks';
 import { TaskIdentifier } from '../manifest';
 import { TaskApiName } from '../types';
 
-const log = debug('lobe-task:executor');
+const log = debug('ethos-task:executor');
 
 class TaskExecutor extends BaseExecutor<typeof TaskApiName> {
   readonly identifier = TaskIdentifier;

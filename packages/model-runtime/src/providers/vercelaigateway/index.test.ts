@@ -41,7 +41,7 @@ describe('LobeVercelAIGatewayAI - custom features', () => {
       expect(params.constructorOptions).toBeDefined();
       expect(params.constructorOptions?.defaultHeaders).toEqual({
         'http-referer': 'https://lobehub.com',
-        'x-title': 'LobeHub',
+        'x-title': 'Ethos',
       });
     });
   });

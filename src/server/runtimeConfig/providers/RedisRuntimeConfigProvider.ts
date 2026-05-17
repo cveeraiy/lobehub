@@ -10,7 +10,7 @@ import type {
   VersionedSnapshot,
 } from '../types';
 
-const log = debug('lobe:runtime-config');
+const log = debug('ethos:runtime-config');
 
 interface CacheRecord<T> {
   expiresAt: number;

@@ -4,9 +4,9 @@ import { type SendGroupMessageParams } from '@lobechat/types';
 import { nanoid } from '@lobechat/utils';
 import debug from 'debug';
 
-import { lambdaClient } from '@/libs/trpc/client';
 import { type StreamEvent } from '@/services/agentRuntime/resolved';
 import { agentRuntimeClient } from '@/services/agentRuntime/resolved';
+import { aiAgentService } from '@/services/aiAgent.resolved';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
@@ -92,9 +92,15 @@ export class ChatGroupChatActionImpl {
     try {
       // 2. Call backend execGroupAgent - creates messages and triggers Agent
       // Pass AbortSignal to allow cancellation during the API call
-      const result = await lambdaClient.aiAgent.execGroupAgent.mutate(
-        { agentId, files: fileIds, groupId, message, topicId },
-        { signal: execAbortController.signal },
+      const result = await aiAgentService.execGroupAgent(
+        {
+          agentId,
+          files: fileIds,
+          groupId,
+          message,
+          topicId,
+        },
+        execAbortController.signal,
       );
 
       log(

@@ -26,7 +26,7 @@ import { getServerDB } from '@/database/server';
 import { VideoGenerationService } from '@/server/services/generation/video';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
 
-const log = debug('lobe-video:webhook');
+const log = debug('ethos-video:webhook');
 
 /** Constant-time string comparison that handles different lengths safely */
 const safeCompare = (a: string, b: string): boolean => {

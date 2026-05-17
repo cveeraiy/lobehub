@@ -59,8 +59,8 @@ import {
 } from './messagePersistErrors';
 import { type IStreamEventManager } from './types';
 
-const log = debug('lobe-server:agent-runtime:streaming-executors');
-const timing = debug('lobe-server:agent-runtime:timing');
+const log = debug('ethos-server:agent-runtime:streaming-executors');
+const timing = debug('ethos-server:agent-runtime:timing');
 
 const VALID_DOCUMENT_POSITIONS = new Set<AgentContextDocument['loadPosition']>(
   AGENT_DOCUMENT_INJECTION_POSITIONS,

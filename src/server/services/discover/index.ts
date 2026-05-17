@@ -71,7 +71,7 @@ import { AssistantStore } from '@/server/modules/AssistantStore';
 import { PluginStore } from '@/server/modules/PluginStore';
 import { MarketService } from '@/server/services/market';
 
-const log = debug('lobe-server:discover');
+const log = debug('ethos-server:discover');
 
 export interface DiscoverServiceOptions {
   /** Access token from OIDC flow (legacy) */

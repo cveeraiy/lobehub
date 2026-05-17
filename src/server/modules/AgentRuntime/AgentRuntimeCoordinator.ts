@@ -5,7 +5,7 @@ import { type AgentOperationMetadata, type StepResult } from './AgentStateManage
 import { createAgentStateManager, createStreamEventManager } from './factory';
 import { type IAgentStateManager, type IStreamEventManager } from './types';
 
-const log = debug('lobe-server:agent-runtime:coordinator');
+const log = debug('ethos-server:agent-runtime:coordinator');
 
 /**
  * Statuses that end the event stream for the current operationId.

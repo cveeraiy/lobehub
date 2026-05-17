@@ -78,7 +78,7 @@ const fetchPricing = async (
       return await parsePricingResponse(pricingResponse);
     }
   } catch (error) {
-    console.debug('Failed to fetch NewAPI pricing info:', error);
+    console.info('Failed to fetch NewAPI pricing info:', error);
     return null;
   }
 };
@@ -88,7 +88,7 @@ export const params = {
     chatCompletion: () => process.env.DEBUG_NEWAPI_CHAT_COMPLETION === '1',
   },
   defaultHeaders: {
-    'X-Client': 'LobeHub',
+    'X-Client': 'Ethos',
   },
   id: ModelProvider.NewAPI,
   models: async ({ client: openAIClient }) => {
@@ -122,7 +122,7 @@ export const params = {
           // Assumption: model_price is the price per 1,000 tokens (i.e., $/1K tokens).
           // To convert to price per 1,000,000 tokens ($/1M tokens), multiply by 1,000,000 / 1,000 = 1,000.
           // Since the base price is $0.002/1K tokens, multiplying by 2 gives $2/1M tokens.
-          // Therefore, inputPrice = model_price * 2 converts the price to $/1M tokens for LobeChat.
+          // Therefore, inputPrice = model_price * 2 converts the price to $/1M tokens for Ethos.
           inputPrice = pricing.model_price * 2;
         } else if (pricing.model_ratio) {
           // model_ratio × $0.002/1K = model_ratio × $2/1M
@@ -168,7 +168,7 @@ export const params = {
         // - model_price: directly specified price (takes priority)
         // - completion_ratio: output price multiplier relative to input price
         //
-        // LobeChat required format: USD per million tokens
+        // Ethos required format: USD per million tokens
 
         const pricingData = calculatePricing(pricing);
         if (pricingData) {

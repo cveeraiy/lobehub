@@ -8,7 +8,7 @@ import { type Redis } from 'ioredis';
 
 import { getAgentRuntimeRedisClient } from './redis';
 
-const log = debug('lobe-server:agent-runtime:agent-state-manager');
+const log = debug('ethos-server:agent-runtime:agent-state-manager');
 
 export interface StepResult {
   events?: AgentEvent[];

@@ -5,7 +5,7 @@ import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
 import { getServerDB } from '@/database/server';
 
-const log = debug('lobe-server:workflows:task:watchdog');
+const log = debug('ethos-server:workflows:task:watchdog');
 
 /**
  * Cron-style watchdog. Scans all `running` tasks where

@@ -1,29 +1,90 @@
 import { INBOX_SESSION_ID } from '@/const/session';
 import { restClient } from '@/libs/rest';
-import { type BatchTaskResult } from '@/types/service';
-import {
-  type ChatTopic,
-  type CreateTopicParams,
-  type QueryTopicParams,
-  type RecentTopic,
-  type TopicRankItem,
+import type { BatchTaskResult } from '@/types/service';
+import type {
+  ChatTopic,
+  ChatTopicMetadata,
+  CreateTopicParams,
+  QueryTopicParams,
+  RecentTopic,
+  TopicRankItem,
 } from '@/types/topic';
+
+type OnboardingSessionMetadataPatch = Partial<NonNullable<ChatTopicMetadata['onboardingSession']>>;
+
+type UpdateTopicMetadataInput = Omit<Partial<ChatTopicMetadata>, 'onboardingSession'> & {
+  onboardingSession?: OnboardingSessionMetadataPatch;
+};
+
+interface RawTopic {
+  agent_id?: string | null;
+  created_at?: string | null;
+  favorite?: boolean;
+  history_summary?: string | null;
+  id: string;
+  metadata?: ChatTopicMetadata | null;
+  session_id?: string | null;
+  status?: ChatTopic['status'] | null;
+  title?: string | null;
+  updated_at?: string | null;
+}
+
+interface RawTopicRankItem {
+  id: string;
+  message_count?: number;
+  session_id?: string | null;
+  title?: string | null;
+}
+
+const toTimestamp = (value?: string | null) => (value ? new Date(value).getTime() : 0);
+
+const toTopic = (topic: RawTopic): ChatTopic => ({
+  createdAt: toTimestamp(topic.created_at),
+  favorite: topic.favorite,
+  historySummary: topic.history_summary ?? undefined,
+  id: topic.id,
+  metadata: topic.metadata ?? undefined,
+  sessionId: topic.session_id ?? undefined,
+  status: topic.status,
+  title: topic.title ?? '',
+  updatedAt: toTimestamp(topic.updated_at),
+});
+
+const toTopicBody = (topic: Partial<ChatTopic>) => ({
+  favorite: topic.favorite,
+  history_summary: topic.historySummary,
+  metadata: topic.metadata,
+  session_id: topic.sessionId,
+  status: topic.status,
+  title: topic.title,
+});
+
+const toCreateTopicBody = (params: CreateTopicParams) => ({
+  agent_id: undefined,
+  favorite: params.favorite,
+  group_id: params.groupId,
+  session_id: params.sessionId,
+  title: params.title,
+  trigger: params.trigger,
+});
 
 export class TopicService {
   createTopic = async (params: CreateTopicParams): Promise<string> => {
     const res = await restClient.post<{ id: string }>('/topics', {
-      body: { ...params, sessionId: this.toDbSessionId(params.sessionId) },
+      body: toCreateTopicBody({ ...params, sessionId: this.toDbSessionId(params.sessionId) }),
     });
     return res.id;
   };
 
   batchCreateTopics = (importTopics: ChatTopic[]): Promise<BatchTaskResult> => {
-    return restClient.post<BatchTaskResult>('/topics/batch', { body: importTopics });
+    return restClient.post<BatchTaskResult>('/topics/batch', {
+      body: { topics: importTopics.map(toTopicBody) },
+    });
   };
 
   cloneTopic = async (id: string, newTitle?: string): Promise<string> => {
     const res = await restClient.post<{ id: string }>(`/topics/${id}/clone`, {
-      body: { newTitle },
+      body: { new_title: newTitle },
     });
     return res.id;
   };
@@ -33,23 +94,30 @@ export class TopicService {
     data: string;
     groupId?: string | null;
   }): Promise<{ messageCount: number; topicId: string }> => {
-    return restClient.post('/topics/import', { body: params });
+    return restClient
+      .post<{ id: string; message_count?: number }>('/topics/import', {
+        body: { agent_id: params.agentId, data: params.data, group_id: params.groupId },
+      })
+      .then((result) => ({ messageCount: result.message_count ?? 0, topicId: result.id }));
   };
 
   getTopics = async (params: QueryTopicParams): Promise<{ items: ChatTopic[]; total: number }> => {
-    return restClient.get('/topics', {
+    const topics = await restClient.get<RawTopic[]>('/topics', {
       params: {
-        agent_id: params.agentId,
+        agent_id: params.agentId ?? undefined,
         current: params.current,
-        group_id: params.groupId,
+        group_id: params.groupId ?? undefined,
         is_inbox: params.isInbox,
         page_size: params.pageSize,
-      } as any,
+      },
     });
+
+    const items = topics.map(toTopic);
+    return { items, total: items.length };
   };
 
   getAllTopics = (): Promise<ChatTopic[]> => {
-    return restClient.get<ChatTopic[]>('/topics/all');
+    return restClient.get<RawTopic[]>('/topics/all').then((topics) => topics.map(toTopic));
   };
 
   countTopics = async (params?: {
@@ -60,15 +128,26 @@ export class TopicService {
     startDate?: string;
   }): Promise<number> => {
     const res = await restClient.get<{ count: number }>('/topics/count', {
-      params: params as any,
+      params: {
+        agent_id: params?.agentId,
+        container_id: params?.containerId ?? undefined,
+        end_date: params?.endDate,
+        start_date: params?.startDate,
+      },
     });
     return res.count;
   };
 
   rankTopics = async (limit?: number): Promise<TopicRankItem[]> => {
-    return restClient.get<TopicRankItem[]>('/topics/rank', {
+    const items = await restClient.get<RawTopicRankItem[]>('/topics/rank', {
       params: limit ? { limit } : undefined,
     });
+    return items.map((item) => ({
+      count: item.message_count ?? 0,
+      id: item.id,
+      sessionId: item.session_id ?? null,
+      title: item.title ?? null,
+    }));
   };
 
   getRecentTopics = async (limit?: number): Promise<RecentTopic[]> => {
@@ -78,17 +157,19 @@ export class TopicService {
   };
 
   searchTopics = (keywords: string, agentId?: string, groupId?: string): Promise<ChatTopic[]> => {
-    return restClient.get<ChatTopic[]>('/topics', {
-      params: { agent_id: agentId, group_id: groupId, q: keywords } as any,
-    });
+    return restClient
+      .get<RawTopic[]>('/topics/search', {
+        params: { agent_id: agentId, group_id: groupId, keywords },
+      })
+      .then((topics) => topics.map(toTopic));
   };
 
   updateTopic = (id: string, data: Partial<ChatTopic>) => {
-    return restClient.put(`/topics/${id}`, { body: data });
+    return restClient.put(`/topics/${id}`, { body: toTopicBody(data) });
   };
 
-  updateTopicMetadata = (id: string, metadata: Record<string, any>) => {
-    return restClient.put(`/topics/${id}/metadata`, { body: metadata });
+  updateTopicMetadata = (id: string, metadata: UpdateTopicMetadataInput) => {
+    return restClient.put(`/topics/${id}`, { body: { metadata } });
   };
 
   getShareInfo = (topicId: string) => {

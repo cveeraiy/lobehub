@@ -91,7 +91,7 @@ export const LobeHubList = memo<LobeHubListProps>(({ keywords }) => {
       items.push({ tool, type: 'builtin' });
     }
 
-    // Add LobeHub skills
+    // Add Ethos skills
     if (isLobehubSkillEnabled) {
       for (const provider of LOBEHUB_SKILL_PROVIDERS) {
         items.push({ provider, type: 'lobehub' });

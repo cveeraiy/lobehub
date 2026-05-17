@@ -173,9 +173,9 @@ agent-browser state save auth.json
 agent-browser state load auth.json
 ```
 
-### LobeHub dev server — inject better-auth cookie
+### Ethos dev server — inject better-auth cookie
 
-`agent-browser --headed` on macOS can create an off-screen Chromium window, blocking manual login. For a local LobeHub dev server (e.g. `localhost:3011`), copy the `better-auth.session_token` cookie out of a **Network request** in the user's own Chrome DevTools and load it via `state load`. See [references/agent-browser-login.md](./references/agent-browser-login.md) for the full recipe.
+`agent-browser --headed` on macOS can create an off-screen Chromium window, blocking manual login. For a local Ethos dev server (e.g. `localhost:3011`), copy the `better-auth.session_token` cookie out of a **Network request** in the user's own Chrome DevTools and load it via `state load`. See [references/agent-browser-login.md](./references/agent-browser-login.md) for the full recipe.
 
 ## Semantic Locators (Alternative to Refs)
 
@@ -265,7 +265,7 @@ Use `-p <provider>` to run against cloud browsers: `agentcore`, `browserbase`, `
 agent-browser --engine lightpanda open example.com # 10x faster, 10x less memory
 ```
 
-## Electron (LobeHub Desktop)
+## Electron (Ethos Desktop)
 
 ### Setup / Teardown
 
@@ -300,7 +300,7 @@ After `start` succeeds, connect with: `agent-browser --cdp 9222 snapshot -i`
 | `ELECTRON_WAIT_S` | `60`                    | Max seconds to wait for Electron process |
 | `RENDERER_WAIT_S` | `60`                    | Max seconds to wait for SPA to load      |
 
-### LobeHub-Specific Patterns
+### Ethos-Specific Patterns
 
 #### Access Zustand Store State
 

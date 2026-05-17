@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { enqueueAgentSignalSourceEvent } from '@/server/services/agentSignal';
 
-const log = debug('lobe-server:agent-signal:router');
+const log = debug('ethos-server:agent-signal:router');
 
 const agentSignalProcedure = authedProcedure;
 const clientSourceTypes = AGENT_SIGNAL_CLIENT_SOURCE_TYPES;

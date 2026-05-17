@@ -12,7 +12,7 @@ import { FileService } from '@/server/services/file';
 
 import { SkillResourceError } from './errors';
 
-const log = debug('lobe-chat:service:skill-resource');
+const log = debug('ethos-chat:service:skill-resource');
 
 function isTextMimeType(mimeType: string): boolean {
   if (mimeType.startsWith('text/')) return true;

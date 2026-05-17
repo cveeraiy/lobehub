@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends
@@ -15,6 +16,10 @@ from app.models.agent import Agent
 from app.models.session import SessionGroup
 
 router = APIRouter(prefix="/api/home", tags=["Home"])
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 @router.get("/sidebar-agents")
@@ -37,7 +42,7 @@ async def get_sidebar_agent_list(
     # Get all agents
     agents_stmt = (
         select(Agent)
-        .where(Agent.user_id == user_id)
+        .where(and_(Agent.user_id == user_id, Agent.virtual.is_(False)))
         .order_by(desc(Agent.pinned), desc(Agent.updated_at))
     )
     agents = (await session.execute(agents_stmt)).scalars().all()
@@ -61,9 +66,9 @@ async def get_sidebar_agent_list(
         "groups": [
             {
                 "id": g.id,
+                "items": grouped.get(g.id, []),
                 "name": g.name,
                 "sort": g.sort,
-                "agents": grouped.get(g.id, []),
             }
             for g in groups
         ],
@@ -119,13 +124,13 @@ async def update_agent_session_group_id(
 def _sidebar_agent(a: Agent) -> dict[str, Any]:
     return {
         "id": a.id,
-        "slug": a.slug,
-        "title": a.title,
-        "description": a.description,
         "avatar": a.avatar,
         "backgroundColor": a.background_color,
-        "pinned": a.pinned,
-        "sessionGroupId": a.session_group_id,
-        "model": a.model,
-        "updatedAt": a.updated_at.isoformat() if a.updated_at else None,
+        "description": a.description,
+        "heterogeneousType": None,
+        "pinned": bool(a.pinned),
+        "sessionId": None,
+        "title": a.title,
+        "type": "agent",
+        "updatedAt": a.updated_at.isoformat() if a.updated_at else _now().isoformat(),
     }

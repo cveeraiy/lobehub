@@ -344,8 +344,9 @@ describe('DataImporter', () => {
       const session1 = await serverDB.query.sessions.findFirst({
         where: eq(sessions.clientId, 'session1'),
       });
+      expect(session1).toBeDefined();
       const session1Agent = await serverDB.query.agentsToSessions.findFirst({
-        where: eq(agentsToSessions.sessionId, session1?.id!),
+        where: eq(agentsToSessions.sessionId, session1!.id),
         with: { agent: true },
       });
 
@@ -354,8 +355,9 @@ describe('DataImporter', () => {
       const session2 = await serverDB.query.sessions.findFirst({
         where: eq(sessions.clientId, 'session2'),
       });
+      expect(session2).toBeDefined();
       const session2Agent = await serverDB.query.agentsToSessions.findFirst({
-        where: eq(agentsToSessions.sessionId, session2?.id!),
+        where: eq(agentsToSessions.sessionId, session2!.id),
         with: { agent: true },
       });
 
@@ -877,7 +879,7 @@ describe('DataImporter', () => {
                 },
                 plugins: [],
                 systemRole:
-                  "You are a LobeChat technical operator 🍐🐊. You now need to write a developer's guide for LobeChat as a guide for them to develop LobeChat. This guide will include several sections, and you need to output the corresponding document content based on the user's input.\n\nHere is the technical introduction of LobeChat\n\n    LobeChat is an AI conversation application built with the Next.js framework. It uses a series of technology stacks to implement various functions and features.\n\n\n    ## Basic Technology Stack\n\n    The core technology stack of LobeChat is as follows:\n\n    - **Framework**: We chose [Next.js](https://nextjs.org/), a powerful React framework that provides key features such as server-side rendering, routing framework, and Router Handler for our project.\n    - **Component Library**: We use [Ant Design (antd)](https://ant.design/) as the basic component library, and introduce [lobe-ui](https://github.com/lobehub/lobe-ui) as our business component library.\n    - **State Management**: We use [zustand](https://github.com/pmndrs/zustand), a lightweight and easy-to-use state management library.\n    - **Network Request**: We adopt [swr](https://swr.vercel.app/), a React Hooks library for data fetching.\n    - **Routing**: We directly use the routing solution provided by [Next.js](https://nextjs.org/) itself.\n    - **Internationalization**: We use [i18next](https://www.i18next.com/) to implement multi-language support for the application.\n    - **Styling**: We use [antd-style](https://github.com/ant-design/antd-style), a CSS-in-JS library that is compatible with Ant Design.\n    - **Unit Testing**: We use [vitest](https://github.com/vitejs/vitest) for unit testing.\n\n    ## Folder Directory Structure\n\n    The folder directory structure of LobeChat is as follows:\n\n    \\`\\`\\`bash\n    src\n    ├── app        # Main logic and state management related code of the application\n    ├── components # Reusable UI components\n    ├── config     # Application configuration files, including client environment variables and server environment variables\n    ├── const      # Used to define constants, such as action types, route names, etc.\n    ├── features   # Function modules related to business functions, such as Agent settings, plugin development pop-ups, etc.\n    ├── hooks      # Custom utility Hooks reused throughout the application\n    ├── layout     # Layout components of the application, such as navigation bar, sidebar, etc.\n    ├── locales    # Language files for internationalization\n    ├── services   # Encapsulated backend service interfaces, such as HTTP requests\n    ├── store      # Zustand store for state management\n    ├── types      # TypeScript type definition files\n    └── utils      # Common utility functions\n    \\`\\`\\`\n",
+                  "You are an Ethos technical operator 🍐🐊. You now need to write a developer's guide for Ethos as a guide for them to develop Ethos. This guide will include several sections, and you need to output the corresponding document content based on the user's input.\n\nHere is the technical introduction of Ethos\n\n    Ethos is an AI conversation application built with the Next.js framework. It uses a series of technology stacks to implement various functions and features.\n\n\n    ## Basic Technology Stack\n\n    The core technology stack of Ethos is as follows:\n\n    - **Framework**: We chose [Next.js](https://nextjs.org/), a powerful React framework that provides key features such as server-side rendering, routing framework, and Router Handler for our project.\n    - **Component Library**: We use [Ant Design (antd)](https://ant.design/) as the basic component library, and introduce [lobe-ui](https://github.com/lobehub/lobe-ui) as our business component library.\n    - **State Management**: We use [zustand](https://github.com/pmndrs/zustand), a lightweight and easy-to-use state management library.\n    - **Network Request**: We adopt [swr](https://swr.vercel.app/), a React Hooks library for data fetching.\n    - **Routing**: We directly use the routing solution provided by [Next.js](https://nextjs.org/) itself.\n    - **Internationalization**: We use [i18next](https://www.i18next.com/) to implement multi-language support for the application.\n    - **Styling**: We use [antd-style](https://github.com/ant-design/antd-style), a CSS-in-JS library that is compatible with Ant Design.\n    - **Unit Testing**: We use [vitest](https://github.com/vitejs/vitest) for unit testing.\n\n    ## Folder Directory Structure\n\n    The folder directory structure of Ethos is as follows:\n\n    \\`\\`\\`bash\n    src\n    ├── app        # Main logic and state management related code of the application\n    ├── components # Reusable UI components\n    ├── config     # Application configuration files, including client environment variables and server environment variables\n    ├── const      # Used to define constants, such as action types, route names, etc.\n    ├── features   # Function modules related to business functions, such as Agent settings, plugin development pop-ups, etc.\n    ├── hooks      # Custom utility Hooks reused throughout the application\n    ├── layout     # Layout components of the application, such as navigation bar, sidebar, etc.\n    ├── locales    # Language files for internationalization\n    ├── services   # Encapsulated backend service interfaces, such as HTTP requests\n    ├── store      # Zustand store for state management\n    ├── types      # TypeScript type definition files\n    └── utils      # Common utility functions\n    \\`\\`\\`\n",
                 tts: {
                   showAllLocaleVoice: false,
                   sttLocale: 'auto',
@@ -896,7 +898,7 @@ describe('DataImporter', () => {
               meta: {
                 avatar: '📝',
                 description:
-                  'LobeChat is an AI conversation application built with the Next.js framework. I will help you write the development documentation for LobeChat.',
+                  'Ethos is an AI conversation application built with the Next.js framework. I will help you write the development documentation for Ethos.',
                 tags: [
                   'Development Documentation',
                   'Technical Introduction',
@@ -904,7 +906,7 @@ describe('DataImporter', () => {
                   'react',
                   'lobe-chat',
                 ],
-                title: 'LobeChat Technical Documentation Expert',
+                title: 'Ethos Technical Documentation Expert',
               },
               type: 'agent',
               createdAt: '2024-01-24T16:43:12.164Z',

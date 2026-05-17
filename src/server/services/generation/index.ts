@@ -12,7 +12,7 @@ import { calculateThumbnailDimensions } from '@/utils/number';
 import { getYYYYmmddHHMMss } from '@/utils/time';
 import { inferFileExtensionFromImageUrl } from '@/utils/url';
 
-const log = debug('lobe-image:generation-service');
+const log = debug('ethos-image:generation-service');
 
 /**
  * Fetch image buffer and MIME type from URL or base64 data

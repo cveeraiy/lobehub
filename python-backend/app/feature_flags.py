@@ -1,4 +1,4 @@
-"""Feature-flag system compatible with the LobeHub TS frontend.
+"""Feature-flag system compatible with the Ethos TS frontend.
 
 Flags are read from the ``FEATURE_FLAGS`` env var (via ``settings``).
 Format: comma-separated tokens, each prefixed with ``+`` (enable) or ``-`` (disable).

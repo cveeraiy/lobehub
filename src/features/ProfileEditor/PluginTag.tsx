@@ -34,7 +34,7 @@ const KlavisIcon = memo<Pick<KlavisServerType, 'icon' | 'label'>>(({ icon, label
 });
 
 /**
- * LobeHub Skill Provider icon component
+ * Ethos Skill Provider icon component
  */
 const LobehubSkillIcon = memo<Pick<LobehubSkillProviderType, 'icon' | 'label'>>(
   ({ icon, label }) => {
@@ -110,7 +110,7 @@ const PluginTag = memo<PluginTagProps>(
     const allKlavisServers = useToolStore(klavisStoreSelectors.getServers, isEqual);
     const isKlavisEnabledInEnv = useServerConfigStore(serverConfigSelectors.enableKlavis);
 
-    // LobeHub Skill-related state
+    // Ethos Skill-related state
     const allLobehubSkillServers = useToolStore(lobehubSkillStoreSelectors.getServers, isEqual);
     const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
 
@@ -136,7 +136,7 @@ const PluginTag = memo<PluginTagProps>(
         }
       }
 
-      // Check if it's a LobeHub Skill provider
+      // Check if it's an Ethos Skill provider
       if (isLobehubSkillEnabled) {
         const lobehubSkillProvider = LOBEHUB_SKILL_PROVIDERS.find((p) => p.id === identifier);
         if (lobehubSkillProvider) {
@@ -228,7 +228,7 @@ const PluginTag = memo<PluginTagProps>(
         return <KlavisIcon icon={meta.icon} label={meta.label} />;
       }
 
-      // LobeHub Skill type has icon property
+      // Ethos Skill type has icon property
       if (meta.type === 'lobehub-skill' && 'icon' in meta && 'label' in meta) {
         return <LobehubSkillIcon icon={meta.icon} label={meta.label} />;
       }

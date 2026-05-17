@@ -47,7 +47,7 @@ import { sleep } from '@/utils/sleep';
 import { StreamingHandler } from './StreamingHandler';
 import { type StreamChunk } from './types/streaming';
 
-const log = debug('lobe-store:agent-executors');
+const log = debug('ethos-store:agent-executors');
 
 // Tool pricing configuration (USD per call)
 const TOOL_PRICING: Record<string, number> = {

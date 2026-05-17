@@ -1,7 +1,7 @@
 {
   "name": "@lobehub/lobehub",
   "version": "2.1.56",
-  "description": "LobeHub - an open-source,comprehensive AI Agent framework that supports speech synthesis, multimodal, and extensible Function Call plugin system. Supports one-click free deployment of your private ChatGPT/LLM web application.",
+  "description": "Ethos - an open-source,comprehensive AI Agent framework that supports speech synthesis, multimodal, and extensible Function Call plugin system. Supports one-click free deployment of your private ChatGPT/LLM web application.",
   "keywords": [
     "framework",
     "chatbot",
@@ -23,7 +23,7 @@
     "url": "https://github.com/lobehub/lobehub.git"
   },
   "license": "MIT",
-  "author": "LobeHub <i@lobehub.com>",
+  "author": "Ethos <i@lobehub.com>",
   "sideEffects": [
     "./src/initialize.ts"
   ],

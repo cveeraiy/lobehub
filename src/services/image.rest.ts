@@ -3,7 +3,7 @@ import debug from 'debug';
 import { restClient } from '@/libs/rest';
 import { type CreateImageServicePayload } from '@/server/routers/lambda/image';
 
-const log = debug('lobe-image:service');
+const log = debug('ethos-image:service');
 
 export class AiImageService {
   async createImage(payload: CreateImageServicePayload) {

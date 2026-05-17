@@ -8,7 +8,7 @@ import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { buildSuggestionPrompt } from './prompts';
 import { RawResponseSchema, SUGGESTION_RESPONSE_JSON_SCHEMA } from './schema';
 
-const log = debug('lobe-server:follow-up-action-service');
+const log = debug('ethos-server:follow-up-action-service');
 
 const EMPTY_RESULT = (messageId: string): FollowUpExtractResult => ({ chips: [], messageId });
 

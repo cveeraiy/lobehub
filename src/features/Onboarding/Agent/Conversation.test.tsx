@@ -8,7 +8,7 @@ import AgentOnboardingConversation from './Conversation';
 
 // Prevent unhandled rejections from @splinetool/runtime fetching remote assets in CI
 vi.mock('@lobehub/ui/brand', () => ({
-  LobeHub: () => null,
+  Ethos: () => null,
   LogoThree: () => null,
 }));
 

@@ -4,7 +4,7 @@ Frontend: src/services/social.rest.ts
 Prefix: /api/social
 
 The social features (follow, favorite, like) are managed by the external
-LobeHub Market API. This router proxies requests from the frontend REST client
+Ethos Market API. This router proxies requests from the frontend REST client
 to that external API, forwarding auth headers.
 """
 

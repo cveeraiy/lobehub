@@ -21,7 +21,7 @@ import { isAgentSignalEnabledForUser } from './featureGate';
 import type { GeneratedAgentSignalEmissionResult } from './orchestrator';
 import type { CreateDefaultAgentSignalPoliciesOptions } from './policies';
 
-const log = debug('lobe-server:agent-signal:service');
+const log = debug('ethos-server:agent-signal:service');
 
 export interface AgentSignalExecutionContext {
   agentId?: string;

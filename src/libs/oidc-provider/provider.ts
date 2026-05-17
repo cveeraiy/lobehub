@@ -14,7 +14,7 @@ import { DrizzleAdapter } from './adapter';
 import { defaultClaims, defaultClients, defaultScopes } from './config';
 import { createInteractionPolicy } from './interaction-policy';
 
-const logProvider = debug('lobe-oidc:provider');
+const logProvider = debug('ethos-oidc:provider');
 
 export const API_AUDIENCE = 'urn:lobehub:chat';
 

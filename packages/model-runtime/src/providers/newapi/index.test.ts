@@ -3,7 +3,6 @@ import { ModelProvider } from 'model-bank';
 import type { Mock } from 'vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { responsesAPIModels } from '../../const/models';
 import type { ChatStreamPayload } from '../../types/chat';
 import * as modelParseModule from '../../utils/modelParse';
 import type { NewAPIModelCard, NewAPIPricing } from './index';
@@ -14,7 +13,7 @@ vi.mock('../../utils/modelParse');
 
 // Mock console methods
 vi.spyOn(console, 'error').mockImplementation(() => {});
-vi.spyOn(console, 'debug').mockImplementation(() => {});
+vi.spyOn(console, 'info').mockImplementation(() => {});
 
 // Type definitions for test data
 interface MockPricingResponse {
@@ -26,7 +25,6 @@ describe('NewAPI Runtime - 100% Branch Coverage', () => {
   let mockFetch: Mock;
   let mockProcessMultiProviderModelList: Mock;
   let mockDetectModelProvider: Mock;
-  let mockResponsesAPIModels: typeof responsesAPIModels;
 
   beforeEach(() => {
     // Setup fetch mock
@@ -36,7 +34,6 @@ describe('NewAPI Runtime - 100% Branch Coverage', () => {
     // Setup utility function mocks
     mockProcessMultiProviderModelList = vi.mocked(modelParseModule.processMultiProviderModelList);
     mockDetectModelProvider = vi.mocked(modelParseModule.detectModelProvider);
-    mockResponsesAPIModels = responsesAPIModels;
 
     // Clear environment variables
     delete process.env.DEBUG_NEWAPI_CHAT_COMPLETION;
@@ -242,14 +239,9 @@ describe('NewAPI Runtime - 100% Branch Coverage', () => {
       });
 
       it('should handle network error (Branch 3.18: error handling)', () => {
-        let errorCaught = false;
-        try {
+        expect(() => {
           throw new Error('Network error');
-        } catch (error) {
-          errorCaught = true;
-          expect(error).toBeInstanceOf(Error);
-        }
-        expect(errorCaught).toBe(true);
+        }).toThrow('Network error');
       });
     });
 
@@ -667,7 +659,7 @@ describe('NewAPI Runtime - 100% Branch Coverage', () => {
 
     it('should export params with correct defaultHeaders', () => {
       expect(params.defaultHeaders).toEqual({
-        'X-Client': 'LobeHub',
+        'X-Client': 'Ethos',
       });
     });
 
@@ -1076,7 +1068,7 @@ describe('NewAPI Runtime - 100% Branch Coverage', () => {
 
       const result = await params.models({ client: mockClient as any });
 
-      expect(console.debug).toHaveBeenCalledWith(
+      expect(console.info).toHaveBeenCalledWith(
         'Failed to fetch NewAPI pricing info:',
         expect.any(Error),
       );

@@ -7,7 +7,7 @@ import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { AiAgentService } from '@/server/services/aiAgent';
 
-const log = debug('lobe-server:agent-notify-router');
+const log = debug('ethos-server:agent-notify-router');
 
 const agentNotifyProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

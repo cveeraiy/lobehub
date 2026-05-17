@@ -1,7 +1,7 @@
 import debug from 'debug';
 import type { Redis } from 'ioredis';
 
-const log = debug('lobe-server:agent-runtime:tool-result-waiter');
+const log = debug('ethos-server:agent-runtime:tool-result-waiter');
 
 export interface ToolResultPayload {
   content: string | null;

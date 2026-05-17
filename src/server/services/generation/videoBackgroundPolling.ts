@@ -12,7 +12,7 @@ import { FileSource } from '@/types/files';
 import type { VideoGenerationAsset } from '@/types/generation';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
 
-const log = debug('lobe-video:background-polling');
+const log = debug('ethos-video:background-polling');
 
 interface BackgroundPollingParams {
   asyncTaskCreatedAt: Date;

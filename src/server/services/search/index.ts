@@ -10,7 +10,7 @@ import { createSearchServiceImpl } from './impls';
 
 const DEFAULT_CRAWL_CONCURRENCY = 3;
 const DEFAULT_CRAWLER_RETRY = 1;
-const log = debug('lobe-oom:web-browsing:search-service');
+const log = debug('ethos-oom:web-browsing:search-service');
 
 const parseImplEnv = (envString: string = '') => {
   // Handle full-width commas and extra whitespace

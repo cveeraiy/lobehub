@@ -23,7 +23,7 @@ const StateChangeSchema = z.object({
 /**
  * Receive connection state-change callbacks from the external message gateway.
  * When a persistent connection (e.g. Discord WebSocket) transitions to
- * "connected" or "error" asynchronously, the gateway POSTs here so LobeHub
+ * "connected" or "error" asynchronously, the gateway POSTs here so Ethos
  * can update the bot runtime status visible to users.
  *
  * Authenticated with MESSAGE_GATEWAY_SERVICE_TOKEN.

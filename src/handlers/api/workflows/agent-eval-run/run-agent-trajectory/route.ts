@@ -9,7 +9,7 @@ import {
   type RunAgentTrajectoryPayload,
 } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:run-agent-trajectory');
+const log = debug('ethos-server:workflows:run-agent-trajectory');
 
 /**
  * Run agent trajectory workflow - executes a single agent runtime call

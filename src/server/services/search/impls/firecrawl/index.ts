@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type FirecrawlResponse, type FirecrawlSearchParameters } from './type';
 
-const log = debug('lobe-search:Firecrawl');
+const log = debug('ethos-search:Firecrawl');
 
 const timeRangeMapping = {
   day: 'qdr:d',

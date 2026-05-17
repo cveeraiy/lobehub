@@ -3,7 +3,7 @@ import debug from 'debug';
 import { type StreamChunkData, type StreamEvent } from './StreamEventManager';
 import { type IStreamEventManager } from './types';
 
-const log = debug('lobe-server:agent-runtime:in-memory-stream-event-manager');
+const log = debug('ethos-server:agent-runtime:in-memory-stream-event-manager');
 
 const getDefaultReasonDetail = (finalState: any, reason?: string): string => {
   if (reason === 'error') {

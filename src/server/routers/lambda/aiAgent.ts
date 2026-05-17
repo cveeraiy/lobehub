@@ -22,7 +22,7 @@ import {
 import { bridgePythonStream } from '@/server/services/pythonStreamBridge';
 import { nanoid } from '@/utils/uuid';
 
-const log = debug('lobe-server:ai-agent-router');
+const log = debug('ethos-server:ai-agent-router');
 
 const extractTaskErrorMessage = (error: unknown): string | undefined => {
   if (!error || typeof error !== 'object') return undefined;

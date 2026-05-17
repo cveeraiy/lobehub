@@ -18,7 +18,7 @@
     "type": "git",
     "url": "https://github.com/lobehub/lobehub.git"
   },
-  "author": "LobeHub <i@lobehub.com>",
+  "author": "Ethos <i@lobehub.com>",
   "sideEffects": false,
   "main": "./src/index.ts",
   "scripts": {

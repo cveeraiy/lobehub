@@ -16,7 +16,7 @@ import { dbMessageSelectors } from '../../message/selectors';
 import { type RemoteToolExecutor } from './exector';
 import { klavisExecutor, lobehubSkillExecutor } from './exector';
 
-const log = debug('lobe-store:plugin-types');
+const log = debug('ethos-store:plugin-types');
 
 /**
  * Plugin type-specific implementations
@@ -46,7 +46,7 @@ export class PluginTypesActionImpl {
       return await this.#get().invokeKlavisTypePlugin(id, payload);
     }
 
-    // Check if this is a LobeHub Skill tool by source field
+    // Check if this is an Ethos Skill tool by source field
     if (payload.source === 'lobehubSkill') {
       return await this.#get().invokeLobehubSkillTypePlugin(id, payload);
     }

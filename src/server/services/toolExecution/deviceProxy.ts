@@ -8,7 +8,7 @@ import debug from 'debug';
 
 import { gatewayEnv } from '@/envs/gateway';
 
-const log = debug('lobe-server:device-proxy');
+const log = debug('ethos-server:device-proxy');
 
 export type { DeviceAttachment, DeviceStatusResult, DeviceSystemInfo };
 

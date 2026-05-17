@@ -362,7 +362,7 @@ describe('AiAgentService.execAgent - builtin agent runtime config', () => {
     );
   });
 
-  it('should not inject lobe-agent when the LobeHub routed model supports visual media natively', async () => {
+  it('should not inject lobe-agent when the Ethos routed model supports visual media natively', async () => {
     mockGetAgentConfig.mockResolvedValue({
       chatConfig: {},
       id: 'agent-custom',

@@ -19,7 +19,7 @@ import type { LobeChatDatabase, Transaction } from '../type';
 import { FileModel } from './file';
 
 // Create debug logger
-const log = debug('lobe-image:generation-model');
+const log = debug('ethos-image:generation-model');
 
 export class GenerationModel {
   private db: LobeChatDatabase;

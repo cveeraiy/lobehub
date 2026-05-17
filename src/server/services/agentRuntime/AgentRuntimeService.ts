@@ -47,7 +47,7 @@ if (process.env.VERCEL) {
   debug.log = console.log.bind(console);
 }
 
-const log = debug('lobe-server:agent-runtime-service');
+const log = debug('ethos-server:agent-runtime-service');
 
 /**
  * Formats an error into ChatMessageError structure

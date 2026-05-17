@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type KagiResponse, type KagiSearchParameters } from './type';
 
-const log = debug('lobe-search:Kagi');
+const log = debug('ethos-search:Kagi');
 
 /**
  * Kagi implementation of the search service

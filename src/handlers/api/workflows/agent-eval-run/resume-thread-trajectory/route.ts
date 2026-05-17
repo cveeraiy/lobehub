@@ -6,7 +6,7 @@ import { qstashClient } from '@/libs/qstash';
 import { AgentEvalRunService } from '@/server/services/agentEvalRun';
 import type { ResumeThreadTrajectoryPayload } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:resume-thread-trajectory');
+const log = debug('ethos-server:workflows:resume-thread-trajectory');
 
 export const { POST } = serve<ResumeThreadTrajectoryPayload>(
   async (context) => {

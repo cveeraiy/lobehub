@@ -177,7 +177,7 @@ CommandMenuContent.displayName = 'CommandMenuContent';
 /**
  * CMDK Menu.
  *
- * Search everything in LobeHub.
+ * Search everything in Ethos.
  */
 const CommandMenu = memo(() => {
   const [open, setOpen] = useGlobalStore((s) => [s.status.showCommandMenu, s.updateSystemStatus]);

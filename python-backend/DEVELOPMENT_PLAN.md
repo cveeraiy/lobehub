@@ -1,8 +1,8 @@
-# LobeHub Python Backend MVP — Development Plan
+# Ethos Python Backend MVP — Development Plan
 
 ## Overview
 
-Port of LobeHub's core backend to Python using FastAPI, SQLModel, Alembic, and Keycloak.
+Port of Ethos's core backend to Python using FastAPI, SQLModel, Alembic, and Keycloak.
 
 **Stack:** FastAPI + SQLModel + Alembic + litellm + Keycloak (OIDC) + PostgreSQL (pgvector) + S3/MinIO
 
@@ -287,7 +287,7 @@ Implements 9 production-quality builtin tools to replace stubs and complete the 
 ### 15c. Skills, Skill Store, Activator (`services/builtin_tools.py`)
 
 - [x] `skills` executor — `findAll`, `findByName`, `readResource`, `runCommand` (sandbox), `execScript` (multi-lang sandbox)
-- [x] `skill_store` — `searchSkill` (LobeHub market API + local fallback), `importFromUrl`, `importFromGitHub`, `importFromMarket`
+- [x] `skill_store` — `searchSkill` (Ethos market API + local fallback), `importFromUrl`, `importFromGitHub`, `importFromMarket`
 - [x] `activator` — `activateTools` (resolve manifests from user/builtin skills, track activated set), `activateSkill` (single-skill shorthand)
 - [x] `BUILTIN_TOOL_SCHEMAS` — 11 new schemas for skills/store/activator APIs (double-underscore naming)
 

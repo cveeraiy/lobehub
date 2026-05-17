@@ -20,7 +20,7 @@ import {
 } from './types';
 import { createMCPError } from './types';
 
-const log = debug('lobe-mcp:client');
+const log = debug('ethos-mcp:client');
 // MCP tool call timeout (milliseconds), configurable via the environment variable MCP_TOOL_TIMEOUT, default is 60000
 // Parse MCP_TOOL_TIMEOUT, only use if it's a valid positive number, otherwise fallback to default 60000
 const MCP_TOOL_TIMEOUT = (() => {

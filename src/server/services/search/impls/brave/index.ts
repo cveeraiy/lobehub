@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type BraveResponse, type BraveSearchParameters } from './type';
 
-const log = debug('lobe-search:Brave');
+const log = debug('ethos-search:Brave');
 
 const timeRangeMapping = {
   day: 'pd',

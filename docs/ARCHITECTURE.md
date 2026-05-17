@@ -1,6 +1,6 @@
-# LobeHub Architecture
+# Ethos Architecture
 
-> Comprehensive architecture reference for the LobeHub monorepo.
+> Comprehensive architecture reference for the Ethos monorepo.
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@
 
 ## System Overview
 
-LobeHub is an open-source AI agent framework that combines a conversational UI, multi-model AI backend, plugin/skill ecosystem, and enterprise configurability into a single full-stack application.
+Ethos is an open-source AI agent framework that combines a conversational UI, multi-model AI backend, plugin/skill ecosystem, and enterprise configurability into a single full-stack application.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -89,7 +89,7 @@ LobeHub is an open-source AI agent framework that combines a conversational UI, 
 lobehub/
 ├── apps/                          # Standalone applications
 │   ├── desktop/                   #   Electron desktop app
-│   ├── cli/                       #   LobeHub CLI (@lobehub/cli)
+│   ├── cli/                       #   Ethos CLI (@lobehub/cli)
 │   └── device-gateway/            #   Device gateway service
 │
 ├── packages/                      # Shared packages (~72 packages)
@@ -663,7 +663,7 @@ Tools, adapters, and infrastructure are isolated into \~72 packages under `packa
 
 ## Licensing
 
-- **LobeHub Community License** (based on Apache 2.0)
+- **Ethos Community License** (based on Apache 2.0)
 - Free for commercial use as-is (no source modification)
 - Commercial license required for derivative works that are distributed
 - Enterprise/commercial branding flags (`commercial_hide_github`, `commercial_hide_docs`) require a commercial license

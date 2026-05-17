@@ -2,7 +2,7 @@ import debug from 'debug';
 import { interactionPolicy } from 'oidc-provider';
 
 const { base } = interactionPolicy; // Import Check and base
-const log = debug('lobe-oidc:interaction-policy');
+const log = debug('ethos-oidc:interaction-policy');
 
 /**
  * Create custom interaction policy

@@ -27,7 +27,7 @@ import type {
   UpdateDocumentResult,
 } from './types';
 
-const log = debug('lobe-chat:service:document');
+const log = debug('ethos-chat:service:document');
 
 export class DocumentService {
   userId: string;

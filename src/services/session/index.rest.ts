@@ -1,17 +1,104 @@
-import { type PartialDeep } from 'type-fest';
+import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
+import type { PartialDeep } from 'type-fest';
 
 import { restClient } from '@/libs/rest';
-import { type LobeAgentChatConfig, type LobeAgentConfig } from '@/types/agent';
-import { type MetaData } from '@/types/meta';
-import {
-  type ChatSessionList,
-  type LobeAgentSession,
-  type LobeSessions,
-  type LobeSessionType,
-  type SessionGroupItem,
-  type SessionRankItem,
-  type UpdateSessionParams,
+import type { LobeAgentChatConfig, LobeAgentConfig } from '@/types/agent';
+import type { MetaData } from '@/types/meta';
+import type {
+  ChatSessionList,
+  LobeAgentSession,
+  LobeSession,
+  LobeSessions,
+  SessionGroupItem,
+  SessionRankItem,
+  UpdateSessionParams,
 } from '@/types/session';
+import { LobeSessionType } from '@/types/session';
+
+interface RawSession {
+  agent_id?: string | null;
+  created_at?: string | null;
+  group_id?: string | null;
+  id: string;
+  pinned?: boolean;
+  slug?: string | null;
+  type?: LobeSessionType;
+  updated_at?: string | null;
+}
+
+interface RawSessionGroup {
+  created_at?: string | null;
+  id: string;
+  name: string;
+  sort?: number | null;
+  updated_at?: string | null;
+}
+
+interface RawGroupedSessions {
+  groups?: RawSessionGroup[];
+  sessionGroups?: RawSessionGroup[];
+  sessions: RawSession[] | Record<string, RawSession[]>;
+}
+
+const toDate = (value?: string | null) => (value ? new Date(value) : new Date(0));
+
+const toSessionGroup = (group: RawSessionGroup): SessionGroupItem => ({
+  createdAt: toDate(group.created_at),
+  id: group.id,
+  name: group.name,
+  sort: group.sort,
+  updatedAt: toDate(group.updated_at),
+});
+
+const toSession = (session: RawSession): LobeSession => {
+  const base = {
+    createdAt: toDate(session.created_at),
+    group: session.group_id ?? undefined,
+    id: session.id,
+    meta: {},
+    pinned: session.pinned,
+    updatedAt: toDate(session.updated_at),
+  };
+
+  if (session.type === LobeSessionType.Group) {
+    return { ...base, type: LobeSessionType.Group };
+  }
+
+  return {
+    ...base,
+    config: DEFAULT_AGENT_CONFIG,
+    model: '',
+    type: LobeSessionType.Agent,
+  };
+};
+
+const toSessionList = (sessions: RawGroupedSessions['sessions']): LobeSessions => {
+  const items = Array.isArray(sessions) ? sessions : Object.values(sessions).flat();
+  return items.map(toSession);
+};
+
+const toGroupedSessions = (response: RawGroupedSessions): ChatSessionList => ({
+  sessionGroups: (response.sessionGroups ?? response.groups ?? []).map(toSessionGroup),
+  sessions: toSessionList(response.sessions),
+});
+
+const toSessionBody = (data: Partial<UpdateSessionParams>) => {
+  const { group, meta, pinned, updatedAt } = data;
+
+  return {
+    group_id: group === 'default' ? null : group,
+    pinned,
+    updated_at: updatedAt,
+    ...meta,
+  };
+};
+
+const toAgentConfigBody = (config: PartialDeep<LobeAgentConfig>) => ({
+  chat_config: config.chatConfig,
+  model: config.model,
+  provider: config.provider,
+  system_role: config.systemRole,
+});
 
 /**
  * @deprecated Session service is legacy. Use agentService for agent CRUD operations.
@@ -46,7 +133,7 @@ export class SessionService {
   };
 
   getGroupedSessions = (): Promise<ChatSessionList> => {
-    return restClient.get<ChatSessionList>('/sessions/grouped');
+    return restClient.get<RawGroupedSessions>('/sessions/grouped').then(toGroupedSessions);
   };
 
   countSessions = async (params?: {
@@ -69,12 +156,12 @@ export class SessionService {
   updateSession = (id: string, data: Partial<UpdateSessionParams>) => {
     const { group, pinned, meta, updatedAt } = data;
     return restClient.put(`/sessions/${id}`, {
-      body: { groupId: group === 'default' ? null : group, pinned, ...meta, updatedAt },
+      body: toSessionBody({ group, meta, pinned, updatedAt }),
     });
   };
 
   getSessionConfig = async (id: string): Promise<LobeAgentConfig> => {
-    return restClient.get<LobeAgentConfig>(`/agents/by-session/${id}/config`);
+    return restClient.get<LobeAgentConfig>(`/agents/config-by-session/${id}`);
   };
 
   updateSessionConfig = (
@@ -82,7 +169,7 @@ export class SessionService {
     config: PartialDeep<LobeAgentConfig>,
     signal?: AbortSignal,
   ) => {
-    return restClient.put(`/sessions/${id}/config`, { body: config, signal });
+    return restClient.put(`/sessions/${id}/config`, { body: toAgentConfigBody(config), signal });
   };
 
   updateSessionMeta = (id: string, meta: Partial<MetaData>, signal?: AbortSignal) => {
@@ -94,11 +181,16 @@ export class SessionService {
     value: Partial<LobeAgentChatConfig>,
     signal?: AbortSignal,
   ) => {
-    return restClient.put(`/sessions/${id}/chat-config`, { body: value, signal });
+    return restClient.put(`/sessions/${id}/chat-config`, {
+      body: { chat_config: value },
+      signal,
+    });
   };
 
   searchSessions = (keywords: string): Promise<LobeSessions> => {
-    return restClient.get<LobeSessions>('/sessions', { params: { q: keywords } });
+    return restClient
+      .get<RawSession[]>('/sessions/search', { params: { keywords } })
+      .then((items) => items.map(toSession));
   };
 
   removeSession = (id: string) => {
@@ -106,7 +198,7 @@ export class SessionService {
   };
 
   removeAllSessions = () => {
-    return restClient.delete('/sessions');
+    return restClient.post('/sessions/remove-all');
   };
 
   // ************************************** //
@@ -127,7 +219,7 @@ export class SessionService {
   };
 
   removeSessionGroups = () => {
-    return restClient.delete('/session-groups');
+    return restClient.post('/session-groups/remove-all');
   };
 
   updateSessionGroup = (id: string, value: Partial<SessionGroupItem>) => {

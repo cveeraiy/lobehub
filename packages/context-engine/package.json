@@ -2,7 +2,7 @@
   "name": "@lobechat/context-engine",
   "version": "0.1.0",
   "private": true,
-  "description": "Context Pipeline Engine for LobeChat - A flexible and configurable context processing system",
+  "description": "Context Pipeline Engine for Ethos - A flexible and configurable context processing system",
   "keywords": [
     "context",
     "pipeline",

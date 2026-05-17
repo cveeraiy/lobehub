@@ -4,7 +4,7 @@ import sharp from 'sharp';
 
 import type { FileService } from '@/server/services/file';
 
-const log = debug('lobe-server:file-ingestion');
+const log = debug('ethos-server:file-ingestion');
 
 // --------------- Constants ---------------
 

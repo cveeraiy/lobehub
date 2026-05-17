@@ -12,7 +12,7 @@ import {
   resolveBotProviderConfig,
 } from '@/server/services/bot/platforms';
 
-const log = debug('lobe-server:bot-gateway');
+const log = debug('ethos-server:bot-gateway');
 
 export interface GatewayManagerConfig {
   definitions: PlatformDefinition[];

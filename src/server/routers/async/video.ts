@@ -18,7 +18,7 @@ import { VideoGenerationService } from '@/server/services/generation/video';
 import { FileSource } from '@/types/files';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
 
-const log = debug('lobe-video:async');
+const log = debug('ethos-video:async');
 
 const videoProcedure = asyncAuthedProcedure.use(async (opts) => {
   const { ctx } = opts;

@@ -4,7 +4,7 @@ import type Redis from 'ioredis';
 import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 import { buildRuntimeKey, parseRuntimeKey } from '@/server/services/bot/platforms';
 
-const log = debug('lobe-server:bot:connect-queue');
+const log = debug('ethos-server:bot:connect-queue');
 
 const QUEUE_KEY = 'bot:gateway:connect_queue';
 export const BOT_CONNECT_QUEUE_EXPIRE_MS = 10 * 60 * 1000; // 10 minutes

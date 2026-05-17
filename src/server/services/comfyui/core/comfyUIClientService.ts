@@ -17,7 +17,7 @@ import { ErrorHandlerService } from '@/server/services/comfyui/core/errorHandler
 import { ServicesError } from '@/server/services/comfyui/errors';
 import { TTLCacheManager } from '@/server/services/comfyui/utils/cacheManager';
 
-const log = debug('lobe-image:comfyui:client');
+const log = debug('ethos-image:comfyui:client');
 
 /**
  * Workflow execution result

@@ -8,7 +8,7 @@ import { appEnv } from '@/envs/app';
 import { qstashClient } from '@/libs/qstash';
 import { runScheduleTick } from '@/server/services/taskRunner/scheduleTick';
 
-const log = debug('lobe-server:workflows:task:schedule-dispatch');
+const log = debug('ethos-server:workflows:task:schedule-dispatch');
 
 const SCHEDULE_EXECUTE_PATH = '/api/workflows/task/schedule-execute';
 

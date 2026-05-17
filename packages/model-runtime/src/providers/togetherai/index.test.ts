@@ -36,7 +36,7 @@ describe('LobeTogetherAI - custom features', () => {
     it('should have custom defaultHeaders', () => {
       expect(params.constructorOptions?.defaultHeaders).toEqual({
         'HTTP-Referer': 'https://chat-preview.lobehub.com',
-        'X-Title': 'Lobe Chat',
+        'X-Title': 'Ethos',
       });
     });
 

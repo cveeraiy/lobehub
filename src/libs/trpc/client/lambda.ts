@@ -8,7 +8,7 @@ import superjson from 'superjson';
 import { withElectronProtocolIfElectron } from '@/const/protocol';
 import { type LambdaRouter } from '@/server/routers/lambda';
 
-const log = debug('lobe-image:lambda-client');
+const log = debug('ethos-image:lambda-client');
 
 // 401 error debouncing: prevent showing multiple login notifications in short time
 let last401Time = 0;
@@ -41,7 +41,7 @@ const errorHandlingLink: TRPCLink<LambdaRouter> = () => {
               case 401: {
                 if (isMarketApi) {
                   // Market API 401: emit event for MarketAuthProvider to handle
-                  // Don't trigger LobeChat logout for market auth issues
+                  // Don't trigger Ethos logout for market auth issues
                   const now = Date.now();
                   if (now - lastMarket401Time > MIN_401_INTERVAL) {
                     lastMarket401Time = now;
@@ -54,7 +54,7 @@ const errorHandlingLink: TRPCLink<LambdaRouter> = () => {
                     });
                   }
                 } else {
-                  // Non-market 401: handle as before (LobeChat session expired)
+                  // Non-market 401: handle as before (Ethos session expired)
                   const now = Date.now();
                   if (now - last401Time > MIN_401_INTERVAL) {
                     last401Time = now;

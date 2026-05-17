@@ -28,21 +28,116 @@ export interface MessageQueryContext {
   topicShareId?: string;
 }
 
+interface RestMessage {
+  agent_id?: string | null;
+  content?: string | null;
+  created_at?: string | null;
+  error?: ChatMessageError | null;
+  id: string;
+  message_group_id?: string | null;
+  metadata?: MessageMetadata | null;
+  model?: string | null;
+  parent_id?: string | null;
+  provider?: string | null;
+  role: UIChatMessage['role'];
+  session_id?: string | null;
+  thread_id?: string | null;
+  tool_call_id?: string | null;
+  tools?: UIChatMessage['tools'] | null;
+  topic_id?: string | null;
+  updated_at?: string | null;
+}
+
+const toTimestamp = (value?: string | null) => (value ? Date.parse(value) : Date.now());
+
+const normalizeMessage = (message: RestMessage): UIChatMessage => ({
+  agentId: message.agent_id ?? undefined,
+  content: message.content ?? '',
+  createdAt: toTimestamp(message.created_at),
+  error: message.error ?? undefined,
+  groupId: message.message_group_id ?? undefined,
+  id: message.id,
+  metadata: message.metadata ?? undefined,
+  model: message.model ?? undefined,
+  parentId: message.parent_id ?? undefined,
+  provider: message.provider ?? undefined,
+  role: message.role,
+  sessionId: message.session_id ?? undefined,
+  threadId: message.thread_id ?? undefined,
+  tool_call_id: message.tool_call_id ?? undefined,
+  tools: message.tools ?? undefined,
+  topicId: message.topic_id ?? undefined,
+  updatedAt: toTimestamp(message.updated_at ?? message.created_at),
+});
+
+const queryParams = (params?: MessageQueryContext) => ({
+  agent_id: params?.agentId,
+  group_id: params?.groupId,
+  thread_id: params?.threadId ?? undefined,
+  topic_id: params?.topicId ?? undefined,
+  topic_share_id: params?.topicShareId,
+});
+
+const createBody = (params: CreateMessageParams) => ({
+  agent_id: params.agentId,
+  content: params.content,
+  error: params.error ?? undefined,
+  metadata: params.metadata,
+  model: params.model,
+  parent_id: params.parentId,
+  provider: params.provider,
+  role: params.role,
+  session_id: params.sessionId,
+  thread_id: params.threadId ?? undefined,
+  tool_call_id: params.tool_call_id,
+  tools: params.tools,
+  topic_id: params.topicId,
+});
+
+const updateBody = (value: Partial<UpdateMessageParams>) => ({
+  content: value.content,
+  error: value.error ?? undefined,
+  model: value.model,
+  provider: value.provider,
+  tools: value.tools,
+});
+
+const pluginBody = (value: Partial<Omit<MessagePluginItem, 'id'>>) => ({
+  api_name: value.apiName,
+  arguments: value.arguments,
+  error: value.error,
+  identifier: value.identifier,
+  state: value.state,
+  tool_call_id: value.toolCallId,
+  type: value.type,
+});
+
+const compressionBody = (params: {
+  agentId: string;
+  groupId?: string | null;
+  messageGroupId?: string;
+  messageIds?: string[];
+  threadId?: string | null;
+  topicId: string;
+}) => ({
+  agent_id: params.agentId,
+  group_id: params.groupId ?? undefined,
+  message_group_id: params.messageGroupId,
+  message_ids: params.messageIds,
+  thread_id: params.threadId ?? undefined,
+  topic_id: params.topicId,
+});
+
 export class MessageService {
   createMessage = async (params: CreateMessageParams): Promise<CreateMessageResult> => {
-    return restClient.post<CreateMessageResult>('/messages', { body: params });
+    return restClient.post<CreateMessageResult>('/messages', { body: createBody(params) });
   };
 
   getMessages = async (params: MessageQueryContext): Promise<UIChatMessage[]> => {
-    return restClient.get<UIChatMessage[]>('/messages', {
-      params: {
-        agent_id: params.agentId,
-        group_id: params.groupId,
-        thread_id: params.threadId ?? undefined,
-        topic_id: params.topicId ?? undefined,
-        topic_share_id: params.topicShareId,
-      } as any,
+    const messages = await restClient.get<RestMessage[]>('/messages', {
+      params: queryParams(params),
     });
+    return messages.map(normalizeMessage);
   };
 
   countMessages = async (params?: {
@@ -61,10 +156,10 @@ export class MessageService {
     range?: [string, string];
     startDate?: string;
   }): Promise<number> => {
-    const res = await restClient.get<{ count: number }>('/messages/count-words', {
+    const res = await restClient.get<{ words: number }>('/messages/count-words', {
       params: params as any,
     });
-    return res.count;
+    return res.words;
   };
 
   rankModels = async (): Promise<ModelRankItem[]> => {
@@ -80,14 +175,15 @@ export class MessageService {
       ? value
       : { body: value, message: value.message, type: 'ApplicationRuntimeError' };
 
-    return restClient.put(`/messages/${id}`, {
-      body: { ...ctx, value: { error } },
+    return restClient.put<UpdateMessageResult>(`/messages/${id}`, {
+      body: { error },
+      params: queryParams(ctx),
     });
   };
 
   updateMessagePluginArguments = async (id: string, value: string | Record<string, any>) => {
     const args = typeof value === 'string' ? value : JSON.stringify(value);
-    return restClient.put(`/messages/${id}/plugin`, { body: { value: { arguments: args } } });
+    return restClient.put(`/messages/${id}/plugin`, { body: { arguments: args } });
   };
 
   updateToolArguments = async (
@@ -96,7 +192,8 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ) => {
     return restClient.put('/messages/tool-arguments', {
-      body: { ...ctx, toolCallId, value },
+      body: { tool_call_id: toolCallId, value },
+      params: queryParams(ctx),
     });
   };
 
@@ -106,16 +203,29 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
     return restClient.put<UpdateMessageResult>(`/messages/${id}`, {
-      body: { ...ctx, value },
+      body: updateBody(value),
+      params: queryParams(ctx),
     });
   };
 
   updateMessageTranslate = async (id: string, translate: Partial<ChatTranslate> | false) => {
-    return restClient.put(`/messages/${id}/translate`, { body: { value: translate } });
+    return restClient.put(`/messages/${id}/translate`, {
+      body:
+        translate === false
+          ? undefined
+          : { content: translate.content, from_lang: translate.from, to: translate.to },
+      params: { remove: translate === false ? true : undefined },
+    });
   };
 
   updateMessageTTS = async (id: string, tts: Partial<ChatTTS> | false) => {
-    return restClient.put(`/messages/${id}/tts`, { body: { value: tts } });
+    return restClient.put(`/messages/${id}/tts`, {
+      body:
+        tts === false
+          ? undefined
+          : { content_md5: tts.contentMd5, file: tts.file, voice: tts.voice },
+      params: { remove: tts === false ? true : undefined },
+    });
   };
 
   updateMessageMetadata = async (
@@ -124,7 +234,8 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
     return restClient.put<UpdateMessageResult>(`/messages/${id}/metadata`, {
-      body: { ...ctx, value },
+      body: value,
+      params: queryParams(ctx),
     });
   };
 
@@ -134,7 +245,8 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
     return restClient.put<UpdateMessageResult>(`/messages/${id}/plugin-state`, {
-      body: { ...ctx, value },
+      body: value,
+      params: queryParams(ctx),
     });
   };
 
@@ -144,7 +256,8 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
     return restClient.put<UpdateMessageResult>(`/messages/${id}/plugin-error`, {
-      body: { ...ctx, value: error },
+      body: error,
+      params: queryParams(ctx),
     });
   };
 
@@ -154,7 +267,8 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
     return restClient.put<UpdateMessageResult>(`/messages/${id}/plugin`, {
-      body: { ...ctx, value },
+      body: pluginBody(value),
+      params: queryParams(ctx),
     });
   };
 
@@ -164,7 +278,10 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
     return restClient.put<UpdateMessageResult>(`/messages/${id}/rag`, {
-      body: { ...ctx, value: data },
+      body: {
+        rag_query_id: data.ragQueryId,
+      },
+      params: queryParams(ctx),
     });
   };
 
@@ -178,8 +295,14 @@ export class MessageService {
     },
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
-    return restClient.put<UpdateMessageResult>(`/messages/${id}/tool`, {
-      body: { ...ctx, value },
+    return restClient.put<UpdateMessageResult>(`/messages/${id}/tool-message`, {
+      body: {
+        content: value.content,
+        metadata: value.metadata,
+        plugin_error: value.pluginError,
+        plugin_state: value.pluginState,
+      },
+      params: queryParams(ctx),
     });
   };
 
@@ -193,25 +316,25 @@ export class MessageService {
     ids: string[],
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
-    return restClient.post<UpdateMessageResult>('/messages/batch-delete', {
+    return restClient.post<UpdateMessageResult>('/messages/remove-batch', {
       body: { ...ctx, ids },
     });
   };
 
   removeMessagesByAssistant = async (sessionId: string, topicId?: string) => {
-    return restClient.delete('/messages', {
-      params: { session_id: sessionId, topic_id: topicId } as any,
+    return restClient.post('/messages/remove-by-assistant', {
+      params: { session_id: sessionId, topic_id: topicId },
     });
   };
 
   removeMessagesByGroup = async (groupId: string, topicId?: string) => {
-    return restClient.delete('/messages', {
-      params: { group_id: groupId, topic_id: topicId } as any,
+    return restClient.post('/messages/remove-by-group', {
+      params: { group_id: groupId, topic_id: topicId },
     });
   };
 
   removeAllMessages = async () => {
-    return restClient.delete('/messages');
+    return restClient.post('/messages/remove-all');
   };
 
   addFilesToMessage = async (
@@ -220,7 +343,8 @@ export class MessageService {
     ctx?: MessageQueryContext,
   ): Promise<UpdateMessageResult> => {
     return restClient.post<UpdateMessageResult>(`/messages/${id}/files`, {
-      body: { ...ctx, fileIds },
+      body: { file_ids: fileIds },
+      params: queryParams(ctx),
     });
   };
 
@@ -237,7 +361,18 @@ export class MessageService {
     messages: UIChatMessage[];
     messagesToSummarize: UIChatMessage[];
   }> => {
-    return restClient.post('/messages/compression-group', { body: params });
+    const result = await restClient.post<{ message_group_id: string }>(
+      '/messages/compression-group',
+      {
+        body: compressionBody({ ...params, messageIds: params.messageIds }),
+      },
+    );
+
+    return {
+      messageGroupId: result.message_group_id,
+      messages: [],
+      messagesToSummarize: [],
+    };
   };
 
   finalizeCompression = async (params: {
@@ -248,7 +383,11 @@ export class MessageService {
     threadId?: string | null;
     topicId: string;
   }): Promise<{ messages?: UIChatMessage[] }> => {
-    return restClient.post('/messages/compression-group/finalize', { body: params });
+    await restClient.post('/messages/compression-group/finalize', {
+      body: { ...compressionBody(params), content: params.content },
+    });
+
+    return { messages: [] };
   };
 
   updateMessageGroupMetadata = async (params: {
@@ -261,7 +400,11 @@ export class MessageService {
     expanded?: boolean;
     messageGroupId: string;
   }): Promise<{ messages: UIChatMessage[] }> => {
-    return restClient.put('/messages/group-metadata', { body: params });
+    await restClient.put(`/messages/${params.messageGroupId}/group-metadata`, {
+      body: { context: params.context, expanded: params.expanded },
+    });
+
+    return { messages: [] };
   };
 
   cancelCompression = async (params: {
@@ -271,7 +414,9 @@ export class MessageService {
     threadId?: string | null;
     topicId: string;
   }): Promise<{ messages: UIChatMessage[] }> => {
-    return restClient.post('/messages/compression-group/cancel', { body: params });
+    await restClient.post('/messages/compression-group/cancel', { body: compressionBody(params) });
+
+    return { messages: [] };
   };
 }
 

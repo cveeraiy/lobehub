@@ -7,7 +7,7 @@ import { conversationSelectors, useConversationStore } from '@/features/Conversa
 import { type MinimapIndicator } from './types';
 import { getIndicatorWidth, getPreviewText } from './utils';
 
-const log = debug('lobe-react:chat-minimap');
+const log = debug('ethos-react:chat-minimap');
 
 export const useMinimapData = () => {
   const scrollMethods = useConversationStore(conversationSelectors.virtuaScrollMethods);

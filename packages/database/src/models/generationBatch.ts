@@ -19,7 +19,7 @@ import { generationBatches } from '../schemas/generation';
 import type { LobeChatDatabase } from '../type';
 import { GenerationModel } from './generation';
 
-const log = debug('lobe-image:generation-batch-model');
+const log = debug('ethos-image:generation-batch-model');
 
 export class GenerationBatchModel {
   private db: LobeChatDatabase;

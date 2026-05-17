@@ -5,7 +5,7 @@ import { type OIDCProvider } from '@/libs/oidc-provider/provider';
 
 import { getOIDCProvider } from './oidcProvider';
 
-const log = debug('lobe-oidc:service');
+const log = debug('ethos-oidc:service');
 
 export class OIDCService {
   private provider: OIDCProvider;

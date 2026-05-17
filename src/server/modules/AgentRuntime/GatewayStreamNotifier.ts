@@ -9,7 +9,7 @@ import {
 } from './StreamEventManager';
 import type { IStreamEventManager } from './types';
 
-const log = debug('lobe-server:agent-runtime:gateway-notifier');
+const log = debug('ethos-server:agent-runtime:gateway-notifier');
 
 const POST_TIMEOUT = 5000; // 5s per request
 const MAX_INFLIGHT = 20; // bounded concurrency

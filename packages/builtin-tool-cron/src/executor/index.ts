@@ -20,7 +20,7 @@ import {
 
 const FETCH_CRON_TOPICS_WITH_JOB_INFO_KEY = 'cronTopicsWithJobInfo';
 
-const log = debug('lobe-cron:executor');
+const log = debug('ethos-cron:executor');
 
 class CronExecutor extends BaseExecutor<typeof CronApiName> {
   readonly identifier = CronIdentifier;

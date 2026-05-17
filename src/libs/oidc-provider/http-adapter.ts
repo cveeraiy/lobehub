@@ -5,7 +5,7 @@ import urlJoin from 'url-join';
 
 import { appEnv } from '@/envs/app';
 
-const log = debug('lobe-oidc:http-adapter');
+const log = debug('ethos-oidc:http-adapter');
 
 /**
  * Convert Web API Headers to standard Node.js HTTP header format

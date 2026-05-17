@@ -174,6 +174,10 @@ export class MarketApiService {
 
   // ==================== Skills API ====================
 
+  async listCreds() {
+    return restClient.get('/market/creds/list');
+  }
+
   async searchSkill(params: {
     category?: string;
     locale?: string;

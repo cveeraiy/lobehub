@@ -33,7 +33,7 @@ import {
   splitMessage,
 } from './replyTemplate';
 
-const log = debug('lobe-server:bot:agent-bridge');
+const log = debug('ethos-server:bot:agent-bridge');
 
 const EXECUTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 

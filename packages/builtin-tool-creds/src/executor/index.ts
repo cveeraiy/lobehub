@@ -20,7 +20,7 @@ import {
   type SaveCredsParams,
 } from '../types';
 
-const log = debug('lobe-creds:executor');
+const log = debug('ethos-creds:executor');
 
 class CredsExecutor extends BaseExecutor<typeof CredsApiName> {
   readonly identifier = CredsIdentifier;

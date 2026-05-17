@@ -13,7 +13,7 @@ import {
 import { BotConnectQueue } from '@/server/services/gateway/botConnectQueue';
 import { afterResponse } from '@/server/utils/afterResponse';
 
-const log = debug('lobe-server:bot:gateway:cron');
+const log = debug('ethos-server:bot:gateway:cron');
 
 // A single gateway invocation keeps persistent bots alive for one
 // serverless cron window. Keep this aligned with BotConnectQueue.EXPIRE_MS

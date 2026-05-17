@@ -131,7 +131,7 @@ describe('computeChatPricing', () => {
     });
   });
 
-  describe('LobeHub-hosted DeepSeek', () => {
+  describe('Ethos-hosted DeepSeek', () => {
     const usage: ModelTokensUsage = {
       inputCacheMissTokens: 1_000_000,
       inputCachedTokens: 1_000_000,
@@ -362,7 +362,7 @@ describe('computeChatPricing', () => {
       expect(breakdown.find((item) => item.unit.name === 'textOutput')?.credits).toBe(519);
     });
 
-    it('charges multimodal input units for LobeHub-hosted Gemini 3 Flash', () => {
+    it('charges multimodal input units for Ethos-hosted Gemini 3 Flash', () => {
       const pricing = lobehubChatModels.find(
         (model: { id: string }) => model.id === 'gemini-3-flash-preview',
       )?.pricing;
@@ -393,7 +393,7 @@ describe('computeChatPricing', () => {
       expect(breakdown.find((item) => item.unit.name === 'textOutput')?.credits).toBe(30);
     });
 
-    it('charges multimodal input units for LobeHub-hosted tiered Gemini Pro', () => {
+    it('charges multimodal input units for Ethos-hosted tiered Gemini Pro', () => {
       const pricing = lobehubChatModels.find(
         (model: { id: string }) => model.id === 'gemini-2.5-pro',
       )?.pricing;

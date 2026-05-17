@@ -47,7 +47,7 @@ describe('ToolMessageReorder', () => {
           {
             function: {
               arguments:
-                '{"query":"LobeChat","searchEngines":["brave","google","duckduckgo","qwant"]}',
+                '{"query":"Ethos","searchEngines":["brave","google","duckduckgo","qwant"]}',
               name: 'lobe-web-browsing____searchWithSearXNG',
             },
             id: 'call_6xCmrOtFOyBAcqpqO1TGfw2B',
@@ -56,7 +56,7 @@ describe('ToolMessageReorder', () => {
           {
             function: {
               arguments:
-                '{"query":"LobeChat","searchEngines":["brave","google","duckduckgo","qwant"]}',
+                '{"query":"Ethos","searchEngines":["brave","google","duckduckgo","qwant"]}',
               name: 'lobe-web-browsing____searchWithSearXNG',
             },
             id: 'tool_call_nXxXHW8Z',
@@ -71,7 +71,7 @@ describe('ToolMessageReorder', () => {
         tool_call_id: 'call_6xCmrOtFOyBAcqpqO1TGfw2B',
       },
       {
-        content: 'LobeHub 是一个专注于设计和开发现代人工智能生成内容（AIGC）工具和组件的团队。',
+        content: 'Ethos 是一个专注于设计和开发现代人工智能生成内容（AIGC）工具和组件的团队。',
         role: 'assistant',
       },
       {
@@ -87,7 +87,7 @@ describe('ToolMessageReorder', () => {
         tool_call_id: 'tool_call_2f3CEKz9',
       },
       {
-        content: '### LobeHub 智能AI聚合神器\n\nLobeHub 是一个强大的AI聚合平台',
+        content: '### Ethos 智能AI聚合神器\n\nLobeHub 是一个强大的AI聚合平台',
         role: 'assistant',
       },
     ];
@@ -108,7 +108,7 @@ describe('ToolMessageReorder', () => {
           {
             function: {
               arguments:
-                '{"query":"LobeChat","searchEngines":["brave","google","duckduckgo","qwant"]}',
+                '{"query":"Ethos","searchEngines":["brave","google","duckduckgo","qwant"]}',
               name: 'lobe-web-browsing____searchWithSearXNG',
             },
             id: 'call_6xCmrOtFOyBAcqpqO1TGfw2B',
@@ -117,7 +117,7 @@ describe('ToolMessageReorder', () => {
           {
             function: {
               arguments:
-                '{"query":"LobeChat","searchEngines":["brave","google","duckduckgo","qwant"]}',
+                '{"query":"Ethos","searchEngines":["brave","google","duckduckgo","qwant"]}',
               name: 'lobe-web-browsing____searchWithSearXNG',
             },
             id: 'tool_call_nXxXHW8Z',
@@ -138,11 +138,11 @@ describe('ToolMessageReorder', () => {
         tool_call_id: 'tool_call_nXxXHW8Z',
       },
       {
-        content: 'LobeHub 是一个专注于设计和开发现代人工智能生成内容（AIGC）工具和组件的团队。',
+        content: 'Ethos 是一个专注于设计和开发现代人工智能生成内容（AIGC）工具和组件的团队。',
         role: 'assistant',
       },
       {
-        content: '### LobeHub 智能AI聚合神器\n\nLobeHub 是一个强大的AI聚合平台',
+        content: '### Ethos 智能AI聚合神器\n\nLobeHub 是一个强大的AI聚合平台',
         role: 'assistant',
       },
     ]);

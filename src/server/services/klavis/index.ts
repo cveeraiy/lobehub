@@ -6,7 +6,7 @@ import { PluginModel } from '@/database/models/plugin';
 import { getKlavisClient, isKlavisClientAvailable } from '@/libs/klavis';
 import { type ToolExecutionResult } from '@/server/services/toolExecution/types';
 
-const log = debug('lobe-server:klavis-service');
+const log = debug('ethos-server:klavis-service');
 
 export interface KlavisToolExecuteParams {
   args: Record<string, any>;

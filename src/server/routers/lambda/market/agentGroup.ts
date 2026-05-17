@@ -34,7 +34,7 @@ interface FetchMarketUserInfoOptions {
 
 /**
  * Fetch Market user info using either trustedClientToken or accessToken
- * Returns the Market accountId which is different from LobeChat userId
+ * Returns the Market accountId which is different from Ethos userId
  */
 const fetchMarketUserInfo = async (
   options: FetchMarketUserInfoOptions,

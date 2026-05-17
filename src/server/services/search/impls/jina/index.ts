@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type JinaResponse, type JinaSearchParameters } from './type';
 
-const log = debug('lobe-search:Jina');
+const log = debug('ethos-search:Jina');
 
 /**
  * Jina implementation of the search service

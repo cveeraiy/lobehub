@@ -91,7 +91,7 @@ get_window_and_screen_info() {
       let wy = bounds["Y"] as? Double ?? 0
       let ww = bounds["Width"] as? Double ?? 0
       let wh = bounds["Height"] as? Double ?? 0
-      if (owner == "Electron" || owner == "LobeHub") && layer == 0 && name == "LobeHub" && ww > 200 && wh > 200 {
+      if (owner == "Electron" || owner == "Ethos") && layer == 0 && name == "Ethos" && ww > 200 && wh > 200 {
         // Find which screen this window is on
         let screens = NSScreen.screens
         var screenIdx = 0

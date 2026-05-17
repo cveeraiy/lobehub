@@ -11,7 +11,7 @@ import { FileS3 } from '@/server/modules/S3';
 import { type FileService } from '@/server/services/file';
 import { type MarketService } from '@/server/services/market';
 
-const log = debug('lobe-server:sandbox-service');
+const log = debug('ethos-server:sandbox-service');
 
 export interface ServerSandboxServiceOptions {
   fileService: FileService;

@@ -1,5 +1,5 @@
 /**
- * Document object in LobeChat
+ * Document object in Ethos
  */
 export interface LobeDocument {
   /**

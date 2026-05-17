@@ -1,4 +1,4 @@
-# 🚀 LobeHub Release (20260420)
+# 🚀 Ethos Release (20260420)
 
 **Release Date:** April 20, 2026\
 **Since previous release:** 96 commits · 58 merged PRs · 31 resolved issues · 17 contributors

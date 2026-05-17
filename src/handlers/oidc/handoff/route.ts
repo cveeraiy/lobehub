@@ -3,7 +3,7 @@ import debug from 'debug';
 import { OAuthHandoffModel } from '@/database/models/oauthHandoff';
 import { serverDB } from '@/database/server';
 
-const log = debug('lobe-oidc:handoff');
+const log = debug('ethos-oidc:handoff');
 
 /**
  * GET /oidc/handoff?id=xxx&client=xxx

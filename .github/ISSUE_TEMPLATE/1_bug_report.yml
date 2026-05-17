@@ -6,7 +6,7 @@ body:
   - type: dropdown
     attributes:
       label: '📱 Client Type'
-      description: 'Select how you are accessing LobeChat'
+      description: 'Select how you are accessing Ethos'
       multiple: true
       options:
         - 'Web (Desktop Browser)'
@@ -107,7 +107,7 @@ body:
           required: true
         - label: Check that there isn't [already an issue](https://github.com/lobehub/lobe-chat/issues) that reports the same bug to avoid creating a duplicate.
           required: true
-        - label: Make sure this is a LobeChat issue and not a third-party library or provider issue.
+        - label: Make sure this is an Ethos issue and not a third-party library or provider issue.
           required: true
         - label: Check that this is a concrete bug. For Q&A, please use [GitHub Discussions](https://github.com/lobehub/lobe-chat/discussions) or join our [Discord Server](https://discord.gg/rGHwKq4R).
           required: true

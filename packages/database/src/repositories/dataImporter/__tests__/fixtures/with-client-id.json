@@ -33,7 +33,7 @@
             "description": "Unleash creativity with Midjourney, effortlessly generating unique AI-driven images through simple prompts. Add visual flair to your conversations with Midjourney's artistic touch."
           },
           "type": "standalone",
-          "author": "LobeHub",
+          "author": "Ethos",
           "$schema": "../node_modules/@lobehub/chat-plugin-sdk/schema.json",
           "version": "1",
           "settings": {

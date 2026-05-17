@@ -11,7 +11,7 @@ import type {
 import { parseComfyUIErrorMessage } from '../../utils/comfyuiErrorParser';
 import { AgentRuntimeError } from '../../utils/createError';
 
-const log = debug('lobe-image:comfyui');
+const log = debug('ethos-image:comfyui');
 
 /**
  * ComfyUI Runtime implementation

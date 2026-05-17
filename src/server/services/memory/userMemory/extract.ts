@@ -505,7 +505,7 @@ export const resolveRuntimeAgentConfig = (
   });
 };
 
-const logRuntime = debug('lobe-server:memory:user-memory:runtime');
+const logRuntime = debug('ethos-server:memory:user-memory:runtime');
 
 const debugRuntimeInit = (
   agent: MemoryAgentConfig,

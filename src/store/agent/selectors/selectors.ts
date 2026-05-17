@@ -271,7 +271,7 @@ const isCurrentAgentExternal = (s: AgentStoreState): boolean => !currentAgentDat
 
 /**
  * Whether current agent is driven by an external heterogeneous runtime
- * (e.g. Claude Code). These agents skip LobeHub's message-channel / model
+ * (e.g. Claude Code). These agents skip Ethos's message-channel / model
  * pickers because their toolchain is owned by the external runtime.
  */
 const isCurrentAgentHeterogeneous = (_s: AgentStoreState): boolean => false;

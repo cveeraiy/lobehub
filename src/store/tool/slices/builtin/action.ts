@@ -13,7 +13,7 @@ import { invokeExecutor } from './executors/index';
 import { type BuiltinToolContext, type BuiltinToolResult } from './types';
 
 const n = setNamespace('builtinTool');
-const log = debug('lobe-store:builtin-tool');
+const log = debug('ethos-store:builtin-tool');
 
 const UNINSTALLED_BUILTIN_TOOLS = 'loadUninstalledBuiltinTools';
 

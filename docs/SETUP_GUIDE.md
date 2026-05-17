@@ -1,6 +1,6 @@
-# LobeHub — Setup Guide
+# Ethos — Setup Guide
 
-LobeHub runs on a **Hono** server with a **Vite** SPA frontend. This guide covers both local development and production deployment.
+Ethos runs on a **Hono** server with a **Vite** SPA frontend. This guide covers both local development and production deployment.
 
 ## Architecture Overview
 

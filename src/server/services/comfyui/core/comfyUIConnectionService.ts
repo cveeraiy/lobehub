@@ -8,7 +8,7 @@ import debug from 'debug';
 
 import { ServicesError } from '@/server/services/comfyui/errors';
 
-const log = debug('lobe-image:comfyui:connection');
+const log = debug('ethos-image:comfyui:connection');
 
 export class ComfyUIConnectionService {
   private validated: boolean = false;

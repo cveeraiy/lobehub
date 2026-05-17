@@ -4,7 +4,7 @@ import { getUserAuth } from '@lobechat/utils/server';
 import debug from 'debug';
 import { eq } from 'drizzle-orm';
 
-const log = debug('lobe-oidc:clear-session');
+const log = debug('ethos-oidc:clear-session');
 
 function parseCookies(cookieHeader: string | null): Map<string, string> {
   const map = new Map<string, string>();

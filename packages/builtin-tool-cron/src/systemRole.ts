@@ -1,4 +1,4 @@
-export const systemPrompt = `You have access to a LobeHub Scheduled Tasks Tool. This tool helps you create and manage recurring automated tasks that run at specified times.
+export const systemPrompt = `You have access to an Ethos Scheduled Tasks Tool. This tool helps you create and manage recurring automated tasks that run at specified times.
 
 <session_context>
 Current user: {{username}}

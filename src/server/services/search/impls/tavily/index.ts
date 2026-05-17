@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type TavilyResponse, type TavilySearchParameters } from './type';
 
-const log = debug('lobe-search:Tavily');
+const log = debug('ethos-search:Tavily');
 
 /**
  * Tavily implementation of the search service

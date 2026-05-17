@@ -5,7 +5,7 @@ import type Redis from 'ioredis';
 
 import type { BotReplyLocale } from './platforms';
 
-const log = debug('lobe-server:bot:dm-pairing-store');
+const log = debug('ethos-server:bot:dm-pairing-store');
 
 /**
  * One pairing request lives in Redis for an hour. Long enough that an owner

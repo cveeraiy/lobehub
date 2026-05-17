@@ -108,6 +108,19 @@ async def uninstall_market_agent(
     return {"ok": True}
 
 
+@router.get("/creds/list")
+async def list_market_creds(
+    _user_id: str = Depends(get_current_user_id),
+):
+    """Return credential summaries for context injection.
+
+    The Python backend does not own marketplace credentials yet. Returning an
+    empty list preserves the optional context contract without falling back to
+    tRPC from REST chat runtime paths.
+    """
+    return {"data": []}
+
+
 def _market_agent_dict(a: Agent) -> dict[str, Any]:
     return {
         "identifier": a.market_identifier,

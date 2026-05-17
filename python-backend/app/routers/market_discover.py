@@ -1,4 +1,4 @@
-"""Market Discover router — proxy to the external LobeHub Market API.
+"""Market Discover router — proxy to the external Ethos Market API.
 
 Mirrors TS: src/server/routers/lambda/market/index.ts
 The TS backend uses MarketSDK / DiscoverService to call the external market.

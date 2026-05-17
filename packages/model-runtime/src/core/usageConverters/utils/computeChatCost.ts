@@ -10,7 +10,7 @@ import type {
   TieredPricingUnit,
 } from 'model-bank';
 
-const log = debug('lobe-cost:computeChatPricing');
+const log = debug('ethos-cost:computeChatPricing');
 
 export interface PricingUnitBreakdown {
   cost: number;

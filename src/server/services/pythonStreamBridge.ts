@@ -17,7 +17,7 @@ import { createStreamEventManager } from '@/server/modules/AgentRuntime';
 import { type IStreamEventManager } from '@/server/modules/AgentRuntime';
 import { callPythonBackendStream } from '@/server/utils/pythonBackend';
 
-const log = debug('lobe-server:python-stream-bridge');
+const log = debug('ethos-server:python-stream-bridge');
 
 /**
  * Parse a raw SSE text frame into { event, data }.

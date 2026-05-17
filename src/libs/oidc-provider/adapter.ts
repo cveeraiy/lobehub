@@ -13,7 +13,7 @@ import debug from 'debug';
 import { eq, sql } from 'drizzle-orm';
 
 // Create adapter logging namespace
-const log = debug('lobe-oidc:adapter');
+const log = debug('ethos-oidc:adapter');
 
 /**
  * Grace period for consumed RefreshToken (in seconds)

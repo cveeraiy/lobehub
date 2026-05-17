@@ -14,7 +14,7 @@ import { resolveContext } from '@/server/routers/lambda/_helpers/resolveContext'
 import { AiChatService } from '@/server/services/aiChat';
 import { FileService } from '@/server/services/file';
 
-const log = debug('lobe-lambda-router:ai-chat');
+const log = debug('ethos-lambda-router:ai-chat');
 
 const aiChatProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

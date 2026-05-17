@@ -69,6 +69,10 @@ class ShareBody(BaseModel):
     visibility: Optional[str] = None
 
 
+class CloneTopicBody(BaseModel):
+    new_title: Optional[str] = None
+
+
 # ── Frontend path aliases (must come before dynamic routes) ──────────
 
 @router.post("/batch-delete")
@@ -349,6 +353,7 @@ async def batch_delete_by_session(
 @router.post("/{topic_id}/clone")
 async def clone_topic(
     topic_id: str,
+    body: Optional[CloneTopicBody] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -357,7 +362,7 @@ async def clone_topic(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Topic not found")
     new_topic = Topic(
         user_id=user_id,
-        title=f"{orig.title or ''} (copy)",
+        title=body.new_title if body and body.new_title else f"{orig.title or ''} (copy)",
         session_id=orig.session_id,
         agent_id=orig.agent_id,
         favorite=orig.favorite,

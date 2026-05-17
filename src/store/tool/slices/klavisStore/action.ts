@@ -345,7 +345,7 @@ export class KlavisStoreActionImpl {
         // Filter plugins with klavis params
         const validPlugins = klavisPlugins.filter((plugin) => plugin.customParams?.klavis);
 
-        // Clean up deprecated Klavis servers (e.g., 'github' moved to LobeHub Skill)
+        // Clean up deprecated Klavis servers (e.g., 'github' moved to Ethos Skill)
         const deprecatedPlugins = validPlugins.filter(
           (plugin) => !VALID_KLAVIS_IDENTIFIERS.has(plugin.identifier),
         );

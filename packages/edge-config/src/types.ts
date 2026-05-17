@@ -18,7 +18,7 @@ export interface BillboardItem {
   description: string;
   /**
    * 每个 locale 的覆盖文案。缺失时回退到默认字段（title / description / linkLabel）。
-   * key 采用 LobeHub locale code（如 `zh-CN`、`en-US`、`ja-JP`）。
+   * key 采用 Ethos locale code（如 `zh-CN`、`en-US`、`ja-JP`）。
    */
   i18n?: Record<string, BillboardItemLocaleFields>;
   id: number;
@@ -40,7 +40,7 @@ export interface BillboardLocaleFields {
  * 实际展示还受 startAt / endAt 时间窗口约束。
  */
 export interface BillboardSet {
-  /** ISO timestamp — 时间窗口结束，到点后 LobeHub 不再展示 */
+  /** ISO timestamp — 时间窗口结束，到点后 Ethos 不再展示 */
   endAt: string;
   /**
    * 按 locale 覆盖 billboard 级别的文案（当前仅 title，用于 ? 菜单）。
@@ -50,7 +50,7 @@ export interface BillboardSet {
   items: BillboardItem[];
   /** 唯一标识符 */
   slug: string;
-  /** ISO timestamp — 时间窗口开始，未到时 LobeHub 不展示 */
+  /** ISO timestamp — 时间窗口开始，未到时 Ethos 不展示 */
   startAt: string;
   /** 用于 ? 菜单展示 */
   title: string;
@@ -76,7 +76,7 @@ export interface EdgeConfigData extends BusinessEdgeConfigData {
 
   /**
    * Billboard snapshot. 每个 Vercel 部署读自己 store 里的 `billboards` key——
-   * dev 部署指向 dev store，prod 部署指向 prod store，LobeHub 侧无感知。
+   * dev 部署指向 dev store，prod 部署指向 prod store，Ethos 侧无感知。
    */
   billboards?: BillboardSnapshot;
 

@@ -13,7 +13,7 @@ import type {
   ToolCallHookEvent,
 } from './types';
 
-const log = debug('lobe-server:hook-dispatcher');
+const log = debug('ethos-server:hook-dispatcher');
 
 /**
  * Delivers a webhook via HTTP POST (fetch or QStash)

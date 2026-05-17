@@ -17,7 +17,7 @@ import { imageResizer } from '@/server/services/comfyui/utils/imageResizer';
 import { WorkflowDetector } from '@/server/services/comfyui/utils/workflowDetector';
 import { nanoid } from '@/utils/uuid';
 
-const log = debug('lobe-image:comfyui:image-service');
+const log = debug('ethos-image:comfyui:image-service');
 
 /**
  * Image Service

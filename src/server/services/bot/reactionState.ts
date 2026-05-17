@@ -2,7 +2,7 @@ import debug from 'debug';
 
 import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 
-const log = debug('lobe-server:bot:reaction-state');
+const log = debug('ethos-server:bot:reaction-state');
 
 /**
  * Cross-process state for the step-aware reaction feature used by the queue

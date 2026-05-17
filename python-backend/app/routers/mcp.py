@@ -94,7 +94,7 @@ async def list_tools(
     body: MCPClientParamsBody,
     user_id: str = Depends(get_current_user_id),
 ):
-    """List tools from an MCP server as LobeChat-compatible API schemas."""
+    """List tools from an MCP server as Ethos-compatible API schemas."""
     params = _validate_params(body)
     return await mcp_service.list_tools(params)
 

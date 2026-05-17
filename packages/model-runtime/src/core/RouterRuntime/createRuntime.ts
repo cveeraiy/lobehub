@@ -41,7 +41,7 @@ import type {
 } from '../openaiCompatibleFactory';
 import type { ApiType, RuntimeClass } from './apiTypes';
 
-const log = debug('lobe-model-runtime:router-runtime');
+const log = debug('ethos-model-runtime:router-runtime');
 
 interface ProviderIniOptions extends Record<string, any> {
   accessKeyId?: string;

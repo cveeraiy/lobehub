@@ -20,9 +20,9 @@ describe('SkillResolver', () => {
       name: 'Agent Browser',
     },
     {
-      description: 'LobeHub management',
+      description: 'Ethos management',
       identifier: 'lobehub-cli',
-      name: 'LobeHub CLI',
+      name: 'Ethos CLI',
     },
   ];
 

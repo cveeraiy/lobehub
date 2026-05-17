@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 
 import { runScheduleTick } from '@/server/services/taskRunner/scheduleTick';
 
-const log = debug('lobe-server:workflows:task:schedule-execute');
+const log = debug('ethos-server:workflows:task:schedule-execute');
 
 export interface ScheduleExecutePayload {
   taskId: string;

@@ -5,7 +5,7 @@ import { appEnv } from '@/envs/app';
 import { injectActiveTraceHeaders } from '@/libs/observability/traceparent';
 import { workflowClient } from '@/libs/qstash';
 
-const log = debug('lobe-server:workflows:agent-signal');
+const log = debug('ethos-server:workflows:agent-signal');
 
 const WORKFLOW_PATHS = {
   run: '/api/workflows/agent-signal/run',

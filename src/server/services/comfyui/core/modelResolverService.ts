@@ -21,7 +21,7 @@ import { ModelResolverError } from '@/server/services/comfyui/errors/modelResolv
 import { TTLCacheManager } from '@/server/services/comfyui/utils/cacheManager';
 import { getModelsByVariant } from '@/server/services/comfyui/utils/staticModelLookup';
 
-const log = debug('lobe-image:comfyui:model-resolver');
+const log = debug('ethos-image:comfyui:model-resolver');
 
 /**
  * Check if a filename has a supported model format extension

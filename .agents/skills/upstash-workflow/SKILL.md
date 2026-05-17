@@ -5,11 +5,11 @@ description: 'Upstash Workflow implementation guide. Use when creating async wor
 
 # Upstash Workflow Implementation Guide
 
-This guide covers the standard patterns for implementing Upstash Workflow + QStash async workflows in the LobeHub codebase.
+This guide covers the standard patterns for implementing Upstash Workflow + QStash async workflows in the Ethos codebase.
 
 ## 🎯 The Three Core Patterns
 
-All workflows in LobeHub follow the same 3-layer architecture with three essential patterns:
+All workflows in Ethos follow the same 3-layer architecture with three essential patterns:
 
 1. **🔍 Dry-Run Mode** - Get statistics without triggering actual execution
 2. **🌟 Fan-Out Pattern** - Split large batches into smaller chunks for parallel processing

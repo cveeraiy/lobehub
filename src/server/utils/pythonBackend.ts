@@ -12,7 +12,7 @@ import debug from 'debug';
 
 import { serverDBEnv } from '@/config/db';
 
-const log = debug('lobe-server:python-backend');
+const log = debug('ethos-server:python-backend');
 
 export class PythonBackendError extends Error {
   status: number;

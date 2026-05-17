@@ -19,7 +19,7 @@ import { dbMessageSelectors } from '@/store/chat/slices/message/selectors';
 import { type ChatStore } from '@/store/chat/store';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
-const log = debug('lobe-store:group-orchestration-executors');
+const log = debug('ethos-store:group-orchestration-executors');
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => {

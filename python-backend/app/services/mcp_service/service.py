@@ -371,7 +371,7 @@ class MCPService:
     # ── List operations ───────────────────────────────────────────
 
     async def list_tools(self, params: dict[str, Any]) -> list[dict[str, Any]]:
-        """List tools as LobeChat-compatible API schemas."""
+        """List tools as Ethos-compatible API schemas."""
         max_retries = 3
         last_error: Optional[Exception] = None
         for attempt in range(max_retries):

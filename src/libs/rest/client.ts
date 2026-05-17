@@ -4,7 +4,7 @@ import { withElectronProtocolIfElectron } from '@/const/protocol';
 
 import type { RestApiError } from './types';
 
-const log = debug('lobe-rest:client');
+const log = debug('ethos-rest:client');
 
 // ---------------------------------------------------------------------------
 // 401 debouncing — mirrors the TRPC lambda client behaviour

@@ -15,7 +15,7 @@ import {
   type OperationState,
 } from './types';
 
-const log = debug('lobe-render:features:Conversation');
+const log = debug('ethos-render:features:Conversation');
 
 export interface StoreUpdaterProps {
   /**

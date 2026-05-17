@@ -3,7 +3,7 @@ import type { Context } from 'hono';
 
 import { runHeartbeatTick } from '@/server/services/taskRunner/heartbeatTick';
 
-const log = debug('lobe-server:workflows:task:heartbeat-tick');
+const log = debug('ethos-server:workflows:task:heartbeat-tick');
 
 export interface HeartbeatTickPayload {
   taskId: string;

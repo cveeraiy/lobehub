@@ -8,7 +8,7 @@ import { UserModel } from '@/database/models/user';
 import { type LobeChatDatabase } from '@/database/type';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 
-const log = debug('lobe-server:system-agent-service');
+const log = debug('ethos-server:system-agent-service');
 
 const TOPIC_TITLE_SCHEMA = {
   name: 'topic_title',

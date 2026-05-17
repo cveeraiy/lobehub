@@ -20,7 +20,7 @@ import ThreadHydration from './ThreadHydration';
 import { useActionsBarConfig } from './useActionsBarConfig';
 import { useAgentContext } from './useAgentContext';
 
-const log = debug('lobe-render:agent:ConversationArea');
+const log = debug('ethos-render:agent:ConversationArea');
 
 /**
  * ConversationArea

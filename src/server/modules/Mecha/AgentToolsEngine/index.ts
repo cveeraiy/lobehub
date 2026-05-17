@@ -36,7 +36,7 @@ export type {
   ServerCreateAgentToolsEngineParams,
 } from './types';
 
-const log = debug('lobe-server:agent-tools-engine');
+const log = debug('ethos-server:agent-tools-engine');
 
 /**
  * Initialize ToolsEngine with server-side context
@@ -150,7 +150,7 @@ export const createServerAgentToolsEngine = (
   );
 
   return createServerToolsEngine(context, {
-    // Pass additional manifests (e.g., LobeHub Skills)
+    // Pass additional manifests (e.g., Ethos Skills)
     additionalManifests,
     // Add default tools based on configuration
     defaultToolIds,

@@ -22,7 +22,7 @@ import { preprocessLhCommand } from '@/server/services/toolExecution/preprocessL
 
 import { type ServerRuntimeRegistration } from './types';
 
-const log = debug('lobe-server:skills-runtime');
+const log = debug('ethos-server:skills-runtime');
 
 class SkillServerRuntimeService implements SkillRuntimeService {
   private resourceService: SkillResourceService;

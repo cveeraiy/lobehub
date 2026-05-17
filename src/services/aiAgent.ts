@@ -1,4 +1,9 @@
-import type { ExecAgentAppContext, ExecAgentResult } from '@lobechat/types';
+import type {
+  ChatTopic,
+  ExecAgentAppContext,
+  ExecAgentResult,
+  UIChatMessage,
+} from '@lobechat/types';
 
 import { lambdaClient } from '@/libs/trpc/client';
 
@@ -44,6 +49,33 @@ export interface ExecAgentTaskParams {
   /** Resume a previous op paused on `human_approve_required` instead of starting from a fresh user prompt. */
   resumeApproval?: ResumeApprovalParam;
   slug?: string;
+}
+
+export interface ExecGroupAgentParams {
+  agentId: string;
+  files?: string[];
+  groupId: string;
+  message: string;
+  newTopic?: {
+    title?: string;
+    topicMessageIds?: string[];
+  };
+  topicId?: string | null;
+}
+
+export interface ExecGroupAgentResult {
+  assistantMessageId: string;
+  error?: string | null;
+  isCreateNewTopic?: boolean;
+  messages?: UIChatMessage[];
+  operationId: string;
+  success: boolean;
+  topicId?: string | null;
+  topics?: {
+    items: ChatTopic[];
+    total: number;
+  };
+  userMessageId: string;
 }
 
 /**
@@ -128,6 +160,13 @@ class AiAgentService {
    */
   async execAgentTask(params: ExecAgentTaskParams): Promise<ExecAgentResult> {
     return await lambdaClient.aiAgent.execAgent.mutate(params);
+  }
+
+  async execGroupAgent(
+    params: ExecGroupAgentParams,
+    signal?: AbortSignal,
+  ): Promise<ExecGroupAgentResult> {
+    return await lambdaClient.aiAgent.execGroupAgent.mutate(params, { signal });
   }
 
   /**

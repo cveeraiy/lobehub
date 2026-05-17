@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import and_, asc, delete, desc, func, select, text, update
+from sqlalchemy import and_, asc, delete, desc, func, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -29,10 +29,12 @@ def _now() -> datetime:
 # ── Schemas ──────────────────────────────────────────────────────────
 
 class CreateAgentBody(BaseModel):
-    slug: str
+    slug: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
     avatar: Optional[str] = None
+    background_color: Optional[str] = None
+    market_identifier: Optional[str] = None
     system_role: Optional[str] = None
     model: Optional[str] = None
     provider: Optional[str] = None
@@ -42,12 +44,17 @@ class CreateAgentBody(BaseModel):
     plugins: Optional[list[str]] = None
     opening_message: Optional[str] = None
     opening_questions: Optional[list[str]] = None
+    session_group_id: Optional[str] = None
+    virtual: Optional[bool] = None
+    group_id: Optional[str] = None
 
 
 class UpdateAgentBody(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     avatar: Optional[str] = None
+    background_color: Optional[str] = None
+    market_identifier: Optional[str] = None
     system_role: Optional[str] = None
     model: Optional[str] = None
     provider: Optional[str] = None
@@ -59,14 +66,21 @@ class UpdateAgentBody(BaseModel):
     opening_message: Optional[str] = None
     opening_questions: Optional[list[str]] = None
     session_group_id: Optional[str] = None
+    virtual: Optional[bool] = None
 
 
 class BatchFileIdsBody(BaseModel):
     file_ids: list[str]
+    enabled: Optional[bool] = None
 
 
 class BatchKBIdsBody(BaseModel):
     knowledge_base_ids: list[str]
+    enabled: Optional[bool] = None
+
+
+class DuplicateAgentBody(BaseModel):
+    new_title: Optional[str] = None
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -80,7 +94,7 @@ async def query_agents(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Agent).where(Agent.user_id == user_id)
+    stmt = select(Agent).where(and_(Agent.user_id == user_id, Agent.virtual.is_(False)))
     if keywords:
         pattern = f"%{keywords}%"
         stmt = stmt.where(Agent.title.ilike(pattern))
@@ -240,7 +254,32 @@ async def create_agent(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    agent = Agent(user_id=user_id, **body.model_dump(exclude_none=True))
+    values = body.model_dump(exclude_none=True, exclude={"group_id"})
+    if "slug" not in values:
+        import uuid as _uuid
+
+        values["slug"] = f"agent-{_uuid.uuid4().hex[:8]}"
+
+    agent = Agent(user_id=user_id, **values)
+    session.add(agent)
+    await session.flush()
+    return {"id": agent.id}
+
+
+@router.post("/virtual", status_code=status.HTTP_201_CREATED)
+async def create_virtual_agent(
+    body: CreateAgentBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    values = body.model_dump(exclude_none=True, exclude={"group_id", "session_group_id"})
+    if "slug" not in values:
+        import uuid as _uuid
+
+        values["slug"] = f"agent-{_uuid.uuid4().hex[:8]}"
+    values["virtual"] = True
+
+    agent = Agent(user_id=user_id, **values)
     session.add(agent)
     await session.flush()
     return {"id": agent.id}
@@ -270,7 +309,7 @@ async def delete_agent(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    # 1. Find linked session IDs
+    # 1. Find linked sessions/topics before deleting rows that reference them.
     linked = await session.execute(
         select(Session.id).where(
             and_(Session.agent_id == agent_id, Session.user_id == user_id)
@@ -278,20 +317,153 @@ async def delete_agent(
     )
     session_ids = linked.scalars().all()
 
+    topic_query = select(Topic.id).where(and_(Topic.agent_id == agent_id, Topic.user_id == user_id))
     if session_ids:
-        # 2. Delete messages, topics for those sessions
+        topic_query = topic_query.union(
+            select(Topic.id).where(and_(Topic.session_id.in_(session_ids), Topic.user_id == user_id))
+        )
+    topic_ids = (await session.execute(topic_query)).scalars().all()
+
+    if topic_ids:
         await session.execute(
-            delete(Message).where(Message.session_id.in_(session_ids))
+            text(
+                "DELETE FROM agent_eval_run_topics "
+                "WHERE topic_id = ANY(:topic_ids)"
+            ),
+            {"topic_ids": topic_ids},
         )
         await session.execute(
-            delete(Topic).where(Topic.session_id.in_(session_ids))
+            text(
+                "DELETE FROM task_topics "
+                "WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"
+            ),
+            {"topic_ids": topic_ids, "uid": user_id},
+        )
+        await session.execute(
+            text(
+                "UPDATE tasks SET current_topic_id = NULL "
+                "WHERE created_by_user_id = :uid AND current_topic_id = ANY(:topic_ids)"
+            ),
+            {"topic_ids": topic_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM topic_documents WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+            {"topic_ids": topic_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM topic_shares WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+            {"topic_ids": topic_ids, "uid": user_id},
+        )
+        await session.execute(
+            text(
+                "UPDATE threads SET parent_thread_id = NULL, source_message_id = NULL "
+                "WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"
+            ),
+            {"topic_ids": topic_ids, "uid": user_id},
         )
 
-    # 3. Delete agents_to_sessions junction rows
-    await session.execute(
-        text("DELETE FROM agents_to_sessions WHERE agent_id = :aid AND user_id = :uid"),
-        {"aid": agent_id, "uid": user_id},
-    )
+    if session_ids:
+        # 2. Delete group membership and chat groups tied to linked sessions.
+        await session.execute(
+            text(
+                "DELETE FROM chat_groups_agents "
+                "WHERE user_id = :uid AND group_id IN "
+                "(SELECT id FROM chat_groups WHERE session_id = ANY(:session_ids))"
+            ),
+            {"session_ids": session_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM chat_groups WHERE user_id = :uid AND session_id = ANY(:session_ids)"),
+            {"session_ids": session_ids, "uid": user_id},
+        )
+
+    # 3. Delete messages and topics owned by this agent or its linked sessions.
+    message_conditions = [Message.agent_id == agent_id]
+    if session_ids:
+        message_conditions.append(Message.session_id.in_(session_ids))
+    if topic_ids:
+        message_conditions.append(Message.topic_id.in_(topic_ids))
+    message_ids = (
+        await session.execute(
+            select(Message.id).where(and_(Message.user_id == user_id, or_(*message_conditions)))
+        )
+    ).scalars().all()
+
+    if message_ids:
+        query_ids = (
+            await session.execute(
+                text(
+                    "SELECT id FROM message_queries "
+                    "WHERE user_id = :uid AND message_id = ANY(:message_ids)"
+                ),
+                {"message_ids": message_ids, "uid": user_id},
+            )
+        ).scalars().all()
+        if query_ids:
+            await session.execute(
+                text(
+                    "DELETE FROM message_query_chunks "
+                    "WHERE user_id = :uid AND query_id = ANY(:query_ids)"
+                ),
+                {"query_ids": query_ids, "uid": user_id},
+            )
+        await session.execute(
+            text("DELETE FROM message_queries WHERE user_id = :uid AND message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM messages_files WHERE user_id = :uid AND message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM message_chunks WHERE user_id = :uid AND message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM message_plugins WHERE message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids},
+        )
+        await session.execute(
+            text("DELETE FROM message_tts WHERE message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids},
+        )
+        await session.execute(
+            text("DELETE FROM message_translates WHERE message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids},
+        )
+        await session.execute(
+            text(
+                "UPDATE message_groups SET parent_message_id = NULL "
+                "WHERE user_id = :uid AND parent_message_id = ANY(:message_ids)"
+            ),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text(
+                "UPDATE messages SET parent_id = NULL "
+                "WHERE user_id = :uid AND parent_id = ANY(:message_ids)"
+            ),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(delete(Message).where(Message.id.in_(message_ids)))
+
+    if session_ids:
+        await session.execute(
+            text("DELETE FROM message_groups WHERE user_id = :uid AND session_id = ANY(:session_ids)"),
+            {"session_ids": session_ids, "uid": user_id},
+        )
+    if topic_ids:
+        await session.execute(
+            text("DELETE FROM message_groups WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+            {"topic_ids": topic_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM threads WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+            {"topic_ids": topic_ids, "uid": user_id},
+        )
+
+    if topic_ids:
+        await session.execute(delete(Topic).where(and_(Topic.id.in_(topic_ids), Topic.user_id == user_id)))
 
     if session_ids:
         # 4. Delete sessions
@@ -299,7 +471,105 @@ async def delete_agent(
             delete(Session).where(Session.id.in_(session_ids))
         )
 
-    # 5. Delete agent-specific relations
+    # 5. Delete or detach agent-specific relations from optional feature tables.
+    await session.execute(
+        text("DELETE FROM chat_groups_agents WHERE agent_id = :aid AND user_id = :uid"),
+        {"aid": agent_id, "uid": user_id},
+    )
+    await session.execute(
+        text("DELETE FROM agent_bot_providers WHERE agent_id = :aid AND user_id = :uid"),
+        {"aid": agent_id, "uid": user_id},
+    )
+    cron_ids = (
+        await session.execute(
+            text("SELECT id FROM agent_cron_jobs WHERE agent_id = :aid AND user_id = :uid"),
+            {"aid": agent_id, "uid": user_id},
+        )
+    ).scalars().all()
+    if cron_ids:
+        await session.execute(
+            text("UPDATE briefs SET cron_job_id = NULL WHERE user_id = :uid AND cron_job_id = ANY(:cron_ids)"),
+            {"cron_ids": cron_ids, "uid": user_id},
+        )
+    await session.execute(
+        text("DELETE FROM agent_cron_jobs WHERE agent_id = :aid AND user_id = :uid"),
+        {"aid": agent_id, "uid": user_id},
+    )
+    await session.execute(
+        text("UPDATE briefs SET agent_id = NULL WHERE user_id = :uid AND agent_id = :aid"),
+        {"aid": agent_id, "uid": user_id},
+    )
+    await session.execute(
+        text(
+            "UPDATE tasks SET created_by_agent_id = NULL "
+            "WHERE created_by_user_id = :uid AND created_by_agent_id = :aid"
+        ),
+        {"aid": agent_id, "uid": user_id},
+    )
+    await session.execute(
+        text(
+            "UPDATE tasks SET assignee_agent_id = NULL "
+            "WHERE created_by_user_id = :uid AND assignee_agent_id = :aid"
+        ),
+        {"aid": agent_id, "uid": user_id},
+    )
+    await session.execute(
+        text(
+            "UPDATE task_comments SET author_agent_id = NULL "
+            "WHERE user_id = :uid AND author_agent_id = :aid"
+        ),
+        {"aid": agent_id, "uid": user_id},
+    )
+    await session.execute(
+        text(
+            "UPDATE agent_documents SET deleted_by_agent_id = NULL "
+            "WHERE user_id = :uid AND deleted_by_agent_id = :aid"
+        ),
+        {"aid": agent_id, "uid": user_id},
+    )
+
+    benchmark_ids = (
+        await session.execute(
+            text("SELECT id FROM agent_eval_benchmarks WHERE agent_id = :aid AND user_id = :uid"),
+            {"aid": agent_id, "uid": user_id},
+        )
+    ).scalars().all()
+    if benchmark_ids:
+        dataset_ids = (
+            await session.execute(
+                text("SELECT id FROM agent_eval_datasets WHERE benchmark_id = ANY(:benchmark_ids)"),
+                {"benchmark_ids": benchmark_ids},
+            )
+        ).scalars().all()
+        run_ids = (
+            await session.execute(
+                text("SELECT id FROM agent_eval_runs WHERE benchmark_id = ANY(:benchmark_ids)"),
+                {"benchmark_ids": benchmark_ids},
+            )
+        ).scalars().all()
+        if run_ids:
+            await session.execute(
+                text("DELETE FROM agent_eval_run_topics WHERE run_id = ANY(:run_ids)"),
+                {"run_ids": run_ids},
+            )
+            await session.execute(
+                text("DELETE FROM agent_eval_runs WHERE id = ANY(:run_ids)"),
+                {"run_ids": run_ids},
+            )
+        if dataset_ids:
+            await session.execute(
+                text("DELETE FROM agent_eval_test_cases WHERE dataset_id = ANY(:dataset_ids)"),
+                {"dataset_ids": dataset_ids},
+            )
+            await session.execute(
+                text("DELETE FROM agent_eval_datasets WHERE id = ANY(:dataset_ids)"),
+                {"dataset_ids": dataset_ids},
+            )
+        await session.execute(
+            text("DELETE FROM agent_eval_benchmarks WHERE id = ANY(:benchmark_ids)"),
+            {"benchmark_ids": benchmark_ids},
+        )
+
     await session.execute(
         delete(AgentKnowledgeBase).where(
             and_(AgentKnowledgeBase.agent_id == agent_id, AgentKnowledgeBase.user_id == user_id)
@@ -326,6 +596,7 @@ async def delete_agent(
 @router.post("/{agent_id}/duplicate")
 async def duplicate_agent(
     agent_id: str,
+    body: Optional[DuplicateAgentBody] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -337,7 +608,7 @@ async def duplicate_agent(
     new_agent = Agent(
         user_id=user_id,
         slug=new_slug,
-        title=f"{orig.title or ''} (copy)",
+        title=body.new_title if body and body.new_title else f"{orig.title or ''} (copy)",
         description=orig.description,
         avatar=orig.avatar,
         system_role=orig.system_role,
@@ -574,6 +845,8 @@ def _agent_dict(a: Agent) -> dict[str, Any]:
         "title": a.title,
         "description": a.description,
         "avatar": a.avatar,
+        "background_color": a.background_color,
+        "market_identifier": a.market_identifier,
         "system_role": a.system_role,
         "model": a.model,
         "provider": a.provider,
@@ -582,6 +855,8 @@ def _agent_dict(a: Agent) -> dict[str, Any]:
         "tts": a.tts,
         "plugins": a.plugins,
         "pinned": a.pinned,
+        "session_group_id": a.session_group_id,
+        "virtual": a.virtual,
         "opening_message": a.opening_message,
         "opening_questions": a.opening_questions,
         "created_at": a.created_at.isoformat() if a.created_at else None,

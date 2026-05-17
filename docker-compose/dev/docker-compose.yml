@@ -7,7 +7,7 @@ services:
     ports:
       - '${RUSTFS_PORT}:9000' # RustFS API
       - '9001:9001' # RustFS Console
-      - '${LOBE_PORT}:3210' # LobeChat
+      - '${LOBE_PORT}:3210' # Ethos
     command: tail -f /dev/null
     networks:
       - lobe-network

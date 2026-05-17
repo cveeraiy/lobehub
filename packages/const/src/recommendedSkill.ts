@@ -17,7 +17,7 @@ export const RECOMMENDED_SKILLS: RecommendedSkillItem[] = [
   { id: 'lobe-gtd', type: RecommendedSkillType.Builtin },
   { id: 'lobe-agent-documents', type: RecommendedSkillType.Builtin },
   { id: 'lobe-message', type: RecommendedSkillType.Builtin },
-  // LobeHub skills
+  // Ethos skills
   { id: 'twitter', type: RecommendedSkillType.Lobehub },
   // Klavis skills
   { id: 'gmail', type: RecommendedSkillType.Klavis },

@@ -4,7 +4,7 @@ import debug from 'debug';
 import { appEnv } from '@/envs/app';
 import { OIDCService } from '@/server/services/oidc';
 
-const log = debug('lobe-oidc:consent');
+const log = debug('ethos-oidc:consent');
 
 export async function POST(request: Request) {
   log('Received POST request for /oidc/consent, URL: %s', request.url);

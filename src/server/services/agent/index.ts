@@ -21,7 +21,7 @@ import { getServerDefaultAgentConfig } from '@/server/globalConfig';
 
 import { type UpdateAgentResult } from './type';
 
-const log = debug('lobe-agent:service');
+const log = debug('ethos-agent:service');
 
 /**
  * Agent config with required id field.

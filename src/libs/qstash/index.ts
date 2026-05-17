@@ -2,7 +2,7 @@ import { Client, Receiver } from '@upstash/qstash';
 import { Client as WorkflowClient } from '@upstash/workflow';
 import debug from 'debug';
 
-const log = debug('lobe-server:qstash');
+const log = debug('ethos-server:qstash');
 
 const headers = {
   ...(process.env.VERCEL_AUTOMATION_BYPASS_SECRET && {

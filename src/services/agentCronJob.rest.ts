@@ -25,7 +25,14 @@ class AgentCronJobService {
       offset?: number;
     } = {},
   ) {
-    return restClient.get('/agent-cron-jobs', { params: options as any });
+    return restClient.get('/agent-cron-jobs', {
+      params: {
+        agent_id: options.agentId,
+        enabled: options.enabled,
+        limit: options.limit,
+        offset: options.offset,
+      },
+    });
   }
 
   async update(id: string, data: UpdateAgentCronJobData) {

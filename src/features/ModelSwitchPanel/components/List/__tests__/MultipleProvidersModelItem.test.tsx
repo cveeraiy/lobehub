@@ -72,7 +72,7 @@ describe('MultipleProvidersModelItem', () => {
             id: 'gpt-5.4',
           } as any,
           providers: [
-            { id: 'lobehub', name: 'LobeHub' },
+            { id: 'lobehub', name: 'Ethos' },
             { id: 'openai', name: 'OpenAI' },
           ],
         }}

@@ -50,7 +50,7 @@ const evalRunInputConfigSchema = z.object({
     .optional(),
 });
 
-const log = debug('lobe-lambda-router:agent-eval');
+const log = debug('ethos-lambda-router:agent-eval');
 
 const agentEvalProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

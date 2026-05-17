@@ -45,7 +45,7 @@ import {
 } from '../../message/selectors/dbMessage';
 import { mergeQueuedMessages } from '../../operation/types';
 
-const log = debug('lobe-store:streaming-executor');
+const log = debug('ethos-store:streaming-executor');
 
 const dynamicInterventionAudits = {
   pathScopeAudit: createPathScopeAudit({

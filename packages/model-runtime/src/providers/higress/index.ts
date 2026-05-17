@@ -19,7 +19,7 @@ export const params = {
   constructorOptions: {
     defaultHeaders: {
       'HTTP-Referer': 'https://lobehub.com',
-      'X-Title': 'LobeHub',
+      'X-Title': 'Ethos',
       'x-Request-Id': uniqueId('lobe-chat-'),
     },
   },

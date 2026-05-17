@@ -11,7 +11,7 @@ import { type ChatStore } from '@/store/chat/store';
 import { type GroupOrchestrationCallbacks } from '@/store/tool/slices/builtin/types';
 import { type StoreSetter } from '@/store/types';
 
-const log = debug('lobe-store:group-orchestration');
+const log = debug('ethos-store:group-orchestration');
 
 /**
  * Default maximum rounds for group orchestration

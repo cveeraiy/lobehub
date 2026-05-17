@@ -9,7 +9,7 @@ import { MarketService } from '@/server/services/market';
 
 import { type ServerRuntimeRegistration } from './types';
 
-const log = debug('lobe-server:creds-runtime');
+const log = debug('ethos-server:creds-runtime');
 
 /**
  * Server-side Creds Service implementation

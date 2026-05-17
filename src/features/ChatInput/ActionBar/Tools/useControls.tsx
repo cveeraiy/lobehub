@@ -65,7 +65,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
   const allKlavisServers = useToolStore(klavisStoreSelectors.getServers, isEqual);
   const isKlavisEnabledInEnv = useServerConfigStore(serverConfigSelectors.enableKlavis);
 
-  // LobeHub Skill related state
+  // Ethos Skill related state
   const allLobehubSkillServers = useToolStore(lobehubSkillStoreSelectors.getServers, isEqual);
   const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
 
@@ -94,7 +94,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
   // Load user's Klavis integrations via SWR (from database)
   useFetchUserKlavisServers(isKlavisEnabledInEnv);
 
-  // Load user's LobeHub Skill connections via SWR
+  // Load user's Ethos Skill connections via SWR
   useFetchLobehubSkillConnections(isLobehubSkillEnabled);
 
   // Get connected server by identifier
@@ -191,7 +191,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
     [isKlavisEnabledInEnv, allKlavisServers, installedKlavisIds, recommendedKlavisIds, agentId, t],
   );
 
-  // LobeHub Skill Provider list items - only show installed or recommended
+  // Ethos Skill Provider list items - only show installed or recommended
   const lobehubSkillItems = useMemo(
     () =>
       isLobehubSkillEnabled
@@ -237,7 +237,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
     ],
   );
 
-  // Builtin tool list items (excluding Klavis and LobeHub Skill)
+  // Builtin tool list items (excluding Klavis and Ethos Skill)
   const builtinItems = useMemo(
     () =>
       filteredBuiltinList.map((item) => ({
@@ -286,7 +286,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
     [filteredBuiltinList, checked, togglePlugin, setUpdating, t],
   );
 
-  // Builtin Agent Skills list items (grouped under LobeHub)
+  // Builtin Agent Skills list items (grouped under Ethos)
   const builtinAgentSkillItems = useMemo(
     () =>
       installedBuiltinSkills.map((skill) => ({
@@ -399,14 +399,14 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
     [userAgentSkills, checked, togglePlugin, setUpdating, t],
   );
 
-  // Skills list items (including LobeHub Skill and Klavis)
-  // Connected items listed first, deduplicated by key (LobeHub takes priority)
+  // Skills list items (including Ethos Skill and Klavis)
+  // Connected items listed first, deduplicated by key (Ethos takes priority)
   const skillItems = useMemo(() => {
-    // Deduplicate by key - LobeHub items take priority over Klavis
+    // Deduplicate by key - Ethos items take priority over Klavis
     const seenKeys = new Set<string>();
     const allItems: typeof lobehubSkillItems = [];
 
-    // Add LobeHub items first (they take priority)
+    // Add Ethos items first (they take priority)
     for (const item of lobehubSkillItems) {
       if (!seenKeys.has(item.key as string)) {
         seenKeys.add(item.key as string);
@@ -484,13 +484,13 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
     };
   };
 
-  // Build LobeHub group children (including Builtin Agent Skills, builtin tools, and LobeHub Skill/Klavis)
+  // Build Ethos group children (including Builtin Agent Skills, builtin tools, and Ethos Skill/Klavis)
   const lobehubGroupChildren: ItemType[] = [
     // 1. Builtin Agent Skills
     ...builtinAgentSkillItems,
     // 2. Builtin tools
     ...builtinItems,
-    // 3. LobeHub Skill and Klavis (as builtin skills)
+    // 3. Ethos Skill and Klavis (as builtin skills)
     ...skillItems,
   ];
 
@@ -508,7 +508,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
 
   // Items for the market tab
   const marketItems: ItemType[] = [
-    // LobeHub group
+    // Ethos group
     ...(lobehubGroupChildren.length > 0
       ? [
           {
@@ -599,12 +599,12 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
       checked.includes(item.key as string),
     );
 
-    // Connected LobeHub Skill Providers
+    // Connected Ethos Skill Providers
     const connectedLobehubSkillItems = lobehubSkillItems.filter((item) =>
       checked.includes(item.key as string),
     );
 
-    // Merge enabled LobeHub Skill and Klavis (as builtin skills)
+    // Merge enabled Ethos Skill and Klavis (as builtin skills)
     const enabledSkillItems = [...connectedLobehubSkillItems, ...connectedKlavisItems];
 
     // Enabled Builtin Agent Skills
@@ -655,7 +655,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
         ),
       }));
 
-    // Build builtin tools group children (including Builtin Agent Skills, builtin tools, and LobeHub Skill/Klavis)
+    // Build builtin tools group children (including Builtin Agent Skills, builtin tools, and Ethos Skill/Klavis)
     const allBuiltinItems: ItemType[] = [
       // 1. Builtin Agent Skills
       ...enabledBuiltinAgentSkillItems,
@@ -665,7 +665,7 @@ export const useControls = ({ setUpdating }: { setUpdating: (updating: boolean) 
       ...(enabledBuiltinItems.length > 0 && enabledSkillItems.length > 0
         ? [{ key: 'installed-divider-builtin-skill', type: 'divider' as const }]
         : []),
-      // 4. LobeHub Skill and Klavis
+      // 4. Ethos Skill and Klavis
       ...enabledSkillItems,
     ];
 

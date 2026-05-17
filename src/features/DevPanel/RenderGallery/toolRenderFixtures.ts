@@ -1108,11 +1108,11 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
   },
   [keyOf('lobe-web-browsing', 'search')]: {
     args: {
-      query: 'LobeHub devtools preview route',
+      query: 'Ethos devtools preview route',
       searchEngines: ['google', 'bing'],
     },
     pluginState: {
-      query: 'LobeHub devtools preview route',
+      query: 'Ethos devtools preview route',
       results: [
         {
           content: 'Documentation and implementation notes about local preview tooling.',

@@ -29,7 +29,7 @@ import { createRedisRuntimeGuardBackend } from '@/server/services/agentSignal/ru
 
 import type { AgentSignalWorkflowRunPayload } from './index';
 
-const log = debug('lobe-server:workflows:agent-signal:run');
+const log = debug('ethos-server:workflows:agent-signal:run');
 
 const isGeneratedEmission = (
   value: Awaited<ReturnType<typeof executeAgentSignalSourceEvent>> | undefined,

@@ -39,7 +39,7 @@ const EVAL_AGENT_RUNTIME_QSTASH_RETRIES = 10;
 const EVAL_AGENT_RUNTIME_QSTASH_RETRY_DELAY = '10000 * (1 + retried)';
 const RESUMABLE_THREAD_STATUSES = new Set(['error', 'timeout']);
 
-const log = debug('lobe-server:eval-run-service');
+const log = debug('ethos-server:eval-run-service');
 
 interface ResumableCaseTarget {
   caseStatus?: string | null;

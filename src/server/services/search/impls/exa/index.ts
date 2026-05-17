@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type ExaResponse, type ExaSearchParameters } from './type';
 
-const log = debug('lobe-search:Exa');
+const log = debug('ethos-search:Exa');
 
 /**
  * Exa implementation of the search service

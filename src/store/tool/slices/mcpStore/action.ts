@@ -32,7 +32,7 @@ import { setNamespace } from '@/utils/storeDebug';
 import { type ToolStore } from '../../store';
 import { type MCPStoreState } from './initialState';
 
-const log = debug('lobe-mcp:store:action');
+const log = debug('ethos-mcp:store:action');
 
 const n = setNamespace('mcpStore');
 
@@ -78,27 +78,27 @@ const buildCloudMcpManifest = (params: {
 
   log('Using cloud connection, building manifest from market data');
 
-  // Get tools (MCP format) or api (LobeChat format) from data
+  // Get tools (MCP format) or api (Ethos format) from data
   const mcpTools = data.tools;
   const lobeChatApi = data.api;
 
-  // If MCP format tools, need to convert to LobeChat api format
+  // If MCP format tools, need to convert to Ethos api format
   // MCP: { name, description, inputSchema }
-  // LobeChat: { name, description, parameters }
+  // Ethos: { name, description, parameters }
   let apiArray: any[] = [];
 
   if (lobeChatApi) {
-    // Already in LobeChat format, use directly
+    // Already in Ethos format, use directly
     apiArray = lobeChatApi;
-    log('[Cloud MCP] Using existing LobeChat API format');
+    log('[Cloud MCP] Using existing Ethos API format');
   } else if (mcpTools && Array.isArray(mcpTools)) {
-    // Convert MCP tools format to LobeChat api format
+    // Convert MCP tools format to Ethos api format
     apiArray = mcpTools.map((tool: any) => ({
       description: tool.description || '',
       name: tool.name,
       parameters: tool.inputSchema || {},
     }));
-    log('[Cloud MCP] Converted %d MCP tools to LobeChat API format', apiArray.length);
+    log('[Cloud MCP] Converted %d MCP tools to Ethos API format', apiArray.length);
   } else {
     console.warn('[Cloud MCP] No tools or api found in manifest data');
   }
@@ -234,7 +234,7 @@ export class PluginMCPStoreActionImpl {
     let data: any;
     let result: CheckMcpInstallResult | undefined;
     let connection: any;
-    const userAgent = `LobeHub Desktop/${CURRENT_VERSION}`;
+    const userAgent = `Ethos Desktop/${CURRENT_VERSION}`;
 
     try {
       // Check if already cancelled

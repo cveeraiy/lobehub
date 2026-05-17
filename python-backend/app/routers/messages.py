@@ -280,6 +280,23 @@ async def compression_group_finalize_alias(
     return await finalize_compression(body, user_id=user_id, session=session)
 
 
+@router.put("/tool-arguments")
+async def update_tool_arguments_alias(
+    body: UpdateToolArgsBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Alias: PUT /tool-arguments — frontend path updates by toolCallId."""
+    stmt = select(MessagePlugin).where(MessagePlugin.tool_call_id == body.tool_call_id)
+    existing = (await session.execute(stmt)).scalar_one_or_none()
+    if existing:
+        args_str = body.value if isinstance(body.value, str) else str(body.value)
+        await session.execute(
+            update(MessagePlugin).where(MessagePlugin.id == existing.id).values(arguments=args_str)
+        )
+    return {"ok": True}
+
+
 # ── Batch / bulk deletes ─────────────────────────────────────────────
 
 @router.post("/remove-all")

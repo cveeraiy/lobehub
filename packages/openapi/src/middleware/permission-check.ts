@@ -6,7 +6,7 @@ import { getServerDB } from '@/database/core/db-adaptor';
 import { RbacModel } from '@/database/models/rbac';
 
 // Create context logger namespace
-const log = debug('lobe-hono:permission-middleware');
+const log = debug('ethos-hono:permission-middleware');
 
 export interface PermissionCheckOptions {
   /**

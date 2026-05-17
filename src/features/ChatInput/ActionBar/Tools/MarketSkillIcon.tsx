@@ -14,7 +14,7 @@ interface MarketSkillIconProps {
 /**
  * Market agent skill icon component.
  *
- * Looks up the skill in the LobeHub Market via SWR (cached/dedup'd) so the
+ * Looks up the skill in the Ethos Market via SWR (cached/dedup'd) so the
  * panel displays the same publisher icon shown in the Skill Store. Falls back
  * to an Avatar generated from the skill name while loading, or when the skill
  * is not present in the market (e.g. user-imported skills from a custom URL).

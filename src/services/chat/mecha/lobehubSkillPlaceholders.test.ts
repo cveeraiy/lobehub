@@ -13,7 +13,7 @@ const lobeHubContent = LobeHubSkill.content;
  *
  * Instead of building a dedicated AgentIdentityContextInjector, we wire current
  * agent / topic identity through the existing PlaceholderVariablesProcessor —
- * the LobeHub builtin skill content references `{{agent_id}}`, `{{topic_id}}`,
+ * the Ethos builtin skill content references `{{agent_id}}`, `{{topic_id}}`,
  * etc., and `contextEngineering.ts` provides the matching variable generators.
  *
  * This test pins the contract from BOTH ends:
@@ -24,7 +24,7 @@ const lobeHubContent = LobeHubSkill.content;
  * vice versa), this test fails before users see a broken `lh agent run -a {{agent_id}}`
  * literal in their prompts.
  */
-describe('LobeHub skill identity placeholders (LOBE-6882)', () => {
+describe('Ethos skill identity placeholders (LOBE-6882)', () => {
   const PLACEHOLDER_KEYS = [
     'agent_id',
     'agent_title',

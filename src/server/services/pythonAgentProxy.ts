@@ -12,7 +12,7 @@ import debug from 'debug';
 
 import { callPythonBackend, isPythonBackendEnabled } from '@/server/utils/pythonBackend';
 
-const log = debug('lobe-server:python-agent-proxy');
+const log = debug('ethos-server:python-agent-proxy');
 
 // ── camelCase → snake_case helpers ────────────────────────────────────
 function toSnakeCase(str: string): string {

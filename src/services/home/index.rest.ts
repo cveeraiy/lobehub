@@ -1,20 +1,55 @@
 import { type SidebarAgentItem, type SidebarAgentListResponse } from '@/database/repositories/home';
 import { restClient } from '@/libs/rest';
 
+type RawSidebarAgentItem = Omit<SidebarAgentItem, 'updatedAt'> & {
+  updatedAt?: string | null;
+};
+
+type RawSidebarGroup = Omit<SidebarAgentListResponse['groups'][number], 'items'> & {
+  agents?: RawSidebarAgentItem[];
+  items?: RawSidebarAgentItem[];
+};
+
+interface RawSidebarAgentListResponse {
+  groups: RawSidebarGroup[];
+  pinned: RawSidebarAgentItem[];
+  ungrouped: RawSidebarAgentItem[];
+}
+
+const toSidebarAgentItem = (item: RawSidebarAgentItem): SidebarAgentItem => ({
+  ...item,
+  updatedAt: item.updatedAt ? new Date(item.updatedAt) : new Date(0),
+});
+
+const toSidebarAgentListResponse = (
+  response: RawSidebarAgentListResponse,
+): SidebarAgentListResponse => ({
+  groups: response.groups.map((group) => ({
+    id: group.id,
+    items: (group.items ?? group.agents ?? []).map(toSidebarAgentItem),
+    name: group.name,
+    sort: group.sort,
+  })),
+  pinned: response.pinned.map(toSidebarAgentItem),
+  ungrouped: response.ungrouped.map(toSidebarAgentItem),
+});
+
 export class HomeService {
-  getSidebarAgentList = (): Promise<SidebarAgentListResponse> => {
-    return restClient.get<SidebarAgentListResponse>('/home/sidebar-agents');
+  getSidebarAgentList = async (): Promise<SidebarAgentListResponse> => {
+    const response = await restClient.get<RawSidebarAgentListResponse>('/home/sidebar-agents');
+    return toSidebarAgentListResponse(response);
   };
 
-  searchAgents = (keyword: string): Promise<SidebarAgentItem[]> => {
-    return restClient.get<SidebarAgentItem[]>('/home/search-agents', {
+  searchAgents = async (keyword: string): Promise<SidebarAgentItem[]> => {
+    const response = await restClient.get<RawSidebarAgentItem[]>('/home/search-agents', {
       params: { keyword },
     });
+    return response.map(toSidebarAgentItem);
   };
 
   updateAgentSessionGroupId = (agentId: string, sessionGroupId: string | null): Promise<void> => {
-    return restClient.put('/home/agent-session-group', {
-      body: { agentId, sessionGroupId },
+    return restClient.put('/home/agent-group', {
+      body: { agent_id: agentId, session_group_id: sessionGroupId },
     }) as any;
   };
 }

@@ -8,7 +8,7 @@ import {
   type OnTrajectoryCompletePayload,
 } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:on-trajectory-complete');
+const log = debug('ethos-server:workflows:on-trajectory-complete');
 
 /**
  * On-trajectory-complete webhook handler

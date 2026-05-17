@@ -19,7 +19,7 @@ import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 
 const n = setNamespace('codeInterpreter');
-const log = debug('lobe-store:builtin-tool');
+const log = debug('ethos-store:builtin-tool');
 
 const SWR_FETCH_INTERPRETER_FILE_KEY = 'FetchCodeInterpreterFileItem';
 

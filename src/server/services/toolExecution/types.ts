@@ -19,7 +19,7 @@ export interface ToolExecutionContext {
   operationId?: string;
   /** Conversation scope captured when the operation was created */
   scope?: string | null;
-  /** Server database for LobeHub Skills execution */
+  /** Server database for Ethos Skills execution */
   serverDB?: LobeChatDatabase;
   /** Task ID when executing within the Task system */
   taskId?: string;

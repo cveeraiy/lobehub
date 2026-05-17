@@ -25,7 +25,7 @@ const DEPRECATED_CHECKS = [
       Object.keys(process.env).filter(
         (key) => key.startsWith('NEXT_AUTH') || key.startsWith('NEXTAUTH'),
       ),
-    message: 'NextAuth has been removed from LobeChat. Please migrate to Better Auth.',
+    message: 'NextAuth has been removed from Ethos. Please migrate to Better Auth.',
     name: 'NextAuth',
   },
   {
@@ -34,7 +34,7 @@ const DEPRECATED_CHECKS = [
       ['NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', 'CLERK_SECRET_KEY', 'CLERK_WEBHOOK_SECRET'].filter(
         (key) => process.env[key],
       ),
-    message: 'Clerk has been removed from LobeChat. Please migrate to Better Auth.',
+    message: 'Clerk has been removed from Ethos. Please migrate to Better Auth.',
     name: 'Clerk',
   },
   {
@@ -58,13 +58,13 @@ const DEPRECATED_CHECKS = [
   {
     getVars: () => (process.env['NEXT_PUBLIC_SERVICE_MODE'] ? ['NEXT_PUBLIC_SERVICE_MODE'] : []),
     message:
-      'LobeChat 2.0 no longer supports client-side database mode. This environment variable is now obsolete and can be removed.',
+      'Ethos 2.0 no longer supports client-side database mode. This environment variable is now obsolete and can be removed.',
     name: 'Service Mode',
   },
   {
     getVars: () => (process.env['ACCESS_CODE'] ? ['ACCESS_CODE'] : []),
     message:
-      'ACCESS_CODE is no longer supported in LobeChat 2.0. Please use Better Auth authentication system instead.',
+      'ACCESS_CODE is no longer supported in Ethos 2.0. Please use Better Auth authentication system instead.',
     name: 'Access Code',
   },
   {
@@ -145,7 +145,7 @@ const DEPRECATED_CHECKS = [
       return [];
     },
     message:
-      'Casdoor webhook is recommended for syncing user data (email, avatar, etc.) to LobeChat. This is especially important for users migrating from NextAuth to Better Auth - users without email configured in Casdoor will not be able to login. Consider configuring CASDOOR_WEBHOOK_SECRET following the documentation.',
+      'Casdoor webhook is recommended for syncing user data (email, avatar, etc.) to Ethos. This is especially important for users migrating from NextAuth to Better Auth - users without email configured in Casdoor will not be able to login. Consider configuring CASDOOR_WEBHOOK_SECRET following the documentation.',
     name: 'Casdoor Webhook',
     severity: 'warning',
   },
@@ -159,7 +159,7 @@ const DEPRECATED_CHECKS = [
       return [];
     },
     message:
-      'Logto webhook is recommended for syncing user data (email, avatar, etc.) to LobeChat. This is especially important for users migrating from NextAuth to Better Auth - users without email configured in Logto will not be able to login. Consider configuring LOGTO_WEBHOOK_SIGNING_KEY following the documentation.',
+      'Logto webhook is recommended for syncing user data (email, avatar, etc.) to Ethos. This is especially important for users migrating from NextAuth to Better Auth - users without email configured in Logto will not be able to login. Consider configuring LOGTO_WEBHOOK_SIGNING_KEY following the documentation.',
     name: 'Logto Webhook',
     severity: 'warning',
   },

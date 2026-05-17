@@ -112,7 +112,7 @@ export interface AnthropicCompatibleParamsInput<T extends Record<string, any> = 
 }
 
 /**
- * Build the default Anthropic Messages payload with LobeChat normalization.
+ * Build the default Anthropic Messages payload with Ethos normalization.
  */
 export const buildDefaultAnthropicPayload = async (
   payload: ChatStreamPayload,
@@ -194,7 +194,7 @@ export const buildDefaultAnthropicPayload = async (
   }
 
   // Resolve temperature/top_p: Claude 4+ doesn't allow both simultaneously.
-  // normalizeTemperature divides by 2 to map LobeChat's 0-2 range to Anthropic's 0-1 range.
+  // normalizeTemperature divides by 2 to map Ethos's 0-2 range to Anthropic's 0-1 range.
   const resolvedSamplingParams = resolveModelSamplingParameters(
     model,
     { temperature, top_p },

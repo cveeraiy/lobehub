@@ -9,7 +9,7 @@ import {
   type RunThreadTrajectoryPayload,
 } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:run-thread-trajectory');
+const log = debug('ethos-server:workflows:run-thread-trajectory');
 
 /**
  * Run thread trajectory workflow - executes a single agent runtime call within a thread (for pass@k).

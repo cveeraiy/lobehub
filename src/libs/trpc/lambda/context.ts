@@ -12,7 +12,7 @@ import { validateOIDCJWT } from '@/libs/oidc-provider/jwt';
 import { isApiKeyExpired, validateApiKeyFormat } from '@/utils/apiKey';
 
 // Create context logger namespace
-const log = debug('lobe-trpc:lambda:context');
+const log = debug('ethos-trpc:lambda:context');
 const LOBE_CHAT_API_KEY_HEADER = 'X-API-Key';
 
 const extractClientIp = (request: Request): string | undefined => {

@@ -1,6 +1,6 @@
-# LobeHub Python Backend
+# Ethos Python Backend
 
-FastAPI backend for LobeHub — chat, agents, knowledge bases, memory, tools, and admin.
+FastAPI backend for Ethos — chat, agents, knowledge bases, memory, tools, and admin.
 
 ## Quick Start
 

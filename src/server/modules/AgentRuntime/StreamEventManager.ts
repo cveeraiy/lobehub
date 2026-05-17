@@ -4,8 +4,8 @@ import { type Redis } from 'ioredis';
 
 import { getAgentRuntimeRedisClient } from './redis';
 
-const log = debug('lobe-server:agent-runtime:stream-event-manager');
-const timing = debug('lobe-server:agent-runtime:timing');
+const log = debug('ethos-server:agent-runtime:stream-event-manager');
+const timing = debug('ethos-server:agent-runtime:timing');
 
 const extractReasonFromError = (error: any): string | undefined => {
   if (!error) return undefined;

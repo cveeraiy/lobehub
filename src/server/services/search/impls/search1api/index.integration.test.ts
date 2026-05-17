@@ -11,9 +11,9 @@ describeIfKey('Search1APIImpl integration', { timeout: 30_000 }, () => {
   const impl = new Search1APIImpl();
 
   it('should return search results for a basic query', async () => {
-    const result = await impl.query('LobeHub');
+    const result = await impl.query('Ethos');
 
-    expect(result.query).toBe('LobeHub');
+    expect(result.query).toBe('Ethos');
     expect(result.resultNumbers).toBeGreaterThan(0);
     expect(result.results.length).toBeGreaterThan(0);
     expect(result.costTime).toBeGreaterThan(0);

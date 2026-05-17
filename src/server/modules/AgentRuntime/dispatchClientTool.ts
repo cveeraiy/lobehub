@@ -8,7 +8,7 @@ import type { ToolResultPayload } from './ToolResultWaiter';
 import { ToolResultWaiter } from './ToolResultWaiter';
 import type { IStreamEventManager } from './types';
 
-const log = debug('lobe-server:agent-runtime:dispatch-client-tool');
+const log = debug('ethos-server:agent-runtime:dispatch-client-tool');
 
 /**
  * Default per-tool execution budget when the payload doesn't carry one.

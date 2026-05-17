@@ -1,9 +1,9 @@
 ---
 name: store-data-structures
-description: Zustand store data structure patterns for LobeHub. Covers List vs Detail data structures, Map + Reducer patterns, type definitions, and when to use each pattern. Use when designing store state, choosing data structures, or implementing list/detail pages.
+description: Zustand store data structure patterns for Ethos. Covers List vs Detail data structures, Map + Reducer patterns, type definitions, and when to use each pattern. Use when designing store state, choosing data structures, or implementing list/detail pages.
 ---
 
-# LobeHub Store Data Structures
+# Ethos Store Data Structures
 
 This guide covers how to structure data in Zustand stores for optimal performance and user experience.
 

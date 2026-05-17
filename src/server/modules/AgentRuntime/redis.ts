@@ -4,8 +4,8 @@ import Redis from 'ioredis';
 import { redisEnv } from '@/envs/redis';
 import { isRedisDisabledByEnv } from '@/libs/redis';
 
-const log = debug('lobe-server:agent-runtime:redis');
-const timing = debug('lobe-server:agent-runtime:timing');
+const log = debug('ethos-server:agent-runtime:redis');
+const timing = debug('ethos-server:agent-runtime:timing');
 
 /**
  * Get Redis URL from environment

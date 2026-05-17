@@ -8,7 +8,7 @@ import {
   type OnThreadCompletePayload,
 } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:on-thread-complete');
+const log = debug('ethos-server:workflows:on-thread-complete');
 
 /**
  * On-thread-complete webhook handler (for pass@k).

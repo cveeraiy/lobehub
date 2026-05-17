@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OAuthDeviceFlowService } from '../../index';
-import { getOAuthService,GithubCopilotOAuthService } from '../../providers/githubCopilot';
+import { getOAuthService, GithubCopilotOAuthService } from '../../providers/githubCopilot';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -50,7 +50,7 @@ describe('GithubCopilotOAuthService', () => {
           headers: {
             'Accept': 'application/json',
             'Authorization': 'token oauth-token-123',
-            'User-Agent': 'LobeChat/1.0',
+            'User-Agent': 'Ethos/1.0',
           },
           method: 'GET',
         }),

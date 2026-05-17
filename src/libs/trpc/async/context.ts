@@ -4,7 +4,7 @@ import debug from 'debug';
 import { LOBE_CHAT_AUTH_HEADER } from '@/envs/auth';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 
-const log = debug('lobe-async:context');
+const log = debug('ethos-async:context');
 
 export interface AsyncAuthContext {
   authorizationToken?: string;
@@ -35,7 +35,7 @@ export const createAsyncRouteContext = async (request: Request): Promise<AsyncCo
   const lobeChatAuthorization = request.headers.get(LOBE_CHAT_AUTH_HEADER);
 
   log('Authorization header present: %s', !!authorization);
-  log('LobeChat auth header present: %s', !!lobeChatAuthorization);
+  log('Ethos auth header present: %s', !!lobeChatAuthorization);
 
   if (!authorization) {
     log('No authorization header found');
@@ -43,15 +43,15 @@ export const createAsyncRouteContext = async (request: Request): Promise<AsyncCo
   }
 
   if (!lobeChatAuthorization) {
-    log('No LobeChat authorization header found');
-    throw new Error('No LobeChat authorization header found');
+    log('No Ethos authorization header found');
+    throw new Error('No Ethos authorization header found');
   }
 
   try {
     log('Initializing KeyVaultsGateKeeper');
     const gateKeeper = await KeyVaultsGateKeeper.initWithEnvKey();
 
-    log('Decrypting LobeChat authorization');
+    log('Decrypting Ethos authorization');
     const { plaintext } = await gateKeeper.decrypt(lobeChatAuthorization);
 
     log('Parsing decrypted authorization data');

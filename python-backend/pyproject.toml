@@ -1,7 +1,7 @@
 [project]
 name = "lobehub-backend"
 version = "0.1.0"
-description = "LobeHub Python Backend MVP"
+description = "Ethos Python Backend MVP"
 requires-python = ">=3.11"
 dependencies = [
     # Core

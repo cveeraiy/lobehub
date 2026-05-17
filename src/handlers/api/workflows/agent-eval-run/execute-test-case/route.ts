@@ -6,7 +6,7 @@ import { getServerDB } from '@/database/server';
 import { qstashClient } from '@/libs/qstash';
 import { AgentEvalRunWorkflow, type ExecuteTestCasePayload } from '@/server/workflows/agentEvalRun';
 
-const log = debug('lobe-server:workflows:execute-test-case');
+const log = debug('ethos-server:workflows:execute-test-case');
 
 /**
  * Execute test case workflow - manages K executions of a single test case

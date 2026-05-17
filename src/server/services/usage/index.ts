@@ -9,7 +9,7 @@ import { type MessageMetadata } from '@/types/message';
 import { type UsageLog, type UsageRecordItem } from '@/types/usage/usageRecord';
 import { formatDate } from '@/utils/format';
 
-const log = debug('lobe-usage:service');
+const log = debug('ethos-usage:service');
 
 export class UsageRecordService {
   private userId: string;

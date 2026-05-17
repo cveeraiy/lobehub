@@ -20,7 +20,7 @@ import { LobehubSkillStatus } from './types';
 const n = setNamespace('lobehubSkillStore');
 
 /**
- * LobeHub Skill Store Actions
+ * Ethos Skill Store Actions
  */
 
 type Setter = StoreSetter<ToolStore>;
@@ -69,7 +69,7 @@ export class LobehubSkillStoreActionImpl {
 
       return { data: response.data, success: true };
     } catch (error) {
-      console.error('[LobehubSkill] Failed to call tool:', error);
+      console.error('[EthosSkill] Failed to call tool:', error);
 
       this.#set(
         produce((draft: LobehubSkillStoreState) => {
@@ -147,7 +147,7 @@ export class LobehubSkillStoreActionImpl {
 
       return server;
     } catch (error) {
-      console.error('[LobehubSkill] Failed to check status:', error);
+      console.error('[EthosSkill] Failed to check status:', error);
 
       this.#set(
         produce((draft: LobehubSkillStoreState) => {
@@ -210,7 +210,7 @@ export class LobehubSkillStoreActionImpl {
 
       return response.refreshed;
     } catch (error) {
-      console.error('[LobehubSkill] Failed to refresh token:', error);
+      console.error('[EthosSkill] Failed to refresh token:', error);
       return false;
     }
   };
@@ -230,7 +230,7 @@ export class LobehubSkillStoreActionImpl {
         n('refreshLobehubSkillTools/success'),
       );
     } catch (error) {
-      console.error('[LobehubSkill] Failed to refresh tools:', error);
+      console.error('[EthosSkill] Failed to refresh tools:', error);
     }
   };
 
@@ -257,7 +257,7 @@ export class LobehubSkillStoreActionImpl {
         n('revokeLobehubSkill/success'),
       );
     } catch (error) {
-      console.error('[LobehubSkill] Failed to revoke:', error);
+      console.error('[EthosSkill] Failed to revoke:', error);
 
       this.#set(
         produce((draft: LobehubSkillStoreState) => {

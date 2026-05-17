@@ -28,7 +28,9 @@ def _now() -> datetime:
 
 class CreateSessionBody(BaseModel):
     agent_id: Optional[str] = None
+    config: Optional[dict[str, Any]] = None
     group_id: Optional[str] = None
+    session: Optional[dict[str, Any]] = None
     type: str = "agent"
 
 
@@ -235,7 +237,21 @@ async def create_session(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    s = Session(user_id=user_id, **body.model_dump(exclude_none=True))
+    session_payload = body.session or {}
+    group_id = body.group_id or session_payload.get("group_id") or session_payload.get("groupId")
+    agent_id = body.agent_id
+
+    if body.config and not agent_id and body.type == "agent":
+        import uuid as _uuid
+
+        agent_values = _agent_values_from_config(body.config)
+        agent_values.setdefault("slug", f"agent-{_uuid.uuid4().hex[:8]}")
+        agent = Agent(user_id=user_id, **agent_values)
+        session.add(agent)
+        await session.flush()
+        agent_id = agent.id
+
+    s = Session(user_id=user_id, agent_id=agent_id, group_id=group_id, type=body.type)
     session.add(s)
     await session.flush()
     return {"id": s.id}
@@ -481,4 +497,23 @@ def _session_dict(s: Session) -> dict[str, Any]:
         "slug": s.slug,
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
+    }
+
+
+def _agent_values_from_config(config: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "avatar": config.get("avatar"),
+        "background_color": config.get("backgroundColor") or config.get("background_color"),
+        "chat_config": config.get("chatConfig") or config.get("chat_config"),
+        "description": config.get("description"),
+        "market_identifier": config.get("marketIdentifier") or config.get("market_identifier"),
+        "model": config.get("model") if isinstance(config.get("model"), str) else None,
+        "opening_message": config.get("openingMessage") or config.get("opening_message"),
+        "opening_questions": config.get("openingQuestions") or config.get("opening_questions"),
+        "plugins": config.get("plugins"),
+        "provider": config.get("provider"),
+        "system_role": config.get("systemRole") or config.get("system_role"),
+        "tags": config.get("tags"),
+        "title": config.get("title"),
+        "tts": config.get("tts"),
     }

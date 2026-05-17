@@ -10,7 +10,7 @@ import urlJoin from 'url-join';
 import { type SearchServiceImpl } from '../type';
 import { type BochaResponse, type BochaSearchParameters } from './type';
 
-const log = debug('lobe-search:Bocha');
+const log = debug('ethos-search:Bocha');
 
 const timeRangeMapping = {
   day: 'oneDay',

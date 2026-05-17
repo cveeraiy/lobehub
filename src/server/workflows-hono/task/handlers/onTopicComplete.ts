@@ -4,7 +4,7 @@ import type { Context } from 'hono';
 import { getServerDB } from '@/database/server';
 import { TaskLifecycleService } from '@/server/services/taskLifecycle';
 
-const log = debug('lobe-server:workflows:task:on-topic-complete');
+const log = debug('ethos-server:workflows:task:on-topic-complete');
 
 export interface OnTopicCompletePayload {
   errorMessage?: string;
