@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import and_, delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/threads", tags=["Threads"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -37,7 +37,71 @@ class UpdateThreadBody(BaseModel):
     status: Optional[str] = None
 
 
+class CreateThreadWithMessageBody(BaseModel):
+    topic_id: str
+    title: Optional[str] = None
+    source_message_id: Optional[str] = None
+    type: Optional[str] = "standalone"
+    parent_thread_id: Optional[str] = None
+    id: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    message: Optional[dict[str, Any]] = None
+
+
+class BatchDeleteThreadsBody(BaseModel):
+    ids: list[str]
+
+
 # ── Endpoints ────────────────────────────────────────────────────────
+
+@router.post("/with-message", status_code=status.HTTP_201_CREATED)
+async def create_thread_with_message(
+    body: CreateThreadWithMessageBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Create a thread and an initial message in one call."""
+    thread = Thread(
+        topic_id=body.topic_id,
+        user_id=user_id,
+        title=body.message.get("content", "")[:20] if body.message and body.message.get("content") else body.title,
+        source_message_id=body.source_message_id,
+        type=body.type,
+        parent_thread_id=body.parent_thread_id,
+    )
+    if body.id:
+        thread.id = body.id
+    session.add(thread)
+    await session.flush()
+
+    message_id = None
+    if body.message:
+        msg = Message(
+            user_id=user_id,
+            role=body.message.get("role", "user"),
+            content=body.message.get("content"),
+            model=body.message.get("model"),
+            provider=body.message.get("provider"),
+            topic_id=body.topic_id,
+            thread_id=thread.id,
+            agent_id=body.message.get("agent_id"),
+            session_id=body.message.get("session_id"),
+        )
+        session.add(msg)
+        await session.flush()
+        message_id = msg.id
+
+    return {"thread_id": thread.id, "message_id": message_id}
+
+
+@router.post("/remove-all")
+async def remove_all_threads(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await session.execute(delete(Thread).where(Thread.user_id == user_id))
+    return {"ok": True}
+
 
 @router.get("")
 async def list_threads(
@@ -138,6 +202,31 @@ async def get_thread_messages(
         }
         for m in rows
     ]
+
+
+@router.post("/remove-by-topic")
+async def remove_threads_by_topic(
+    topic_id: str = Query(...),
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await session.execute(
+        delete(Thread).where(and_(Thread.topic_id == topic_id, Thread.user_id == user_id))
+    )
+    return {"ok": True}
+
+
+@router.post("/batch-delete")
+async def batch_delete_threads(
+    body: BatchDeleteThreadsBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    if body.ids:
+        await session.execute(
+            delete(Thread).where(and_(Thread.id.in_(body.ids), Thread.user_id == user_id))
+        )
+    return {"ok": True}
 
 
 # ── Helpers ──────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import type { DocumentLoadFormat, DocumentLoadRule } from '@lobechat/agent-templ
 import { AgentDocumentsExecutionRuntime } from '@lobechat/builtin-tool-agent-documents/executionRuntime';
 import { AgentDocumentsExecutor } from '@lobechat/builtin-tool-agent-documents/executor';
 
-import { agentDocumentService } from '@/services/agentDocument';
+import { agentDocumentService } from '@/services/agentDocument.resolved';
 
 const runtime = new AgentDocumentsExecutionRuntime({
   copyDocument: ({ agentId, id, newTitle }) =>

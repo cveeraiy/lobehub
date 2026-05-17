@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import and_, delete, desc, select, update
+from sqlalchemy import and_, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -14,6 +14,22 @@ from app.dependencies import get_current_user_id
 from app.models.misc import Notification
 
 router = APIRouter(prefix="/api/notifications", tags=["Notifications"])
+
+
+@router.get("/count")
+async def count_notifications(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    total = (await session.execute(
+        select(func.count()).select_from(Notification).where(Notification.user_id == user_id)
+    )).scalar_one()
+    unread = (await session.execute(
+        select(func.count()).select_from(Notification).where(
+            and_(Notification.user_id == user_id, Notification.read_at.is_(None))
+        )
+    )).scalar_one()
+    return {"total": total, "unread": unread}
 
 
 @router.get("")
@@ -43,7 +59,7 @@ async def mark_read(
     await session.execute(
         update(Notification)
         .where(and_(Notification.id == notification_id, Notification.user_id == user_id))
-        .values(read_at=datetime.now(timezone.utc))
+        .values(read_at=datetime.now(timezone.utc).replace(tzinfo=None))
     )
     return {"ok": True}
 
@@ -56,7 +72,7 @@ async def mark_all_read(
     await session.execute(
         update(Notification)
         .where(and_(Notification.user_id == user_id, Notification.read_at.is_(None)))
-        .values(read_at=datetime.now(timezone.utc))
+        .values(read_at=datetime.now(timezone.utc).replace(tzinfo=None))
     )
     return {"ok": True}
 
@@ -70,6 +86,17 @@ async def dismiss_notification(
     await session.execute(
         delete(Notification)
         .where(and_(Notification.id == notification_id, Notification.user_id == user_id))
+    )
+    return {"ok": True}
+
+
+@router.delete("")
+async def remove_all_notifications(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await session.execute(
+        delete(Notification).where(Notification.user_id == user_id)
     )
     return {"ok": True}
 

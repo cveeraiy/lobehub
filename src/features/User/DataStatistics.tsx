@@ -10,9 +10,9 @@ import { useTranslation } from 'react-i18next';
 
 import NeuralNetworkLoading from '@/components/NeuralNetworkLoading';
 import { useClientDataSWR } from '@/libs/swr';
-import { messageService } from '@/services/message';
-import { sessionService } from '@/services/session';
-import { topicService } from '@/services/topic';
+import { messageService } from '@/services/message/resolved';
+import { sessionService } from '@/services/session/resolved';
+import { topicService } from '@/services/topic/resolved';
 import { useServerConfigStore } from '@/store/serverConfig';
 import { formatShortenNumber } from '@/utils/format';
 import { today } from '@/utils/time';

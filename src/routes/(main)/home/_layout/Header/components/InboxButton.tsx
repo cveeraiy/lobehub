@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DESKTOP_HEADER_ICON_SIZE } from '@/const/layoutTokens';
 import { useClientDataSWR } from '@/libs/swr';
-import { notificationService } from '@/services/notification';
+import { notificationService } from '@/services/notification.resolved';
 import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 
 import InboxDrawer from './InboxDrawer';

@@ -9,7 +9,7 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { lambdaClient } from '@/libs/trpc/client/lambda';
-import { uploadService } from '@/services/upload';
+import { uploadService } from '@/services/upload.resolved';
 import { useToolStore } from '@/store/tool';
 
 interface UploadSkillModalProps {

@@ -9,8 +9,8 @@ import { SkillsExecutionRuntime } from '@lobechat/builtin-tool-skills/executionR
 import { SkillsExecutor } from '@lobechat/builtin-tool-skills/executor';
 
 import { filterBuiltinSkills } from '@/helpers/skillFilters';
-import { cloudSandboxService } from '@/services/cloudSandbox';
-import { agentSkillService } from '@/services/skill';
+import { cloudSandboxService } from '@/services/cloudSandbox.resolved';
+import { agentSkillService } from '@/services/skill/resolved';
 import { useChatStore } from '@/store/chat';
 
 // Create runtime with client-side service

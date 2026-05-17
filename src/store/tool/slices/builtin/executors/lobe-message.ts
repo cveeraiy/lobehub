@@ -10,7 +10,7 @@ import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
 import { lambdaClient } from '@/libs/trpc/client';
-import { agentBotProviderService } from '@/services/agentBotProvider';
+import { agentBotProviderService } from '@/services/agentBotProvider.resolved';
 
 class MessageExecutor extends BaseExecutor<typeof MessageApiName> {
   readonly identifier = MessageToolIdentifier;

@@ -3,7 +3,7 @@ import { type UIChatMessage } from '@lobechat/types';
 import { TraceNameMap } from '@lobechat/types';
 
 import { chatService } from '@/services/chat';
-import { topicService } from '@/services/topic';
+import { topicService } from '@/services/topic/resolved';
 import { type ChatStore } from '@/store/chat';
 import { type StoreSetter } from '@/store/types';
 import { useUserStore } from '@/store/user';

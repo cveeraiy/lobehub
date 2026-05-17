@@ -10,6 +10,9 @@ export const getServerDBConfig = () => {
 
       KEY_VAULTS_SECRET: process.env.KEY_VAULTS_SECRET,
 
+      PYTHON_BACKEND_SERVICE_TOKEN: process.env.PYTHON_BACKEND_SERVICE_TOKEN,
+      PYTHON_BACKEND_URL: process.env.PYTHON_BACKEND_URL,
+
       REMOVE_GLOBAL_FILE: process.env.DISABLE_REMOVE_GLOBAL_FILE !== '0',
     },
     server: {
@@ -18,6 +21,9 @@ export const getServerDBConfig = () => {
       DATABASE_URL: z.string().optional(),
 
       KEY_VAULTS_SECRET: z.string().optional(),
+
+      PYTHON_BACKEND_SERVICE_TOKEN: z.string().optional(),
+      PYTHON_BACKEND_URL: z.string().url().optional(),
 
       REMOVE_GLOBAL_FILE: z.boolean().optional(),
     },

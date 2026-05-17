@@ -2,7 +2,7 @@ import { type CreateNewEvalEvaluation, type RAGEvalDataSetItem } from '@lobechat
 import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { ragEvalService } from '@/services/ragEval';
+import { ragEvalService } from '@/services/ragEval.resolved';
 import { type KnowledgeBaseStore } from '@/store/library/store';
 import { type StoreSetter } from '@/store/types';
 

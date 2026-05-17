@@ -74,7 +74,7 @@ class TaskRunnerService:
             # Auto-timeout stale topics
             if task.last_heartbeat_at and task.heartbeat_timeout:
                 elapsed = (
-                    datetime.now(timezone.utc) - task.last_heartbeat_at
+                    datetime.now(timezone.utc).replace(tzinfo=None) - task.last_heartbeat_at
                 ).total_seconds()
                 if elapsed > task.heartbeat_timeout:
                     await self._task_svc.timeout_running_topics(task.id)
@@ -85,7 +85,7 @@ class TaskRunnerService:
             # Transition to running
             if task.status != "running":
                 await self._task_svc.update_status(
-                    task.id, "running", started_at=datetime.now(timezone.utc)
+                    task.id, "running", started_at=datetime.now(timezone.utc).replace(tzinfo=None)
                 )
                 we_set_running = True
             elif task.error:

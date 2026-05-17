@@ -1,4 +1,4 @@
-import { userService } from '@/services/user';
+import { userService } from '@/services/user/resolved';
 import { type StoreSetter } from '@/store/types';
 import { type UserStore } from '@/store/user';
 import { type UserGuide, type UserLab, type UserPreference } from '@/types/user';

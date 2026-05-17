@@ -8,7 +8,7 @@ import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import ManifestPreviewer from '@/components/ManifestPreviewer';
-import { toolService } from '@/services/tool';
+import { toolService } from '@/services/tool.resolved';
 import { useToolStore } from '@/store/tool';
 import { pluginSelectors } from '@/store/tool/selectors';
 import { type PluginInstallError } from '@/types/tool/plugin';

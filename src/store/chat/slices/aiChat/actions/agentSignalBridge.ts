@@ -3,7 +3,7 @@ import type {
   AgentSignalSourceType,
 } from '@lobechat/agent-signal/source';
 
-import { agentSignalService } from '@/services/agentSignal';
+import { agentSignalService } from '@/services/agentSignal.resolved';
 import { labPreferSelectors, preferenceSelectors } from '@/store/user/selectors';
 import { getUserStoreState } from '@/store/user/store';
 

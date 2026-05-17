@@ -20,6 +20,8 @@ from app.config import settings
 
 
 # ── Raw flag definitions (mirrors TS FeatureFlagsSchema defaults) ───
+_is_dev = settings.debug
+
 DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "check_updates": True,
     "provider_settings": True,
@@ -35,15 +37,15 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "market": False,
     "knowledge_base": True,
     "rag_eval": False,
-    "agent_self_iteration": False,
-    "agent_onboarding": False,
-    "agent_task": False,
+    "agent_self_iteration": _is_dev,
+    "agent_onboarding": _is_dev,
+    "agent_task": _is_dev,
     "auth_captcha": True,
     "cloud_promotion": False,
     "bot_channels": False,
     "resources": False,
     "starter_list": False,
-    "admin_panel": False,
+    "admin_panel": _is_dev,
     "enterprise_mode": False,
     "commercial_hide_github": False,
     "commercial_hide_docs": False,
@@ -84,6 +86,25 @@ def get_resolved_flags() -> dict[str, bool]:
     return merged
 
 
+# ── snake_case → camelCase conversion ─────────────────────────────────
+# Explicit overrides for acronyms that differ from naive conversion.
+_CAMEL_OVERRIDES: dict[str, str] = {
+    "show_openai_api_key": "showOpenAIApiKey",
+    "show_openai_proxy_url": "showOpenAIProxyUrl",
+    "enable_rag_eval": "enableRAGEval",
+    "enable_stt": "enableSTT",
+    "hide_github": "hideGitHub",
+}
+
+
+def _snake_to_camel(name: str) -> str:
+    """Convert snake_case to camelCase, respecting acronym overrides."""
+    if name in _CAMEL_OVERRIDES:
+        return _CAMEL_OVERRIDES[name]
+    parts = name.split("_")
+    return parts[0] + "".join(p.capitalize() for p in parts[1:])
+
+
 # ── Mapped state (mirrors TS ``mapFeatureFlagsEnvToState``) ─────────
 @dataclass(frozen=True)
 class FeatureFlagsState:
@@ -117,6 +138,15 @@ class FeatureFlagsState:
 
     hide_github: bool = False
     hide_docs: bool = False
+
+    def to_camel_dict(self) -> dict[str, bool]:
+        """Serialise to camelCase dict matching the TS ``mapFeatureFlagsEnvToState`` output.
+
+        e.g. ``is_agent_editable`` → ``isAgentEditable``
+
+        Special acronyms (OpenAI, RAG, STT, GitHub) are handled via explicit overrides.
+        """
+        return {_snake_to_camel(k): v for k, v in self.__dict__.items()}
 
 
 def get_feature_flags(user_id: Optional[str] = None) -> FeatureFlagsState:

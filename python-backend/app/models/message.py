@@ -25,7 +25,6 @@ class Message(SQLModel, table=True):
         Index("messages_user_id_idx", "user_id"),
         Index("messages_session_id_idx", "session_id"),
         Index("messages_topic_id_idx", "topic_id"),
-        Index("messages_thread_id_idx", "thread_id"),
         Index("messages_agent_id_idx", "agent_id"),
         Index("messages_parent_id_idx", "parent_id"),
     )
@@ -47,9 +46,9 @@ class Message(SQLModel, table=True):
     user_id: str = Field(foreign_key="users.id", nullable=False)
     session_id: Optional[str] = Field(default=None, foreign_key="sessions.id")
     topic_id: Optional[str] = Field(default=None, foreign_key="topics.id")
-    thread_id: Optional[str] = Field(default=None, foreign_key="threads.id")
     agent_id: Optional[str] = Field(default=None, foreign_key="agents.id")
     parent_id: Optional[str] = Field(default=None, foreign_key="messages.id")
+    thread_id: Optional[str] = Field(default=None, foreign_key="threads.id", index=True)
 
     # 'default' | 'group'
     message_group_id: Optional[str] = None

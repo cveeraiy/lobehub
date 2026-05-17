@@ -3,14 +3,16 @@ import { Hono } from 'hono';
 import { POST as agentGatewayCallback } from '@/handlers/api/agent/gateway/callback/route';
 import { GET as agentGateway } from '@/handlers/api/agent/gateway/route';
 import { POST as agentGatewayStart } from '@/handlers/api/agent/gateway/start/route';
+import { POST as pythonStream } from '@/handlers/api/agent/python-stream/route';
 import { POST as agentExec } from '@/handlers/api/agent/route';
 import { GET as agentRunHealth, POST as agentRun } from '@/handlers/api/agent/run/route';
 import { GET as agentStream } from '@/handlers/api/agent/stream/route';
 import { POST as agentToolResult } from '@/handlers/api/agent/tool-result/route';
 import { POST as platformWebhook } from '@/handlers/api/agent/webhooks/[platform]/[[...appId]]/route';
 import { POST as botCallback } from '@/handlers/api/agent/webhooks/bot-callback/route';
+import { type AuthEnv, authMiddleware } from '@/hono-server/middleware/auth';
 
-const agent = new Hono();
+const agent = new Hono<AuthEnv>();
 
 // ============ Agent Execution ============ //
 agent.post('/api/agent', (c) => agentExec(c.req.raw));
@@ -21,6 +23,11 @@ agent.get('/api/agent/run', () => agentRunHealth() as any);
 
 // ============ Agent SSE Stream ============ //
 agent.get('/api/agent/stream', (c) => agentStream(c.req.raw));
+
+// ============ Python Backend SSE Stream Proxy ============ //
+agent.post('/api/agent/python-stream', authMiddleware, (c) =>
+  pythonStream(c.req.raw, c.get('userId')),
+);
 
 // ============ Agent Gateway ============ //
 agent.get('/api/agent/gateway', (c) => agentGateway(c.req.raw));

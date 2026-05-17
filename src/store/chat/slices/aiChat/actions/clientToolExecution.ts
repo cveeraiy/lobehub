@@ -3,7 +3,7 @@ import { type BuiltinToolContext } from '@lobechat/types';
 import debug from 'debug';
 import { produce } from 'immer';
 
-import { mcpService } from '@/services/mcp';
+import { mcpService } from '@/services/mcp.resolved';
 import { type ChatStore } from '@/store/chat/store';
 import { hasExecutor, invokeExecutor } from '@/store/tool/slices/builtin/executors';
 import { type StoreSetter } from '@/store/types';

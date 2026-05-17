@@ -1,8 +1,8 @@
 import { type ChatToolPayload } from '@lobechat/types';
 import debug from 'debug';
 
-import { type StreamEvent } from '@/services/agentRuntime';
-import { agentRuntimeService } from '@/services/agentRuntime';
+import { type StreamEvent } from '@/services/agentRuntime/resolved';
+import { agentRuntimeService } from '@/services/agentRuntime/resolved';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 

@@ -55,6 +55,7 @@ class Agent(SQLModel, table=True):
     tts: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("tts"))
 
     # Behaviour
+    virtual: bool = Field(default=False)
     pinned: bool = Field(default=False)
     opening_message: Optional[str] = None
     opening_questions: Optional[list[str]] = Field(default=None, sa_column=json_column("opening_questions"))

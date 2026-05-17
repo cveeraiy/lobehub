@@ -7,7 +7,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { messageService } from '@/services/message';
+import { messageService } from '@/services/message/resolved';
 
 import StatsFormGroup from '../components/StatsFormGroup';
 

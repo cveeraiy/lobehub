@@ -2,7 +2,7 @@ import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
-import { agentBotProviderService } from '@/services/agentBotProvider';
+import { agentBotProviderService } from '@/services/agentBotProvider.resolved';
 import { type StoreSetter } from '@/store/types';
 import type { BotRuntimeStatusSnapshot } from '@/types/botRuntimeStatus';
 

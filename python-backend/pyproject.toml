@@ -20,6 +20,7 @@ dependencies = [
     # Auth
     "python-jose[cryptography]>=3.3.0",
     "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
 
     # LLM
     "litellm>=1.55.0",
@@ -33,15 +34,16 @@ dependencies = [
     # Storage
     "boto3>=1.35.86",
 
+    # SSE
+    "sse-starlette>=3.0.0",
+
     # Utils
     "anyio>=4.0.0",
     "nanoid>=2.0.0",
     "python-multipart>=0.0.19",
-    "orjson>=3.10.12",
     "cryptography>=44.0.0",
 
     # Builtin tools
-    "simpleeval>=1.0.0",
     "beautifulsoup4>=4.12.0",
 ]
 

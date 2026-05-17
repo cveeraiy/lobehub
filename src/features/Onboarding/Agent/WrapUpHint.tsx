@@ -5,7 +5,7 @@ import { confirmModal } from '@lobehub/ui/base-ui';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { userService } from '@/services/user';
+import { userService } from '@/services/user/resolved';
 import { useUserStore } from '@/store/user';
 import type { OnboardingPhase } from '@/types/user';
 

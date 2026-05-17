@@ -1,7 +1,7 @@
 import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
 
-import { chatGroupService } from '@/services/chatGroup';
-import { documentService } from '@/services/document';
+import { chatGroupService } from '@/services/chatGroup/resolved';
+import { documentService } from '@/services/document/resolved';
 import { getAgentStoreState } from '@/store/agent';
 import { agentSelectors, builtinAgentSelectors } from '@/store/agent/selectors';
 import { getChatGroupStoreState } from '@/store/agentGroup';

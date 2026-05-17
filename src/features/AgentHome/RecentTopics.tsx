@@ -9,7 +9,7 @@ import { Link, useParams } from 'react-router-dom';
 import useSWR from 'swr';
 
 import { SESSION_CHAT_TOPIC_URL } from '@/const/url';
-import { topicService } from '@/services/topic';
+import { topicService } from '@/services/topic/resolved';
 
 import SectionHeader from './SectionHeader';
 

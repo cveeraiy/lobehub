@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import type { SendButtonHandler } from '@/features/ChatInput/store/initialState';
 import { useQueryRoute } from '@/hooks/useQueryRoute';
-import { agentService } from '@/services/agent';
+import { agentService } from '@/services/agent.resolved';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
 import { fileChatSelectors, useFileStore } from '@/store/file';

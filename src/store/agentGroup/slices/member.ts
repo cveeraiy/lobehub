@@ -1,7 +1,7 @@
 import { type LobeAgentConfig } from '@lobechat/types';
 import { type PartialDeep } from 'type-fest';
 
-import { chatGroupService } from '@/services/chatGroup';
+import { chatGroupService } from '@/services/chatGroup/resolved';
 import { getAgentStoreState } from '@/store/agent';
 import { type ChatGroupStore } from '@/store/agentGroup/store';
 

@@ -19,7 +19,7 @@ import { ActivatorExecutor } from '@lobechat/builtin-tool-activator/executor';
 import { SkillsExecutionRuntime } from '@lobechat/builtin-tool-skills/executionRuntime';
 
 import { filterBuiltinSkills } from '@/helpers/skillFilters';
-import { agentSkillService } from '@/services/skill';
+import { agentSkillService } from '@/services/skill/resolved';
 import { getToolStoreState } from '@/store/tool';
 import { toolSelectors } from '@/store/tool/selectors/tool';
 import { LobehubSkillStatus } from '@/store/tool/slices/lobehubSkillStore';

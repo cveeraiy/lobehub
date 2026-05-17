@@ -31,7 +31,7 @@ async_session_factory = sessionmaker(
 )
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:  # noqa: D401
     """FastAPI dependency that yields an async DB session."""
     async with async_session_factory() as session:
         try:
@@ -42,6 +42,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
+
+# Alias used by some routers
+get_session = get_db
 
 
 @asynccontextmanager

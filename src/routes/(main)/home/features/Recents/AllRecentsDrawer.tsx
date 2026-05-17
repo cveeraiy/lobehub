@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import SkeletonList from '@/features/NavPanel/components/SkeletonList';
 import SideBarDrawer from '@/features/NavPanel/SideBarDrawer';
 import { useClientDataSWR } from '@/libs/swr';
-import { recentService } from '@/services/recent';
+import { recentService } from '@/services/recent/resolved';
 import { ALL_RECENTS_DRAWER_SWR_PREFIX } from '@/store/home/slices/recent/action';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 

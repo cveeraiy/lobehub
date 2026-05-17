@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 
 import { message } from '@/components/AntdStaticMethods';
-import { sessionService } from '@/services/session';
+import { sessionService } from '@/services/session/resolved';
 import { type SessionStore } from '@/store/session';
 import { type StoreSetter } from '@/store/types';
 import { type SessionGroupItem } from '@/types/session';

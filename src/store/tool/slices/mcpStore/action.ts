@@ -11,9 +11,9 @@ import useSWR from 'swr';
 
 import { type MCPErrorData } from '@/libs/mcp/types';
 import { parseStdioErrorMessage } from '@/libs/mcp/types';
-import { discoverService } from '@/services/discover';
-import { mcpService } from '@/services/mcp';
-import { pluginService } from '@/services/plugin';
+import { discoverService } from '@/services/discover.resolved';
+import { mcpService } from '@/services/mcp.resolved';
+import { pluginService } from '@/services/plugin/resolved';
 import { globalHelpers } from '@/store/global/helpers';
 import { mcpStoreSelectors } from '@/store/tool/selectors';
 import { type StoreSetter } from '@/store/types';

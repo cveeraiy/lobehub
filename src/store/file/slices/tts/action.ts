@@ -1,7 +1,7 @@
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { fileService } from '@/services/file';
+import { fileService } from '@/services/file/resolved';
 import { type StoreSetter } from '@/store/types';
 import { type FileItem } from '@/types/files';
 

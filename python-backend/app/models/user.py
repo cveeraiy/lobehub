@@ -31,8 +31,12 @@ class User(SQLModel, table=True):
     phone: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    full_name: Optional[str] = None
 
     is_onboarded: bool = Field(default=False)
+    agent_onboarding: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("agent_onboarding"))
+    onboarding: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("onboarding"))
+    interests: Optional[list[str]] = Field(default=None, sa_column=json_column("interests"))
     # 'user' | 'admin'
     clerk_created_at: Optional[datetime] = None
     key: Optional[str] = Field(default=None, max_length=255)
@@ -78,10 +82,44 @@ class UserSettings(SQLModel, table=True):
     system_agent: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("system_agent"))
     tool: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("tool"))
     tts: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("tts"))
+    hotkey: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("hotkey"))
+    image: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("image"))
+    market: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("market"))
+    memory: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("memory"))
+    notification: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("notification"))
+    settings_permissions: Optional[dict[str, Any]] = Field(
+        default=None, sa_column=json_column("settings_permissions")
+    )
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     accessed_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+
+
+# ── nextauth_accounts ─────────────────────────────────────────────────────
+
+
+class NextAuthAccount(SQLModel, table=True):
+    __tablename__ = "nextauth_accounts"
+    __table_args__ = (
+        Index("nextauth_accounts_user_id_idx", "user_id"),
+    )
+
+    provider: str = Field(primary_key=True, nullable=False)
+    provider_account_id: str = Field(
+        primary_key=True, nullable=False,
+        sa_column_kwargs={"name": "providerAccountId"},
+    )
+    user_id: str = Field(foreign_key="users.id", nullable=False)
+
+    type: str = Field(nullable=False)  # 'oauth' | 'oidc' | 'email' | 'credentials' | 'webauthn'
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    id_token: Optional[str] = None
+    expires_at: Optional[int] = None
+    token_type: Optional[str] = None
+    scope: Optional[str] = None
+    session_state: Optional[str] = None
 
 
 # ── user_installed_plugins ──────────────────────────────────────────────────

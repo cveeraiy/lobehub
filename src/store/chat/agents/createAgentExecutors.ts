@@ -35,10 +35,10 @@ import { t } from 'i18next';
 import pMap from 'p-map';
 
 import { LOADING_FLAT } from '@/const/message';
-import { aiAgentService } from '@/services/aiAgent';
+import { aiAgentService } from '@/services/aiAgent.resolved';
 import { chatService } from '@/services/chat';
 import { type ResolvedAgentConfig } from '@/services/chat/mecha';
-import { messageService } from '@/services/message';
+import { messageService } from '@/services/message/resolved';
 import { type ChatStore } from '@/store/chat/store';
 import { getCompressionCandidateMessageIds } from '@/store/chat/utils/compression';
 import { getFileStoreState } from '@/store/file/store';

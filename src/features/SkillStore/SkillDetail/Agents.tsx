@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { VirtuosoGrid } from 'react-virtuoso';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { discoverService } from '@/services/discover';
+import { discoverService } from '@/services/discover.resolved';
 import { type DiscoverAssistantItem } from '@/types/discover';
 
 import AgentItem from './AgentItem';

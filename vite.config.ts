@@ -234,7 +234,7 @@ export default defineConfig({
                     info(
                       `  ${c.green('✅')}  Vite: compile and bundle finished (${res.status}) ${rootUrl}`,
                     );
-                    void openProxyUrl();
+                    // void openProxyUrl();
                     break;
                   } catch {
                     await new Promise((r) => setTimeout(r, interval));
@@ -311,10 +311,12 @@ export default defineConfig({
     host: true,
     port: 9876,
     proxy: {
+      // /api → PORT (Python backend at 8000, or Hono at 3010)
       '/api': `http://localhost:${process.env.PORT || 3010}`,
-      '/oidc': `http://localhost:${process.env.PORT || 3010}`,
-      '/trpc': `http://localhost:${process.env.PORT || 3010}`,
-      '/webapi': `http://localhost:${process.env.PORT || 3010}`,
+      // /trpc, /oidc, /webapi → always the TS/Hono backend
+      '/oidc': `http://localhost:${process.env.HONO_PORT || 3010}`,
+      '/trpc': `http://localhost:${process.env.HONO_PORT || 3010}`,
+      '/webapi': `http://localhost:${process.env.HONO_PORT || 3010}`,
     },
     warmup: {
       clientFiles: [

@@ -23,7 +23,7 @@ def get_client() -> httpx.AsyncClient:
                 max_keepalive_connections=20,
                 keepalive_expiry=120,
             ),
-            headers={"User-Agent": "LobeHub-Backend/1.0"},
+            headers={"User-Agent": "Ethos-Backend/1.0"},
         )
     return _client
 

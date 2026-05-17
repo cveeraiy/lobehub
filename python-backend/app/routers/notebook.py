@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/notebook", tags=["Notebook"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class CreateDocumentBody(BaseModel):

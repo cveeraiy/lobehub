@@ -4,7 +4,7 @@ import { Flexbox, Skeleton, Text } from '@lobehub/ui';
 import { cx } from 'antd-style';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 import { useChatStore } from '@/store/chat';
 import { chatPortalSelectors } from '@/store/chat/selectors';
 import { oneLineEllipsis } from '@/styles';

@@ -31,7 +31,7 @@ router = APIRouter(prefix="/api/user", tags=["User"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -39,8 +39,13 @@ def _now() -> datetime:
 class UpdateSettingsBody(BaseModel):
     general: Optional[dict[str, Any]] = None
     default_agent: Optional[dict[str, Any]] = None
+    hotkey: Optional[dict[str, Any]] = None
+    image: Optional[dict[str, Any]] = None
     key_vaults: Optional[dict[str, Any]] = None
     language_model: Optional[dict[str, Any]] = None
+    market: Optional[dict[str, Any]] = None
+    memory: Optional[dict[str, Any]] = None
+    notification: Optional[dict[str, Any]] = None
     system_agent: Optional[dict[str, Any]] = None
     tool: Optional[dict[str, Any]] = None
     tts: Optional[dict[str, Any]] = None
@@ -130,6 +135,9 @@ async def get_user_state(
         "canEnableTrace": msg_count > 4,
         "settings": _settings_dict(user_settings, decrypted_key_vaults) if user_settings else {},
         "featureFlags": ff.__dict__,
+        "agentOnboarding": user.agent_onboarding,
+        "onboarding": user.onboarding,
+        "interests": user.interests,
     }
 
 
@@ -329,6 +337,190 @@ async def update_guide(
     return {"ok": True}
 
 
+@router.get("/sso-providers")
+async def get_user_sso_providers(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Return SSO providers linked to the user."""
+    from app.models.user import NextAuthAccount
+    result = await session.execute(
+        select(NextAuthAccount.provider, NextAuthAccount.type).where(
+            NextAuthAccount.user_id == user_id
+        )
+    )
+    rows = result.all()
+    return [{"provider": r[0], "type": r[1]} for r in rows]
+
+
+# ── Onboarding ────────────────────────────────────────────────────────
+
+@router.get("/onboarding/state")
+async def get_or_create_onboarding_state(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Get or create onboarding state — creates agent + topic if needed."""
+    from app.services.onboarding import OnboardingService
+    svc = OnboardingService(session, user_id)
+    return await svc.get_or_create_state()
+
+
+@router.get("/onboarding/agent-context")
+async def get_onboarding_agent_context(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Return persona + soul content + phase guidance for onboarding agent."""
+    from app.services.onboarding import OnboardingService
+    svc = OnboardingService(session, user_id)
+    return await svc.get_onboarding_agent_context()
+
+
+@router.post("/onboarding/save-question")
+async def save_user_question(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Save structured fields from onboarding questions."""
+    from app.services.onboarding import OnboardingService
+    svc = OnboardingService(session, user_id)
+    return await svc.save_user_question(body)
+
+
+@router.post("/onboarding/finish")
+async def finish_onboarding(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Mark agent onboarding as complete."""
+    from app.services.onboarding import OnboardingService
+    svc = OnboardingService(session, user_id)
+    return await svc.finish_onboarding()
+
+
+@router.get("/onboarding/document")
+async def read_onboarding_document(
+    type: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Read soul or persona onboarding document."""
+    if type not in ("soul", "persona"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "type must be 'soul' or 'persona'")
+    from app.services.onboarding import OnboardingService
+    svc = OnboardingService(session, user_id)
+    return await svc.read_onboarding_document(type)
+
+
+@router.put("/onboarding/document")
+async def update_onboarding_document(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Create or update soul or persona onboarding document."""
+    doc_type = body.get("type")
+    content = body.get("content", "")
+    if doc_type not in ("soul", "persona"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "type must be 'soul' or 'persona'")
+    from app.services.onboarding import OnboardingService
+    svc = OnboardingService(session, user_id)
+    return await svc.update_onboarding_document(doc_type, content)
+
+
+@router.patch("/onboarding/document")
+async def patch_onboarding_document(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Apply search/replace hunks to soul or persona document."""
+    doc_type = body.get("type")
+    hunks = body.get("hunks", [])
+    if doc_type not in ("soul", "persona"):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "type must be 'soul' or 'persona'")
+    if not hunks:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "hunks must be a non-empty array")
+    from app.services.onboarding import OnboardingService
+    svc = OnboardingService(session, user_id)
+    return await svc.patch_onboarding_document(doc_type, hunks)
+
+
+@router.put("/onboarding")
+async def update_onboarding(
+    body: UpdateOnboardingBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update onboarding state (step, version, finishedAt)."""
+    payload = body.model_dump(exclude_none=True)
+    await session.execute(update(User).where(User.id == user_id).values(onboarding=payload))
+    return {"ok": True}
+
+
+@router.put("/agent-onboarding")
+async def update_agent_onboarding(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update agent onboarding state."""
+    await session.execute(
+        update(User).where(User.id == user_id).values(agent_onboarding=body)
+    )
+    return {"ok": True}
+
+
+@router.post("/agent-onboarding/reset")
+async def reset_agent_onboarding(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Reset agent onboarding to initial state."""
+    initial = {"version": 1}
+    await session.execute(
+        update(User).where(User.id == user_id).values(agent_onboarding=initial)
+    )
+    return initial
+
+
+@router.put("/interests")
+async def update_interests(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update user interests list."""
+    interests = body.get("interests", [])
+    await session.execute(
+        update(User).where(User.id == user_id).values(interests=interests)
+    )
+    return {"ok": True}
+
+
+@router.get("/registration-duration")
+async def get_user_registration_duration(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Return how long ago the user registered."""
+    user = (await session.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+
+    created = user.created_at or _now()
+    updated = user.updated_at or created
+    duration = int((_now() - created).total_seconds())
+
+    return {
+        "createdAt": created.isoformat(),
+        "updatedAt": updated.isoformat(),
+        "duration": duration,
+    }
+
+
 # ── Helpers ──────────────────────────────────────────────────────────
 
 def _settings_dict(us: Optional[UserSettings], decrypted_kv: Optional[dict] = None) -> dict[str, Any]:
@@ -337,8 +529,18 @@ def _settings_dict(us: Optional[UserSettings], decrypted_kv: Optional[dict] = No
     d: dict[str, Any] = {}
     if us.general:
         d["general"] = us.general
+    if us.hotkey:
+        d["hotkey"] = us.hotkey
+    if us.image:
+        d["image"] = us.image
     if us.default_agent:
         d["defaultAgent"] = us.default_agent
+    if us.market:
+        d["market"] = us.market
+    if us.memory:
+        d["memory"] = us.memory
+    if us.notification:
+        d["notification"] = us.notification
     if us.language_model:
         d["languageModel"] = us.language_model
     if us.system_agent:

@@ -98,7 +98,7 @@ class TaskLifecycleService:
         # Check if task has reached max topics
         if task.max_topics and (task.total_topics or 0) >= task.max_topics:
             await self._task_svc.update_status(
-                task.id, "completed", completed_at=datetime.now(timezone.utc)
+                task.id, "completed", completed_at=datetime.now(timezone.utc).replace(tzinfo=None)
             )
             return
 

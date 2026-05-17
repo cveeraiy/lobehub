@@ -1,7 +1,7 @@
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWRWithSync } from '@/libs/swr';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 import { documentSWRKeys } from '@/services/document/swrKeys';
 import { type StoreSetter } from '@/store/types';
 import { type LobeDocument } from '@/types/document';

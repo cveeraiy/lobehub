@@ -10,7 +10,7 @@ import { DEFAULT_AVATAR } from '@/const/meta';
 import { INBOX_SESSION_ID } from '@/const/session';
 import Link from '@/libs/router/Link';
 import { useClientDataSWR } from '@/libs/swr';
-import { sessionService } from '@/services/session';
+import { sessionService } from '@/services/session/resolved';
 import { type SessionRankItem } from '@/types/session';
 
 import StatsFormGroup from '../components/StatsFormGroup';

@@ -7,19 +7,21 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import and_, delete, desc, select, update
+from sqlalchemy import and_, delete, desc, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.skill import AgentSkill
+from app.models.skill import AgentSkill, AgentSkillShare
 from app.skills.builtin import BUILTIN_SKILLS, get_builtin_skill
+
+_VALID_VISIBILITY = ("private", "public", "restricted")
 
 router = APIRouter(prefix="/api/skills", tags=["Skills"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -30,11 +32,54 @@ class CreateSkillBody(BaseModel):
     description: str
     content: Optional[str] = None
     manifest: Optional[dict[str, Any]] = None
+    visibility: str = "private"
 
 
 class UpdateSkillBody(BaseModel):
     content: Optional[str] = None
     manifest: Optional[dict[str, Any]] = None
+    visibility: Optional[str] = None
+
+
+class ShareSkillBody(BaseModel):
+    user_ids: list[str]
+
+
+class UnshareSkillBody(BaseModel):
+    user_ids: list[str]
+
+
+# ── Frontend path aliases (must come before /{skill_id}) ──────────────
+
+@router.get("/by-identifier")
+async def get_skill_by_identifier_query(
+    identifier: str = "",
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Alias: GET /by-identifier?identifier=... — frontend path."""
+    return await get_skill_by_identifier(identifier, user_id=user_id, session=session)
+
+
+@router.get("/by-name")
+async def get_skill_by_name_query(
+    name: str = "",
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Alias: GET /by-name?name=... — frontend path."""
+    return await get_skill_by_name(name, user_id=user_id, session=session)
+
+
+@router.get("/search")
+async def search_skills_query(
+    query: str = "",
+    q: str = "",
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Alias: GET /search?query=... — frontend path."""
+    return await search_skills(q=query or q, user_id=user_id, session=session)
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -42,23 +87,58 @@ class UpdateSkillBody(BaseModel):
 @router.get("")
 async def list_skills(
     source: Optional[str] = None,
+    include_shared: bool = True,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """List all skills (user + builtin)."""
-    stmt = (
+    """List all skills (user-owned + shared/public + builtin)."""
+    # 1. User's own skills
+    own_stmt = (
         select(AgentSkill)
         .where(AgentSkill.user_id == user_id)
         .order_by(desc(AgentSkill.updated_at))
     )
-    rows = (await session.execute(stmt)).scalars().all()
-    user_skills = [_skill_dict(r) for r in rows]
+    own_rows = (await session.execute(own_stmt)).scalars().all()
+    user_skills = [_skill_dict(r) for r in own_rows]
 
     if source == "user":
         return user_skills
 
-    # Merge builtins (only those not overridden by user)
-    user_ids = {s["identifier"] for s in user_skills}
+    # 2. Skills shared with this user (restricted + public)
+    shared_skills: list[dict[str, Any]] = []
+    if include_shared and source != "builtin":
+        # Public skills from other users
+        public_stmt = (
+            select(AgentSkill)
+            .where(
+                and_(
+                    AgentSkill.visibility == "public",
+                    AgentSkill.user_id != user_id,
+                )
+            )
+            .order_by(desc(AgentSkill.updated_at))
+        )
+        public_rows = (await session.execute(public_stmt)).scalars().all()
+        shared_skills.extend([_skill_dict(r, source_label="public") for r in public_rows])
+
+        # Restricted skills explicitly shared with this user
+        restricted_stmt = (
+            select(AgentSkill)
+            .join(AgentSkillShare, AgentSkillShare.skill_id == AgentSkill.id)
+            .where(
+                and_(
+                    AgentSkillShare.shared_with_user_id == user_id,
+                    AgentSkill.visibility == "restricted",
+                    AgentSkill.user_id != user_id,
+                )
+            )
+            .order_by(desc(AgentSkill.updated_at))
+        )
+        restricted_rows = (await session.execute(restricted_stmt)).scalars().all()
+        shared_skills.extend([_skill_dict(r, source_label="shared") for r in restricted_rows])
+
+    # 3. Builtins
+    seen_identifiers = {s["identifier"] for s in user_skills + shared_skills}
     builtin_skills = [
         {
             "id": None,
@@ -68,13 +148,16 @@ async def list_skills(
             "source": "builtin",
         }
         for b in BUILTIN_SKILLS
-        if b["identifier"] not in user_ids
+        if b["identifier"] not in seen_identifiers
     ]
 
     if source == "builtin":
         return builtin_skills
 
-    return user_skills + builtin_skills
+    if source == "shared":
+        return shared_skills
+
+    return user_skills + shared_skills + builtin_skills
 
 
 @router.get("/{skill_id}")
@@ -83,7 +166,7 @@ async def get_skill(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    row = await _find_skill(session, user_id, skill_id)
+    row = await _find_accessible_skill(session, user_id, skill_id)
     if not row:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
     return _skill_dict(row)
@@ -122,6 +205,21 @@ async def get_skill_by_identifier(
     raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
 
 
+@router.get("/by-name/{name}")
+async def get_skill_by_name(
+    name: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    stmt = select(AgentSkill).where(
+        and_(AgentSkill.display_name == name, AgentSkill.user_id == user_id)
+    )
+    row = (await session.execute(stmt)).scalar_one_or_none()
+    if not row:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
+    return _skill_dict(row)
+
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_skill(
     body: CreateSkillBody,
@@ -136,12 +234,19 @@ async def create_skill(
     if body.content:
         manifest.setdefault("prompt", body.content)
 
+    if body.visibility not in _VALID_VISIBILITY:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Invalid visibility: {body.visibility}. Must be one of {_VALID_VISIBILITY}",
+        )
+
     skill = AgentSkill(
         identifier=identifier,
         user_id=user_id,
         display_name=body.name,
         description=body.description,
         manifest=manifest,
+        visibility=body.visibility,
     )
     session.add(skill)
     await session.flush()
@@ -156,6 +261,14 @@ async def update_skill(
     session: AsyncSession = Depends(get_db),
 ):
     values: dict[str, Any] = {"updated_at": _now()}
+
+    if body.visibility is not None:
+        if body.visibility not in _VALID_VISIBILITY:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"Invalid visibility: {body.visibility}. Must be one of {_VALID_VISIBILITY}",
+            )
+        values["visibility"] = body.visibility
 
     if body.manifest is not None:
         values["manifest"] = body.manifest
@@ -194,14 +307,33 @@ async def search_skills(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Search skills by name/description (case-insensitive)."""
+    """Search skills by name/description (case-insensitive).
+
+    Searches user-owned, public, and shared skills.
+    """
     pattern = f"%{q}%"
+    name_or_desc = AgentSkill.display_name.ilike(pattern) | AgentSkill.description.ilike(pattern)
+
+    # Subquery: skill IDs shared with this user
+    shared_subq = (
+        select(AgentSkillShare.skill_id)
+        .where(AgentSkillShare.shared_with_user_id == user_id)
+        .scalar_subquery()
+    )
+
     stmt = (
         select(AgentSkill)
         .where(
             and_(
-                AgentSkill.user_id == user_id,
-                (AgentSkill.display_name.ilike(pattern) | AgentSkill.description.ilike(pattern)),
+                name_or_desc,
+                or_(
+                    AgentSkill.user_id == user_id,
+                    AgentSkill.visibility == "public",
+                    and_(
+                        AgentSkill.visibility == "restricted",
+                        AgentSkill.id.in_(shared_subq),
+                    ),
+                ),
             )
         )
         .order_by(desc(AgentSkill.updated_at))
@@ -210,24 +342,354 @@ async def search_skills(
     return [_skill_dict(r) for r in rows]
 
 
+# ── Import endpoints ─────────────────────────────────────────────────
+
+class ImportFromUrlBody(BaseModel):
+    url: str
+
+
+class ImportFromGitHubBody(BaseModel):
+    git_url: str
+    branch: Optional[str] = None
+
+
+class ImportFromMarketBody(BaseModel):
+    identifier: str
+
+
+class ImportFromZipBody(BaseModel):
+    zip_file_id: str
+
+
+@router.post("/import/url")
+async def import_skill_from_url(
+    body: ImportFromUrlBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Import a skill from a URL (placeholder — needs skill importer service)."""
+    skill = AgentSkill(
+        identifier=f"url-import-{body.url.split('/')[-1][:20]}",
+        user_id=user_id,
+        display_name=f"Imported from URL",
+        description=f"Imported from {body.url}",
+        manifest={"source": "url", "url": body.url},
+        visibility="private",
+    )
+    session.add(skill)
+    await session.flush()
+    return {"id": skill.id, "identifier": skill.identifier}
+
+
+@router.post("/import/github")
+async def import_skill_from_github(
+    body: ImportFromGitHubBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Import a skill from GitHub (placeholder — needs skill importer service)."""
+    repo_name = body.git_url.rstrip("/").split("/")[-1]
+    skill = AgentSkill(
+        identifier=f"github-{repo_name}",
+        user_id=user_id,
+        display_name=repo_name,
+        description=f"Imported from GitHub: {body.git_url}",
+        manifest={"source": "github", "gitUrl": body.git_url, "branch": body.branch},
+        visibility="private",
+    )
+    session.add(skill)
+    await session.flush()
+    return {"id": skill.id, "identifier": skill.identifier}
+
+
+@router.post("/import/market")
+async def import_skill_from_market(
+    body: ImportFromMarketBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Import a skill from the market (placeholder — needs market service)."""
+    skill = AgentSkill(
+        identifier=body.identifier,
+        user_id=user_id,
+        display_name=body.identifier,
+        description=f"Imported from market: {body.identifier}",
+        manifest={"source": "market", "identifier": body.identifier},
+        visibility="private",
+    )
+    session.add(skill)
+    await session.flush()
+    return {"id": skill.id, "identifier": skill.identifier}
+
+
+@router.post("/import/zip")
+async def import_skill_from_zip(
+    body: ImportFromZipBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Import a skill from a zip file (placeholder — needs skill importer service)."""
+    skill = AgentSkill(
+        identifier=f"zip-import-{body.zip_file_id[:8]}",
+        user_id=user_id,
+        display_name=f"Imported from zip",
+        description="Imported from zip file",
+        manifest={"source": "zip", "zipFileId": body.zip_file_id},
+        visibility="private",
+    )
+    session.add(skill)
+    await session.flush()
+    return {"id": skill.id, "identifier": skill.identifier}
+
+
+@router.get("/{skill_id}/zip-url")
+async def get_skill_with_zip_url(
+    skill_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Get skill info with its zip download URL."""
+    skill = await _find_accessible_skill(session, user_id, skill_id)
+    if not skill:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
+    # Zip URL resolution would need file service
+    return {"name": skill.display_name, "url": None}
+
+
+@router.get("/{skill_id}/resources/content")
+async def read_skill_resource_by_query(
+    skill_id: str,
+    path: str = "",
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Alias: GET /{skill_id}/resources/content?path=... — frontend path."""
+    return await read_skill_resource(skill_id, path, user_id=user_id, session=session)
+
+
+@router.get("/{skill_id}/resources")
+async def list_skill_resources(
+    skill_id: str,
+    include_content: bool = False,
+    includeContent: bool = False,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """List resources for a skill."""
+    skill = await _find_accessible_skill(session, user_id, skill_id)
+    if not skill:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
+    if not skill.resources:
+        return []
+    # Return resource paths/metadata
+    want_content = include_content or includeContent
+    resources = []
+    for path, meta in (skill.resources or {}).items():
+        entry: dict[str, Any] = {"path": path}
+        if isinstance(meta, dict):
+            entry.update(meta)
+        if want_content and isinstance(meta, dict):
+            entry["content"] = meta.get("content")
+        resources.append(entry)
+    return resources
+
+
+@router.get("/{skill_id}/resources/{path:path}")
+async def read_skill_resource(
+    skill_id: str,
+    path: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Read a specific resource file from a skill."""
+    skill = await _find_accessible_skill(session, user_id, skill_id)
+    if not skill:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
+    if not skill.resources:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Skill has no resources")
+    resource = skill.resources.get(path)
+    if not resource:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Resource not found")
+    return resource
+
+
+# ── Sharing endpoints ────────────────────────────────────────────────
+
+@router.post("/{skill_id}/share", status_code=status.HTTP_201_CREATED)
+async def share_skill(
+    skill_id: str,
+    body: ShareSkillBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Share a skill with specific users. Sets visibility to 'restricted' if currently 'private'."""
+    skill = await _find_owned_skill(session, user_id, skill_id)
+    if not skill:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found or not owned by you")
+
+    # Auto-set visibility to restricted if currently private
+    if skill.visibility == "private":
+        await session.execute(
+            update(AgentSkill)
+            .where(AgentSkill.id == skill_id)
+            .values(visibility="restricted", updated_at=_now())
+        )
+
+    created = []
+    for target_user_id in body.user_ids:
+        if target_user_id == user_id:
+            continue  # skip self
+        # Upsert: ignore if already shared
+        existing = await session.execute(
+            select(AgentSkillShare).where(
+                and_(
+                    AgentSkillShare.skill_id == skill_id,
+                    AgentSkillShare.shared_with_user_id == target_user_id,
+                )
+            )
+        )
+        if existing.scalar_one_or_none():
+            continue
+        share = AgentSkillShare(
+            skill_id=skill_id,
+            shared_with_user_id=target_user_id,
+        )
+        session.add(share)
+        created.append(target_user_id)
+
+    await session.flush()
+    return {"shared_with": created, "skill_id": skill_id}
+
+
+@router.post("/{skill_id}/unshare")
+async def unshare_skill(
+    skill_id: str,
+    body: UnshareSkillBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Remove sharing for specific users."""
+    skill = await _find_owned_skill(session, user_id, skill_id)
+    if not skill:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found or not owned by you")
+
+    await session.execute(
+        delete(AgentSkillShare).where(
+            and_(
+                AgentSkillShare.skill_id == skill_id,
+                AgentSkillShare.shared_with_user_id.in_(body.user_ids),
+            )
+        )
+    )
+    return {"ok": True}
+
+
+@router.get("/{skill_id}/shares")
+async def list_skill_shares(
+    skill_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """List users a skill is shared with (owner only)."""
+    skill = await _find_owned_skill(session, user_id, skill_id)
+    if not skill:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found or not owned by you")
+
+    stmt = select(AgentSkillShare).where(AgentSkillShare.skill_id == skill_id)
+    rows = (await session.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": r.id,
+            "shared_with_user_id": r.shared_with_user_id,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in rows
+    ]
+
+
+@router.put("/{skill_id}/visibility")
+async def update_skill_visibility(
+    skill_id: str,
+    body: dict[str, str],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update skill visibility (owner only). Body: {"visibility": "public"|"private"|"restricted"}."""
+    vis = body.get("visibility", "")
+    if vis not in _VALID_VISIBILITY:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Invalid visibility: {vis}. Must be one of {_VALID_VISIBILITY}",
+        )
+
+    skill = await _find_owned_skill(session, user_id, skill_id)
+    if not skill:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found or not owned by you")
+
+    await session.execute(
+        update(AgentSkill)
+        .where(AgentSkill.id == skill_id)
+        .values(visibility=vis, updated_at=_now())
+    )
+
+    # If set to private, remove all shares
+    if vis == "private":
+        await session.execute(
+            delete(AgentSkillShare).where(AgentSkillShare.skill_id == skill_id)
+        )
+
+    return {"ok": True, "visibility": vis}
+
+
 # ── Helpers ──────────────────────────────────────────────────────────
 
-async def _find_skill(db: AsyncSession, user_id: str, skill_id: str) -> AgentSkill | None:
+async def _find_owned_skill(db: AsyncSession, user_id: str, skill_id: str) -> AgentSkill | None:
+    """Find a skill owned by the given user."""
     stmt = select(AgentSkill).where(
         and_(AgentSkill.id == skill_id, AgentSkill.user_id == user_id)
     )
     return (await db.execute(stmt)).scalar_one_or_none()
 
 
-def _skill_dict(s: AgentSkill) -> dict[str, Any]:
-    return {
+async def _find_accessible_skill(db: AsyncSession, user_id: str, skill_id: str) -> AgentSkill | None:
+    """Find a skill the user can access (owned, public, or shared)."""
+    # Subquery: skill IDs shared with this user
+    shared_subq = (
+        select(AgentSkillShare.skill_id)
+        .where(AgentSkillShare.shared_with_user_id == user_id)
+        .scalar_subquery()
+    )
+
+    stmt = select(AgentSkill).where(
+        and_(
+            AgentSkill.id == skill_id,
+            or_(
+                AgentSkill.user_id == user_id,
+                AgentSkill.visibility == "public",
+                and_(
+                    AgentSkill.visibility == "restricted",
+                    AgentSkill.id.in_(shared_subq),
+                ),
+            ),
+        )
+    )
+    return (await db.execute(stmt)).scalar_one_or_none()
+
+
+def _skill_dict(s: AgentSkill, *, source_label: str | None = None) -> dict[str, Any]:
+    d: dict[str, Any] = {
         "id": s.id,
         "identifier": s.identifier,
         "display_name": s.display_name,
         "description": s.description,
         "avatar": s.avatar,
+        "visibility": s.visibility,
         "manifest": s.manifest,
         "resources": s.resources,
+        "owner_id": s.user_id,
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
     }
+    if source_label:
+        d["source"] = source_label
+    return d

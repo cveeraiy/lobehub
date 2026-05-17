@@ -11,7 +11,7 @@ import { PageEditor } from '@/features/PageEditor';
 import dynamic from '@/libs/next/dynamic';
 import { useCurrentFolderId } from '@/routes/(main)/resource/features/hooks/useCurrentFolderId';
 import { useResourceManagerStore } from '@/routes/(main)/resource/features/store';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 import { useFileStore } from '@/store/file';
 import { documentSelectors } from '@/store/file/slices/document/selectors';
 

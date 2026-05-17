@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useMatch, useNavigate } from 'react-router-dom';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { agentDocumentService, agentDocumentSWRKeys } from '@/services/agentDocument';
+import { agentDocumentService, agentDocumentSWRKeys } from '@/services/agentDocument.resolved';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
 import { chatPortalSelectors } from '@/store/chat/selectors';

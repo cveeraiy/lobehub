@@ -2,8 +2,8 @@ import isEqual from 'fast-deep-equal';
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWRWithSync } from '@/libs/swr';
-import { briefService } from '@/services/brief';
-import { taskService } from '@/services/task';
+import { briefService } from '@/services/brief.resolved';
+import { taskService } from '@/services/task.resolved';
 import { type BriefStore } from '@/store/brief/store';
 import { type BriefItem } from '@/store/brief/types';
 import { type StoreSetter } from '@/store/types';

@@ -7,7 +7,7 @@ import {
   type CreateAgentCronJobData,
   type UpdateAgentCronJobData,
 } from '@/database/schemas/agentCronJob';
-import { agentCronJobService } from '@/services/agentCronJob';
+import { agentCronJobService } from '@/services/agentCronJob.resolved';
 
 export const useAgentCronJobs = (agentId?: string, enabled: boolean = true) => {
   const { t } = useTranslation('setting');

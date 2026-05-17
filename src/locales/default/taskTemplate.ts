@@ -4,7 +4,7 @@ export default {
   'action.connect.popupBlocked':
     'Connection popup blocked. Allow popups in your browser to continue.',
   'action.create.error': 'Failed to create task. Please try again.',
-  'action.create.success': 'Scheduled task added. Find it in Lobe AI.',
+  'action.create.success': 'Scheduled task added. Find it in Ethos AI.',
   'action.createButton': 'Add as scheduled task',
   'action.creating': 'Creating...',
   'action.dismiss.error': 'Failed to dismiss. Please try again.',

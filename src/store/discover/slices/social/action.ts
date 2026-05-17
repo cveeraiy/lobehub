@@ -10,7 +10,7 @@ import {
   type PaginatedResponse,
   type SocialTargetType,
 } from '@/services/social';
-import { socialService } from '@/services/social';
+import { socialService } from '@/services/social.resolved';
 import { type DiscoverStore } from '@/store/discover';
 import { type StoreSetter } from '@/store/types';
 

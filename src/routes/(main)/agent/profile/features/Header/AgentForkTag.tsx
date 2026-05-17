@@ -6,7 +6,7 @@ import { memo, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { marketApiService } from '@/services/marketApi';
+import { marketApiService } from '@/services/marketApi.resolved';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 import { type AgentForkSourceResponse } from '@/types/discover';

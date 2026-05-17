@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 
 import ModelSelect from '@/features/ModelSelect';
-import { agentService } from '@/services/agent';
+import { agentService } from '@/services/agent.resolved';
 import { useAgentGroupStore } from '@/store/agentGroup';
 
 import AgentProfileCard from '.';

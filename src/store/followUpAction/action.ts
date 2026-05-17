@@ -1,6 +1,6 @@
 import type { FollowUpChip, FollowUpHint } from '@lobechat/types';
 
-import { followUpActionService } from '@/services/followUpAction';
+import { followUpActionService } from '@/services/followUpAction.resolved';
 import { type StoreSetter } from '@/store/types';
 
 import { type FollowUpActionStore } from './store';

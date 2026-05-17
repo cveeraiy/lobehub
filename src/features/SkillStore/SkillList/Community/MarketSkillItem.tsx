@@ -8,7 +8,7 @@ import { DownloadIcon, Loader2, MoreVerticalIcon, Plus, Trash2 } from 'lucide-re
 import { lazy, memo, Suspense, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { agentSkillService } from '@/services/skill';
+import { agentSkillService } from '@/services/skill/resolved';
 import { useToolStore } from '@/store/tool';
 import { agentSkillsSelectors } from '@/store/tool/selectors';
 import { type DiscoverSkillItem } from '@/types/discover';

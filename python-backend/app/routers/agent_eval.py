@@ -1,11 +1,14 @@
-"""Agent eval router — benchmarks, datasets, test cases, runs."""
+"""Agent eval router — benchmarks, datasets, test cases, runs.
+
+Covers TS parity for all agentEvalProcedure endpoints.
+"""
 
 from __future__ import annotations
 
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field as PField
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -18,28 +21,49 @@ router = APIRouter(prefix="/api/agent-eval", tags=["Agent Eval"])
 # ── Schemas ──────────────────────────────────────────────────────────
 
 class BenchmarkCreate(BaseModel):
-    agent_id: str
+    model_config = {"populate_by_name": True}
+    identifier: Optional[str] = None
     name: str
     description: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    tags: Optional[list[str]] = None
+    rubrics: Optional[list[Any]] = None
+    # Legacy field
+    agent_id: Optional[str] = PField(default=None, alias="agentId")
     config: Optional[dict[str, Any]] = None
 
 
 class DatasetCreate(BaseModel):
-    benchmark_id: str
+    model_config = {"populate_by_name": True}
+    benchmark_id: str = PField(alias="benchmarkId")
     name: str
+    identifier: Optional[str] = None
     description: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    eval_mode: Optional[str] = PField(default=None, alias="evalMode")
+    eval_config: Optional[dict[str, Any]] = PField(default=None, alias="evalConfig")
 
 
 class TestCaseCreate(BaseModel):
-    input: str
-    expected_output: Optional[str] = None
+    model_config = {"populate_by_name": True}
+    dataset_id: str = PField(alias="datasetId")
+    content: Optional[dict[str, Any]] = None
+    eval_mode: Optional[str] = PField(default=None, alias="evalMode")
+    eval_config: Optional[dict[str, Any]] = PField(default=None, alias="evalConfig")
     metadata: Optional[dict[str, Any]] = None
+    # Legacy fields
+    input: Optional[str] = None
+    expected_output: Optional[str] = None
 
 
 class RunCreate(BaseModel):
-    benchmark_id: str
-    dataset_id: Optional[str] = None
+    model_config = {"populate_by_name": True}
+    dataset_id: Optional[str] = PField(default=None, alias="datasetId")
+    name: Optional[str] = None
+    target_agent_id: Optional[str] = PField(default=None, alias="targetAgentId")
     config: Optional[dict[str, Any]] = None
+    # Legacy field
+    benchmark_id: Optional[str] = PField(default=None, alias="benchmarkId")
 
 
 # ── Benchmark endpoints ──────────────────────────────────────────────
@@ -92,7 +116,7 @@ async def delete_benchmark(
 
 @router.get("/datasets")
 async def list_datasets(
-    benchmark_id: str = Query(...),
+    benchmark_id: str = Query(default=None, alias="benchmarkId"),
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -126,17 +150,22 @@ async def create_dataset(
 
 @router.get("/test-cases")
 async def list_test_cases(
-    dataset_id: str = Query(...),
+    dataset_id: str = Query(default=None, alias="datasetId"),
+    limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0),
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
     svc = AgentEvalService(session, user_id)
-    cases = await svc.list_test_cases(dataset_id)
+    cases = await svc.list_test_cases(dataset_id, limit=limit, offset=offset)
     return [
         {
             "id": c.id,
             "input": c.input,
             "expected_output": c.expected_output,
+            "content": getattr(c, "content", None),
+            "metadata": getattr(c, "metadata_", None),
+            "sortOrder": getattr(c, "sort_order", None),
             "created_at": c.created_at.isoformat() if c.created_at else None,
         }
         for c in cases
@@ -145,16 +174,20 @@ async def list_test_cases(
 
 @router.post("/test-cases")
 async def create_test_case(
-    dataset_id: str = Query(...),
-    body: TestCaseCreate = ...,
+    body: TestCaseCreate,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
     svc = AgentEvalService(session, user_id)
+    input_text = body.input
+    expected = body.expected_output
+    if body.content:
+        input_text = input_text or body.content.get("input")
+        expected = expected or body.content.get("expected")
     tc = await svc.create_test_case(
-        dataset_id=dataset_id,
-        input=body.input,
-        expected_output=body.expected_output,
+        dataset_id=body.dataset_id,
+        input=input_text,
+        expected_output=expected,
         metadata_=body.metadata,
     )
     await session.commit()
@@ -181,13 +214,14 @@ async def batch_create_test_cases(
 
 @router.get("/runs")
 async def list_runs(
-    benchmark_id: str = Query(...),
+    benchmark_id: Optional[str] = Query(default=None, alias="benchmarkId"),
+    dataset_id: Optional[str] = Query(default=None, alias="datasetId"),
     limit: int = Query(default=50, le=200),
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
     svc = AgentEvalService(session, user_id)
-    runs = await svc.list_runs(benchmark_id, limit=limit)
+    runs = await svc.list_runs(benchmark_id, limit=limit, dataset_id=dataset_id)
     return [
         {
             "id": r.id,
@@ -269,3 +303,500 @@ async def list_run_topics(
         }
         for t in topics
     ]
+
+
+# ── Missing TS parity endpoints ────────────────────────────────────
+
+
+class BenchmarkUpdate(BaseModel):
+    model_config = {"populate_by_name": True}
+    identifier: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    tags: Optional[list[str]] = None
+    config: Optional[dict[str, Any]] = None
+
+
+class DatasetUpdate(BaseModel):
+    model_config = {"populate_by_name": True}
+    name: Optional[str] = None
+    description: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    eval_mode: Optional[str] = PField(default=None, alias="evalMode")
+    eval_config: Optional[dict[str, Any]] = PField(default=None, alias="evalConfig")
+
+
+class TestCaseUpdate(BaseModel):
+    model_config = {"populate_by_name": True}
+    content: Optional[dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
+    eval_mode: Optional[str] = PField(default=None, alias="evalMode")
+    eval_config: Optional[dict[str, Any]] = PField(default=None, alias="evalConfig")
+    sort_order: Optional[int] = PField(default=None, alias="sortOrder")
+
+
+class RunUpdate(BaseModel):
+    model_config = {"populate_by_name": True}
+    name: Optional[str] = None
+    dataset_id: Optional[str] = PField(default=None, alias="datasetId")
+    target_agent_id: Optional[str] = PField(default=None, alias="targetAgentId")
+    config: Optional[dict[str, Any]] = None
+
+
+class UpdateRunStatusBody(BaseModel):
+    status: str
+    error: Optional[str] = None
+
+
+class UpdateRunMetricsBody(BaseModel):
+    metrics: dict[str, Any]
+
+
+class ParseDatasetFileBody(BaseModel):
+    model_config = {"populate_by_name": True}
+    pathname: str
+    filename: Optional[str] = None
+
+
+class ImportDatasetBody(BaseModel):
+    model_config = {"populate_by_name": True}
+    dataset_id: str = PField(alias="datasetId")
+    pathname: str
+    filename: Optional[str] = None
+    format: Optional[str] = None
+    field_mapping: Optional[dict[str, Any]] = PField(default=None, alias="fieldMapping")
+    # Legacy
+    test_cases: Optional[list[dict[str, Any]]] = PField(default=None, alias="testCases")
+
+
+class RetryRunCaseBody(BaseModel):
+    model_config = {"populate_by_name": True}
+    test_case_id: str = PField(alias="testCaseId")
+
+
+class ResumeRunCaseBody(BaseModel):
+    model_config = {"populate_by_name": True}
+    test_case_id: str = PField(alias="testCaseId")
+    thread_id: Optional[str] = PField(default=None, alias="threadId")
+
+
+class BatchResumeBody(BaseModel):
+    targets: list[dict[str, Any]]
+
+
+# ── Benchmark: get, update ──────────────────────────────────────────
+
+
+@router.get("/benchmarks/{benchmark_id}")
+async def get_benchmark(
+    benchmark_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    bench = await svc.get_benchmark(benchmark_id)
+    if not bench:
+        raise HTTPException(404, "Benchmark not found")
+    return {
+        "id": bench.id,
+        "agent_id": bench.agent_id,
+        "name": bench.name,
+        "description": bench.description,
+        "config": bench.config,
+        "created_at": bench.created_at.isoformat() if bench.created_at else None,
+    }
+
+
+@router.patch("/benchmarks/{benchmark_id}")
+@router.put("/benchmarks/{benchmark_id}")
+async def update_benchmark(
+    benchmark_id: str,
+    body: BenchmarkUpdate,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    result = await svc.update_benchmark(benchmark_id, **body.model_dump(exclude_none=True))
+    await session.commit()
+    if not result:
+        raise HTTPException(404, "Benchmark not found")
+    return {"ok": True}
+
+
+# ── Dataset: get, update, delete, parseFile, import ─────────────────
+
+
+@router.get("/datasets/{dataset_id}")
+async def get_dataset(
+    dataset_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    ds = await svc.get_dataset(dataset_id)
+    if not ds:
+        raise HTTPException(404, "Dataset not found")
+    return {
+        "id": ds.id,
+        "benchmark_id": ds.benchmark_id,
+        "name": ds.name,
+        "description": ds.description,
+        "created_at": ds.created_at.isoformat() if ds.created_at else None,
+    }
+
+
+@router.patch("/datasets/{dataset_id}")
+@router.put("/datasets/{dataset_id}")
+async def update_dataset(
+    dataset_id: str,
+    body: DatasetUpdate,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    result = await svc.update_dataset(dataset_id, **body.model_dump(exclude_none=True))
+    await session.commit()
+    if not result:
+        raise HTTPException(404, "Dataset not found")
+    return {"ok": True}
+
+
+@router.delete("/datasets/{dataset_id}")
+async def delete_dataset(
+    dataset_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    await svc.delete_dataset(dataset_id)
+    await session.commit()
+    return {"ok": True}
+
+
+@router.post("/datasets/parse-file")
+async def parse_dataset_file(
+    body: ParseDatasetFileBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Parse a file and return candidate test cases (placeholder)."""
+    return {
+        "success": True,
+        "data": [],
+        "message": "File parsing placeholder — implement with FileService integration",
+    }
+
+
+@router.post("/datasets/import")
+async def import_dataset(
+    body: ImportDatasetBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Batch import test cases into a dataset."""
+    svc = AgentEvalService(session, user_id)
+    cases = await svc.batch_create_test_cases(body.dataset_id, body.test_cases)
+    await session.commit()
+    return {"imported": len(cases)}
+
+
+# ── TestCase: get, update, delete ───────────────────────────────────
+
+
+@router.get("/test-cases/{test_case_id}")
+async def get_test_case(
+    test_case_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    tc = await svc.get_test_case(test_case_id)
+    if not tc:
+        raise HTTPException(404, "Test case not found")
+    return {
+        "id": tc.id,
+        "input": tc.input,
+        "expected_output": tc.expected_output,
+        "metadata": getattr(tc, "metadata_", None),
+        "created_at": tc.created_at.isoformat() if tc.created_at else None,
+    }
+
+
+@router.patch("/test-cases/{test_case_id}")
+@router.put("/test-cases/{test_case_id}")
+async def update_test_case(
+    test_case_id: str,
+    body: TestCaseUpdate,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    result = await svc.update_test_case(test_case_id, **body.model_dump(exclude_none=True))
+    await session.commit()
+    if not result:
+        raise HTTPException(404, "Test case not found")
+    return {"ok": True}
+
+
+@router.delete("/test-cases/{test_case_id}")
+async def delete_test_case(
+    test_case_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    await svc.delete_test_case(test_case_id)
+    await session.commit()
+    return {"ok": True}
+
+
+# ── Run: getDetails, delete, start, abort, retry, resume, progress ──
+
+
+@router.get("/runs/{run_id}/details")
+async def get_run_details(
+    run_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    result = await svc.get_run_details(run_id)
+    if not result:
+        raise HTTPException(404, "Run not found")
+    return result
+
+
+@router.delete("/runs/{run_id}")
+async def delete_run(
+    run_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    svc = AgentEvalService(session, user_id)
+    await svc.delete_run(run_id)
+    await session.commit()
+    return {"ok": True}
+
+
+class StartRunBody(BaseModel):
+    force: Optional[bool] = None
+
+
+@router.post("/runs/{run_id}/start")
+async def start_run(
+    run_id: str,
+    body: Optional[StartRunBody] = None,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Start executing an eval run (transitions idle/failed → pending → running)."""
+    svc = AgentEvalService(session, user_id)
+    run = await svc.get_run(run_id)
+    if not run:
+        raise HTTPException(404, "Run not found")
+    if run.status not in ("idle", "failed"):
+        raise HTTPException(400, f"Run cannot be started from status: {run.status}")
+    await svc.update_run_status(run_id, "pending")
+    try:
+        result = await svc.execute_run(run_id)
+        await session.commit()
+        return result
+    except Exception as exc:
+        await svc.update_run_status(run_id, "failed", error=str(exc))
+        await session.commit()
+        raise HTTPException(500, str(exc))
+
+
+@router.post("/runs/{run_id}/abort")
+async def abort_run(
+    run_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Abort a running evaluation."""
+    svc = AgentEvalService(session, user_id)
+    run = await svc.get_run(run_id)
+    if not run:
+        raise HTTPException(404, "Run not found")
+    if run.status not in ("running", "pending"):
+        raise HTTPException(400, f"Run is not running (status: {run.status})")
+    await svc.update_run_status(run_id, "canceled")
+    await session.commit()
+    return {"success": True}
+
+
+@router.post("/runs/{run_id}/retry-errors")
+async def retry_run_errors(
+    run_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Retry all failed test cases in a run."""
+    svc = AgentEvalService(session, user_id)
+    run = await svc.get_run(run_id)
+    if not run:
+        raise HTTPException(404, "Run not found")
+    retry_count = await svc.retry_failed_cases(run_id)
+    await session.commit()
+    return {"success": True, "retryCount": retry_count, "runId": run_id}
+
+
+@router.post("/runs/{run_id}/retry-case")
+async def retry_run_case(
+    run_id: str,
+    body: RetryRunCaseBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Retry a specific test case in a run."""
+    svc = AgentEvalService(session, user_id)
+    run = await svc.get_run(run_id)
+    if not run:
+        raise HTTPException(404, "Run not found")
+    await svc.retry_case(run_id, body.test_case_id)
+    await session.commit()
+    return {"success": True, "runId": run_id, "testCaseId": body.test_case_id}
+
+
+@router.post("/runs/{run_id}/resume-case")
+async def resume_run_case(
+    run_id: str,
+    body: ResumeRunCaseBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Resume a specific test case in a run."""
+    svc = AgentEvalService(session, user_id)
+    result = await svc.resume_case(run_id, body.test_case_id, thread_id=body.thread_id)
+    await session.commit()
+    return result
+
+
+@router.post("/runs/{run_id}/batch-resume")
+async def batch_resume_run_cases(
+    run_id: str,
+    body: BatchResumeBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Batch resume multiple test cases."""
+    svc = AgentEvalService(session, user_id)
+    succeeded = 0
+    failed = 0
+    for target in body.targets:
+        try:
+            await svc.resume_case(run_id, target["testCaseId"], thread_id=target.get("threadId"))
+            succeeded += 1
+        except Exception:
+            failed += 1
+    await session.commit()
+    return {"succeeded": succeeded, "failed": failed, "total": len(body.targets)}
+
+
+@router.get("/runs/{run_id}/resumable-cases")
+async def get_resumable_cases(
+    run_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Get test cases that can be resumed."""
+    svc = AgentEvalService(session, user_id)
+    cases = await svc.get_resumable_cases(run_id)
+    return cases
+
+
+@router.get("/runs/{run_id}/progress")
+async def get_run_progress(
+    run_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Get real-time progress of a running evaluation."""
+    svc = AgentEvalService(session, user_id)
+    run = await svc.get_run(run_id)
+    if not run:
+        raise HTTPException(404, "Run not found")
+    topics = await svc.list_run_topics(run_id)
+    total = len(topics)
+    completed = sum(1 for t in topics if t.status in ("completed", "failed", "canceled"))
+    running = sum(1 for t in topics if t.status == "running")
+    pending = sum(1 for t in topics if t.status == "pending")
+    failed = sum(1 for t in topics if t.status == "failed")
+    return {
+        "status": run.status,
+        "total": total,
+        "completed": completed,
+        "running": running,
+        "pending": pending,
+        "failed": failed,
+        "progress": (completed / total * 100) if total > 0 else 0,
+    }
+
+
+@router.get("/runs/{run_id}/results")
+async def get_run_results(
+    run_id: str,
+    limit: int = Query(default=50, le=200),
+    offset: int = Query(default=0),
+    status_filter: Optional[str] = Query(default=None, alias="status"),
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Get detailed results of test case executions."""
+    svc = AgentEvalService(session, user_id)
+    results = await svc.get_run_results(run_id, limit=limit, offset=offset, status_filter=status_filter)
+    return results
+
+
+# ── Run: updateStatus, updateMetrics, update ────────────────────────
+
+
+@router.put("/runs/{run_id}/status")
+async def update_run_status(
+    run_id: str,
+    body: UpdateRunStatusBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update run status (internal use)."""
+    svc = AgentEvalService(session, user_id)
+    await svc.update_run_status(run_id, body.status, error=body.error)
+    await session.commit()
+    return {"ok": True}
+
+
+@router.put("/runs/{run_id}/metrics")
+async def update_run_metrics(
+    run_id: str,
+    body: UpdateRunMetricsBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update run metrics (internal use)."""
+    svc = AgentEvalService(session, user_id)
+    await svc.update_run_metrics(run_id, body.metrics)
+    await session.commit()
+    return {"ok": True}
+
+
+@router.patch("/runs/{run_id}")
+@router.put("/runs/{run_id}")
+async def update_run(
+    run_id: str,
+    body: RunUpdate,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Update run (user-facing: name, datasetId, targetAgentId, config)."""
+    svc = AgentEvalService(session, user_id)
+    run = await svc.get_run(run_id)
+    if not run:
+        raise HTTPException(404, "Run not found")
+    if run.status not in ("idle", "failed") and (body.dataset_id or body.target_agent_id):
+        raise HTTPException(400, "Cannot change datasetId or targetAgentId after run has started")
+    result = await svc.update_run(run_id, **body.model_dump(exclude_none=True))
+    await session.commit()
+    if not result:
+        raise HTTPException(404, "Run not found")
+    return {"ok": True}

@@ -27,11 +27,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/agent-cron-jobs", tags=["agent-cron-jobs"])
 
-_TEMP_USER_ID = "user_default"
-
-
-def _get_user_id() -> str:
-    return _TEMP_USER_ID
+from app.dependencies import get_current_user_id
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +98,7 @@ async def list_cron_jobs(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """List cron jobs with filtering and pagination."""
     base = select(AgentCronJob).where(AgentCronJob.user_id == user_id)
@@ -133,7 +129,7 @@ async def list_cron_jobs(
 async def create_cron_job(
     body: CreateCronJobRequest,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Create a new cron job."""
     job = AgentCronJob(
@@ -157,7 +153,7 @@ async def create_cron_job(
 @router.get("/stats")
 async def get_stats(
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get execution statistics for user's cron jobs."""
     stmt = select(
@@ -183,7 +179,7 @@ async def get_stats(
 async def get_near_depletion(
     threshold: int = Query(default=5, ge=1, le=20),
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get jobs near depletion (total_runs close to some limit)."""
     # For now return all enabled jobs sorted by total_runs desc
@@ -201,7 +197,7 @@ async def get_near_depletion(
 async def find_by_agent(
     agent_id: str,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """List cron jobs for a specific agent."""
     stmt = (
@@ -217,7 +213,7 @@ async def find_by_agent(
 async def find_by_id(
     job_id: str,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get a single cron job by ID."""
     stmt = select(AgentCronJob).where(
@@ -234,7 +230,7 @@ async def update_cron_job(
     job_id: str,
     body: UpdateCronJobRequest,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Update a cron job."""
     stmt = select(AgentCronJob).where(
@@ -251,7 +247,7 @@ async def update_cron_job(
             update_data[field_name] = val
 
     if update_data:
-        update_data["updated_at"] = datetime.now(timezone.utc)
+        update_data["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
         await session.execute(
             update(AgentCronJob)
             .where(AgentCronJob.id == job_id)
@@ -267,7 +263,7 @@ async def update_cron_job(
 async def delete_cron_job(
     job_id: str,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Delete a cron job."""
     result = await session.execute(
@@ -285,7 +281,7 @@ async def delete_cron_job(
 async def batch_update_status(
     body: BatchUpdateStatusRequest,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Batch enable/disable multiple cron jobs."""
     if not body.ids:
@@ -297,7 +293,7 @@ async def batch_update_status(
             AgentCronJob.id.in_(body.ids),
             AgentCronJob.user_id == user_id,
         )
-        .values(enabled=body.enabled, updated_at=datetime.now(timezone.utc))
+        .values(enabled=body.enabled, updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
     )
     count = result.rowcount  # type: ignore[union-attr]
     await session.commit()
@@ -314,7 +310,7 @@ async def batch_update_status(
 async def reset_executions(
     body: ResetExecutionsRequest,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Reset execution counts for a cron job."""
     stmt = select(AgentCronJob).where(
@@ -327,7 +323,7 @@ async def reset_executions(
     update_values: dict[str, Any] = {
         "total_runs": 0,
         "total_failures": 0,
-        "updated_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc).replace(tzinfo=None),
     }
 
     await session.execute(

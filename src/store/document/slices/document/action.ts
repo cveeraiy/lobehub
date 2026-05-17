@@ -7,7 +7,7 @@ import { debounce } from 'es-toolkit/compat';
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWRWithSync } from '@/libs/swr';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 import { documentSWRKeys } from '@/services/document/swrKeys';
 import { usePageStore } from '@/store/page';
 import { type StoreSetter } from '@/store/types';

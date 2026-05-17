@@ -31,7 +31,7 @@ async def find_by_month(
         year, mo = month.split("-")
         year_int, month_int = int(year), int(mo)
     else:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         year_int, month_int = now.year, now.month
 
     stmt = (
@@ -76,7 +76,7 @@ async def find_and_group_by_day(
         year, mo = month.split("-")
         year_int, month_int = int(year), int(mo)
     else:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         year_int, month_int = now.year, now.month
 
     stmt = (

@@ -23,7 +23,7 @@ router = APIRouter(prefix="/api/agent-groups", tags=["Agent Groups"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class CreateGroupBody(BaseModel):
@@ -131,6 +131,55 @@ async def remove_agent_from_group(
         .where(and_(Agent.id == agent_id, Agent.user_id == user_id, Agent.session_group_id == group_id))
         .values(session_group_id=None)
     )
+    return {"ok": True}
+
+
+@router.get("/{group_id}")
+async def get_group_by_id(
+    group_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    grp = (await session.execute(
+        select(SessionGroup).where(
+            and_(SessionGroup.id == group_id, SessionGroup.user_id == user_id)
+        )
+    )).scalar_one_or_none()
+    if not grp:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Group not found")
+    return _group_dict(grp)
+
+
+@router.post("/remove-all")
+async def remove_all_groups(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await session.execute(
+        update(Agent).where(Agent.user_id == user_id).values(session_group_id=None)
+    )
+    await session.execute(
+        delete(SessionGroup).where(SessionGroup.user_id == user_id)
+    )
+    return {"ok": True}
+
+
+class UpdateSortBody(BaseModel):
+    sort_map: dict[str, int]
+
+
+@router.put("/sort")
+async def update_group_sort(
+    body: UpdateSortBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    for gid, sort_val in body.sort_map.items():
+        await session.execute(
+            update(SessionGroup)
+            .where(and_(SessionGroup.id == gid, SessionGroup.user_id == user_id))
+            .values(sort=sort_val)
+        )
     return {"ok": True}
 
 

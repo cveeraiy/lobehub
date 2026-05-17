@@ -15,6 +15,11 @@ import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { AgentRuntimeService } from '@/server/services/agentRuntime';
 import { AiAgentService } from '@/server/services/aiAgent';
 import { AiChatService } from '@/server/services/aiChat';
+import {
+  isPythonBackendEnabled,
+  PythonAgentProxyService,
+} from '@/server/services/pythonAgentProxy';
+import { bridgePythonStream } from '@/server/services/pythonStreamBridge';
 import { nanoid } from '@/utils/uuid';
 
 const log = debug('lobe-server:ai-agent-router');
@@ -630,6 +635,35 @@ export const aiAgentRouter = router({
     log('execAgent: identifier=%s, prompt=%s', agentId || slug, prompt.slice(0, 50));
 
     try {
+      // Proxy to Python backend when configured
+      if (isPythonBackendEnabled()) {
+        const proxy = new PythonAgentProxyService(ctx.userId);
+        const proxyInput = {
+          agentId,
+          appContext: appContext as Record<string, unknown> | undefined,
+          autoStart,
+          clientRuntime,
+          deviceId,
+          existingMessageIds,
+          fileIds,
+          parentMessageId,
+          prompt,
+          resume: !!parentMessageId,
+          resumeApproval: resumeApproval as Record<string, unknown> | undefined,
+          slug,
+          userInterventionConfig: userInterventionConfig as Record<string, unknown> | undefined,
+        };
+        const result = await proxy.execAgent(proxyInput);
+
+        // Bridge the Python SSE stream into the TS StreamEventManager so the
+        // existing frontend SSE endpoint (GET /api/agent/stream) can deliver events.
+        if (result?.operationId) {
+          bridgePythonStream(result.operationId, ctx.userId, proxyInput);
+        }
+
+        return result;
+      }
+
       return await ctx.aiAgentService.execAgent({
         agentId,
         appContext,
@@ -695,18 +729,41 @@ export const aiAgentRouter = router({
       } = task;
 
       try {
-        const result = await ctx.aiAgentService.execAgent({
-          agentId,
-          appContext,
-          autoStart,
-          deviceId,
-          existingMessageIds,
-          parentMessageId,
-          prompt,
-          // When parentMessageId is provided, this is a regeneration/continue — skip user message creation
-          resume: !!parentMessageId,
-          slug,
-        });
+        let result: any;
+
+        // Proxy to Python backend when configured
+        if (isPythonBackendEnabled()) {
+          const proxy = new PythonAgentProxyService(ctx.userId);
+          const proxyInput = {
+            agentId,
+            appContext: appContext as Record<string, unknown> | undefined,
+            autoStart,
+            deviceId,
+            existingMessageIds,
+            parentMessageId,
+            prompt,
+            resume: !!parentMessageId,
+            slug,
+          };
+          result = await proxy.execAgent(proxyInput);
+
+          if (result?.operationId) {
+            bridgePythonStream(result.operationId, ctx.userId, proxyInput);
+          }
+        } else {
+          result = await ctx.aiAgentService.execAgent({
+            agentId,
+            appContext,
+            autoStart,
+            deviceId,
+            existingMessageIds,
+            parentMessageId,
+            prompt,
+            // When parentMessageId is provided, this is a regeneration/continue — skip user message creation
+            resume: !!parentMessageId,
+            slug,
+          });
+        }
 
         return {
           autoStarted: result.autoStarted,
@@ -762,6 +819,26 @@ export const aiAgentRouter = router({
     log('execGroupAgent: agentId=%s, groupId=%s', agentId, groupId);
 
     try {
+      // Proxy to Python backend when configured
+      if (isPythonBackendEnabled()) {
+        const proxy = new PythonAgentProxyService(ctx.userId);
+        const proxyInput = {
+          agentId,
+          files,
+          groupId,
+          message,
+          newTopic: newTopic as Record<string, unknown> | undefined,
+          topicId,
+        };
+        const result = await proxy.execGroupAgent(proxyInput);
+
+        if (result?.operationId) {
+          bridgePythonStream(result.operationId, ctx.userId, proxyInput);
+        }
+
+        return result;
+      }
+
       // Execute group agent
       const result = await ctx.aiAgentService.execGroupAgent({
         agentId,
@@ -816,6 +893,20 @@ export const aiAgentRouter = router({
       log('execSubAgentTask: agentId=%s, groupId=%s', agentId, groupId);
 
       try {
+        // Proxy to Python backend when configured
+        if (isPythonBackendEnabled()) {
+          const proxy = new PythonAgentProxyService(ctx.userId);
+          return await proxy.execSubAgentTask({
+            agentId,
+            groupId,
+            instruction,
+            parentMessageId,
+            timeout,
+            title,
+            topicId,
+          });
+        }
+
         return await ctx.aiAgentService.execSubAgentTask({
           agentId,
           groupId,
@@ -1138,6 +1229,12 @@ export const aiAgentRouter = router({
     log('interruptTask: threadId=%s, operationId=%s', threadId, operationId);
 
     try {
+      // Proxy to Python backend when configured
+      if (isPythonBackendEnabled()) {
+        const proxy = new PythonAgentProxyService(ctx.userId);
+        return await proxy.interruptTask({ operationId, threadId });
+      }
+
       return await ctx.aiAgentService.interruptTask({ operationId, threadId });
     } catch (error: any) {
       if (error.message === 'Thread not found') {

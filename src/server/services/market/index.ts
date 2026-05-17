@@ -558,7 +558,7 @@ export class MarketService {
             identifier: providerId,
             meta: {
               avatar: icon || '🔗',
-              description: `LobeHub Skill: ${providerLabel}`,
+              description: `Ethos Skill: ${providerLabel}`,
               tags: ['lobehub-skill', providerId],
               title: providerLabel,
             },

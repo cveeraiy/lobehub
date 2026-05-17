@@ -71,7 +71,7 @@ async def export_session_markdown(
     ).scalars().all()
 
     lines: list[str] = []
-    lines.append(f"# {sess.title or 'Untitled Session'}\n")
+    lines.append(f"# {getattr(sess, 'title', None) or 'Untitled Session'}\n")
     for m in messages:
         role_label = {"user": "User", "assistant": "Assistant", "system": "System"}.get(m.role, m.role)
         lines.append(f"## {role_label}\n")
@@ -135,8 +135,8 @@ def _session_export(s: Session) -> dict[str, Any]:
     return {
         "id": s.id,
         "type": s.type,
-        "title": s.title,
-        "description": s.description,
+        "title": getattr(s, "title", None),
+        "description": getattr(s, "description", None),
         "created_at": s.created_at.isoformat() if s.created_at else None,
     }
 

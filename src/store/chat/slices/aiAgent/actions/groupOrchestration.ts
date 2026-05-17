@@ -5,7 +5,7 @@ import debug from 'debug';
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { aiAgentService } from '@/services/aiAgent';
+import { aiAgentService } from '@/services/aiAgent.resolved';
 import { createGroupOrchestrationExecutors } from '@/store/chat/agents/GroupOrchestration';
 import { type ChatStore } from '@/store/chat/store';
 import { type GroupOrchestrationCallbacks } from '@/store/tool/slices/builtin/types';

@@ -2,7 +2,7 @@ import { type KnowledgeItem } from '@lobechat/types';
 import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { agentService } from '@/services/agent';
+import { agentService } from '@/services/agent.resolved';
 import { type StoreSetter } from '@/store/types';
 
 import { type AgentStore } from '../../store';

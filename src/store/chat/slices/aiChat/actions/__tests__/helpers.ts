@@ -1,12 +1,12 @@
 import { vi } from 'vitest';
 
 import { chatService } from '@/services/chat';
-import { messageService } from '@/services/message';
+import { messageService } from '@/services/message/resolved';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 
 import { useChatStore } from '../../../../store';
 import { messageMapKey } from '../../../../utils/messageMapKey';
-import { createMockAgentConfig, createMockChatConfig,TEST_IDS } from './fixtures';
+import { createMockAgentConfig, createMockChatConfig, TEST_IDS } from './fixtures';
 
 /**
  * Setup mock selectors with default or custom values

@@ -47,6 +47,22 @@ class Settings(BaseSettings):
     auth_oidc_jwks_uri: Optional[str] = None
     # Algorithms accepted for JWT validation
     auth_oidc_algorithms: str = "RS256"
+    # Client secret for authorization code flow (required for login)
+    auth_oidc_client_secret: Optional[str] = None
+    # Scopes to request from Keycloak
+    auth_oidc_scopes: str = "openid email profile"
+
+    # ── App URL ──────────────────────────────────────────────────────────
+    # Public URL of this app (used for OIDC redirect URIs)
+    app_url: str = "http://localhost:9876"
+
+    # Disable email/password login — only SSO (Keycloak) allowed
+    auth_disable_email_password: bool = True
+
+    # ── Session ──────────────────────────────────────────────────────────
+    # Secret key for signing session cookies (min 32 chars)
+    # Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    session_secret: str = "change-me-in-production-use-a-real-secret-key"
 
     @model_validator(mode="after")
     def _resolve_oidc_defaults(self) -> "Settings":
@@ -137,6 +153,13 @@ class Settings(BaseSettings):
     content_policy_use_moderation_api: bool = False
     content_policy_check_output: bool = True
     content_policy_blocked_patterns: str = ""  # comma-separated regex patterns
+
+    # ── Internal service token (TS ↔ Python proxy auth) ──────────
+    # Shared secret between the TS backend and this Python backend.
+    # When set, requests with a valid X-Service-Token header bypass OIDC
+    # JWT validation and trust the X-Internal-User-Id header instead.
+    # Generate with: python -c "import secrets; print(secrets.token_urlsafe(32))"
+    python_backend_service_token: Optional[str] = None
 
     # ── Feature flags ────────────────────────────────────────────
     # Comma-separated: "+flag_name" to enable, "-flag_name" to disable

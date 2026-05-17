@@ -1,7 +1,7 @@
 import { contextSupervisorMakeDecision } from '@lobechat/prompts';
 import { type GroupMemberWithAgent, type UIChatMessage } from '@lobechat/types';
 
-import { aiChatService } from '@/services/aiChat';
+import { aiChatService } from '@/services/aiChat.resolved';
 
 export interface SupervisorDecision {
   id: string;

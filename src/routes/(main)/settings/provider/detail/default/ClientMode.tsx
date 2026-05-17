@@ -5,7 +5,7 @@ import { memo } from 'react';
 
 import Loading from '@/components/Loading/BrandTextLoading';
 import { useClientDataSWR } from '@/libs/swr';
-import { aiProviderService } from '@/services/aiProvider';
+import { aiProviderService } from '@/services/aiProvider/resolved';
 import { useAiInfraStore } from '@/store/aiInfra';
 
 import ModelList from '../../features/ModelList';

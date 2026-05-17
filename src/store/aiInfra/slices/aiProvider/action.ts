@@ -16,7 +16,7 @@ import {
 import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { aiProviderService } from '@/services/aiProvider';
+import { aiProviderService } from '@/services/aiProvider/resolved';
 import { type AiInfraStore } from '@/store/aiInfra/store';
 import { type StoreSetter } from '@/store/types';
 import { useUserStore } from '@/store/user';

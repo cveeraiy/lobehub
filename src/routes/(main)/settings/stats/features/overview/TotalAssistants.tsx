@@ -5,7 +5,7 @@ import Statistic from '@/components/Statistic';
 import StatisticCard from '@/components/StatisticCard';
 import TitleWithPercentage from '@/components/StatisticCard/TitleWithPercentage';
 import { useClientDataSWR } from '@/libs/swr';
-import { sessionService } from '@/services/session';
+import { sessionService } from '@/services/session/resolved';
 import { formatIntergerNumber } from '@/utils/format';
 import { lastMonth } from '@/utils/time';
 

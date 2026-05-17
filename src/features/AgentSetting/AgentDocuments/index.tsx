@@ -6,7 +6,7 @@ import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { agentDocumentService } from '@/services/agentDocument';
+import { agentDocumentService } from '@/services/agentDocument.resolved';
 import { useAgentStore } from '@/store/agent';
 
 interface AgentDocumentItem {

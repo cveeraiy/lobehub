@@ -1,7 +1,7 @@
 import { type SWRResponse } from 'swr';
 
 import { useOnlyFetchOnceSWR } from '@/libs/swr';
-import { globalService } from '@/services/global';
+import { globalService } from '@/services/global.resolved';
 import { type StoreSetter } from '@/store/types';
 import { type GlobalRuntimeConfig } from '@/types/serverConfig';
 

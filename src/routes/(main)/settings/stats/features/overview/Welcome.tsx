@@ -5,7 +5,7 @@ import { memo } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { userService } from '@/services/user';
+import { userService } from '@/services/user/resolved';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { formatIntergerNumber } from '@/utils/format';

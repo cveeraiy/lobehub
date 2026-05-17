@@ -7,7 +7,7 @@ import { type SWRResponse } from 'swr';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { invalidateDocumentMutation } from '@/services/document/invalidation';
 import { notebookSWRKeys } from '@/services/document/swrKeys';
-import { notebookService } from '@/services/notebook';
+import { notebookService } from '@/services/notebook.resolved';
 import { useChatStore } from '@/store/chat';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';

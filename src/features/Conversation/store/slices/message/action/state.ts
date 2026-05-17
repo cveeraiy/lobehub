@@ -2,7 +2,7 @@ import { copyToClipboard } from '@lobehub/ui';
 import { produce } from 'immer';
 import { type StateCreator } from 'zustand';
 
-import { messageService } from '@/services/message';
+import { messageService } from '@/services/message/resolved';
 import { useChatStore } from '@/store/chat';
 import { cleanSpeakerTag } from '@/store/chat/utils/cleanSpeakerTag';
 

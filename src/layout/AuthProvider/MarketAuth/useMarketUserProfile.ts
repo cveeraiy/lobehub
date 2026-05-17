@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { marketAuthService } from '@/services/marketAuth.resolved';
 
 import { type MarketUserProfile } from './types';
 
@@ -8,7 +8,7 @@ import { type MarketUserProfile } from './types';
  * Fetcher function for user profile using tRPC
  */
 const fetchUserProfile = async (username: string): Promise<MarketUserProfile | null> => {
-  const result = await lambdaClient.market.user.getUserByUsername.query({ username });
+  const result = await marketAuthService.getUserByUsername(username);
   return result as MarketUserProfile;
 };
 

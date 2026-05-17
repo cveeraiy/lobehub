@@ -5,8 +5,8 @@ import { nanoid } from '@lobechat/utils';
 import debug from 'debug';
 
 import { lambdaClient } from '@/libs/trpc/client';
-import { type StreamEvent } from '@/services/agentRuntime';
-import { agentRuntimeClient } from '@/services/agentRuntime';
+import { type StreamEvent } from '@/services/agentRuntime/resolved';
+import { agentRuntimeClient } from '@/services/agentRuntime/resolved';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';

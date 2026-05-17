@@ -1,9 +1,9 @@
 import type { InstallMarketplaceAgentSummary } from '@lobechat/builtin-tool-agent-marketplace';
 import { customAlphabet } from 'nanoid/non-secure';
 
-import { agentService } from '@/services/agent';
-import { discoverService } from '@/services/discover';
-import { marketApiService } from '@/services/marketApi';
+import { agentService } from '@/services/agent.resolved';
+import { discoverService } from '@/services/discover.resolved';
+import { marketApiService } from '@/services/marketApi.resolved';
 import { useAgentStore } from '@/store/agent';
 import { useHomeStore } from '@/store/home';
 

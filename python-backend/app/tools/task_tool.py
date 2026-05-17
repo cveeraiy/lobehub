@@ -225,7 +225,7 @@ async def task_with_context(
             update_vals["error"] = error
         if status == "completed":
             from datetime import datetime, timezone
-            update_vals["completed_at"] = datetime.now(timezone.utc)
+            update_vals["completed_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
 
         await session.execute(
             sa_update(Task).where(Task.id == task.id).values(**update_vals)

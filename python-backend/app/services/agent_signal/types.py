@@ -18,7 +18,7 @@ class Signal:
     payload: dict[str, Any] = field(default_factory=dict)
     scope: str | None = None  # optional namespace for dedup
     dedup_key: str | None = None  # if set, duplicate signals are suppressed
-    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
 
 
 @dataclass

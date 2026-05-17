@@ -73,7 +73,7 @@ def _format_error_for_metadata(error: Any) -> Optional[dict[str, Any]]:
 
 
 def _utcnow_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
 
 
 class AiAgentService:
@@ -246,7 +246,7 @@ class AiAgentService:
         error: Optional[dict[str, Any]] = None,
     ) -> None:
         """Update a message's content and/or error."""
-        values: dict[str, Any] = {"updated_at": datetime.now(timezone.utc)}
+        values: dict[str, Any] = {"updated_at": datetime.now(timezone.utc).replace(tzinfo=None)}
         if content is not None:
             values["content"] = content
         if error is not None:

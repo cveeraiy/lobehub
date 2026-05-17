@@ -11,7 +11,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import DataStyleModal from '@/components/DataStyleModal';
-import { importService } from '@/services/import';
+import { importService } from '@/services/import/resolved';
 import { useChatStore } from '@/store/chat';
 import { useHomeStore } from '@/store/home';
 import { type ImportPgDataStructure } from '@/types/export';

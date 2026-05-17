@@ -1,7 +1,7 @@
 import { type NewChatGroup } from '@lobechat/types';
 import urlJoin from 'url-join';
 
-import { chatGroupService } from '@/services/chatGroup';
+import { chatGroupService } from '@/services/chatGroup/resolved';
 import { useChatStore } from '@/store/chat';
 import { getHomeStoreState } from '@/store/home';
 

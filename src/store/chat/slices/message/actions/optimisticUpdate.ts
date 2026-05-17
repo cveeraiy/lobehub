@@ -14,7 +14,7 @@ import {
 import { ChatErrorType } from '@lobechat/types';
 import { nanoid } from '@lobechat/utils';
 
-import { messageService } from '@/services/message';
+import { messageService } from '@/services/message/resolved';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 

@@ -70,7 +70,7 @@ class TaskService:
         return task
 
     async def update_fields(self, task_id: str, **fields: Any) -> None:
-        fields["updated_at"] = datetime.now(timezone.utc)
+        fields["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
         await self._db.execute(
             update(Task)
             .where(Task.id == task_id, Task.created_by_user_id == self._uid)
@@ -86,7 +86,7 @@ class TaskService:
         started_at: datetime | None = None,
         completed_at: datetime | None = None,
     ) -> None:
-        fields: dict[str, Any] = {"status": status, "updated_at": datetime.now(timezone.utc)}
+        fields: dict[str, Any] = {"status": status, "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)}
         if error is not None:
             fields["error"] = error
         if started_at is not None:
@@ -103,7 +103,7 @@ class TaskService:
         await self._db.execute(
             update(Task)
             .where(Task.id == task_id)
-            .values(last_heartbeat_at=datetime.now(timezone.utc))
+            .values(last_heartbeat_at=datetime.now(timezone.utc).replace(tzinfo=None))
         )
 
     async def update_current_topic(self, task_id: str, topic_id: str) -> None:
@@ -160,14 +160,14 @@ class TaskService:
                 TaskTopic.topic_id == topic_id,
                 TaskTopic.user_id == self._uid,
             )
-            .values(status=status, updated_at=datetime.now(timezone.utc))
+            .values(status=status, updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
         )
 
     async def timeout_running_topics(self, task_id: str) -> None:
         await self._db.execute(
             update(TaskTopic)
             .where(TaskTopic.task_id == task_id, TaskTopic.status == "running")
-            .values(status="timeout", updated_at=datetime.now(timezone.utc))
+            .values(status="timeout", updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
         )
 
     # ── Brief helpers ────────────────────────────────────────────────

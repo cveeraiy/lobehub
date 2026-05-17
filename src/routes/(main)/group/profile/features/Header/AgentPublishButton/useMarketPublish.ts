@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { message } from '@/components/AntdStaticMethods';
 import { useTokenCount } from '@/hooks/useTokenCount';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { marketApiService } from '@/services/marketApi';
+import { marketApiService } from '@/services/marketApi.resolved';
 import { useAgentStore } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 import { useGlobalStore } from '@/store/global';

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { lambdaClient, toolsClient } from '@/libs/trpc/client';
+import { toolsClient } from '@/libs/trpc/client';
+import { marketAuthService } from '@/services/marketAuth.resolved';
 
 const POLL_INTERVAL_MS = 1000;
 const POLL_TIMEOUT_MS = 15_000;
@@ -113,7 +114,7 @@ export const useSocialConnect = ({
   // Check for claimable resources
   const checkClaimableResources = useCallback(async () => {
     try {
-      const result = await lambdaClient.market.socialProfile.scanClaimableResources.query();
+      const result = await marketAuthService.scanClaimableResources();
       if (result.plugins.length > 0 || result.skills.length > 0) {
         onClaimableResourcesFound?.(result);
       }

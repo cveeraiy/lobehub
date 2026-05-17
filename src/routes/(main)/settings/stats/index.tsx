@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useClientDataSWR } from '@/libs/swr';
 import SettingHeader from '@/routes/(main)/settings/features/SettingHeader';
-import { usageService } from '@/services/usage';
+import { usageService } from '@/services/usage.resolved';
 
 import {
   ShareButton,

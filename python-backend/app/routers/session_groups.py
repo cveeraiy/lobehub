@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import and_, delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/session-groups", tags=["Session Groups"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class CreateSessionGroupBody(BaseModel):
@@ -33,6 +33,11 @@ class CreateSessionGroupBody(BaseModel):
 class UpdateSessionGroupBody(BaseModel):
     name: Optional[str] = None
     sort: Optional[int] = None
+
+
+class UpdateSortOrderBody(BaseModel):
+    sort_map: Optional[dict[str, int]] = None
+    sortMap: Optional[dict[str, int]] = None
 
 
 @router.get("")
@@ -129,6 +134,62 @@ async def remove_session_from_group(
         .where(and_(Session.id == session_id, Session.user_id == user_id, Session.group_id == group_id))
         .values(group_id=None)
     )
+    return {"ok": True}
+
+
+@router.get("/{group_id}")
+async def get_session_group(
+    group_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    grp = (await session.execute(
+        select(SessionGroup).where(
+            and_(SessionGroup.id == group_id, SessionGroup.user_id == user_id)
+        )
+    )).scalar_one_or_none()
+    if not grp:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Group not found")
+    return _group_dict(grp)
+
+
+@router.post("/remove-all")
+async def remove_all_session_groups(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await session.execute(
+        update(Session).where(Session.user_id == user_id).values(group_id=None)
+    )
+    await session.execute(
+        delete(SessionGroup).where(SessionGroup.user_id == user_id)
+    )
+    return {"ok": True}
+
+
+@router.put("/order")
+async def update_sort_order_alias(
+    body: UpdateSortOrderBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Alias: PUT /order — frontend path."""
+    return await update_sort_order(body, user_id=user_id, session=session)
+
+
+@router.put("/sort")
+async def update_sort_order(
+    body: UpdateSortOrderBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    sm = body.sortMap or body.sort_map or {}
+    for gid, sort_val in sm.items():
+        await session.execute(
+            update(SessionGroup)
+            .where(and_(SessionGroup.id == gid, SessionGroup.user_id == user_id))
+            .values(sort=sort_val)
+        )
     return {"ok": True}
 
 

@@ -88,7 +88,7 @@ export default {
   'agent.welcome.sentence.2': 'What kind of partner do you want me to be?',
   'agent.welcome.sentence.3': 'First, give me a name :)',
   'agent.welcome.footer':
-    'Configure your Lobe AI Agent. It lives on your server, learns from every interaction, and becomes more powerful the longer it runs.',
+    'Configure your Ethos AI Agent. It lives on your server, learns from every interaction, and becomes more powerful the longer it runs.',
   'agent.greeting.prompt': 'Give me a name, a vibe, and an emoji',
   'agent.greeting.nameLabel': 'Name',
   'agent.greeting.namePlaceholder': 'e.g. Lumi, Atlas, Neko...',

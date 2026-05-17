@@ -35,7 +35,7 @@ export class SkillImporter {
     this.parser = new SkillParser();
     this.resourceService = new SkillResourceService(db, userId);
     this.fileService = new FileService(db, userId);
-    this.github = new GitHub({ userAgent: 'LobeHub-Skill-Importer' });
+    this.github = new GitHub({ userAgent: 'Ethos-Skill-Importer' });
     this.userId = userId;
   }
 

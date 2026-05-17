@@ -40,7 +40,7 @@ class ExaProvider(SearchProvider):
         if params.search_time_range and params.search_time_range != "anytime":
             days = _DAYS_MAP.get(params.search_time_range)
             if days:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(timezone.utc).replace(tzinfo=None)
                 body["endPublishedDate"] = now.isoformat()
                 body["startPublishedDate"] = (now - timedelta(days=days)).isoformat()
 

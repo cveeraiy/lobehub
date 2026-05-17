@@ -32,7 +32,7 @@ class Thread(SQLModel, table=True):
 
     title: Optional[str] = None
     source_message_id: Optional[str] = Field(default=None, foreign_key="messages.id")
-    # 'standalone' | 'continuation'
+    # 'standalone' | 'continuation' | 'isolation' | 'eval'
     type: Optional[str] = Field(default="standalone", max_length=255)
     status: Optional[str] = Field(default=None, max_length=255)
 

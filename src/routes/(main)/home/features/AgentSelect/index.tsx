@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DEFAULT_AVATAR, DEFAULT_INBOX_AVATAR } from '@/const/meta';
 import { useFetchAgentList } from '@/hooks/useFetchAgentList';
-import { agentService } from '@/services/agent';
+import { agentService } from '@/services/agent.resolved';
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors, builtinAgentSelectors } from '@/store/agent/selectors';
 import { useGlobalStore } from '@/store/global';
@@ -58,7 +58,7 @@ const AgentSelect = memo(() => {
 
   const displayMeta = isInboxDisplay ? inboxMeta : (sidebarItem ?? agentMapMeta);
 
-  const fallbackTitle = isInboxDisplay ? 'Lobe AI' : t('defaultSession', { ns: 'common' });
+  const fallbackTitle = isInboxDisplay ? 'Ethos AI' : t('defaultSession', { ns: 'common' });
   const displayTitle = displayMeta?.title || fallbackTitle;
   const displayAvatar =
     (typeof displayMeta?.avatar === 'string' ? displayMeta.avatar : undefined) ||

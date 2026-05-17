@@ -38,6 +38,10 @@ class SearchBody(BaseModel):
     model: str = "openai/text-embedding-3-small"
 
 
+class BatchFilesBody(BaseModel):
+    file_ids: list[str]
+
+
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @router.get("")
@@ -140,6 +144,42 @@ async def remove_file(
     session: AsyncSession = Depends(get_db),
 ):
     await svc.remove_file_from_kb(session, user_id, kb_id, file_id)
+    return {"ok": True}
+
+
+@router.post("/{kb_id}/files", status_code=status.HTTP_201_CREATED)
+async def add_files(
+    kb_id: str,
+    body: BatchFilesBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Add multiple files to a knowledge base."""
+    for fid in body.file_ids:
+        await svc.add_file_to_kb(session, user_id, kb_id, fid)
+    return {"ok": True, "count": len(body.file_ids)}
+
+
+@router.post("/{kb_id}/files/batch-remove")
+async def remove_files(
+    kb_id: str,
+    body: BatchFilesBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Remove multiple files from a knowledge base."""
+    for fid in body.file_ids:
+        await svc.remove_file_from_kb(session, user_id, kb_id, fid)
+    return {"ok": True, "count": len(body.file_ids)}
+
+
+@router.delete("")
+async def delete_all_kbs(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Delete all knowledge bases for the user."""
+    await svc.delete_all_knowledge_bases(session, user_id)
     return {"ok": True}
 
 

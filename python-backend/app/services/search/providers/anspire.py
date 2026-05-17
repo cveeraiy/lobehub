@@ -36,7 +36,7 @@ class AnspireProvider(SearchProvider):
         if params.search_time_range and params.search_time_range != "anytime":
             days = _DAYS_MAP.get(params.search_time_range)
             if days:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(timezone.utc).replace(tzinfo=None)
                 fmt = "%Y-%m-%d %H:%M:%S"
                 qs["FromTime"] = (now - timedelta(days=days)).strftime(fmt)
                 qs["ToTime"] = now.strftime(fmt)

@@ -4,7 +4,7 @@ import { type SWRResponse } from 'swr';
 
 import { MESSAGE_CANCEL_FLAT } from '@/const/message';
 import { useClientDataSWR } from '@/libs/swr';
-import { pluginService } from '@/services/plugin';
+import { pluginService } from '@/services/plugin/resolved';
 import { type StoreSetter } from '@/store/types';
 import { merge } from '@/utils/merge';
 

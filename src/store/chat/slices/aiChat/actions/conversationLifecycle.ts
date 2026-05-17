@@ -25,12 +25,12 @@ import { TRPCClientError } from '@trpc/client';
 import { t } from 'i18next';
 
 import { markUserValidAction } from '@/business/client/markUserValidAction';
-import { agentService } from '@/services/agent';
-import { aiChatService } from '@/services/aiChat';
+import { agentService } from '@/services/agent.resolved';
+import { aiChatService } from '@/services/aiChat.resolved';
 import { chatService } from '@/services/chat';
 import { resolveSelectedSkillsWithContent } from '@/services/chat/mecha/skillPreload';
 import { resolveSelectedToolsWithContent } from '@/services/chat/mecha/toolPreload';
-import { messageService } from '@/services/message';
+import { messageService } from '@/services/message/resolved';
 import { getAgentStoreState, useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 import { agentGroupByIdSelectors, getChatGroupStoreState } from '@/store/agentGroup';

@@ -2,7 +2,7 @@ import { createNanoId } from '@lobechat/utils';
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWRWithSync } from '@/libs/swr';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 import { useGlobalStore } from '@/store/global';
 import { type StoreSetter } from '@/store/types';
 import { type LobeDocument } from '@/types/document';

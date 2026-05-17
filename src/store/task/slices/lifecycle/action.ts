@@ -1,6 +1,6 @@
 import type { TaskDetailData, TaskStatus } from '@lobechat/types';
 
-import { taskService } from '@/services/task';
+import { taskService } from '@/services/task.resolved';
 import type { StoreSetter } from '@/store/types';
 
 import type { TaskStore } from '../../store';

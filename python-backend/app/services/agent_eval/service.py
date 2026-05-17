@@ -71,15 +71,62 @@ class AgentEvalService:
         )
         return (await self._db.execute(stmt)).scalars().all()
 
+    async def get_dataset(self, dataset_id: str) -> AgentEvalDataset | None:
+        stmt = select(AgentEvalDataset).where(
+            AgentEvalDataset.id == dataset_id,
+            AgentEvalDataset.user_id == self._uid,
+        )
+        return (await self._db.execute(stmt)).scalar_one_or_none()
+
     async def create_dataset(self, **kwargs: Any) -> AgentEvalDataset:
         ds = AgentEvalDataset(user_id=self._uid, **kwargs)
         self._db.add(ds)
         await self._db.flush()
         return ds
 
+    async def update_dataset(self, dataset_id: str, **kwargs: Any) -> AgentEvalDataset | None:
+        ds = await self.get_dataset(dataset_id)
+        if not ds:
+            return None
+        for k, v in kwargs.items():
+            if hasattr(ds, k):
+                setattr(ds, k, v)
+        ds.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        await self._db.flush()
+        return ds
+
+    async def delete_dataset(self, dataset_id: str) -> None:
+        await self._db.execute(
+            delete(AgentEvalTestCase).where(
+                AgentEvalTestCase.dataset_id == dataset_id,
+                AgentEvalTestCase.user_id == self._uid,
+            )
+        )
+        await self._db.execute(
+            delete(AgentEvalDataset).where(
+                AgentEvalDataset.id == dataset_id,
+                AgentEvalDataset.user_id == self._uid,
+            )
+        )
+
+    # ── Benchmarks — update ──────────────────────────────────────────
+
+    async def update_benchmark(self, benchmark_id: str, **kwargs: Any) -> AgentEvalBenchmark | None:
+        bench = await self.get_benchmark(benchmark_id)
+        if not bench:
+            return None
+        for k, v in kwargs.items():
+            if hasattr(bench, k):
+                setattr(bench, k, v)
+        bench.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        await self._db.flush()
+        return bench
+
     # ── Test Cases ───────────────────────────────────────────────────
 
-    async def list_test_cases(self, dataset_id: str) -> Sequence[AgentEvalTestCase]:
+    async def list_test_cases(
+        self, dataset_id: str, *, limit: int = 50, offset: int = 0
+    ) -> Sequence[AgentEvalTestCase]:
         stmt = (
             select(AgentEvalTestCase)
             .where(
@@ -87,6 +134,8 @@ class AgentEvalService:
                 AgentEvalTestCase.user_id == self._uid,
             )
             .order_by(AgentEvalTestCase.created_at)
+            .offset(offset)
+            .limit(min(limit, 200))
         )
         return (await self._db.execute(stmt)).scalars().all()
 
@@ -96,6 +145,45 @@ class AgentEvalService:
         await self._db.flush()
         return tc
 
+    async def get_test_case(self, test_case_id: str) -> AgentEvalTestCase | None:
+        stmt = select(AgentEvalTestCase).where(
+            AgentEvalTestCase.id == test_case_id,
+            AgentEvalTestCase.user_id == self._uid,
+        )
+        return (await self._db.execute(stmt)).scalar_one_or_none()
+
+    async def update_test_case(self, test_case_id: str, **kwargs: Any) -> AgentEvalTestCase | None:
+        tc = await self.get_test_case(test_case_id)
+        if not tc:
+            return None
+        for k, v in kwargs.items():
+            if hasattr(tc, k):
+                setattr(tc, k, v)
+        tc.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        await self._db.flush()
+        return tc
+
+    async def delete_test_case(self, test_case_id: str) -> None:
+        await self._db.execute(
+            delete(AgentEvalTestCase).where(
+                AgentEvalTestCase.id == test_case_id,
+                AgentEvalTestCase.user_id == self._uid,
+            )
+        )
+
+    async def count_test_cases(self, dataset_id: str) -> int:
+        from sqlalchemy import func as sa_func
+        stmt = (
+            select(sa_func.count())
+            .select_from(AgentEvalTestCase)
+            .where(
+                AgentEvalTestCase.dataset_id == dataset_id,
+                AgentEvalTestCase.user_id == self._uid,
+            )
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar_one() or 0
+
     async def batch_create_test_cases(
         self, dataset_id: str, cases: list[dict[str, Any]]
     ) -> list[AgentEvalTestCase]:
@@ -104,7 +192,7 @@ class AgentEvalService:
             tc = AgentEvalTestCase(
                 user_id=self._uid,
                 dataset_id=dataset_id,
-                input=c["input"],
+                input=c.get("input", ""),
                 expected_output=c.get("expected_output"),
                 metadata_=c.get("metadata"),
             )
@@ -116,17 +204,18 @@ class AgentEvalService:
     # ── Runs ─────────────────────────────────────────────────────────
 
     async def list_runs(
-        self, benchmark_id: str, *, limit: int = 50
+        self,
+        benchmark_id: str | None = None,
+        *,
+        limit: int = 50,
+        dataset_id: str | None = None,
     ) -> Sequence[AgentEvalRun]:
-        stmt = (
-            select(AgentEvalRun)
-            .where(
-                AgentEvalRun.benchmark_id == benchmark_id,
-                AgentEvalRun.user_id == self._uid,
-            )
-            .order_by(AgentEvalRun.created_at.desc())
-            .limit(min(limit, 200))
-        )
+        stmt = select(AgentEvalRun).where(AgentEvalRun.user_id == self._uid)
+        if benchmark_id:
+            stmt = stmt.where(AgentEvalRun.benchmark_id == benchmark_id)
+        if dataset_id:
+            stmt = stmt.where(AgentEvalRun.dataset_id == dataset_id)
+        stmt = stmt.order_by(AgentEvalRun.created_at.desc()).limit(min(limit, 200))
         return (await self._db.execute(stmt)).scalars().all()
 
     async def create_run(self, **kwargs: Any) -> AgentEvalRun:
@@ -152,16 +241,16 @@ class AgentEvalService:
     ) -> None:
         fields: dict[str, Any] = {
             "status": status,
-            "updated_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None),
         }
         if error is not None:
             fields["error"] = error
         if results is not None:
             fields["results"] = results
         if status == "running":
-            fields["started_at"] = datetime.now(timezone.utc)
+            fields["started_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
         if status in ("completed", "failed"):
-            fields["completed_at"] = datetime.now(timezone.utc)
+            fields["completed_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
 
         await self._db.execute(
             update(AgentEvalRun)
@@ -189,7 +278,7 @@ class AgentEvalService:
     ) -> None:
         fields: dict[str, Any] = {
             "status": status,
-            "updated_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None),
         }
         if score is not None:
             fields["score"] = score
@@ -271,3 +360,172 @@ class AgentEvalService:
         except Exception as exc:
             await self.update_run_status(run_id, "failed", error=str(exc))
             raise
+
+    # ── Run — additional CRUD ────────────────────────────────────────
+
+    async def get_run_details(self, run_id: str) -> dict[str, Any] | None:
+        run = await self.get_run(run_id)
+        if not run:
+            return None
+        topics = await self.list_run_topics(run_id)
+        return {
+            "id": run.id,
+            "benchmark_id": run.benchmark_id,
+            "dataset_id": run.dataset_id,
+            "status": run.status,
+            "name": getattr(run, "name", None),
+            "config": run.config,
+            "metrics": run.metrics,
+            "results": run.results,
+            "error": run.error,
+            "started_at": run.started_at.isoformat() if run.started_at else None,
+            "completed_at": run.completed_at.isoformat() if run.completed_at else None,
+            "created_at": run.created_at.isoformat() if run.created_at else None,
+            "topics": [
+                {
+                    "id": t.id,
+                    "test_case_id": t.test_case_id,
+                    "topic_id": getattr(t, "topic_id", None),
+                    "status": t.status,
+                    "score": t.score,
+                    "passed": getattr(t, "passed", None),
+                    "eval_result": getattr(t, "eval_result", None),
+                }
+                for t in topics
+            ],
+        }
+
+    async def delete_run(self, run_id: str) -> None:
+        await self._db.execute(
+            delete(AgentEvalRunTopic).where(AgentEvalRunTopic.run_id == run_id)
+        )
+        await self._db.execute(
+            delete(AgentEvalRun).where(
+                AgentEvalRun.id == run_id,
+                AgentEvalRun.user_id == self._uid,
+            )
+        )
+
+    async def update_run(self, run_id: str, **kwargs: Any) -> AgentEvalRun | None:
+        run = await self.get_run(run_id)
+        if not run:
+            return None
+        for k, v in kwargs.items():
+            if hasattr(run, k):
+                setattr(run, k, v)
+        run.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        await self._db.flush()
+        return run
+
+    async def update_run_metrics(self, run_id: str, metrics: dict[str, Any]) -> None:
+        await self._db.execute(
+            update(AgentEvalRun)
+            .where(AgentEvalRun.id == run_id, AgentEvalRun.user_id == self._uid)
+            .values(metrics=metrics, updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+        )
+
+    async def retry_failed_cases(self, run_id: str) -> int:
+        """Reset failed run topics back to pending."""
+        result = await self._db.execute(
+            update(AgentEvalRunTopic)
+            .where(
+                AgentEvalRunTopic.run_id == run_id,
+                AgentEvalRunTopic.status == "failed",
+            )
+            .values(status="pending", updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+        )
+        return result.rowcount
+
+    async def retry_case(self, run_id: str, test_case_id: str) -> None:
+        await self._db.execute(
+            update(AgentEvalRunTopic)
+            .where(
+                AgentEvalRunTopic.run_id == run_id,
+                AgentEvalRunTopic.test_case_id == test_case_id,
+            )
+            .values(status="pending", updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+        )
+
+    async def resume_case(
+        self, run_id: str, test_case_id: str, *, thread_id: str | None = None
+    ) -> dict[str, Any]:
+        await self._db.execute(
+            update(AgentEvalRunTopic)
+            .where(
+                AgentEvalRunTopic.run_id == run_id,
+                AgentEvalRunTopic.test_case_id == test_case_id,
+            )
+            .values(status="pending", updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+        )
+        return {"success": True, "runId": run_id, "testCaseId": test_case_id}
+
+    async def get_resumable_cases(self, run_id: str) -> list[dict[str, Any]]:
+        stmt = (
+            select(AgentEvalRunTopic)
+            .where(
+                AgentEvalRunTopic.run_id == run_id,
+                AgentEvalRunTopic.status.in_(["failed", "external"]),
+            )
+        )
+        topics = (await self._db.execute(stmt)).scalars().all()
+        return [
+            {
+                "testCaseId": t.test_case_id,
+                "topicId": getattr(t, "topic_id", None),
+                "status": t.status,
+            }
+            for t in topics
+        ]
+
+    async def get_run_results(
+        self,
+        run_id: str,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+        status_filter: str | None = None,
+    ) -> list[dict[str, Any]]:
+        stmt = (
+            select(AgentEvalRunTopic)
+            .where(AgentEvalRunTopic.run_id == run_id)
+        )
+        if status_filter:
+            stmt = stmt.where(AgentEvalRunTopic.status == status_filter)
+        stmt = stmt.order_by(AgentEvalRunTopic.created_at).offset(offset).limit(limit)
+        topics = (await self._db.execute(stmt)).scalars().all()
+        return [
+            {
+                "id": t.id,
+                "testCaseId": t.test_case_id,
+                "topicId": getattr(t, "topic_id", None),
+                "status": t.status,
+                "score": t.score,
+                "passed": getattr(t, "passed", None),
+                "evalResult": getattr(t, "eval_result", None),
+            }
+            for t in topics
+        ]
+
+    # ── Run topic by run+topic ───────────────────────────────────────
+
+    async def find_run_topic_by_run_and_topic(
+        self, run_id: str, topic_id: str
+    ) -> AgentEvalRunTopic | None:
+        stmt = select(AgentEvalRunTopic).where(
+            AgentEvalRunTopic.run_id == run_id,
+            AgentEvalRunTopic.topic_id == topic_id,
+        )
+        return (await self._db.execute(stmt)).scalar_one_or_none()
+
+    async def update_run_topic_by_run_and_topic(
+        self, run_id: str, topic_id: str, **kwargs: Any
+    ) -> None:
+        kwargs["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
+        await self._db.execute(
+            update(AgentEvalRunTopic)
+            .where(
+                AgentEvalRunTopic.run_id == run_id,
+                AgentEvalRunTopic.topic_id == topic_id,
+            )
+            .values(**kwargs)
+        )

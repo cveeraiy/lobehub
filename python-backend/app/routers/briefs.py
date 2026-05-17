@@ -27,12 +27,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/briefs", tags=["briefs"])
 
-# Placeholder user ID — replace with real auth dependency
-_TEMP_USER_ID = "user_default"
-
-
-def _get_user_id() -> str:
-    return _TEMP_USER_ID
+from app.dependencies import get_current_user_id
 
 
 # ---------------------------------------------------------------------------
@@ -92,6 +87,7 @@ def _brief_to_response(brief: Any) -> dict[str, Any]:
         "title": brief.title,
         "summary": brief.summary,
         "actions": brief.actions,
+        "agents": getattr(brief, "agents", None) or [],
         "resolved_action": brief.resolved_action,
         "resolved_comment": brief.resolved_comment,
         "read_at": brief.read_at.isoformat() if brief.read_at else None,
@@ -110,7 +106,7 @@ async def list_briefs(
     offset: int = Query(default=0, ge=0),
     type: Optional[str] = Query(default=None),
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """List briefs with pagination."""
     svc = BriefService(session, user_id)
@@ -125,7 +121,7 @@ async def list_briefs(
 @router.get("/unresolved")
 async def list_unresolved(
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """List all unresolved briefs."""
     svc = BriefService(session, user_id)
@@ -140,7 +136,7 @@ async def list_unresolved(
 async def create_brief(
     body: CreateBriefRequest,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Create a new brief."""
     svc = BriefService(session, user_id)
@@ -164,7 +160,7 @@ async def create_brief(
 async def list_briefs_by_task(
     task_id: str,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """List all briefs for a task."""
     svc = BriefService(session, user_id)
@@ -179,7 +175,7 @@ async def list_briefs_by_task(
 async def get_brief(
     brief_id: str,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Get a brief by ID."""
     svc = BriefService(session, user_id)
@@ -194,7 +190,7 @@ async def resolve_brief(
     brief_id: str,
     body: ResolveBriefRequest,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Resolve a brief (approve, feedback, retry, acknowledge)."""
     svc = BriefService(session, user_id)
@@ -206,10 +202,11 @@ async def resolve_brief(
 
 
 @router.post("/{brief_id}/read")
+@router.put("/{brief_id}/read")
 async def mark_brief_read(
     brief_id: str,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Mark a brief as read."""
     svc = BriefService(session, user_id)
@@ -224,7 +221,7 @@ async def mark_brief_read(
 async def delete_brief(
     brief_id: str,
     session: AsyncSession = Depends(get_session),
-    user_id: str = Depends(_get_user_id),
+    user_id: str = Depends(get_current_user_id),
 ):
     """Delete a brief."""
     svc = BriefService(session, user_id)

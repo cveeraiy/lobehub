@@ -3,7 +3,7 @@ import { type PartialDeep } from 'type-fest';
 
 import { MESSAGE_CANCEL_FLAT } from '@/const/message';
 import { shareService } from '@/services/share';
-import { userService } from '@/services/user';
+import { userService } from '@/services/user/resolved';
 import { type StoreSetter } from '@/store/types';
 import { type UserStore } from '@/store/user';
 import { type LobeAgentSettings } from '@/types/session';
@@ -89,7 +89,10 @@ export class UserSettingsActionImpl {
 
     const diffs = difference(nextSettings, defaultSettings);
     const isEmptyObjectDiff = (value: unknown): boolean =>
-      !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value as object).length === 0;
+      !!value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.keys(value as object).length === 0;
 
     // When user resets a field to default value, we need to explicitly include it in diffs
     // to override the previously saved non-default value in the backend

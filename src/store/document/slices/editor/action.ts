@@ -6,7 +6,7 @@ import isEqual from 'fast-deep-equal';
 
 import { EMPTY_EDITOR_STATE } from '@/libs/editor/constants';
 import { isValidEditorData } from '@/libs/editor/isValidEditorData';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 import type { StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 

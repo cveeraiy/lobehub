@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/plugins", tags=["Plugins"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -108,6 +108,18 @@ async def uninstall_plugin(
                 UserInstalledPlugin.user_id == user_id,
             )
         )
+    )
+    return {"ok": True}
+
+
+@router.delete("")
+async def remove_all_plugins(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Remove all installed plugins for the user."""
+    await session.execute(
+        delete(UserInstalledPlugin).where(UserInstalledPlugin.user_id == user_id)
     )
     return {"ok": True}
 

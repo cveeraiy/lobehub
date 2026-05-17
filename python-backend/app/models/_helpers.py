@@ -70,7 +70,8 @@ def inbox_session_id(user_id: str) -> str:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    """Naive UTC timestamp — matches TIMESTAMP WITHOUT TIME ZONE columns."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def created_at_field() -> datetime:

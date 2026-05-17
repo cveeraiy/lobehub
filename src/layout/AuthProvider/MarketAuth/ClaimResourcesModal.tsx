@@ -7,7 +7,7 @@ import { Package, Wrench } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { marketAuthService } from '@/services/marketAuth.resolved';
 
 import { type ClaimableResource, type ClaimableResources } from './useSocialConnect';
 
@@ -73,7 +73,7 @@ export const ClaimResourcesModal = memo<ClaimResourcesModalProps>(
 
       setIsClaiming(true);
       try {
-        await lambdaClient.market.socialProfile.claimResources.mutate({
+        await marketAuthService.claimResources({
           pluginIds,
           skillIds,
         });

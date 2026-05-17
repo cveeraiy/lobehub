@@ -6,7 +6,7 @@ import { createContext, use, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mutate as globalMutate } from 'swr';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { marketAuthService } from '@/services/marketAuth.resolved';
 import { useServerConfigStore } from '@/store/serverConfig';
 import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useUserStore } from '@/store/user';
@@ -40,9 +40,7 @@ interface MarketAuthProviderProps {
  */
 const fetchUserInfo = async (accessToken?: string): Promise<MarketUserInfo | null> => {
   try {
-    const userInfo = await lambdaClient.market.oidc.getUserInfo.mutate({
-      token: accessToken,
-    });
+    const userInfo = await marketAuthService.getUserInfo(accessToken);
 
     return userInfo as MarketUserInfo;
   } catch (error) {
@@ -117,7 +115,7 @@ const getRefreshToken = (): string | null => {
  */
 const checkNeedsProfileSetup = async (username: string): Promise<boolean> => {
   try {
-    const profile = await lambdaClient.market.user.getUserByUsername.query({ username });
+    const profile = await marketAuthService.getUserByUsername(username);
     // If userName is not set, user needs to complete profile setup
     return !profile.userName;
   } catch {
@@ -184,7 +182,7 @@ export const MarketAuthProvider = ({ children }: MarketAuthProviderProps) => {
    */
   const tryRefreshToken = async (refreshTokenValue: string): Promise<boolean> => {
     try {
-      const response = await lambdaClient.market.oidc.refreshToken.mutate({
+      const response = await marketAuthService.refreshToken({
         clientId: 'lobechat-com',
         refreshToken: refreshTokenValue,
       });
@@ -533,7 +531,7 @@ export const MarketAuthProvider = ({ children }: MarketAuthProviderProps) => {
       }
 
       try {
-        const result = await lambdaClient.market.socialProfile.scanClaimableResources.query();
+        const result = await marketAuthService.scanClaimableResources();
         if (result.plugins.length > 0 || result.skills.length > 0) {
           // Store the callback for when claim succeeds
           if (onClaimSuccess) {
@@ -573,7 +571,7 @@ export const MarketAuthProvider = ({ children }: MarketAuthProviderProps) => {
     }
 
     try {
-      const response = await lambdaClient.market.oidc.refreshToken.mutate({
+      const response = await marketAuthService.refreshToken({
         clientId: 'lobechat-com',
         refreshToken: dbTokens.refreshToken,
       });

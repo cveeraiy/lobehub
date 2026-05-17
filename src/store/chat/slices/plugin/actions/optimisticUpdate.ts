@@ -6,7 +6,7 @@ import {
 } from '@lobechat/types';
 import isEqual from 'fast-deep-equal';
 
-import { messageService } from '@/services/message';
+import { messageService } from '@/services/message/resolved';
 import { type OptimisticUpdateContext } from '@/store/chat/slices/message/actions/optimisticUpdate';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';

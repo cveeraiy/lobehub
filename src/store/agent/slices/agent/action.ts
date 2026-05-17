@@ -8,14 +8,14 @@ import type { PartialDeep } from 'type-fest';
 
 import { MESSAGE_CANCEL_FLAT } from '@/const/message';
 import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
-import type { CreateAgentParams, CreateAgentResult } from '@/services/agent';
-import { agentService } from '@/services/agent';
+import type { CreateAgentParams, CreateAgentResult } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent.resolved';
 import {
-  agentDocumentService,
   agentDocumentSWRKeys,
   mapAgentDocumentsToContext,
   resolveAgentDocumentsContext,
 } from '@/services/agentDocument';
+import { agentDocumentService } from '@/services/agentDocument.resolved';
 import type { StoreSetter } from '@/store/types';
 import { getUserStoreState } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';

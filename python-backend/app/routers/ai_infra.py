@@ -34,15 +34,17 @@ def _get_vault() -> KeyVaultService | None:
 # ── Pydantic schemas ────────────────────────────────────────────────
 
 class CreateProviderBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
     id: str
     name: Optional[str] = None
     description: Optional[str] = None
     logo: Optional[str] = None
-    key_vaults: Optional[dict[str, Any]] = None
+    key_vaults: Optional[dict[str, Any]] = Field(default=None, alias="keyVaults")
     settings: Optional[dict[str, Any]] = None
     config: Optional[dict[str, Any]] = None
-    check_model: Optional[str] = None
-    fetch_on_client: Optional[bool] = None
+    check_model: Optional[str] = Field(default=None, alias="checkModel")
+    fetch_on_client: Optional[bool] = Field(default=None, alias="fetchOnClient")
 
 
 class UpdateProviderBody(BaseModel):
@@ -52,10 +54,12 @@ class UpdateProviderBody(BaseModel):
 
 
 class UpdateProviderConfigBody(BaseModel):
-    key_vaults: Optional[dict[str, Any]] = None
+    model_config = {"populate_by_name": True}
+
+    key_vaults: Optional[dict[str, Any]] = Field(default=None, alias="keyVaults")
     config: Optional[dict[str, Any]] = None
-    check_model: Optional[str] = None
-    fetch_on_client: Optional[bool] = None
+    check_model: Optional[str] = Field(default=None, alias="checkModel")
+    fetch_on_client: Optional[bool] = Field(default=None, alias="fetchOnClient")
 
 
 class ToggleEnabledBody(BaseModel):
@@ -118,9 +122,33 @@ class ModelSortItem(BaseModel):
     type: Optional[str] = None
 
 
+class BatchUpdateModelItem(BaseModel):
+    id: str
+    display_name: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    enabled: Optional[bool] = None
+    abilities: Optional[dict[str, Any]] = None
+    parameters: Optional[dict[str, Any]] = None
+    config: Optional[dict[str, Any]] = None
+    settings: Optional[dict[str, Any]] = None
+    pricing: Optional[dict[str, Any]] = None
+    context_window_tokens: Optional[int] = None
+
+
+class BatchUpdateModelsBody(BaseModel):
+    id: str  # provider_id
+    models: list[BatchUpdateModelItem]
+
+
 class UpdateModelOrderBody(BaseModel):
     provider_id: str
     sort_map: list[ModelSortItem]
+
+
+class CheckConnectivityBody(BaseModel):
+    id: str
+    model: Optional[str] = None
 
 
 # =====================================================================
@@ -133,6 +161,16 @@ async def list_providers(
     session: AsyncSession = Depends(get_db),
 ):
     return await svc.get_provider_list(session, user_id)
+
+
+@router.get("/providers/runtime-state")
+async def get_providers_runtime_state(
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Alias for /runtime — placed before the parameterized route to avoid capture."""
+    vault = _get_vault()
+    return await svc.get_runtime_state(session, user_id, vault)
 
 
 @router.get("/providers/{provider_id}")
@@ -216,6 +254,7 @@ async def update_provider_config(
 
 
 @router.put("/providers/{provider_id}/enabled")
+@router.put("/providers/{provider_id}/toggle")
 async def toggle_provider(
     provider_id: str,
     body: ToggleEnabledBody,
@@ -385,6 +424,57 @@ async def clear_remote_models(
 ):
     await svc.clear_remote_models(session, user_id, provider_id)
     return {"ok": True}
+
+
+@router.put("/models/batch-update")
+async def batch_update_models(
+    body: BatchUpdateModelsBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Batch update multiple models for a provider (upsert)."""
+    for m in body.models:
+        values = m.model_dump(exclude_none=True, exclude={"id"})
+        if values:
+            await svc.update_model(session, user_id, m.id, body.id, **values)
+    return {"ok": True}
+
+
+# =====================================================================
+#  Connectivity check
+# =====================================================================
+
+@router.post("/providers/{provider_id}/check")
+async def check_provider_connectivity(
+    provider_id: str,
+    body: CheckConnectivityBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Check provider connectivity by sending a test chat message."""
+    vault = _get_vault()
+    detail = await svc.get_provider_detail(session, user_id, provider_id, vault)
+
+    model = body.model
+    if not model and detail:
+        model = detail.get("check_model")
+    if not model:
+        return {"ok": False, "error": "No check model configured."}
+
+    try:
+        from app.services.llm_service import LLMService
+        llm = LLMService()
+        await llm.chat_completion(
+            messages=[{"role": "user", "content": "Hi"}],
+            model=model,
+            provider=provider_id,
+            user_id=user_id,
+            stream=False,
+            temperature=0,
+        )
+        return {"ok": True, "model": model}
+    except Exception as exc:
+        return {"ok": False, "model": model, "error": str(exc)}
 
 
 # =====================================================================

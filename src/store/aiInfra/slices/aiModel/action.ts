@@ -8,7 +8,7 @@ import {
 import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { aiModelService } from '@/services/aiModel';
+import { aiModelService } from '@/services/aiModel/resolved';
 import { type AiInfraStore } from '@/store/aiInfra/store';
 import { type StoreSetter } from '@/store/types';
 

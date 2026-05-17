@@ -205,7 +205,7 @@ async def _skill_store_context_dispatch(
 
 @register(
     "skill_store__searchSkill",
-    description="Search the LobeHub skill marketplace for skills to install.",
+    description="Search the Ethos skill marketplace for skills to install.",
     parameters={
         "type": "object",
         "properties": {
@@ -252,7 +252,7 @@ async def _import_github_stub(arguments: dict[str, Any]) -> str:
 
 @register(
     "skill_store__importFromMarket",
-    description="Import a skill from the LobeHub marketplace by its identifier.",
+    description="Import a skill from the Ethos marketplace by its identifier.",
     parameters={
         "type": "object",
         "properties": {

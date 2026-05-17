@@ -20,7 +20,7 @@ import useSWR from 'swr';
 
 import { useAppOrigin } from '@/hooks/useAppOrigin';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { topicService } from '@/services/topic';
+import { topicService } from '@/services/topic/resolved';
 import { useChatStore } from '@/store/chat';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';

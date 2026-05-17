@@ -20,7 +20,7 @@ import type {
   DocumentHistorySaveSource,
   ListHistoryOutput,
 } from '@/server/routers/lambda/_schema/documentHistory';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 import { useDocumentStore } from '@/store/document';
 import { editorSelectors } from '@/store/document/slices/editor';
 

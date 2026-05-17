@@ -9,7 +9,7 @@ import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
 import { type AddIdentityEntryResult } from '@/database/models/userMemory';
-import { memoryCRUDService, userMemoryService } from '@/services/userMemory';
+import { memoryCRUDService, userMemoryService } from '@/services/userMemory/resolved';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 

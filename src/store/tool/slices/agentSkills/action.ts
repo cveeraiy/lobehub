@@ -13,7 +13,7 @@ import { produce } from 'immer';
 import useSWR, { mutate, type SWRResponse } from 'swr';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { agentSkillService } from '@/services/skill';
+import { agentSkillService } from '@/services/skill/resolved';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 
