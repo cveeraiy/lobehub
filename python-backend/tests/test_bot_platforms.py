@@ -6,8 +6,10 @@ from app.services.bot.platforms import platform_registry
 from app.services.bot.platforms.discord.definition import discord
 from app.services.bot.platforms.feishu.definition import feishu, lark
 from app.services.bot.platforms.line.definition import line
+from app.services.bot.platforms.qq.definition import qq
 from app.services.bot.platforms.slack.definition import slack
 from app.services.bot.platforms.telegram.definition import telegram
+from app.services.bot.platforms.wechat.definition import wechat
 
 
 def test_discord_platform_serializes_frontend_schema() -> None:
@@ -27,6 +29,8 @@ def test_registry_exposes_only_python_migrated_platforms() -> None:
         "slack",
         "feishu",
         "lark",
+        "qq",
+        "wechat",
     ]
 
 
@@ -208,4 +212,70 @@ async def test_lark_validate_credentials_reports_missing_fields() -> None:
             {"field": "applicationId", "message": "Application ID is required"},
             {"field": "appSecret", "message": "App Secret is required"},
         ],
+    }
+
+
+def test_qq_platform_serializes_frontend_schema() -> None:
+    data = qq.serialize()
+
+    assert data["id"] == "qq"
+    assert data["connectionMode"] == "websocket"
+    assert data["documentation"]["portalUrl"] == "https://q.qq.com/"
+    assert data["supportsMarkdown"] is False
+    assert data["supportsMessageEdit"] is False
+    assert any(field["key"] == "applicationId" for field in data["schema"])
+
+
+def test_qq_settings_merge_schema_defaults() -> None:
+    settings = qq.merge_settings({"charLimit": 1000})
+
+    assert settings["charLimit"] == 1000
+    assert settings["connectionMode"] == "websocket"
+    assert settings["concurrency"] == "queue"
+    assert settings["debounceMs"] == 5000
+    assert settings["dmPolicy"] == "open"
+    assert settings["groupPolicy"] == "open"
+
+
+@pytest.mark.asyncio
+async def test_qq_validate_credentials_reports_missing_fields() -> None:
+    result = await qq.validate_credentials({})
+
+    assert result.valid is False
+    assert result.to_dict() == {
+        "valid": False,
+        "errors": [
+            {"field": "applicationId", "message": "App ID is required"},
+            {"field": "appSecret", "message": "App Secret is required"},
+        ],
+    }
+
+
+def test_wechat_platform_serializes_frontend_schema() -> None:
+    data = wechat.serialize()
+
+    assert data["id"] == "wechat"
+    assert data["connectionMode"] == "polling"
+    assert data["documentation"]["setupGuideUrl"] == "https://lobehub.com/docs/usage/channels/wechat"
+    assert data["supportsMessageEdit"] is False
+    assert not any(field["key"] == "credentials" for field in data["schema"])
+
+
+def test_wechat_settings_merge_schema_defaults() -> None:
+    settings = wechat.merge_settings({"charLimit": 1000})
+
+    assert settings["charLimit"] == 1000
+    assert settings["concurrency"] == "queue"
+    assert settings["debounceMs"] == 5000
+    assert settings["displayToolCalls"] is False
+
+
+@pytest.mark.asyncio
+async def test_wechat_validate_credentials_reports_missing_bot_token() -> None:
+    result = await wechat.validate_credentials({})
+
+    assert result.valid is False
+    assert result.to_dict() == {
+        "valid": False,
+        "errors": [{"field": "botToken", "message": "Bot Token is required"}],
     }

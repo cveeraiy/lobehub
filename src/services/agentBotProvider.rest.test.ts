@@ -61,6 +61,21 @@ describe('AgentBotProviderService REST', () => {
         schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
         supportsMarkdown: false,
       },
+      {
+        connectionMode: 'websocket',
+        id: 'qq',
+        name: 'QQ',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        supportsMarkdown: false,
+        supportsMessageEdit: false,
+      },
+      {
+        connectionMode: 'polling',
+        id: 'wechat',
+        name: 'WeChat',
+        schema: [{ key: 'settings', label: 'channel.settings', type: 'object' }],
+        supportsMessageEdit: false,
+      },
     ]);
 
     const result = await agentBotProviderService.listPlatforms();
@@ -104,6 +119,21 @@ describe('AgentBotProviderService REST', () => {
         name: 'Lark',
         schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
         supportsMarkdown: false,
+      },
+      {
+        connectionMode: 'websocket',
+        id: 'qq',
+        name: 'QQ',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        supportsMarkdown: false,
+        supportsMessageEdit: false,
+      },
+      {
+        connectionMode: 'polling',
+        id: 'wechat',
+        name: 'WeChat',
+        schema: [{ key: 'settings', label: 'channel.settings', type: 'object' }],
+        supportsMessageEdit: false,
       },
     ]);
   });
