@@ -29,6 +29,7 @@ interface TaskItemContextMenu {
 }
 
 export interface TaskContextMenuTarget {
+  id?: string;
   identifier: string;
   priority?: number | null;
   status: string;
@@ -55,14 +56,19 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
   useEffect(() => () => cleanupRef.current?.(), []);
 
   return useMemo<TaskContextMenuActions>(() => {
-    const triggerDelete = (identifier: string) => {
+    const getTaskKey = (task: TaskContextMenuTarget) => task.identifier || task.id || '';
+
+    const triggerDelete = (task: TaskContextMenuTarget) => {
+      const taskKey = getTaskKey(task);
+      if (!taskKey) return;
+
       modal.confirm({
         centered: true,
         content: t('taskDetail.deleteConfirm.content'),
         okButtonProps: { danger: true },
         okText: t('taskDetail.deleteConfirm.ok'),
         onOk: async () => {
-          await deleteTask(identifier);
+          await deleteTask(taskKey);
         },
         title: t('taskDetail.deleteConfirm.title'),
         type: 'error',
@@ -72,6 +78,7 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
     const buildItems = (task: TaskContextMenuTarget): GenericItemType[] => {
       const currentStatus = task.status as TaskStatus;
       const currentPriority = task.priority ?? 0;
+      const taskKey = getTaskKey(task);
 
       const statusChildren = USER_SELECTABLE_STATUSES.map((status, index) => {
         const meta = STATUS_META[status];
@@ -84,7 +91,7 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
           onClick: ({ domEvent }) => {
             domEvent.stopPropagation();
             if (status === currentStatus) return;
-            void updateTaskStatus(task.identifier, status);
+            void updateTaskStatus(taskKey, status);
           },
         } as GenericItemType;
       });
@@ -104,13 +111,13 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
           onClick: async ({ domEvent }) => {
             domEvent.stopPropagation();
             if (level === currentPriority) return;
-            await updateTask(task.identifier, { priority: level });
+            await updateTask(taskKey, { priority: level });
             await refreshTaskList();
           },
         } as GenericItemType;
       });
 
-      const taskUrl = `${appOrigin}/task/${task.identifier}`;
+      const taskUrl = `${appOrigin}/task/${taskKey}`;
 
       return [
         {
@@ -138,7 +145,7 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
           label: t('taskList.contextMenu.copyId'),
           onClick: async ({ domEvent }) => {
             domEvent.stopPropagation();
-            await copyToClipboard(task.identifier);
+            await copyToClipboard(taskKey);
             message.success(t('taskList.contextMenu.copyIdSuccess'));
           },
         },
@@ -163,7 +170,7 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
           label: t('delete', { ns: 'common' }),
           onClick: ({ domEvent }) => {
             domEvent.stopPropagation();
-            triggerDelete(task.identifier);
+            triggerDelete(task);
           },
         },
       ];
@@ -194,7 +201,7 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
           event.stopPropagation();
           closeContextMenu();
           cleanup();
-          triggerDelete(task.identifier);
+          triggerDelete(task);
           return;
         }
 
@@ -210,7 +217,7 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
           const nextLevel = PRIORITY_LEVELS[idx];
           if (nextLevel !== currentPriority) {
             void (async () => {
-              await updateTask(task.identifier, { priority: nextLevel });
+              await updateTask(getTaskKey(task), { priority: nextLevel });
               await refreshTaskList();
             })();
           }
@@ -224,7 +231,7 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
         event.stopPropagation();
         const nextStatus = USER_SELECTABLE_STATUSES[idx];
         if (nextStatus !== currentStatus) {
-          void updateTaskStatus(task.identifier, nextStatus);
+          void updateTaskStatus(getTaskKey(task), nextStatus);
         }
         closeContextMenu();
         cleanup();
@@ -251,13 +258,10 @@ export const useTaskContextMenuActions = (): TaskContextMenuActions => {
 
 export const useTaskItemContextMenu = (task: TaskContextMenuTarget): TaskItemContextMenu => {
   const { buildItems, installKeyboardHandlers } = useTaskContextMenuActions();
-  const items = useMemo(
-    () => buildItems(task),
-    [buildItems, task.identifier, task.status, task.priority],
-  );
+  const items = useMemo(() => buildItems(task), [buildItems, task]);
   const onContextMenu = useCallback(
     () => installKeyboardHandlers(task),
-    [installKeyboardHandlers, task.identifier, task.status, task.priority],
+    [installKeyboardHandlers, task],
   );
   return { items, onContextMenu };
 };

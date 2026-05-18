@@ -41,9 +41,10 @@ const cardStyles = createStaticStyles(({ css, cssVar }) => ({
 }));
 
 const DraggableTaskCard = memo<{ task: TaskListItem }>(({ task }) => {
+  const taskKey = task.identifier || task.id;
   const { attributes, isDragging, listeners, setNodeRef } = useDraggable({
     data: { task },
-    id: task.identifier,
+    id: taskKey,
   });
 
   return (
@@ -191,7 +192,10 @@ const KanbanColumn = memo<KanbanColumnProps>(
     // Don't highlight if dragging a card that's already in this column
     const activeTask = active?.data.current?.task as TaskListItem | undefined;
     const isFromThisColumn =
-      activeTask && tasks.some((task) => task.identifier === activeTask.identifier);
+      activeTask &&
+      tasks.some(
+        (task) => (task.identifier || task.id) === (activeTask.identifier || activeTask.id),
+      );
     const showDropHighlight = isOver && droppable && !isFromThisColumn;
     const showDisabled = isDragActive && !droppable;
 
@@ -243,7 +247,7 @@ const KanbanColumn = memo<KanbanColumnProps>(
         </div>
         <div className={styles.body}>
           {tasks.length > 0 ? (
-            tasks.map((task) => <DraggableTaskCard key={task.identifier} task={task} />)
+            tasks.map((task) => <DraggableTaskCard key={task.identifier || task.id} task={task} />)
           ) : onCreate ? (
             <div className={styles.addPill} title={t('taskList.kanban.addTask')} onClick={onCreate}>
               <Icon icon={Plus} size={16} />

@@ -64,6 +64,16 @@ class TaskService:
     # ── Write ────────────────────────────────────────────────────────
 
     async def create(self, **kwargs: Any) -> Task:
+        identifier_prefix = kwargs.pop("identifier_prefix", None) or "T"
+        identifier = kwargs.get("identifier")
+        if not identifier:
+            seq_result = await self._db.execute(
+                select(func.coalesce(func.max(Task.seq), 0))
+                .where(Task.created_by_user_id == self._uid)
+            )
+            seq = int(seq_result.scalar_one()) + 1
+            kwargs["identifier"] = f"{identifier_prefix}-{seq}"
+            kwargs["seq"] = seq
         task = Task(created_by_user_id=self._uid, **kwargs)
         self._db.add(task)
         await self._db.flush()
@@ -117,6 +127,41 @@ class TaskService:
         )
 
     async def delete_task(self, task_id: str) -> None:
+        await self._db.execute(
+            update(Task)
+            .where(Task.parent_task_id == task_id, Task.created_by_user_id == self._uid)
+            .values(parent_task_id=None)
+        )
+        await self._db.execute(
+            delete(TaskDependency).where(
+                TaskDependency.user_id == self._uid,
+                (TaskDependency.task_id == task_id) | (TaskDependency.depends_on_id == task_id),
+            )
+        )
+        await self._db.execute(
+            delete(TaskDocument).where(
+                TaskDocument.task_id == task_id,
+                TaskDocument.user_id == self._uid,
+            )
+        )
+        await self._db.execute(
+            delete(TaskTopic).where(
+                TaskTopic.task_id == task_id,
+                TaskTopic.user_id == self._uid,
+            )
+        )
+        await self._db.execute(
+            delete(TaskComment).where(
+                TaskComment.task_id == task_id,
+                TaskComment.user_id == self._uid,
+            )
+        )
+        await self._db.execute(
+            delete(Brief).where(
+                Brief.task_id == task_id,
+                Brief.user_id == self._uid,
+            )
+        )
         await self._db.execute(
             delete(Task).where(Task.id == task_id, Task.created_by_user_id == self._uid)
         )

@@ -130,6 +130,7 @@ const getTaskAssigneeMeta = (task: TaskListItem): TaskGroupMeta => {
 };
 
 const getTaskAssigneeSortValue = (task: TaskListItem) => task.assigneeAgentId ?? '';
+const getTaskIdentifier = (task: TaskListItem) => task.identifier || task.id || '';
 
 const toTime = (value: Date | string | null | undefined): number => {
   if (!value) return 0;
@@ -159,7 +160,7 @@ const getComparableValue = (task: TaskListItem, orderBy: TaskOrderBy): number | 
       return STATUS_GROUP_RANK_MAP[getTaskStatusGroup(task)];
     }
     case 'title': {
-      return task.name || task.identifier;
+      return task.name || getTaskIdentifier(task);
     }
     case 'updatedAt': {
       return toTime(task.updatedAt);
@@ -197,7 +198,7 @@ export const compareTaskItems = (
       : compareStrings(String(valueA), String(valueB), effectiveOrderDirection);
 
   if (compared !== 0) return compared;
-  return compareStrings(a.identifier, b.identifier, 'asc');
+  return compareStrings(getTaskIdentifier(a), getTaskIdentifier(b), 'asc');
 };
 
 export const getTaskGroupMeta = (task: TaskListItem, groupBy: TaskGroupBy): TaskGroupMeta => {

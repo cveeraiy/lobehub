@@ -6,7 +6,8 @@ Example::
 
     FEATURE_FLAGS="+knowledge_base,-market,+admin_panel"
 
-The ``DEFAULT_FEATURE_FLAGS`` dict mirrors the TS ``schema.ts`` defaults.
+The ``DEFAULT_FEATURE_FLAGS`` dict starts from the TS ``schema.ts`` shape, but the
+Python backend enables the key product surfaces by default for local/API parity.
 ``get_feature_flags(user_id=...)`` returns the resolved ``FeatureFlagsState``
 that the ``GET /api/config`` endpoint can serialise to the SPA.
 """
@@ -19,33 +20,31 @@ from typing import Optional
 from app.config import settings
 
 
-# ── Raw flag definitions (mirrors TS FeatureFlagsSchema defaults) ───
-_is_dev = settings.debug
-
+# ── Raw flag definitions (mirrors TS FeatureFlagsSchema shape) ───────
 DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "check_updates": True,
     "provider_settings": True,
     "openai_api_key": True,
     "openai_proxy_url": True,
-    "api_key_manage": False,
+    "api_key_manage": True,
     "edit_agent": True,
-    "ai_image": False,
+    "ai_image": True,
     "speech_to_text": True,
     "token_counter": True,
     "welcome_suggest": True,
     "changelog": True,
-    "market": False,
+    "market": True,
     "knowledge_base": True,
-    "rag_eval": False,
-    "agent_self_iteration": _is_dev,
-    "agent_onboarding": _is_dev,
-    "agent_task": _is_dev,
+    "rag_eval": True,
+    "agent_self_iteration": True,
+    "agent_onboarding": True,
+    "agent_task": True,
     "auth_captcha": True,
     "cloud_promotion": False,
-    "bot_channels": False,
-    "resources": False,
-    "starter_list": False,
-    "admin_panel": _is_dev,
+    "bot_channels": True,
+    "resources": True,
+    "starter_list": True,
+    "admin_panel": True,
     "enterprise_mode": False,
     "commercial_hide_github": False,
     "commercial_hide_docs": False,
@@ -116,25 +115,25 @@ class FeatureFlagsState:
     show_provider: bool = True
     show_openai_api_key: bool = True
     show_openai_proxy_url: bool = True
-    show_api_key_manage: bool = False
-    show_ai_image: bool = False
+    show_api_key_manage: bool = True
+    show_ai_image: bool = True
     show_changelog: bool = True
     show_cloud_promotion: bool = False
-    show_market: bool = False
-    show_starter_list: bool = False
-    show_admin_panel: bool = False
+    show_market: bool = True
+    show_starter_list: bool = True
+    show_admin_panel: bool = True
 
     enable_check_updates: bool = True
     show_welcome_suggest: bool = True
     enable_knowledge_base: bool = True
-    enable_rag_eval: bool = False
-    enable_agent_self_iteration: bool = False
-    enable_agent_onboarding: bool = False
-    enable_agent_task: bool = False
+    enable_rag_eval: bool = True
+    enable_agent_self_iteration: bool = True
+    enable_agent_onboarding: bool = True
+    enable_agent_task: bool = True
     enable_auth_captcha: bool = True
     enable_stt: bool = True
-    enable_bot_channels: bool = False
-    enable_resources: bool = False
+    enable_bot_channels: bool = True
+    enable_resources: bool = True
 
     hide_github: bool = False
     hide_docs: bool = False

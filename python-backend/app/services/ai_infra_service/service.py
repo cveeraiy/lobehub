@@ -20,6 +20,7 @@ from app.models.ai_infra import AiModel, AiProvider
 from app.services.key_vault import KeyVaultService
 from app.services.model_catalog import (
     BUILTIN_PROVIDERS,
+    get_builtin_provider,
     get_builtin_models,
     get_provider_sort_key,
     is_builtin_provider,
@@ -104,7 +105,7 @@ async def get_provider_list(
     seen = set()
     for bp in BUILTIN_PROVIDERS:
         if bp.id in user_map:
-            entry = {**user_map[bp.id]}
+            entry = _provider_list_entry(user_map[bp.id], bp)
         else:
             entry = {
                 "id": bp.id,
@@ -124,6 +125,20 @@ async def get_provider_list(
             merged.append(entry)
 
     return merged
+
+
+def _provider_list_entry(
+    row: dict[str, Any],
+    builtin: Any,
+) -> dict[str, Any]:
+    return {
+        **row,
+        "name": row.get("name") or builtin.name,
+        "description": row.get("description") or builtin.description,
+        "logo": row.get("logo"),
+        "sort": row.get("sort") if row.get("sort") is not None else builtin.sort,
+        "source": row.get("source") or "builtin",
+    }
 
 
 async def get_provider_detail(
@@ -156,6 +171,7 @@ def _provider_to_detail(
     p: AiProvider,
     vault: Optional[KeyVaultService] = None,
 ) -> dict[str, Any]:
+    builtin = get_builtin_provider(p.id)
     kv: dict[str, Any] = {}
     if p.key_vaults and vault:
         kv = vault.decrypt_json(p.key_vaults)
@@ -166,12 +182,12 @@ def _provider_to_detail(
             pass
     return {
         "id": p.id,
-        "name": p.name,
-        "description": p.description,
+        "name": p.name or (builtin.name if builtin else None),
+        "description": p.description or (builtin.description if builtin else None),
         "logo": p.logo,
         "enabled": p.enabled,
-        "sort": p.sort,
-        "source": p.source,
+        "sort": p.sort if p.sort is not None else (builtin.sort if builtin else None),
+        "source": p.source or get_provider_source(p.id),
         "key_vaults": kv,
         "settings": p.settings or None,
         "config": p.config or None,

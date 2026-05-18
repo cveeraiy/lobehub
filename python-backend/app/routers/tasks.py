@@ -1396,6 +1396,11 @@ async def _find_all_descendants(
 # ── Clear All ───────────────────────────────────────────────────────
 
 
+@router.delete("/")
+async def reject_empty_task_delete():
+    raise HTTPException(400, "Task id is required")
+
+
 @router.delete("")
 async def clear_all_tasks(
     user_id: str = Depends(get_current_user_id),

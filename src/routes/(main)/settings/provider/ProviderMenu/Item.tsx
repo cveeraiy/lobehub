@@ -2,6 +2,7 @@ import { BRANDING_PROVIDER } from '@lobechat/business-const';
 import { ProviderIcon } from '@lobehub/icons';
 import { Avatar, Center } from '@lobehub/ui';
 import { Badge } from 'antd';
+import { DEFAULT_MODEL_PROVIDER_LIST } from 'model-bank/modelProviders';
 import { memo, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -15,9 +16,14 @@ interface ProviderItemProps extends AiProviderListItem {
   onClick: (id: string) => void;
 }
 
+const builtinProviderNameMap = new Map(
+  DEFAULT_MODEL_PROVIDER_LIST.map((item) => [item.id, item.name]),
+);
+
 const ProviderItem = memo<ProviderItemProps>(
   ({ id, name, source, enabled, logo, onClick = () => {} }) => {
     const location = useLocation();
+    const displayName = name || builtinProviderNameMap.get(id) || id;
 
     // Extract providerId from pathname: /settings/provider/xxx -> xxx
     const activeKey = useMemo(() => {
@@ -33,7 +39,7 @@ const ProviderItem = memo<ProviderItemProps>(
     const providerIcon =
       isCustom && logo ? (
         <Avatar
-          alt={name || id}
+          alt={displayName}
           avatar={logo}
           shape={'square'}
           size={22}
@@ -55,7 +61,7 @@ const ProviderItem = memo<ProviderItemProps>(
       <NavItem
         active={activeKey === id}
         icon={() => providerIcon}
-        title={name}
+        title={displayName}
         extra={
           enabled ? (
             <Center width={24}>

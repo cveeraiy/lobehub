@@ -98,7 +98,7 @@ interface TaskStatusTagProps {
   disableDropdown?: boolean;
   onChange?: (status: TaskStatus) => void;
   size?: number;
-  status?: TaskStatus;
+  status?: string;
   taskIdentifier?: string;
 }
 
@@ -108,7 +108,7 @@ const TaskStatusTag = memo<TaskStatusTagProps>(
     const { t } = useTranslation('chat');
     const updateTaskStatus = useTaskStore((s) => s.updateTaskStatus);
 
-    const displayStatus = status ?? 'backlog';
+    const displayStatus = STATUS_META[status as TaskStatus] ? (status as TaskStatus) : 'backlog';
     const meta = STATUS_META[displayStatus];
 
     const handleStatusChange = useCallback(

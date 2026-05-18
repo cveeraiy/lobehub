@@ -68,11 +68,16 @@ const CreateTaskContent = memo<CreateTaskContentProps>(
       });
 
       if (result) {
+        const resultId = 'id' in result && typeof result.id === 'string' ? result.id : undefined;
+        const taskIdentifier = result.identifier || resultId;
+
         close();
-        onCreated?.({
-          agentId: result.assigneeAgentId ?? undefined,
-          identifier: result.identifier,
-        });
+        if (taskIdentifier) {
+          onCreated?.({
+            agentId: result.assigneeAgentId ?? undefined,
+            identifier: taskIdentifier,
+          });
+        }
       }
     }, [assigneeAgentId, close, createTask, onCreated, priority, title]);
 
