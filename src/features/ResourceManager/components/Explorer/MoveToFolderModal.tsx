@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type FolderTreeItem } from '@/features/ResourceManager/components/FolderTree';
 import FolderTree from '@/features/ResourceManager/components/FolderTree';
-import { fileService } from '@/services/file';
+import { fileService } from '@/services/file/resolved';
 import { useFileStore } from '@/store/file';
 import { useTreeStore } from '@/store/tree';
 
@@ -25,8 +25,8 @@ const MoveToFolderModal = memo<MoveToFolderModalProps>(
     const [folders, setFolders] = useState<FolderTreeItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-    const [loadedFolders, setLoadedFolders] = useState<Set<string>>(new Set());
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
+    const [loadedFolders, setLoadedFolders] = useState<Set<string>>(() => new Set());
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
     const createFolder = useFileStore((s) => s.createFolder);

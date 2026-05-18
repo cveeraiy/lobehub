@@ -81,10 +81,17 @@ const mapStatusToResourceItem = (item: KnowledgeItemStatus): ResourceStatusItem 
   };
 };
 
+const normalizeLibraryId = (libraryId?: string): string | undefined => {
+  if (!libraryId || libraryId === 'undefined' || libraryId === 'null') return undefined;
+
+  return libraryId;
+};
+
 const toBackendQueryParams = (params: ResourceQueryParams) => {
   const { libraryId, ...rest } = params;
+  const knowledgeBaseId = normalizeLibraryId(libraryId);
 
-  return libraryId ? { ...rest, knowledgeBaseId: libraryId } : rest;
+  return knowledgeBaseId ? { ...rest, knowledgeBaseId } : rest;
 };
 
 /**

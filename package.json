@@ -521,6 +521,7 @@
       "fast-xml-parser": "5.4.2",
       "lexical": "0.42.0",
       "pdfjs-dist": "5.4.530",
+      "react-grab": "0.1.37",
       "stylelint-config-clean-order": "7.0.0"
     },
     "patchedDependencies": {

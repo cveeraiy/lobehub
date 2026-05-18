@@ -26,6 +26,16 @@ vi.mock('@lobechat/const', async (importOriginal) => {
 });
 
 vi.mock('@/libs/trpc/client', () => ({
+  lambdaClient: {
+    klavis: {
+      createServerInstance: { mutate: vi.fn() },
+      deleteServerInstance: { mutate: vi.fn() },
+      getKlavisPlugins: { query: vi.fn() },
+      getServerInstance: { query: vi.fn() },
+      removeKlavisPlugin: { mutate: vi.fn() },
+      updateKlavisPlugin: { mutate: vi.fn() },
+    },
+  },
   toolsClient: {
     market: {
       connectCallTool: { mutate: vi.fn() },

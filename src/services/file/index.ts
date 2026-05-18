@@ -16,7 +16,9 @@ interface CreateFileParams extends Omit<UploadFileParams, 'url'> {
 }
 
 const compactQueryParams = (params: QueryFileListParams): QueryFileListParams =>
-  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined));
+  Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== undefined && value !== 'undefined'),
+  );
 
 export class FileService {
   createFile = async (

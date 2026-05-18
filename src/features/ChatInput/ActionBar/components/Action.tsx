@@ -2,7 +2,6 @@
 
 import { type ActionIconProps, type PopoverTrigger } from '@lobehub/ui';
 import { ActionIcon } from '@lobehub/ui';
-import { isUndefined } from 'es-toolkit/compat';
 import { memo } from 'react';
 import useMergeState from 'use-merge-value';
 
@@ -25,7 +24,7 @@ interface ActionProps extends Omit<ActionIconProps, 'popover'> {
 
 const Action = memo<ActionProps>(
   ({
-    showTooltip,
+    showTooltip: _showTooltip,
     loading,
     icon,
     title,
@@ -44,17 +43,14 @@ const Action = memo<ActionProps>(
     });
     const mobile = useServerConfigStore((s) => s.isMobile);
     const { actionSize, dropdownPlacement } = useActionBarContext();
+    const ariaLabel = typeof title === 'string' ? title : undefined;
     const iconNode = (
       <ActionIcon
+        aria-label={ariaLabel}
         disabled={disabled}
         icon={icon}
         loading={loading}
-        title={
-          isUndefined(showTooltip) ? (mobile ? undefined : title) : showTooltip ? title : undefined
-        }
-        tooltipProps={{
-          placement: 'bottom',
-        }}
+        title={undefined}
         onClick={(e) => {
           if (disabled || loading) return;
           if (onClick) return onClick(e);

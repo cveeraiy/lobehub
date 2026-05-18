@@ -527,25 +527,27 @@ export const marketRouter = router({
   /**
    * List all user connections
    */
-  connectListConnections: lobehubSkillBaseProcedure.query(async ({ ctx }) => {
-    log('connectListConnections');
+  connectListConnections: lobehubSkillBaseProcedure
+    .input(z.object({}).optional())
+    .query(async ({ ctx }) => {
+      log('connectListConnections');
 
-    try {
-      const response = await ctx.marketSDK.connect.listConnections();
-      // Debug logging
-      log('connectListConnections raw response: %O', response);
-      log('connectListConnections connections: %O', response.connections);
-      return {
-        connections: response.connections || [],
-      };
-    } catch (error) {
-      log('connectListConnections error: %O', error);
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: `Failed to list connections: ${(error as Error).message}`,
-      });
-    }
-  }),
+      try {
+        const response = await ctx.marketSDK.connect.listConnections();
+        // Debug logging
+        log('connectListConnections raw response: %O', response);
+        log('connectListConnections connections: %O', response.connections);
+        return {
+          connections: response.connections || [],
+        };
+      } catch (error) {
+        log('connectListConnections error: %O', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: `Failed to list connections: ${(error as Error).message}`,
+        });
+      }
+    }),
 
   /**
    * List available providers (public, no auth required)

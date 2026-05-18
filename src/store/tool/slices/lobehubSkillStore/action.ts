@@ -19,6 +19,14 @@ import { LobehubSkillStatus } from './types';
 
 const n = setNamespace('lobehubSkillStore');
 
+const isStandaloneViteDev = (): boolean =>
+  Boolean(
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    window.location.port === '9876' &&
+    !(window as typeof window & { __DEBUG_PROXY__?: boolean }).__DEBUG_PROXY__,
+  );
+
 /**
  * Ethos Skill Store Actions
  */
@@ -270,10 +278,12 @@ export class LobehubSkillStoreActionImpl {
   };
 
   useFetchLobehubSkillConnections = (enabled: boolean): SWRResponse<LobehubSkillServer[]> => {
+    const shouldFetch = enabled && !isStandaloneViteDev();
+
     return useSWR<LobehubSkillServer[]>(
-      enabled ? 'fetchLobehubSkillConnections' : null,
+      shouldFetch ? 'fetchLobehubSkillConnections' : null,
       async () => {
-        const response = await toolsClient.market.connectListConnections.query();
+        const response = await toolsClient.market.connectListConnections.query({});
 
         // Debug logging
 

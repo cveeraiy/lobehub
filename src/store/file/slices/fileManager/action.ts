@@ -12,7 +12,6 @@ import { message } from '@/components/AntdStaticMethods';
 import { FILE_UPLOAD_BLACKLIST, MAX_UPLOAD_FILE_COUNT } from '@/const/file';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { documentService } from '@/services/document/resolved';
-import { FileService } from '@/services/file';
 import { fileService } from '@/services/file/resolved';
 import { ragService } from '@/services/rag.resolved';
 import { type UploadFileListDispatch } from '@/store/file/reducers/uploadFileList';
@@ -26,7 +25,6 @@ import { unzipFile } from '@/utils/unzipFile';
 import { type FileStore } from '../../store';
 import { fileManagerSelectors } from './selectors';
 
-const serverFileService = new FileService();
 const FETCH_ALL_KNOWLEDGE_KEY = 'useFetchKnowledgeItems';
 
 export interface FolderCrumb {
@@ -171,7 +169,7 @@ export class FileManageActionImpl {
     if (!fileListHasMore || !queryListParams) return;
 
     try {
-      const response = await serverFileService.getKnowledgeItems({
+      const response = await fileService.getKnowledgeItems({
         ...queryListParams,
         limit: queryListParams.limit ?? 50,
         offset: fileListOffset,
@@ -345,7 +343,7 @@ export class FileManageActionImpl {
     // toggle file ids
     this.#get().toggleEmbeddingIds([id]);
 
-    await serverFileService.removeFileAsyncTask(id, 'embedding');
+    await fileService.removeFileAsyncTask(id, 'embedding');
 
     await this.#get().refreshFileList();
 
@@ -665,7 +663,7 @@ export class FileManageActionImpl {
     return useClientDataSWR<FolderCrumb[]>(
       !slug ? null : ['useFetchFolderBreadcrumb', slug],
       async () => {
-        const response = await serverFileService.getFolderBreadcrumb(slug!);
+        const response = await fileService.getFolderBreadcrumb(slug!);
         return response;
       },
     );
@@ -675,7 +673,7 @@ export class FileManageActionImpl {
     return useClientDataSWR<FileListItem | undefined>(
       !id ? null : ['useFetchKnowledgeItem', id],
       async () => {
-        const response = await serverFileService.getKnowledgeItem(id!);
+        const response = await fileService.getKnowledgeItem(id!);
         return response ?? undefined;
       },
     );
@@ -683,7 +681,7 @@ export class FileManageActionImpl {
 
   useFetchKnowledgeItems = (params: QueryFileListParams): SWRResponse<FileListItem[]> => {
     return useClientDataSWR<FileListItem[]>([FETCH_ALL_KNOWLEDGE_KEY, params], async () => {
-      const response = await serverFileService.getKnowledgeItems({
+      const response = await fileService.getKnowledgeItems({
         ...params,
         limit: params.limit ?? 50,
         offset: 0,

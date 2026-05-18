@@ -34,6 +34,6 @@ if (typeof window !== 'undefined') {
   });
 }
 
-if (__DEV__) {
+if (__DEV__ && import.meta.env.VITE_REACT_SCAN === 'true') {
   scan({ enabled: true });
 }

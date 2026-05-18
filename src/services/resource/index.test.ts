@@ -65,6 +65,23 @@ describe('resourceService.queryResources', () => {
     expect(mockGetKnowledgeItems.mock.calls[0][0]).not.toHaveProperty('libraryId');
     expect(mockGetKnowledgeItems.mock.calls[0][0]).not.toHaveProperty('knowledgeBaseId');
   });
+
+  it('omits string placeholder library ids before resolved file service selection', async () => {
+    mockGetKnowledgeItems.mockResolvedValue({
+      hasMore: false,
+      items: [],
+      total: 0,
+    });
+
+    await resourceService.queryResources({
+      category: 'all',
+      libraryId: 'undefined',
+    } as any);
+
+    expect(mockGetKnowledgeItems).toHaveBeenCalledWith({
+      category: 'all',
+    });
+  });
 });
 
 describe('resourceService.updateResource', () => {

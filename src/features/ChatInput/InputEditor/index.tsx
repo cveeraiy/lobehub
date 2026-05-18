@@ -39,6 +39,10 @@ import { INSERT_REFER_TOPIC_COMMAND } from './ReferTopic';
 import { useMentionCategories } from './useMentionCategories';
 
 const className = cx(css`
+  [contenteditable='true'] {
+    display: block;
+  }
+
   p {
     margin-block-end: 0;
   }
