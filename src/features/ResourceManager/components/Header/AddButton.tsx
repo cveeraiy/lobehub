@@ -257,6 +257,7 @@ const AddButton = () => {
   return (
     <>
       <DropdownMenu
+        nativeButton
         items={items}
         open={menuOpen}
         placement="bottomRight"

@@ -14,6 +14,56 @@ interface CreateFileParams extends Omit<UploadFileParams, 'url'> {
   url: string;
 }
 
+const compactQueryParams = (params: QueryFileListParams): QueryFileListParams =>
+  Object.fromEntries(
+    Object.entries(params).filter(
+      ([, value]) => value !== undefined && value !== null && value !== 'undefined',
+    ),
+  );
+
+const toRestQueryParams = (params: QueryFileListParams) => {
+  const {
+    fileType,
+    knowledgeBaseId,
+    parentId,
+    showFilesInKnowledgeBase: _showFiles,
+    sortType,
+    ...rest
+  } = compactQueryParams(params) as QueryFileListParams & { fileType?: string };
+
+  return {
+    ...rest,
+    ...(fileType ? { file_type: fileType } : {}),
+    ...(knowledgeBaseId ? { knowledge_base_id: knowledgeBaseId } : {}),
+    ...(parentId ? { parent_id: parentId } : {}),
+    ...(sortType ? { sort_type: sortType } : {}),
+  };
+};
+
+const toDate = (value: unknown): Date => (value ? new Date(value as string) : new Date());
+
+const toFileListItem = (item: any): FileListItem => ({
+  chunkCount: item.chunkCount ?? item.chunk_count ?? null,
+  chunkingError: item.chunkingError ?? item.chunking_error ?? null,
+  chunkingStatus: item.chunkingStatus ?? item.chunking_status ?? null,
+  content: item.content,
+  createdAt: toDate(item.createdAt ?? item.created_at),
+  editorData: item.editorData ?? item.editor_data,
+  embeddingError: item.embeddingError ?? item.embedding_error ?? null,
+  embeddingStatus: item.embeddingStatus ?? item.embedding_status ?? null,
+  fileType: item.fileType ?? item.file_type ?? 'application/octet-stream',
+  finishEmbedding: item.finishEmbedding ?? item.finish_embedding ?? false,
+  id: item.id,
+  metadata: item.metadata ?? null,
+  name: item.name ?? item.title ?? 'Untitled',
+  parentId: item.parentId ?? item.parent_id ?? null,
+  size: item.size ?? 0,
+  slug: item.slug ?? null,
+  sourceType: item.sourceType ?? item.source_type ?? 'file',
+  updatedAt: toDate(item.updatedAt ?? item.updated_at),
+  url: item.url ?? '',
+});
+
 export class FileService {
   createFile = async (
     params: UploadFileParams & { parentId?: string },
@@ -56,7 +106,15 @@ export class FileService {
   };
 
   getKnowledgeItems = async (params: QueryFileListParams) => {
-    return restClient.get('/files/knowledge-items', { params: params as any });
+    const response = await restClient.get<any>('/files/knowledge-items', {
+      params: toRestQueryParams(params) as any,
+    });
+
+    return {
+      hasMore: response.hasMore ?? response.has_more ?? false,
+      items: (response.items ?? []).map(toFileListItem),
+      total: response.total,
+    };
   };
 
   getKnowledgeItemStatusesByIds = async (ids: string[]): Promise<KnowledgeItemStatus[]> => {
@@ -66,11 +124,13 @@ export class FileService {
   };
 
   resolveKnowledgeItemIds = async (params: QueryFileListParams) => {
-    return restClient.get('/files/knowledge-item-ids', { params: params as any });
+    return restClient.get('/files/knowledge-item-ids', {
+      params: toRestQueryParams(params) as any,
+    });
   };
 
   deleteKnowledgeItemsByQuery = async (params: QueryFileListParams) => {
-    return restClient.post('/files/knowledge-items/delete', { body: params });
+    return restClient.post('/files/knowledge-items/delete', { body: toRestQueryParams(params) });
   };
 
   getKnowledgeItem = async (id: string): Promise<FileListItem | null> => {

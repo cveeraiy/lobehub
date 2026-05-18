@@ -180,8 +180,21 @@ class AgentBotProviderService {
     return restClient.post(`/agent-bot-providers/${provider.id}/test`, {});
   };
 
-  lineFetchBotInfo = async (_channelAccessToken: string) => {
-    throw new Error('lineFetchBotInfo is not available via REST API');
+  lineFetchBotInfo = async (
+    channelAccessToken: string,
+  ): Promise<{ basicId?: string; displayName?: string; userId: string }> => {
+    const result = await restClient.post<{
+      basic_id?: string;
+      display_name?: string;
+      user_id: string;
+    }>('/agent-bot-providers/line/fetch-bot-info', {
+      body: { channel_access_token: channelAccessToken },
+    });
+    return {
+      basicId: result.basic_id,
+      displayName: result.display_name,
+      userId: result.user_id,
+    };
   };
 
   wechatGetQrCode = async () => {

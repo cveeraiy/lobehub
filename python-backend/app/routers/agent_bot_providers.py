@@ -18,6 +18,7 @@ from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models.agent_ops import AgentBotProvider
 from app.services.bot.platforms import platform_registry
+from app.services.bot.platforms.line.definition import fetch_line_bot_info
 from app.services.key_vault.service import KeyVaultService
 
 router = APIRouter(prefix="/api/agent-bot-providers", tags=["Agent Bot Providers"])
@@ -87,6 +88,10 @@ class UpdateBotProviderBody(BaseModel):
     credentials: dict[str, str] | None = None
     settings: dict[str, Any] | None = None
     enabled: bool | None = None
+
+
+class LineFetchBotInfoBody(BaseModel):
+    channel_access_token: str
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -359,3 +364,19 @@ async def refresh_runtime_statuses_by_agent(
     user_id: str = Depends(get_current_user_id),
 ):
     return {"success": True}
+
+
+@router.post("/line/fetch-bot-info")
+async def line_fetch_bot_info(
+    body: LineFetchBotInfoBody,
+    user_id: str = Depends(get_current_user_id),
+):
+    try:
+        info = await fetch_line_bot_info(body.channel_access_token)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    return {
+        "basic_id": info.get("basicId"),
+        "display_name": info.get("displayName"),
+        "user_id": info["userId"],
+    }

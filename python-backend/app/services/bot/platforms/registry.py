@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from app.services.bot.platforms.discord.definition import discord
+from app.services.bot.platforms.feishu.definition import feishu, lark
+from app.services.bot.platforms.line.definition import line
+from app.services.bot.platforms.slack.definition import slack
+from app.services.bot.platforms.telegram.definition import telegram
 from app.services.bot.platforms.types import PlatformDefinition
 
 
@@ -31,4 +35,8 @@ class PlatformRegistry:
 
 platform_registry = PlatformRegistry()
 platform_registry.register(discord)
-
+platform_registry.register(telegram)
+platform_registry.register(line)
+platform_registry.register(slack)
+platform_registry.register(feishu)
+platform_registry.register(lark)

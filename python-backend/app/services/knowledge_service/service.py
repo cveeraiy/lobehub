@@ -15,9 +15,17 @@ from typing import Any, Optional
 from sqlalchemy import and_, delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.agent import AgentKnowledgeBase
 from app.models.file import File
+from app.models.file import Document
 from app.models.knowledge import KnowledgeBase, KnowledgeBaseFile
 from app.models.rag import Chunk, DocumentChunk, Embedding
+from app.models.rag_eval import (
+    RagEvalDataset,
+    RagEvalDatasetRecord,
+    RagEvalEvaluation,
+    RagEvalEvaluationRecord,
+)
 from app.services import llm_service
 
 logger = logging.getLogger(__name__)
@@ -97,6 +105,67 @@ async def delete_knowledge_base(
     user_id: str,
     kb_id: str,
 ) -> None:
+    await session.execute(
+        update(Document)
+        .where(and_(Document.knowledge_base_id == kb_id, Document.user_id == user_id))
+        .values(knowledge_base_id=None, updated_at=_now())
+    )
+    await session.execute(
+        delete(AgentKnowledgeBase).where(
+            and_(
+                AgentKnowledgeBase.knowledge_base_id == kb_id,
+                AgentKnowledgeBase.user_id == user_id,
+            )
+        )
+    )
+    dataset_ids = (
+        await session.execute(
+            select(RagEvalDataset.id).where(
+                and_(
+                    RagEvalDataset.knowledge_base_id == kb_id,
+                    RagEvalDataset.user_id == user_id,
+                )
+            )
+        )
+    ).scalars().all()
+    evaluation_ids = (
+        await session.execute(
+            select(RagEvalEvaluation.id).where(
+                and_(
+                    RagEvalEvaluation.knowledge_base_id == kb_id,
+                    RagEvalEvaluation.user_id == user_id,
+                )
+            )
+        )
+    ).scalars().all()
+    if evaluation_ids:
+        await session.execute(
+            delete(RagEvalEvaluationRecord).where(
+                RagEvalEvaluationRecord.evaluation_id.in_(evaluation_ids)
+            )
+        )
+    await session.execute(
+        delete(RagEvalEvaluation).where(
+            and_(
+                RagEvalEvaluation.knowledge_base_id == kb_id,
+                RagEvalEvaluation.user_id == user_id,
+            )
+        )
+    )
+    if dataset_ids:
+        await session.execute(
+            delete(RagEvalDatasetRecord).where(
+                RagEvalDatasetRecord.dataset_id.in_(dataset_ids)
+            )
+        )
+    await session.execute(
+        delete(RagEvalDataset).where(
+            and_(
+                RagEvalDataset.knowledge_base_id == kb_id,
+                RagEvalDataset.user_id == user_id,
+            )
+        )
+    )
     # Remove junction records
     await session.execute(
         delete(KnowledgeBaseFile).where(

@@ -29,6 +29,38 @@ describe('AgentBotProviderService REST', () => {
         name: 'Discord',
         schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
       },
+      {
+        connectionMode: 'webhook',
+        id: 'telegram',
+        name: 'Telegram',
+        schema: [{ key: 'credentials', label: 'channel.credentials', type: 'object' }],
+      },
+      {
+        connectionMode: 'webhook',
+        id: 'line',
+        name: 'LINE',
+        schema: [{ key: 'applicationId', label: 'channel.line.destinationUserId', type: 'string' }],
+      },
+      {
+        connectionMode: 'websocket',
+        id: 'slack',
+        name: 'Slack',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+      },
+      {
+        connectionMode: 'websocket',
+        id: 'feishu',
+        name: 'Feishu',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        supportsMarkdown: false,
+      },
+      {
+        connectionMode: 'websocket',
+        id: 'lark',
+        name: 'Lark',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        supportsMarkdown: false,
+      },
     ]);
 
     const result = await agentBotProviderService.listPlatforms();
@@ -40,6 +72,38 @@ describe('AgentBotProviderService REST', () => {
         id: 'discord',
         name: 'Discord',
         schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+      },
+      {
+        connectionMode: 'webhook',
+        id: 'telegram',
+        name: 'Telegram',
+        schema: [{ key: 'credentials', label: 'channel.credentials', type: 'object' }],
+      },
+      {
+        connectionMode: 'webhook',
+        id: 'line',
+        name: 'LINE',
+        schema: [{ key: 'applicationId', label: 'channel.line.destinationUserId', type: 'string' }],
+      },
+      {
+        connectionMode: 'websocket',
+        id: 'slack',
+        name: 'Slack',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+      },
+      {
+        connectionMode: 'websocket',
+        id: 'feishu',
+        name: 'Feishu',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        supportsMarkdown: false,
+      },
+      {
+        connectionMode: 'websocket',
+        id: 'lark',
+        name: 'Lark',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        supportsMarkdown: false,
       },
     ]);
   });
@@ -157,5 +221,24 @@ describe('AgentBotProviderService REST', () => {
     await agentBotProviderService.delete('provider-1');
 
     expect(mockRestDelete).toHaveBeenCalledWith('/agent-bot-providers/provider-1');
+  });
+
+  it('fetches LINE bot info through REST and maps the response', async () => {
+    mockRestPost.mockResolvedValueOnce({
+      basic_id: '@line-basic',
+      display_name: 'Line Bot',
+      user_id: 'U123',
+    });
+
+    const result = await agentBotProviderService.lineFetchBotInfo('line-token');
+
+    expect(mockRestPost).toHaveBeenCalledWith('/agent-bot-providers/line/fetch-bot-info', {
+      body: { channel_access_token: 'line-token' },
+    });
+    expect(result).toEqual({
+      basicId: '@line-basic',
+      displayName: 'Line Bot',
+      userId: 'U123',
+    });
   });
 });

@@ -18,9 +18,21 @@ async def test_list_platforms(client: httpx.AsyncClient) -> None:
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data, list)
-    assert [platform["id"] for platform in data] == ["discord"]
+    assert [platform["id"] for platform in data] == [
+        "discord",
+        "telegram",
+        "line",
+        "slack",
+        "feishu",
+        "lark",
+    ]
     assert data[0]["connectionMode"] == "websocket"
     assert any(field["key"] == "credentials" for field in data[0]["schema"])
+    assert data[1]["connectionMode"] == "webhook"
+    assert data[2]["showWebhookUrl"] is True
+    assert data[3]["connectionMode"] == "websocket"
+    assert data[4]["supportsMarkdown"] is False
+    assert data[5]["supportsMarkdown"] is False
 
 
 # ── 32.2  Setup: create an agent for bot provider tests ──────────────

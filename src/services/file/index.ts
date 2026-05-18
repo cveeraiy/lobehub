@@ -15,6 +15,9 @@ interface CreateFileParams extends Omit<UploadFileParams, 'url'> {
   url: string;
 }
 
+const compactQueryParams = (params: QueryFileListParams): QueryFileListParams =>
+  Object.fromEntries(Object.entries(params).filter(([, value]) => value !== undefined));
+
 export class FileService {
   createFile = async (
     params: UploadFileParams & { parentId?: string },
@@ -56,7 +59,9 @@ export class FileService {
 
   // V2.0 Migrate from getFiles to getKnowledgeItems
   getKnowledgeItems = async (params: QueryFileListParams) => {
-    return lambdaClient.file.getKnowledgeItems.query(params as QueryFileListSchemaType);
+    return lambdaClient.file.getKnowledgeItems.query(
+      compactQueryParams(params) as QueryFileListSchemaType,
+    );
   };
 
   getKnowledgeItemStatusesByIds = async (ids: string[]): Promise<KnowledgeItemStatus[]> => {
@@ -64,11 +69,15 @@ export class FileService {
   };
 
   resolveKnowledgeItemIds = async (params: QueryFileListParams) => {
-    return lambdaClient.file.resolveKnowledgeItemIds.query(params as QueryFileListSchemaType);
+    return lambdaClient.file.resolveKnowledgeItemIds.query(
+      compactQueryParams(params) as QueryFileListSchemaType,
+    );
   };
 
   deleteKnowledgeItemsByQuery = async (params: QueryFileListParams) => {
-    return lambdaClient.file.deleteKnowledgeItemsByQuery.mutate(params as QueryFileListSchemaType);
+    return lambdaClient.file.deleteKnowledgeItemsByQuery.mutate(
+      compactQueryParams(params) as QueryFileListSchemaType,
+    );
   };
 
   // V2.0 Migrate from getFileItem to getKnowledgeItem

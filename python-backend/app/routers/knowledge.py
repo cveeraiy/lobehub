@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -39,7 +39,9 @@ class SearchBody(BaseModel):
 
 
 class BatchFilesBody(BaseModel):
-    file_ids: list[str]
+    file_ids: list[str] = Field(alias="ids")
+
+    model_config = {"populate_by_name": True}
 
 
 # ── Endpoints ────────────────────────────────────────────────────────

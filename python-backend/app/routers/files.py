@@ -110,18 +110,6 @@ async def list_files(
     return [_file_dict(r) for r in rows]
 
 
-@router.get("/{file_id}")
-async def get_file(
-    file_id: str,
-    user_id: str = Depends(get_current_user_id),
-    session: AsyncSession = Depends(get_db),
-):
-    f = await get_file_by_id(session, user_id, file_id)
-    if not f:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found")
-    return _file_dict(f)
-
-
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_file(
     file: UploadFile,
@@ -502,6 +490,18 @@ async def resolve_knowledge_item_ids_get(
         q=q,
     )
     return await resolve_knowledge_item_ids(body, user_id=user_id, session=session)
+
+
+@router.get("/{file_id}")
+async def get_file(
+    file_id: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    f = await get_file_by_id(session, user_id, file_id)
+    if not f:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found")
+    return _file_dict(f)
 
 
 @router.post("/knowledge-items/resolve-ids")

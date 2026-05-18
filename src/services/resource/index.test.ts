@@ -4,21 +4,24 @@ import type { FileListItem } from '@/types/files';
 
 import { resourceService } from './index';
 
-const { mockUpdateDocument, mockGetKnowledgeItem, mockUpdateFile } = vi.hoisted(() => ({
-  mockGetKnowledgeItem: vi.fn(),
-  mockUpdateDocument: vi.fn(),
-  mockUpdateFile: vi.fn(),
-}));
+const { mockGetKnowledgeItems, mockUpdateDocument, mockGetKnowledgeItem, mockUpdateFile } =
+  vi.hoisted(() => ({
+    mockGetKnowledgeItems: vi.fn(),
+    mockGetKnowledgeItem: vi.fn(),
+    mockUpdateDocument: vi.fn(),
+    mockUpdateFile: vi.fn(),
+  }));
 
-vi.mock('../document', () => ({
+vi.mock('../document/resolved', () => ({
   documentService: {
     updateDocument: mockUpdateDocument,
   },
 }));
 
-vi.mock('../file', () => ({
+vi.mock('../file/resolved', () => ({
   fileService: {
     getKnowledgeItem: mockGetKnowledgeItem,
+    getKnowledgeItems: mockGetKnowledgeItems,
     updateFile: mockUpdateFile,
   },
 }));
@@ -39,6 +42,29 @@ const createKnowledgeItem = (overrides: Partial<FileListItem> = {}): FileListIte
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   url: 'https://example.com/resource-1',
   ...overrides,
+});
+
+describe('resourceService.queryResources', () => {
+  it('omits frontend-only libraryId and undefined knowledgeBaseId', async () => {
+    mockGetKnowledgeItems.mockResolvedValue({
+      hasMore: false,
+      items: [],
+      total: 0,
+    });
+
+    await resourceService.queryResources({
+      category: 'all',
+      libraryId: undefined,
+      parentId: null,
+    } as any);
+
+    expect(mockGetKnowledgeItems).toHaveBeenCalledWith({
+      category: 'all',
+      parentId: null,
+    });
+    expect(mockGetKnowledgeItems.mock.calls[0][0]).not.toHaveProperty('libraryId');
+    expect(mockGetKnowledgeItems.mock.calls[0][0]).not.toHaveProperty('knowledgeBaseId');
+  });
 });
 
 describe('resourceService.updateResource', () => {
