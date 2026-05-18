@@ -313,10 +313,12 @@ export default defineConfig({
     proxy: {
       // /api → PORT (Python backend at 8000, or Hono at 3010)
       '/api': `http://localhost:${process.env.PORT || 3010}`,
-      // /trpc, /oidc, /webapi → always the TS/Hono backend
+      // /trpc and /oidc stay on TS/Hono. /webapi follows PORT so AI provider
+      // runtime calls can be served by the Python backend during REST migration.
       '/oidc': `http://localhost:${process.env.HONO_PORT || 3010}`,
       '/trpc': `http://localhost:${process.env.HONO_PORT || 3010}`,
-      '/webapi': `http://localhost:${process.env.HONO_PORT || 3010}`,
+      '/webapi/user/avatar': `http://localhost:${process.env.HONO_PORT || 3010}`,
+      '/webapi': `http://localhost:${process.env.PORT || 3010}`,
     },
     warmup: {
       clientFiles: [

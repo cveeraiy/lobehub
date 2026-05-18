@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.services import ai_infra_service as svc
+from app.services import provider_runtime
 from app.services.key_vault import KeyVaultService
 
 logger = logging.getLogger(__name__)
@@ -496,15 +497,17 @@ async def check_provider_connectivity(
         return {"ok": False, "error": "No check model configured."}
 
     try:
-        from app.services.llm_service import LLMService
-        llm = LLMService()
-        await llm.chat_completion(
+        from app.services import llm_service
+
+        runtime = await provider_runtime.resolve_provider_config(session, user_id, provider_id)
+        await llm_service.chat(
             messages=[{"role": "user", "content": "Hi"}],
-            model=model,
-            provider=provider_id,
-            user_id=user_id,
+            model=provider_runtime.model_for_litellm(runtime, model),
             stream=False,
             temperature=0,
+            api_key=runtime.api_key,
+            api_base=runtime.api_base,
+            extra_kwargs=runtime.extra_kwargs or None,
         )
         return {"ok": True, "model": model}
     except Exception as exc:

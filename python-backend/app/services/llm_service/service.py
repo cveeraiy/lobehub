@@ -88,12 +88,26 @@ async def chat(
     # AWS Bedrock: litellm reads AWS_* env vars automatically, but we also
     # pass them explicitly so they work even without env var export.
     if model.startswith("bedrock/"):
-        if settings.aws_access_key_id:
-            kwargs["aws_access_key_id"] = settings.aws_access_key_id
-        if settings.aws_secret_access_key:
-            kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
-        if settings.aws_region:
-            kwargs["aws_region_name"] = settings.aws_region
+        kwargs.pop("api_key", None)
+        kwargs.pop("api_base", None)
+        aws_extra = extra_kwargs or {}
+        aws_access_key_id = aws_extra.pop("aws_access_key_id", None)
+        aws_secret_access_key = aws_extra.pop("aws_secret_access_key", None)
+        aws_session_token = aws_extra.pop("aws_session_token", None)
+        aws_region_name = aws_extra.pop("aws_region_name", None)
+        if aws_access_key_id or settings.aws_access_key_id:
+            kwargs["aws_access_key_id"] = aws_access_key_id or settings.aws_access_key_id
+        if aws_secret_access_key or settings.aws_secret_access_key:
+            kwargs["aws_secret_access_key"] = aws_secret_access_key or settings.aws_secret_access_key
+        if aws_session_token:
+            kwargs["aws_session_token"] = aws_session_token
+        if aws_region_name or settings.aws_region:
+            kwargs["aws_region_name"] = aws_region_name or settings.aws_region
+
+    if model.startswith("azure/") and extra_kwargs:
+        api_version = extra_kwargs.pop("api_version", None)
+        if api_version:
+            kwargs["api_version"] = api_version
 
     if extra_kwargs:
         kwargs.update(extra_kwargs)
@@ -173,5 +187,16 @@ async def resolve_provider_credentials(
         if val:
             creds["api_base"] = val
             break
+
+    if provider_id == "bedrock":
+        bedrock_map = {
+            "accessKeyId": "aws_access_key_id",
+            "secretAccessKey": "aws_secret_access_key",
+            "sessionToken": "aws_session_token",
+            "region": "aws_region_name",
+        }
+        for source_key, target_key in bedrock_map.items():
+            if key_vaults.get(source_key):
+                creds[target_key] = key_vaults[source_key]
 
     return creds

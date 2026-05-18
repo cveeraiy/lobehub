@@ -148,6 +148,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.klavis",
     # AI infra
     "app.routers.ai_infra",
+    "app.routers.webapi",
     "app.routers.cloud_sandbox",
     # Search / market / share
     "app.routers.search",
@@ -173,4 +174,3 @@ for _mod_path in _ROUTER_MODULES:
         logger.exception("Failed to load router %s", _mod_path)
 
 logger.info("Registered %d routers", len(_ROUTER_MODULES))
-
