@@ -8,7 +8,7 @@ import { Minus, Plus } from 'lucide-react';
 import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds.resolved';
 
 const styles = createStaticStyles(({ css }) => ({
   footer: css`
@@ -54,7 +54,7 @@ const KVCredForm: FC<KVCredFormProps> = ({ type, onBack, onSuccess }) => {
         {} as Record<string, string>,
       );
 
-      return lambdaClient.market.creds.createKV.mutate({
+      return credsService.createKV({
         description: values.description,
         key: values.key,
         name: values.name,

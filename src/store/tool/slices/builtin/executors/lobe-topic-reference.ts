@@ -1,7 +1,7 @@
 import { TopicReferenceExecutor } from '@lobechat/builtin-tool-topic-reference/executor';
 import type { BuiltinToolResult } from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { topicService } from '@/services/topic/resolved';
 
 interface GetTopicContextParams {
   topicId: string;
@@ -16,7 +16,7 @@ class TopicReferenceExecutionRuntime {
     }
 
     try {
-      const result = await lambdaClient.topic.getTopicContext.query({ topicId });
+      const result = await topicService.getTopicContext(topicId);
       return { content: result.content, success: result.success };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);

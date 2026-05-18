@@ -1,19 +1,28 @@
 import {
+  type AgentCronJob,
   type CreateAgentCronJobData,
   type UpdateAgentCronJobData,
 } from '@/database/schemas/agentCronJob';
 import { restClient } from '@/libs/rest';
 
+interface ServiceResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
+
 class AgentCronJobService {
-  async create(data: Omit<CreateAgentCronJobData, 'userId'> & { templateId?: string }) {
+  async create(
+    data: Omit<CreateAgentCronJobData, 'userId'> & { templateId?: string },
+  ): Promise<ServiceResponse<AgentCronJob>> {
     return restClient.post('/agent-cron-jobs', { body: data });
   }
 
-  async getByAgentId(agentId: string) {
+  async getByAgentId(agentId: string): Promise<ServiceResponse<AgentCronJob[]>> {
     return restClient.get(`/agent-cron-jobs/agent/${agentId}`);
   }
 
-  async getById(id: string) {
+  async getById(id: string): Promise<ServiceResponse<AgentCronJob>> {
     return restClient.get(`/agent-cron-jobs/${id}`);
   }
 
@@ -35,15 +44,18 @@ class AgentCronJobService {
     });
   }
 
-  async update(id: string, data: UpdateAgentCronJobData) {
+  async update(id: string, data: UpdateAgentCronJobData): Promise<ServiceResponse<AgentCronJob>> {
     return restClient.put(`/agent-cron-jobs/${id}`, { body: data });
   }
 
-  async delete(id: string) {
+  async delete(id: string): Promise<{ message?: string; success: boolean }> {
     return restClient.delete(`/agent-cron-jobs/${id}`);
   }
 
-  async resetExecutions(id: string, newMaxExecutions?: number) {
+  async resetExecutions(
+    id: string,
+    newMaxExecutions?: number,
+  ): Promise<ServiceResponse<AgentCronJob>> {
     return restClient.post('/agent-cron-jobs/reset-executions', {
       body: { id, newMaxExecutions },
     });

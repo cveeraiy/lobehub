@@ -91,7 +91,7 @@ async def update_api_key(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    values = body.model_dump(exclude_none=True)
+    values = body.model_dump(exclude_unset=True)
     if not values:
         return {"ok": True}
     values["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -161,9 +161,13 @@ def _key_dict(k: ApiKey) -> dict[str, Any]:
     return {
         "id": k.id,
         "name": k.name,
+        "key": k.key_prefix or "",
         "prefix": k.key_prefix,
-        "last_used_at": k.last_used_at.isoformat() if k.last_used_at else None,
-        "expires_at": k.expires_at.isoformat() if k.expires_at else None,
-        "usage_count": k.usage_count,
-        "created_at": k.created_at.isoformat() if k.created_at else None,
+        "enabled": True,
+        "lastUsedAt": k.last_used_at.isoformat() if k.last_used_at else None,
+        "expiresAt": k.expires_at.isoformat() if k.expires_at else None,
+        "usageCount": k.usage_count,
+        "createdAt": k.created_at.isoformat() if k.created_at else None,
+        "updatedAt": k.updated_at.isoformat() if k.updated_at else None,
+        "userId": k.user_id,
     }

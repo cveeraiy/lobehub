@@ -9,8 +9,8 @@ import { MessageApiName, MessageToolIdentifier } from '@lobechat/builtin-tool-me
 import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
 import { agentBotProviderService } from '@/services/agentBotProvider.resolved';
+import { botMessageService } from '@/services/botMessage.resolved';
 
 class MessageExecutor extends BaseExecutor<typeof MessageApiName> {
   readonly identifier = MessageToolIdentifier;
@@ -85,7 +85,7 @@ class MessageExecutor extends BaseExecutor<typeof MessageApiName> {
     _ctx: BuiltinToolContext,
   ): Promise<BuiltinToolResult> => {
     try {
-      const bots = await lambdaClient.agentBotProvider.list.query();
+      const bots = await agentBotProviderService.list();
       const bot = (bots as any[]).find((b: any) => b.id === params.botId);
       if (!bot) {
         return { content: `Bot not found: ${params.botId}`, success: false };
@@ -174,7 +174,7 @@ class MessageExecutor extends BaseExecutor<typeof MessageApiName> {
   ): Promise<BuiltinToolResult> => {
     try {
       // Look up bot to get platform + applicationId
-      const bots = await lambdaClient.agentBotProvider.list.query();
+      const bots = await agentBotProviderService.list();
       const bot = (bots as any[]).find((b: any) => b.id === params.botId);
       if (!bot) {
         return { content: `Bot not found: ${params.botId}`, success: false };
@@ -288,7 +288,7 @@ class MessageExecutor extends BaseExecutor<typeof MessageApiName> {
 
       // Resolve botId from platform if not provided
       if (!botId && params.platform) {
-        const bots = await lambdaClient.agentBotProvider.list.query();
+        const bots = await agentBotProviderService.list();
         const bot = (bots as any[]).find((b: any) => b.platform === params.platform && b.enabled);
         if (!bot) {
           return {
@@ -303,16 +303,9 @@ class MessageExecutor extends BaseExecutor<typeof MessageApiName> {
         return { content: 'botId or platform is required', success: false };
       }
 
-      const router = lambdaClient.botMessage as any;
-      const procedure = router[apiName];
-      if (!procedure) {
-        return { content: `Unknown message API: ${apiName}`, success: false };
-      }
-
       const { botId: _, platform: __, ...rest } = params;
       const input = { botId, ...rest };
-      const result =
-        method === 'query' ? await procedure.query(input) : await procedure.mutate(input);
+      const result = await botMessageService.call(apiName, input, method);
 
       return {
         content: JSON.stringify(result),

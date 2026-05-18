@@ -23,6 +23,30 @@ interface GetOwnAgentsParams {
   pageSize?: number;
 }
 
+interface AgentOwnershipResult {
+  exists: boolean;
+  isOwner: boolean;
+  originalAgent: unknown | null;
+}
+
+interface AgentGroupOwnershipResult {
+  exists: boolean;
+  isOwner: boolean;
+  originalGroup: unknown | null;
+}
+
+interface PublishAgentResult {
+  identifier: string;
+  isNewAgent: boolean;
+  success: boolean;
+}
+
+interface PublishAgentGroupResult {
+  identifier: string;
+  isNewGroup: boolean;
+  success: boolean;
+}
+
 export class MarketApiService {
   /**
    * @deprecated No-op: Authentication is now handled through REST auth headers.
@@ -61,6 +85,20 @@ export class MarketApiService {
     } catch {
       return false;
     }
+  }
+
+  async checkAgentOwnership(identifier: string): Promise<AgentOwnershipResult> {
+    return restClient.get('/market/agent/check-ownership', { params: { identifier } });
+  }
+
+  async publishOrCreateAgent(params: Record<string, any>): Promise<PublishAgentResult> {
+    return restClient.post('/market/agent/publish-or-create', {
+      body: {
+        ...params,
+        editor_data: params.editorData,
+        token_usage: params.tokenUsage,
+      },
+    });
   }
 
   // Create agent version
@@ -139,6 +177,20 @@ export class MarketApiService {
 
   async getAgentGroupDetail(identifier: string): Promise<any> {
     return restClient.get('/market/agent-group/detail', { params: { identifier } }) as Promise<any>;
+  }
+
+  async checkAgentGroupOwnership(identifier: string): Promise<AgentGroupOwnershipResult> {
+    return restClient.get('/market/agent-group/check-ownership', { params: { identifier } });
+  }
+
+  async publishOrCreateAgentGroup(params: Record<string, any>): Promise<PublishAgentGroupResult> {
+    return restClient.post('/market/agent-group/publish-or-create', {
+      body: {
+        ...params,
+        background_color: params.backgroundColor,
+        member_agents: params.memberAgents,
+      },
+    });
   }
 
   async publishAgentGroup(identifier: string): Promise<void> {

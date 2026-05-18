@@ -189,32 +189,36 @@ async def get_all_topics(
 
 @router.get("/cron-grouped")
 async def get_cron_topics_grouped(
+    agent_id: Optional[str] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    from app.models.agent_ops import AgentCronJob
     stmt = (
         select(Topic)
-        .where(Topic.user_id == user_id)
+        .where(
+            and_(
+                Topic.user_id == user_id,
+                Topic.trigger == "cron",
+                Topic.metadata_.is_not(None),
+            )
+        )
         .order_by(desc(Topic.updated_at))
     )
+    if agent_id:
+        stmt = stmt.where(Topic.agent_id == agent_id)
+
     topics = (await session.execute(stmt)).scalars().all()
-    # Group by agent_id → cron jobs
-    agent_ids = {t.agent_id for t in topics if t.agent_id}
-    cron_map: dict[str, list] = {}
-    if agent_ids:
-        cron_stmt = select(AgentCronJob).where(
-            and_(AgentCronJob.agent_id.in_(agent_ids), AgentCronJob.user_id == user_id)
-        )
-        crons = (await session.execute(cron_stmt)).scalars().all()
-        for c in crons:
-            cron_map.setdefault(c.agent_id, []).append({"id": c.id, "name": c.name})
-    result: dict[str, Any] = {}
+
+    result: dict[str, list[dict[str, Any]]] = {}
     for t in topics:
-        key = t.agent_id or "_no_agent"
-        result.setdefault(key, {"cron_jobs": cron_map.get(key, []), "topics": []})
-        result[key]["topics"].append(_topic_dict(t))
-    return result
+        metadata = t.metadata_ or {}
+        cron_job_id = metadata.get("cronJobId") or metadata.get("cron_job_id")
+        if not cron_job_id:
+            continue
+
+        result.setdefault(cron_job_id, []).append(_topic_dict(t))
+
+    return [{"cronJobId": cron_job_id, "topics": items} for cron_job_id, items in result.items()]
 
 
 @router.get("")

@@ -1,4 +1,5 @@
 import { lambdaClient } from '@/libs/trpc/client';
+import type { ChunkPage } from '@/services/rag.rest';
 import { type SemanticSearchSchemaType } from '@/types/rag';
 
 class RAGService {
@@ -28,6 +29,10 @@ class RAGService {
 
   getFileContents = async (fileIds: string[], signal?: AbortSignal) => {
     return lambdaClient.chunk.getFileContents.mutate({ fileIds }, { signal });
+  };
+
+  getChunksByFileId = async (id: string, cursor?: number): Promise<ChunkPage> => {
+    return lambdaClient.chunk.getChunksByFileId.query({ cursor, id });
   };
 
   deleteMessageRagQuery = async (id: string) => {

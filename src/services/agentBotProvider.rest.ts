@@ -3,7 +3,14 @@ import type { BotRuntimeStatusSnapshot } from '@/types/botRuntimeStatus';
 
 class AgentBotProviderService {
   listPlatforms = async () => {
-    return restClient.get('/agent-bot-providers/platforms/list');
+    const result = await restClient.get<{ platforms: string[] }>(
+      '/agent-bot-providers/platforms/list',
+    );
+    return result.platforms.map((platform) => ({ id: platform, name: platform, schema: [] }));
+  };
+
+  list = async () => {
+    return restClient.get('/agent-bot-providers');
   };
 
   getByAgentId = async (agentId: string) => {

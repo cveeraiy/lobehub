@@ -193,10 +193,8 @@ const PageExplorerPlaceholder = memo<PageExplorerPlaceholderProps>(
             }
 
             // Parse file as document on server - this creates a clean document from the file
-            const { lambdaClient } = await import('@/libs/trpc/client');
-            const parsedDocument = await lambdaClient.document.parseDocument.mutate({
-              id: uploadResult.id,
-            });
+            const { documentService } = await import('@/services/document/resolved');
+            const parsedDocument = await documentService.parseDocument(uploadResult.id);
 
             // Convert to LobeDocument format
             const realPage = {
@@ -211,7 +209,7 @@ const PageExplorerPlaceholder = memo<PageExplorerPlaceholderProps>(
               id: parsedDocument.id,
               metadata: parsedDocument.metadata || {},
               source: parsedDocument.source || 'document',
-              sourceType: parsedDocument.sourceType || 'file',
+              sourceType: DocumentSourceType.FILE,
               title: parsedDocument.title || fileName,
               totalCharCount: parsedDocument.totalCharCount || 0,
               totalLineCount: parsedDocument.totalLineCount || 0,

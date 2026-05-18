@@ -156,6 +156,32 @@ export class TopicService {
     });
   };
 
+  getCronTopicsGroupedByCronJob = async (
+    agentId: string,
+  ): Promise<Array<{ cronJobId: string; topics: ChatTopic[] }>> => {
+    const groups = await restClient.get<Array<{ cronJobId: string; topics: RawTopic[] }>>(
+      '/topics/cron-grouped',
+      {
+        params: { agent_id: agentId },
+      },
+    );
+
+    return groups.map((group) => ({
+      cronJobId: group.cronJobId,
+      topics: group.topics.map(toTopic),
+    }));
+  };
+
+  getTopicContext = async (topicId: string): Promise<{ content: string; success: boolean }> => {
+    const result = await restClient.get<{ message_count: number; topic: RawTopic }>(
+      `/topics/${topicId}/context`,
+    );
+    return {
+      content: `Topic: ${result.topic.title ?? 'Untitled'}\nMessages: ${result.message_count}`,
+      success: true,
+    };
+  };
+
   searchTopics = (keywords: string, agentId?: string, groupId?: string): Promise<ChatTopic[]> => {
     return restClient
       .get<RawTopic[]>('/topics/search', {

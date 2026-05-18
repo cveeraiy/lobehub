@@ -9,7 +9,7 @@ import { Minus, Plus } from 'lucide-react';
 import { type FC, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds.resolved';
 
 const styles = createStaticStyles(({ css }) => ({
   footer: css`
@@ -46,10 +46,7 @@ const EditKVForm: FC<EditKVFormProps> = ({ cred, onCancel, onSuccess }) => {
   useEffect(() => {
     const fetchDecryptedValues = async () => {
       try {
-        const result = await lambdaClient.market.creds.get.query({
-          decrypt: true,
-          id: cred.id,
-        });
+        const result = await credsService.get(cred.id, { decrypt: true });
 
         // Convert values object to array of key-value pairs
         const values = (result as any).plaintext || {};
@@ -91,9 +88,8 @@ const EditKVForm: FC<EditKVFormProps> = ({ cred, onCancel, onSuccess }) => {
         {} as Record<string, string>,
       );
 
-      return lambdaClient.market.creds.update.mutate({
+      return credsService.update(cred.id, {
         description: values.description,
-        id: cred.id,
         name: values.name,
         values: valuesObj,
       });

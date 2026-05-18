@@ -1,13 +1,13 @@
 'use client';
 
 import { Button, Flexbox } from '@lobehub/ui';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Avatar, Empty, Form, Input, Select, Spin } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient, lambdaQuery } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds.resolved';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   connectionOption: css`
@@ -45,14 +45,16 @@ const OAuthCredForm: FC<OAuthCredFormProps> = ({ onBack, onSuccess }) => {
   const { t } = useTranslation('setting');
   const [form] = Form.useForm<FormValues>();
 
-  const { data: connectionsData, isLoading } =
-    lambdaQuery.market.creds.listOAuthConnections.useQuery();
+  const { data: connectionsData, isLoading } = useQuery({
+    queryFn: () => credsService.listOAuthConnections(),
+    queryKey: ['market-creds-oauth-connections'],
+  });
 
   const connections = connectionsData?.connections ?? [];
 
   const createMutation = useMutation({
     mutationFn: (values: FormValues) => {
-      return lambdaClient.market.creds.createOAuth.mutate({
+      return credsService.createOAuth({
         description: values.description,
         key: values.key,
         name: values.name,

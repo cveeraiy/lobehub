@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Hono REST Parity'
+  short_description: 'Audit Hono routes against Python REST endpoints and E2E tests.'
+  default_prompt: 'Use $hono-python-rest-parity to validate Hono backend operations against Python REST endpoints and API tests.'

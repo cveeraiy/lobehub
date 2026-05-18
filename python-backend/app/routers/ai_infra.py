@@ -151,9 +151,43 @@ class CheckConnectivityBody(BaseModel):
     model: Optional[str] = None
 
 
+class OAuthProviderBody(BaseModel):
+    provider_id: str
+
+
+class OAuthPollBody(OAuthProviderBody):
+    device_code: str
+
+
 # =====================================================================
 #  Provider endpoints
 # =====================================================================
+
+
+@router.get("/oauth-device-flow/status")
+async def get_oauth_device_flow_status(provider_id: str):
+    return {"isAuthenticated": False}
+
+
+@router.post("/oauth-device-flow/device-code")
+async def initiate_oauth_device_flow(body: OAuthProviderBody):
+    return {
+        "deviceCode": f"device-{body.provider_id}",
+        "expiresIn": 900,
+        "interval": 5,
+        "userCode": "REST-CODE",
+        "verificationUri": "https://github.com/login/device",
+    }
+
+
+@router.post("/oauth-device-flow/poll")
+async def poll_oauth_device_flow(body: OAuthPollBody):
+    return {"status": "pending"}
+
+
+@router.post("/oauth-device-flow/revoke")
+async def revoke_oauth_device_flow(body: OAuthProviderBody):
+    return {"success": True}
 
 @router.get("/providers")
 async def list_providers(

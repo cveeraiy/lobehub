@@ -200,6 +200,25 @@ export class DocumentService {
     return restClient.get(`/documents/${id}`);
   }
 
+  async parseDocument(id: string): Promise<DocumentItem> {
+    const result = await restClient.post<any>(`/documents/${id}/parse`);
+    return {
+      content: result.content ?? '',
+      createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
+      editorData: result.editorData ?? null,
+      fileType: result.fileType ?? 'custom/document',
+      filename: result.filename,
+      id: result.id,
+      metadata: result.metadata ?? {},
+      source: result.source ?? 'document',
+      sourceType: result.sourceType ?? 'file',
+      title: result.title ?? result.filename ?? 'Untitled',
+      totalCharCount: result.totalCharCount ?? 0,
+      totalLineCount: result.totalLineCount ?? 0,
+      updatedAt: result.updatedAt ? new Date(result.updatedAt) : new Date(),
+    } as DocumentItem;
+  }
+
   async deleteDocument(id: string): Promise<void> {
     await restClient.delete(`/documents/${id}`);
   }

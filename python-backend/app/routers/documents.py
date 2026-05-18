@@ -363,7 +363,7 @@ async def parse_document(
     doc = await _find_doc(session, user_id, document_id)
     if not doc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
-    return {"id": doc.id, "content": doc.content, "metadata": doc.metadata_}
+    return _doc_dict(doc)
 
 
 @router.post("/parse-file/{file_id}")

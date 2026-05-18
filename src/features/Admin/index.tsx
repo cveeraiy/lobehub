@@ -13,8 +13,10 @@ interface UserRecord {
   id: string;
   image: string | null;
   name: string;
-  role: string;
+  role: AdminAssignableRole | 'super_admin';
 }
+
+type AdminAssignableRole = 'admin' | 'user';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   container: css`
@@ -152,7 +154,7 @@ const AdminPanel = memo(() => {
     [users],
   );
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (userId: string, newRole: AdminAssignableRole) => {
     try {
       await admin.setRole({ role: newRole, userId });
       message.success('Role updated');
@@ -211,11 +213,11 @@ const AdminPanel = memo(() => {
     {
       dataIndex: 'role',
       key: 'role',
-      render: (role: string, record: UserRecord) => (
-        <Select
+      render: (role: UserRecord['role'], record: UserRecord) => (
+        <Select<AdminAssignableRole>
           disabled={record.id === currentUserId} // Disable self-actions
           size="small"
-          value={role}
+          value={role === 'super_admin' ? 'admin' : role}
           options={[
             { label: 'User', value: 'user' },
             { label: 'Admin', value: 'admin' },

@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { lambdaClient } from '@/libs/trpc/client/lambda';
+import { topicService } from '@/services/topic/resolved';
 import { useAgentStore } from '@/store/agent';
 
 /**
@@ -13,7 +13,7 @@ export const useFetchCronTopics = () => {
     agentId ? ['cronTopics', agentId] : null,
     async () => {
       if (!agentId) return [];
-      return await lambdaClient.topic.getCronTopicsGroupedByCronJob.query({ agentId });
+      return await topicService.getCronTopicsGroupedByCronJob(agentId);
     },
     {
       revalidateOnFocus: false,

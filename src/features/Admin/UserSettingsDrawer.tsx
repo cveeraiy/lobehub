@@ -3,7 +3,7 @@ import { createStaticStyles } from 'antd-style';
 import { Bot, Monitor, Settings } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { adminService } from '@/services/admin.resolved';
 
 interface UserSettingsDrawerProps {
   onClose: () => void;
@@ -77,7 +77,7 @@ const UserSettingsDrawer = memo<UserSettingsDrawerProps>(({ open, onClose, userI
     if (!userId) return;
     setLoading(true);
     try {
-      const result = await lambdaClient.admin.getUserSettings.query({ userId });
+      const result = await adminService.getUserSettings(userId);
       setSettings(result.settings);
       setPermissions(result.permissions ?? { agentSettings: false, systemSettings: false });
     } catch {
@@ -98,10 +98,7 @@ const UserSettingsDrawer = memo<UserSettingsDrawerProps>(({ open, onClose, userI
     const newPermissions = { ...permissions, [key]: value };
     setPermissions(newPermissions);
     try {
-      await lambdaClient.admin.updateUserPermissions.mutate({
-        permissions: newPermissions,
-        userId,
-      });
+      await adminService.updateUserPermissions(userId, newPermissions);
       message.success('Permissions updated');
     } catch {
       message.error('Failed to update permissions');

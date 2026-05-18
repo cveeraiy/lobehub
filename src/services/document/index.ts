@@ -201,6 +201,10 @@ export class DocumentService {
     return lambdaClient.document.getDocumentById.query({ id });
   }
 
+  async parseDocument(id: string): Promise<DocumentItem> {
+    return lambdaClient.document.parseDocument.mutate({ id });
+  }
+
   async deleteDocument(id: string): Promise<void> {
     await lambdaClient.document.deleteDocument.mutate({ id });
   }

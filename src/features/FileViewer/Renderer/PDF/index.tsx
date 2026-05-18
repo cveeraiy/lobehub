@@ -4,11 +4,13 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
 import { Flexbox } from '@lobehub/ui';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Fragment, memo, useCallback, useState } from 'react';
 
 import NeuralNetworkLoading from '@/components/NeuralNetworkLoading';
 import { Document, Page, pdfjs } from '@/libs/pdfjs';
-import { lambdaQuery } from '@/libs/trpc/client';
+import { ragService } from '@/services/rag.resolved';
+import type { ChunkPage } from '@/services/rag.rest';
 
 import HighlightLayer from './HighlightLayer';
 import { styles } from './style';
@@ -32,7 +34,6 @@ const PDFViewer = memo<PDFViewerProps>(({ url, fileId }) => {
   const [containerWidth, setContainerWidth] = useState<number>();
   const [isLoaded, setIsLoaded] = useState(false);
 
-   
   const onResize = useCallback<ResizeObserverCallback>((entries) => {
     const [entry] = entries;
 
@@ -48,10 +49,12 @@ const PDFViewer = memo<PDFViewerProps>(({ url, fileId }) => {
     setIsLoaded(true);
   };
 
-  const { data } = lambdaQuery.chunk.getChunksByFileId.useInfiniteQuery(
-    { id: fileId },
-    { getNextPageParam: (lastPage) => lastPage.nextCursor },
-  );
+  const { data } = useInfiniteQuery<ChunkPage>({
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => ragService.getChunksByFileId(fileId, Number(pageParam)),
+    queryKey: ['chunks-by-file', fileId],
+  });
 
   const dataSource = data?.pages.flatMap((page) => page.items) || [];
 

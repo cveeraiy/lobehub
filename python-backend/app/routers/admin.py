@@ -94,10 +94,53 @@ async def get_user_stats(
         )
     ).scalar_one()
     return {
-        "user_id": user_id,
+        "userId": user_id,
         "messages": msg_count,
         "sessions": session_count,
         "topics": topic_count,
+        "words": 0,
+        "heatmaps": [],
+        "modelRank": [],
+        "sessionRank": [],
+        "topicRank": [],
+    }
+
+
+@router.get("/users/{user_id}/state")
+async def get_user_state(
+    user_id: str,
+    admin_id: str = Depends(require_admin),
+    session: AsyncSession = Depends(get_db),
+):
+    """Return a target user's initialization state for read-only admin view."""
+    user = (await session.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+    us = (
+        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+    ).scalar_one_or_none()
+    preference = user.preference or {}
+    settings_permissions = (
+        us.settings_permissions if us and us.settings_permissions else _default_settings_permissions()
+    )
+    return {
+        "avatar": user.avatar,
+        "canEnablePWAGuide": False,
+        "canEnableTrace": False,
+        "email": user.email,
+        "firstName": user.first_name,
+        "fullName": user.full_name,
+        "hasConversation": False,
+        "agentOnboarding": user.agent_onboarding,
+        "interests": user.interests,
+        "isOnboard": user.is_onboarded if user.is_onboarded is not None else True,
+        "lastName": user.last_name,
+        "onboarding": user.onboarding,
+        "preference": preference,
+        "settings": _settings_dict(us),
+        "settingsPermissions": settings_permissions,
+        "userId": user_id,
+        "username": user.username,
     }
 
 
@@ -168,6 +211,10 @@ class AdminUpdatePermissionsBody(BaseModel):
     permissions: dict[str, Any]
 
 
+def _default_settings_permissions() -> dict[str, bool]:
+    return {"agentSettings": False, "systemSettings": False}
+
+
 @router.get("/users/{user_id}/settings")
 async def get_user_settings(
     user_id: str,
@@ -184,6 +231,7 @@ async def get_user_settings(
     return {
         "userId": user_id,
         "settings": _settings_dict(us),
+        "permissions": us.settings_permissions if us and us.settings_permissions else _default_settings_permissions(),
         "preference": user.preference or {},
         "onboarding": user.onboarding,
         "agentOnboarding": user.agent_onboarding,
@@ -222,15 +270,22 @@ async def update_user_permissions(
     admin_id: str = Depends(require_admin),
     session: AsyncSession = Depends(get_db),
 ):
-    """Update a target user's permissions (stored in user preference)."""
+    """Update a target user's settings permissions."""
     user = (await session.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
-    current = dict(user.preference or {})
-    current["permissions"] = body.permissions
-    await session.execute(
-        update(User).where(User.id == user_id).values(preference=current)
-    )
+    existing = (
+        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+    ).scalar_one_or_none()
+    if existing:
+        await session.execute(
+            update(UserSettings)
+            .where(UserSettings.user_id == user_id)
+            .values(settings_permissions=body.permissions)
+        )
+    else:
+        session.add(UserSettings(user_id=user_id, settings_permissions=body.permissions))
+        await session.flush()
     return {"ok": True}
 
 

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import base64
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse, PlainTextResponse
+from pydantic import BaseModel
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +19,13 @@ from app.models.session import Session
 from app.models.topic import Topic
 
 router = APIRouter(prefix="/api/export", tags=["Export"])
+
+
+class ExportPdfBody(BaseModel):
+    content: str
+    session_id: str
+    title: str
+    topic_id: str | None = None
 
 
 @router.get("/all")
@@ -44,6 +53,28 @@ async def export_all(
         "sessions": [_session_export(s) for s in sessions],
         "topics": [_topic_export(t) for t in topics],
         "messages": [_msg_export(m) for m in messages],
+    }
+
+
+@router.post("/pdf")
+async def export_pdf(body: ExportPdfBody):
+    """Return a lightweight PDF payload for the frontend download flow."""
+    escaped_title = body.title.replace("(", "\\(").replace(")", "\\)")
+    escaped_content = body.content[:4000].replace("(", "\\(").replace(")", "\\)")
+    stream = f"BT /F1 16 Tf 72 760 Td ({escaped_title}) Tj 0 -28 Td /F1 10 Tf ({escaped_content}) Tj ET"
+    pdf = (
+        "%PDF-1.4\n"
+        "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n"
+        "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n"
+        "3 0 obj << /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> "
+        "/MediaBox [0 0 612 792] /Contents 5 0 R >> endobj\n"
+        "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n"
+        f"5 0 obj << /Length {len(stream)} >> stream\n{stream}\nendstream endobj\n"
+        "trailer << /Root 1 0 R >>\n%%EOF"
+    )
+    return {
+        "filename": f"{body.title or 'chat-export'}.pdf",
+        "pdf": base64.b64encode(pdf.encode("utf-8")).decode("ascii"),
     }
 
 

@@ -1,8 +1,15 @@
 import {
+  type AgentCronJob,
   type CreateAgentCronJobData,
   type UpdateAgentCronJobData,
 } from '@/database/schemas/agentCronJob';
 import { lambdaClient } from '@/libs/trpc/client/lambda';
+
+interface ServiceResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
 
 /**
  * Client-side service for Agent Cron Job operations
@@ -17,21 +24,23 @@ class AgentCronJobService {
    * `templateId` is optional — when set, server records the task template
    * interaction so the same template is excluded from future recommendations.
    */
-  async create(data: Omit<CreateAgentCronJobData, 'userId'> & { templateId?: string }) {
+  async create(
+    data: Omit<CreateAgentCronJobData, 'userId'> & { templateId?: string },
+  ): Promise<ServiceResponse<AgentCronJob>> {
     return await lambdaClient.agentCronJob.create.mutate(data);
   }
 
   /**
    * Get cron jobs for a specific agent
    */
-  async getByAgentId(agentId: string) {
+  async getByAgentId(agentId: string): Promise<ServiceResponse<AgentCronJob[]>> {
     return await lambdaClient.agentCronJob.findByAgent.query({ agentId });
   }
 
   /**
    * Get a single cron job by ID
    */
-  async getById(id: string) {
+  async getById(id: string): Promise<ServiceResponse<AgentCronJob>> {
     return await lambdaClient.agentCronJob.findById.query({ id });
   }
 
@@ -52,21 +61,24 @@ class AgentCronJobService {
   /**
    * Update a cron job
    */
-  async update(id: string, data: UpdateAgentCronJobData) {
+  async update(id: string, data: UpdateAgentCronJobData): Promise<ServiceResponse<AgentCronJob>> {
     return await lambdaClient.agentCronJob.update.mutate({ data, id });
   }
 
   /**
    * Delete a cron job
    */
-  async delete(id: string) {
+  async delete(id: string): Promise<{ message?: string; success: boolean }> {
     return await lambdaClient.agentCronJob.delete.mutate({ id });
   }
 
   /**
    * Reset execution counts
    */
-  async resetExecutions(id: string, newMaxExecutions?: number) {
+  async resetExecutions(
+    id: string,
+    newMaxExecutions?: number,
+  ): Promise<ServiceResponse<AgentCronJob>> {
     return await lambdaClient.agentCronJob.resetExecutions.mutate({
       id,
       newMaxExecutions,

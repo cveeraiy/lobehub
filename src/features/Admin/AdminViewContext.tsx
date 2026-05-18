@@ -12,7 +12,7 @@ import {
 } from 'react';
 
 import { DEFAULT_PREFERENCE } from '@/const/user';
-import { lambdaClient } from '@/libs/trpc/client';
+import { adminService } from '@/services/admin.resolved';
 import { type UserStore, useUserStore } from '@/store/user';
 import { type LobeUser } from '@/types/user';
 
@@ -90,7 +90,7 @@ const hydrateStore = (data: UserInitializationState) => {
     email: data.email,
     firstName: data.firstName,
     fullName: data.fullName,
-    id: data.userId,
+    id: data.userId ?? '',
     interests: data.interests,
     username: data.username,
   };
@@ -136,8 +136,8 @@ export const AdminViewProvider = ({ children, targetUserId }: AdminViewProviderP
     setIsLoading(true);
     try {
       const [state, stats] = await Promise.all([
-        lambdaClient.admin.getUserState.query({ userId: targetUserId }),
-        lambdaClient.admin.getUserStats.query({ userId: targetUserId }),
+        adminService.getUserState(targetUserId),
+        adminService.getUserStats(targetUserId),
       ]);
       setTargetUserState(state);
       setTargetUserStats(stats);

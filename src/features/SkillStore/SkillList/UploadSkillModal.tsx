@@ -8,7 +8,7 @@ import { ArrowLeftRight, InboxIcon, Sparkles, Upload as UploadIcon } from 'lucid
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client/lambda';
+import { fileService } from '@/services/file/resolved';
 import { uploadService } from '@/services/upload.resolved';
 import { useToolStore } from '@/store/tool';
 
@@ -40,7 +40,7 @@ const UploadSkillModal = memo<UploadSkillModalProps>(({ open, onOpenChange }) =>
 
       const hash = sha256(await file.arrayBuffer());
 
-      const result = await lambdaClient.file.createFile.mutate({
+      const result = await fileService.createFile({
         fileType: file.type || 'application/zip',
         hash,
         metadata: {},

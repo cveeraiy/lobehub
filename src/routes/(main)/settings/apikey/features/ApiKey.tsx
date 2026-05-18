@@ -11,7 +11,7 @@ import { type FC } from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { apiKeyService } from '@/services/apiKey.resolved';
 import { type ApiKeyItem, type CreateApiKeyParams, type UpdateApiKeyParams } from '@/types/apiKey';
 
 import { ApiKeyDisplay, ApiKeyModal, EditableCell } from './index';
@@ -44,7 +44,7 @@ const ApiKey: FC = () => {
   const actionRef = useRef<ActionType>(null);
 
   const createMutation = useMutation({
-    mutationFn: (params: CreateApiKeyParams) => lambdaClient.apiKey.createApiKey.mutate(params),
+    mutationFn: (params: CreateApiKeyParams) => apiKeyService.createApiKey(params),
     onSuccess: () => {
       actionRef.current?.reload();
       setModalOpen(false);
@@ -53,14 +53,14 @@ const ApiKey: FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, params }: { id: string; params: UpdateApiKeyParams }) =>
-      lambdaClient.apiKey.updateApiKey.mutate({ id, value: params }),
+      apiKeyService.updateApiKey(id, params),
     onSuccess: () => {
       actionRef.current?.reload();
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => lambdaClient.apiKey.deleteApiKey.mutate({ id }),
+    mutationFn: (id: string) => apiKeyService.deleteApiKey(id),
     onSuccess: () => {
       actionRef.current?.reload();
     },
@@ -182,7 +182,7 @@ const ApiKey: FC = () => {
         rowKey="id"
         search={false}
         request={async () => {
-          const apiKeys = await lambdaClient.apiKey.getApiKeys.query();
+          const apiKeys = await apiKeyService.getApiKeys();
 
           return {
             data: apiKeys,

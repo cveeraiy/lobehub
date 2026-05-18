@@ -8,7 +8,7 @@ import { createStaticStyles } from 'antd-style';
 import { type FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds.resolved';
 
 const styles = createStaticStyles(({ css }) => ({
   footer: css`
@@ -43,7 +43,7 @@ const FileCredForm: FC<FileCredFormProps> = ({ onBack, onSuccess }) => {
         throw new Error('File is required');
       }
 
-      return lambdaClient.market.creds.createFile.mutate({
+      return credsService.createFile({
         description: values.description,
         fileHashId,
         fileName,
@@ -70,7 +70,7 @@ const FileCredForm: FC<FileCredFormProps> = ({ onBack, onSuccess }) => {
       const base64 = btoa(binary);
 
       // Upload via TRPC
-      const result = await lambdaClient.market.creds.uploadFile.mutate({
+      const result = await credsService.uploadFile({
         file: base64,
         fileName: file.name,
         fileType: file.type || 'application/octet-stream',

@@ -9,7 +9,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { type FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds.resolved';
 
 const { Text } = Typography;
 
@@ -135,11 +135,7 @@ const ViewCredModal: FC<ViewCredModalProps> = ({ cred, open, onClose }) => {
 
   const { data, isLoading, error } = useQuery({
     enabled: open && !!cred,
-    queryFn: () =>
-      lambdaClient.market.creds.get.query({
-        decrypt: true,
-        id: cred!.id,
-      }),
+    queryFn: () => credsService.get(cred!.id, { decrypt: true }),
     queryKey: ['cred-plaintext', cred?.id],
   });
 

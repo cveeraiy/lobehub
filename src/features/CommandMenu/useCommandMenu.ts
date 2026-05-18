@@ -7,8 +7,8 @@ import useSWR from 'swr';
 import { type SearchResult } from '@/database/repositories/search';
 import { useCreateNewModal } from '@/features/LibraryModal';
 import { useGroupWizard } from '@/layout/GlobalProvider/GroupWizardProvider';
-import { lambdaClient } from '@/libs/trpc/client';
 import { useCreateMenuItems } from '@/routes/(main)/home/_layout/hooks';
+import { commandSearchService } from '@/services/commandSearch.resolved';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors/builtinAgentSelectors';
 import { useChatStore } from '@/store/chat';
@@ -60,7 +60,7 @@ export const useCommandMenu = () => {
     hasSearch ? ['search', searchQuery, agentId, typeFilter] : null,
     async () => {
       const locale = globalHelpers.getCurrentLanguage();
-      return lambdaClient.search.query.query({
+      return commandSearchService.query({
         agentId,
         limitPerType: typeFilter ? 50 : 5, // Show more results when filtering by type
         locale,

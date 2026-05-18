@@ -23,6 +23,30 @@ interface GetOwnAgentsParams {
   pageSize?: number;
 }
 
+interface AgentOwnershipResult {
+  exists: boolean;
+  isOwner: boolean;
+  originalAgent: unknown | null;
+}
+
+interface AgentGroupOwnershipResult {
+  exists: boolean;
+  isOwner: boolean;
+  originalGroup: unknown | null;
+}
+
+interface PublishAgentResult {
+  identifier: string;
+  isNewAgent: boolean;
+  success: boolean;
+}
+
+interface PublishAgentGroupResult {
+  identifier: string;
+  isNewGroup: boolean;
+  success: boolean;
+}
+
 export class MarketApiService {
   /**
    * @deprecated This method is no longer needed as authentication is now handled
@@ -63,6 +87,14 @@ export class MarketApiService {
     } catch {
       return false;
     }
+  }
+
+  async checkAgentOwnership(identifier: string): Promise<AgentOwnershipResult> {
+    return lambdaClient.market.agent.checkOwnership.query({ identifier });
+  }
+
+  async publishOrCreateAgent(params: Record<string, any>): Promise<PublishAgentResult> {
+    return lambdaClient.market.agent.publishOrCreate.mutate(params as any);
   }
 
   // Create agent version
@@ -157,6 +189,14 @@ export class MarketApiService {
     return lambdaClient.market.agentGroup.getAgentGroupDetail.query({
       identifier,
     }) as Promise<any>;
+  }
+
+  async checkAgentGroupOwnership(identifier: string): Promise<AgentGroupOwnershipResult> {
+    return lambdaClient.market.agentGroup.checkOwnership.query({ identifier });
+  }
+
+  async publishOrCreateAgentGroup(params: Record<string, any>): Promise<PublishAgentGroupResult> {
+    return lambdaClient.market.agentGroup.publishOrCreate.mutate(params as any);
   }
 
   async publishAgentGroup(identifier: string): Promise<void> {

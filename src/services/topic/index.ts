@@ -16,6 +16,11 @@ type UpdateTopicMetadataInput = Omit<Partial<ChatTopicMetadata>, 'onboardingSess
   onboardingSession?: OnboardingSessionMetadataPatch;
 };
 
+interface CronTopicsGroup {
+  cronJobId: string;
+  topics: ChatTopic[];
+}
+
 export class TopicService {
   createTopic = (params: CreateTopicParams): Promise<string> => {
     return lambdaClient.topic.createTopic.mutate({
@@ -74,6 +79,16 @@ export class TopicService {
 
   getRecentTopics = async (limit?: number): Promise<RecentTopic[]> => {
     return lambdaClient.topic.recentTopics.query({ limit });
+  };
+
+  getCronTopicsGroupedByCronJob = (agentId: string): Promise<CronTopicsGroup[]> => {
+    return lambdaClient.topic.getCronTopicsGroupedByCronJob.query({
+      agentId,
+    }) as unknown as Promise<CronTopicsGroup[]>;
+  };
+
+  getTopicContext = (topicId: string): Promise<{ content: string; success: boolean }> => {
+    return lambdaClient.topic.getTopicContext.query({ topicId });
   };
 
   searchTopics = (keywords: string, agentId?: string, groupId?: string): Promise<ChatTopic[]> => {

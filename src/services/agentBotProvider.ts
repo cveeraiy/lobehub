@@ -7,6 +7,10 @@ class AgentBotProviderService {
     return lambdaClient.agentBotProvider.listPlatforms.query();
   };
 
+  list = async () => {
+    return lambdaClient.agentBotProvider.list.query();
+  };
+
   getByAgentId = async (agentId: string) => {
     return lambdaClient.agentBotProvider.getByAgentId.query({ agentId });
   };

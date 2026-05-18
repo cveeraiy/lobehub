@@ -20,7 +20,6 @@ import NavHeader from '@/features/NavHeader';
 import WideScreenContainer from '@/features/WideScreenContainer';
 import { useQueryRoute } from '@/hooks/useQueryRoute';
 import { mutate } from '@/libs/swr';
-import { lambdaClient } from '@/libs/trpc/client/lambda';
 import { agentCronJobService } from '@/services/agentCronJob.resolved';
 import { topicService } from '@/services/topic/resolved';
 import { useAgentStore } from '@/store/agent';
@@ -303,9 +302,7 @@ const CronJobDetailPage = memo(() => {
         try {
           let topicIds: string[] = [];
           if (aid) {
-            const groups = await lambdaClient.topic.getCronTopicsGroupedByCronJob.query({
-              agentId: aid,
-            });
+            const groups = await topicService.getCronTopicsGroupedByCronJob(aid);
             const group = groups.find((item) => item.cronJobId === cronId);
             topicIds = group?.topics.map((topic) => topic.id) || [];
           }
@@ -333,7 +330,7 @@ const CronJobDetailPage = memo(() => {
       },
       title: t('agentCronJobs.deleteCronJob' as any),
     });
-  }, [activeTopicId, cronId, cronListAgentId, modal, refreshTopic, router, switchTopic, t]);
+  }, [activeTopicId, aid, cronId, cronListAgentId, modal, refreshTopic, router, switchTopic, t]);
 
   const handleSaveNewJob = useCallback(async () => {
     if (!aid) {

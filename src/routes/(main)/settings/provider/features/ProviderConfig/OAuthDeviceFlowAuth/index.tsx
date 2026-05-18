@@ -3,6 +3,7 @@
 import { CheckCircleFilled } from '@ant-design/icons';
 import { ProviderIcon } from '@lobehub/icons';
 import { CopyButton, Flexbox, Icon } from '@lobehub/ui';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { App, Avatar, Button, Typography } from 'antd';
 import { createStaticStyles, cssVar } from 'antd-style';
 import { ExternalLinkIcon, Loader2Icon, LogOutIcon, UnplugIcon } from 'lucide-react';
@@ -10,7 +11,7 @@ import { type ReactNode } from 'react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaQuery } from '@/libs/trpc/client';
+import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow.resolved';
 
 import { useOAuthDeviceFlow } from './useOAuthDeviceFlow';
 
@@ -134,30 +135,30 @@ const OAuthDeviceFlowAuth = memo<OAuthDeviceFlowAuthProps>(
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const hasAutoClosedRef = useRef(false);
 
-    const utils = lambdaQuery.useUtils();
-
-    const { data: authStatus } = lambdaQuery.oauthDeviceFlow.getAuthStatus.useQuery(
-      { providerId },
-      { refetchOnWindowFocus: true },
-    );
+    const { data: authStatus, refetch: refetchAuthStatus } = useQuery({
+      queryFn: () => oauthDeviceFlowService.getAuthStatus(providerId),
+      queryKey: ['oauth-device-flow-status', providerId],
+      refetchOnWindowFocus: true,
+    });
     const isAuthenticated = authStatus?.isAuthenticated ?? false;
     const username = authStatus?.username;
     const avatarUrl = authStatus?.avatarUrl;
 
-    const revokeAuth = lambdaQuery.oauthDeviceFlow.revokeAuth.useMutation({
+    const revokeAuth = useMutation({
+      mutationFn: () => oauthDeviceFlowService.revokeAuth(providerId),
       onSuccess: () => {
-        utils.oauthDeviceFlow.getAuthStatus.invalidate({ providerId });
+        refetchAuthStatus();
         onAuthChange?.();
       },
     });
 
     const handleSuccess = useCallback(async () => {
       // First invalidate and refetch the auth status
-      await utils.oauthDeviceFlow.getAuthStatus.invalidate({ providerId });
+      await refetchAuthStatus();
       // Then notify parent and reset authenticating state
       onAuthChange?.();
       setIsAuthenticating(false);
-    }, [onAuthChange, providerId, utils.oauthDeviceFlow.getAuthStatus]);
+    }, [onAuthChange, refetchAuthStatus]);
 
     const { state, deviceCodeInfo, error, startAuth, cancelAuth } = useOAuthDeviceFlow({
       onSuccess: handleSuccess,
@@ -171,11 +172,11 @@ const OAuthDeviceFlowAuth = memo<OAuthDeviceFlowAuthProps>(
         okButtonProps: { danger: true },
         okText: t('providerModels.config.oauth.disconnect'),
         onOk: async () => {
-          await revokeAuth.mutateAsync({ providerId });
+          await revokeAuth.mutateAsync();
         },
         title: t('providerModels.config.oauth.disconnect'),
       });
-    }, [modal, providerId, revokeAuth, t]);
+    }, [modal, revokeAuth, t]);
 
     const handleStartAuth = useCallback(async () => {
       hasAutoClosedRef.current = false;

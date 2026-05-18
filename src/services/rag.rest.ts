@@ -1,5 +1,22 @@
 import { restClient } from '@/libs/rest';
+import type { FileChunk } from '@/types/chunk';
 import { type SemanticSearchSchemaType } from '@/types/rag';
+
+interface RawFileChunk extends Omit<FileChunk, 'createdAt' | 'updatedAt'> {
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface ChunkPage {
+  items: FileChunk[];
+  nextCursor: number;
+}
+
+const toFileChunk = (chunk: RawFileChunk): FileChunk => ({
+  ...chunk,
+  createdAt: chunk.created_at ? new Date(chunk.created_at) : new Date(),
+  updatedAt: chunk.updated_at ? new Date(chunk.updated_at) : new Date(),
+});
 
 class RAGService {
   parseFileContent = async (id: string, skipExist?: boolean) => {
@@ -28,6 +45,17 @@ class RAGService {
 
   getFileContents = async (fileIds: string[], signal?: AbortSignal) => {
     return restClient.post('/chunks/file-contents', { body: { fileIds }, signal });
+  };
+
+  getChunksByFileId = async (id: string, cursor?: number): Promise<ChunkPage> => {
+    const result = await restClient.get<{ items: RawFileChunk[]; nextCursor: number }>(
+      `/chunks/by-file/${id}`,
+      { params: { cursor } },
+    );
+    return {
+      items: result.items.map(toFileChunk),
+      nextCursor: result.nextCursor,
+    };
   };
 
   deleteMessageRagQuery = async (id: string) => {
