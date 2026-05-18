@@ -17,9 +17,10 @@ async def test_list_platforms(client: httpx.AsyncClient) -> None:
     r = await client.get("/api/agent-bot-providers/platforms/list")
     assert r.status_code == 200
     data = r.json()
-    assert "platforms" in data
-    assert "discord" in data["platforms"]
-    assert "slack" in data["platforms"]
+    assert isinstance(data, list)
+    assert [platform["id"] for platform in data] == ["discord"]
+    assert data[0]["connectionMode"] == "websocket"
+    assert any(field["key"] == "credentials" for field in data[0]["schema"])
 
 
 # ── 32.2  Setup: create an agent for bot provider tests ──────────────
@@ -41,14 +42,16 @@ async def test_create_bot_provider(client: httpx.AsyncClient, state: SharedState
     assert state.agent_id
     r = await client.post("/api/agent-bot-providers", json={
         "agent_id": state.agent_id,
+        "application_id": "discord-app-test-123",
         "platform": "discord",
-        "credentials": {"bot_token": "test-token-123"},
+        "credentials": {"botToken": "test-token-123", "publicKey": "test-public-key"},
         "settings": {"prefix": "!"},
         "enabled": True,
     })
     assert r.status_code == 201
     data = r.json()
     assert data["platform"] == "discord"
+    assert data["application_id"] == "discord-app-test-123"
     assert data["agent_id"] == state.agent_id
     assert data["enabled"] is True
     state.provider_id = data["id"]
@@ -106,8 +109,8 @@ async def test_update_bot_provider(client: httpx.AsyncClient, state: SharedState
 async def test_test_connection(client: httpx.AsyncClient, state: SharedState) -> None:
     assert state.provider_id
     r = await client.post(f"/api/agent-bot-providers/{state.provider_id}/test")
-    assert r.status_code == 200
-    assert r.json()["valid"] is True
+    assert r.status_code == 400
+    assert r.json()["detail"]["valid"] is False
 
 
 # ── 32.9  Connect bot (placeholder) ─────────────────────────────────
@@ -116,8 +119,7 @@ async def test_test_connection(client: httpx.AsyncClient, state: SharedState) ->
 async def test_connect_bot(client: httpx.AsyncClient, state: SharedState) -> None:
     assert state.provider_id
     r = await client.post(f"/api/agent-bot-providers/{state.provider_id}/connect")
-    assert r.status_code == 200
-    assert r.json()["status"] == "queued"
+    assert r.status_code == 501
 
 
 # ── 32.10  Get nonexistent provider → 404 ────────────────────────────
@@ -135,10 +137,11 @@ async def test_duplicate_provider(client: httpx.AsyncClient, state: SharedState)
     assert state.agent_id
     r = await client.post("/api/agent-bot-providers", json={
         "agent_id": state.agent_id,
+        "application_id": "discord-app-test-123",
         "platform": "discord",
-        "credentials": {"bot_token": "another-token"},
+        "credentials": {"botToken": "another-token", "publicKey": "another-key"},
     })
-    # Should conflict on unique (agent_id, platform)
+    # Should conflict on unique (platform, application_id)
     assert r.status_code == 409
 
 

@@ -1,40 +1,113 @@
 import { restClient } from '@/libs/rest';
+import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
 import type { BotRuntimeStatusSnapshot } from '@/types/botRuntimeStatus';
 
+interface AgentBotProviderResponse {
+  agent_id: string;
+  application_id: string;
+  created_at?: string | null;
+  credentials: Record<string, string> | null;
+  enabled: boolean;
+  id: string;
+  platform: string;
+  settings?: Record<string, unknown> | null;
+  updated_at?: string | null;
+  user_id?: string;
+}
+
+interface BotProviderItem {
+  agentId: string;
+  applicationId: string;
+  createdAt?: string | null;
+  credentials: Record<string, string>;
+  enabled: boolean;
+  id: string;
+  platform: string;
+  settings?: Record<string, unknown> | null;
+  updatedAt?: string | null;
+  userId?: string;
+}
+
+interface RuntimeStatusResponse {
+  application_id: string;
+  error_message?: string;
+  platform: string;
+  status: BotRuntimeStatusSnapshot['status'];
+  updated_at: number;
+}
+
+const mapProvider = (item: AgentBotProviderResponse): BotProviderItem => ({
+  agentId: item.agent_id,
+  applicationId: item.application_id,
+  createdAt: item.created_at,
+  credentials: item.credentials ?? {},
+  enabled: item.enabled,
+  id: item.id,
+  platform: item.platform,
+  settings: item.settings,
+  updatedAt: item.updated_at,
+  userId: item.user_id,
+});
+
+const mapRuntimeStatus = (item: RuntimeStatusResponse): BotRuntimeStatusSnapshot => ({
+  applicationId: item.application_id,
+  errorMessage: item.error_message,
+  platform: item.platform,
+  status: item.status,
+  updatedAt: item.updated_at,
+});
+
 class AgentBotProviderService {
-  listPlatforms = async () => {
-    const result = await restClient.get<{ platforms: string[] }>(
-      '/agent-bot-providers/platforms/list',
+  listPlatforms = async (): Promise<SerializedPlatformDefinition[]> => {
+    return restClient.get<SerializedPlatformDefinition[]>('/agent-bot-providers/platforms/list');
+  };
+
+  list = async (): Promise<BotProviderItem[]> => {
+    const result = await restClient.get<AgentBotProviderResponse[]>('/agent-bot-providers');
+    return result.map(mapProvider);
+  };
+
+  getByAgentId = async (agentId: string): Promise<BotProviderItem[]> => {
+    const result = await restClient.get<AgentBotProviderResponse[]>(
+      `/agent-bot-providers/by-agent/${agentId}`,
     );
-    return result.platforms.map((platform) => ({ id: platform, name: platform, schema: [] }));
+    return result.map(mapProvider);
   };
 
-  list = async () => {
-    return restClient.get('/agent-bot-providers');
-  };
-
-  getByAgentId = async (agentId: string) => {
-    return restClient.get(`/agent-bot-providers/by-agent/${agentId}`);
-  };
-
-  getRuntimeStatus = async (_params: {
+  getRuntimeStatus = async (params: {
     applicationId: string;
     platform: string;
   }): Promise<BotRuntimeStatusSnapshot> => {
-    // Runtime status requires the TS gateway infrastructure;
-    // fallback to a basic status from the REST API
-    return { status: 'unknown' } as BotRuntimeStatusSnapshot;
+    const result = await restClient.get<RuntimeStatusResponse>(
+      '/agent-bot-providers/runtime-status/get',
+      {
+        params: {
+          application_id: params.applicationId,
+          platform: params.platform,
+        },
+      },
+    );
+    return mapRuntimeStatus(result);
   };
 
-  refreshRuntimeStatus = async (_params: {
+  refreshRuntimeStatus = async (params: {
     applicationId: string;
     platform: string;
   }): Promise<BotRuntimeStatusSnapshot> => {
-    return { status: 'unknown' } as BotRuntimeStatusSnapshot;
+    const result = await restClient.post<RuntimeStatusResponse>(
+      '/agent-bot-providers/runtime-status/refresh',
+      {
+        body: {
+          application_id: params.applicationId,
+          platform: params.platform,
+        },
+      },
+    );
+    return mapRuntimeStatus(result);
   };
 
-  refreshRuntimeStatusesByAgent = async (_agentId: string): Promise<void> => {
-    // No-op in REST: gateway refresh requires TS infrastructure
+  refreshRuntimeStatusesByAgent = async (agentId: string): Promise<void> => {
+    await restClient.post(`/agent-bot-providers/runtime-status/refresh-by-agent/${agentId}`, {});
   };
 
   create = async (params: {
@@ -44,8 +117,8 @@ class AgentBotProviderService {
     enabled?: boolean;
     platform: string;
     settings?: Record<string, unknown>;
-  }) => {
-    return restClient.post('/agent-bot-providers', {
+  }): Promise<BotProviderItem> => {
+    const result = await restClient.post<AgentBotProviderResponse>('/agent-bot-providers', {
       body: {
         agent_id: params.agentId,
         application_id: params.applicationId,
@@ -55,6 +128,7 @@ class AgentBotProviderService {
         settings: params.settings,
       },
     });
+    return mapProvider(result);
   };
 
   update = async (
@@ -66,8 +140,8 @@ class AgentBotProviderService {
       platform?: string;
       settings?: Record<string, unknown>;
     },
-  ) => {
-    return restClient.patch(`/agent-bot-providers/${id}`, {
+  ): Promise<BotProviderItem> => {
+    const result = await restClient.patch<AgentBotProviderResponse>(`/agent-bot-providers/${id}`, {
       body: {
         application_id: params.applicationId,
         credentials: params.credentials,
@@ -76,6 +150,7 @@ class AgentBotProviderService {
         settings: params.settings,
       },
     });
+    return mapProvider(result);
   };
 
   delete = async (id: string) => {
@@ -86,28 +161,26 @@ class AgentBotProviderService {
     applicationId: string;
     platform: string;
   }): Promise<{ status: 'queued' | 'started' }> => {
-    // Need to find provider ID from applicationId + platform first
-    const providers = await restClient.get<any[]>('/agent-bot-providers', {
-      params: { platform: params.platform } as any,
-    });
-    const provider = providers?.find?.((p: any) => p.application_id === params.applicationId);
+    const providers = await this.list();
+    const provider = providers.find(
+      (item) => item.applicationId === params.applicationId && item.platform === params.platform,
+    );
     if (!provider) throw new Error('Bot provider not found');
 
     return restClient.post(`/agent-bot-providers/${provider.id}/connect`, {});
   };
 
   testConnection = async (params: { applicationId: string; platform: string }) => {
-    const providers = await restClient.get<any[]>('/agent-bot-providers', {
-      params: { platform: params.platform } as any,
-    });
-    const provider = providers?.find?.((p: any) => p.application_id === params.applicationId);
+    const providers = await this.list();
+    const provider = providers.find(
+      (item) => item.applicationId === params.applicationId && item.platform === params.platform,
+    );
     if (!provider) throw new Error('Bot provider not found');
 
     return restClient.post(`/agent-bot-providers/${provider.id}/test`, {});
   };
 
   lineFetchBotInfo = async (_channelAccessToken: string) => {
-    // LINE bot info fetch requires the TS LINE adapter
     throw new Error('lineFetchBotInfo is not available via REST API');
   };
 
@@ -116,7 +189,6 @@ class AgentBotProviderService {
   };
 
   wechatPollQrStatus = async (_qrcode: string) => {
-    // WeChat QR polling requires the TS WeChat adapter
     throw new Error('wechatPollQrStatus is not available via REST API');
   };
 }

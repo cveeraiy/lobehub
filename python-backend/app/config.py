@@ -140,6 +140,13 @@ class Settings(BaseSettings):
     # Comma-separated domain allowlist for skill imports (empty = any public domain)
     skill_import_domain_allowlist: str = ""
 
+    # ── Skills / MCP ──────────────────────────────────────────────
+    # Enables official Ethos Skill providers in the SPA. Custom skills and MCP
+    # endpoints are served by the Python backend independently of this switch.
+    enable_lobehub_skill: bool = True
+    # Klavis requires a real API key; keep the UI gate credential-aware.
+    klavis_api_key: Optional[str] = None
+
     # ── Tool rate limiting ──────────────────────────────────────────
     # Max external API calls per minute per user (0 = no limit)
     tool_rate_limit_per_minute: int = 60

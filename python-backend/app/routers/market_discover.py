@@ -10,11 +10,14 @@ from __future__ import annotations
 
 import logging
 import os
+import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, Field
+from jose import jwt
 
 from app.dependencies import get_current_user_id
 
@@ -54,14 +57,55 @@ async def _proxy_post(path: str, body: dict[str, Any] | None = None, headers: di
 def _auth_headers(request: Request) -> dict[str, str]:
     """Forward authorization headers from the incoming request."""
     headers: dict[str, str] = {}
-    auth = request.headers.get("authorization")
-    if auth:
-        headers["Authorization"] = auth
+
+    market_token = request.cookies.get("mp_token")
+    if market_token:
+        headers["Authorization"] = f"Bearer {market_token}"
+    else:
+        auth = request.headers.get("authorization")
+        if auth:
+            headers["Authorization"] = auth
+
     # Forward market-specific cookies if present
     cookie = request.headers.get("cookie")
     if cookie:
         headers["Cookie"] = cookie
     return headers
+
+
+def _client_assertion(client_id: str, client_secret: str) -> str:
+    """Create the same client-credentials JWT assertion used by the TS Market SDK."""
+    now = datetime.now(timezone.utc)
+    return jwt.encode(
+        {
+            "aud": f"{MARKET_BASE_URL}/oauth/token",
+            "exp": now + timedelta(minutes=5),
+            "iat": now,
+            "iss": client_id,
+            "jti": str(uuid.uuid4()),
+            "sub": client_id,
+        },
+        client_secret,
+        algorithm="HS256",
+    )
+
+
+async def _fetch_m2m_token(client_id: str, client_secret: str) -> dict[str, Any]:
+    assertion = _client_assertion(client_id, client_secret)
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.post(
+            f"{MARKET_BASE_URL}/oauth/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_assertion_type": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+                "client_assertion": assertion,
+            },
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        if resp.status_code >= 400:
+            logger.warning("Market OAuth error: POST /oauth/token -> %d", resp.status_code)
+            raise HTTPException(resp.status_code, resp.text)
+        return resp.json()
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -208,7 +252,7 @@ async def get_mcp_categories(
     _user_id: str = Depends(get_current_user_id),
 ):
     return await _proxy_get(
-        "/api/mcp/categories",
+        "/api/v1/plugins/categories",
         params={"locale": locale, "q": q},
         headers=_auth_headers(request),
     )
@@ -223,7 +267,7 @@ async def get_mcp_detail(
     _user_id: str = Depends(get_current_user_id),
 ):
     return await _proxy_get(
-        "/api/mcp/detail",
+        f"/api/v1/plugins/{identifier}",
         params={"identifier": identifier, "locale": locale, "version": version},
         headers=_auth_headers(request),
     )
@@ -241,7 +285,7 @@ async def get_mcp_list(
     _user_id: str = Depends(get_current_user_id),
 ):
     return await _proxy_get(
-        "/api/mcp",
+        "/api/v1/plugins",
         params={
             "category": category, "locale": locale,
             "page": page, "pageSize": pageSize, "q": q, "sort": sort,
@@ -260,7 +304,7 @@ async def get_mcp_manifest(
     _user_id: str = Depends(get_current_user_id),
 ):
     return await _proxy_get(
-        "/api/mcp/manifest",
+        f"/api/v1/plugins/{identifier}/manifest",
         params={"identifier": identifier, "locale": locale, "version": version, "install": install},
         headers=_auth_headers(request),
     )
@@ -440,7 +484,7 @@ async def get_skill_categories(
     _user_id: str = Depends(get_current_user_id),
 ):
     return await _proxy_get(
-        "/api/skills/categories",
+        "/api/v1/skills/categories",
         params={"locale": locale, "q": q},
         headers=_auth_headers(request),
     )
@@ -455,7 +499,7 @@ async def get_skill_detail(
     _user_id: str = Depends(get_current_user_id),
 ):
     return await _proxy_get(
-        "/api/skills/detail",
+        f"/api/v1/skills/{identifier}",
         params={"identifier": identifier, "locale": locale, "version": version},
         headers=_auth_headers(request),
     )
@@ -473,7 +517,7 @@ async def get_skill_list(
     _user_id: str = Depends(get_current_user_id),
 ):
     return await _proxy_get(
-        "/api/skills",
+        "/api/v1/skills",
         params={
             "category": category, "locale": locale,
             "page": page, "pageSize": pageSize, "q": q, "sort": sort,
@@ -566,24 +610,60 @@ async def register_client(
     _user_id: str = Depends(get_current_user_id),
 ):
     """Register a client in the marketplace for M2M authentication."""
-    return await _proxy_post(
-        "/api/clients/register",
+    result = await _proxy_post(
+        "/api/v1/clients/register",
+        body={
+            "clientName": "Ethos Web",
+            "clientType": "web",
+            "deviceId": "unknown-device",
+            "platform": request.headers.get("user-agent"),
+            "version": "0.1.0",
+        },
         headers=_auth_headers(request),
     )
+    return {
+        "clientId": result.get("client_id") or result.get("clientId"),
+        "clientSecret": result.get("client_secret") or result.get("clientSecret"),
+    }
 
 
 @router.post("/register-m2m-token")
 async def register_m2m_token(
     body: RegisterM2MTokenBody,
     request: Request,
+    response: Response,
     _user_id: str = Depends(get_current_user_id),
 ):
     """Get an M2M access token using client credentials."""
-    return await _proxy_post(
-        "/api/clients/token",
-        body={"clientId": body.clientId, "clientSecret": body.clientSecret},
-        headers=_auth_headers(request),
+    token_info = await _fetch_m2m_token(body.clientId, body.clientSecret)
+    access_token = token_info.get("access_token")
+    expires_in = int(token_info.get("expires_in") or 3600)
+
+    if not access_token:
+        response.delete_cookie("mp_token", path="/")
+        response.delete_cookie("mp_token_status", path="/")
+        return {"success": False}
+
+    max_age = max(expires_in - 60, 0)
+    response.set_cookie(
+        "mp_token",
+        access_token,
+        httponly=True,
+        max_age=max_age,
+        path="/",
+        samesite="lax",
+        secure=os.getenv("NODE_ENV") == "production",
     )
+    response.set_cookie(
+        "mp_token_status",
+        "active",
+        httponly=False,
+        max_age=max_age,
+        path="/",
+        samesite="lax",
+        secure=os.getenv("NODE_ENV") == "production",
+    )
+    return {"expiresIn": max_age, "success": True}
 
 
 # ── Telemetry / Reporting ────────────────────────────────────────────

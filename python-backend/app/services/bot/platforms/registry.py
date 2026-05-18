@@ -1,0 +1,34 @@
+from __future__ import annotations
+
+from app.services.bot.platforms.discord.definition import discord
+from app.services.bot.platforms.types import PlatformDefinition
+
+
+class PlatformRegistry:
+    def __init__(self) -> None:
+        self._platforms: dict[str, PlatformDefinition] = {}
+
+    def register(self, definition: PlatformDefinition) -> None:
+        if definition.id in self._platforms:
+            raise ValueError(f"Platform '{definition.id}' is already registered")
+        self._platforms[definition.id] = definition
+
+    def get(self, platform: str) -> PlatformDefinition | None:
+        return self._platforms.get(platform)
+
+    def require(self, platform: str) -> PlatformDefinition:
+        definition = self.get(platform)
+        if definition is None:
+            raise ValueError(f"Unsupported bot platform: {platform}")
+        return definition
+
+    def list(self) -> list[PlatformDefinition]:
+        return list(self._platforms.values())
+
+    def list_serialized(self) -> list[dict]:
+        return [definition.serialize() for definition in self.list()]
+
+
+platform_registry = PlatformRegistry()
+platform_registry.register(discord)
+

@@ -5,26 +5,54 @@ Mirrors TS: src/server/routers/lambda/agentBotProvider.ts
 
 from __future__ import annotations
 
-import logging
-from datetime import datetime, timezone
-from typing import Any, Optional
+import json
+from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
-from sqlalchemy import select, and_, delete as sa_delete
+from pydantic import BaseModel
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models.agent_ops import AgentBotProvider
-
-logger = logging.getLogger(__name__)
+from app.services.bot.platforms import platform_registry
+from app.services.key_vault.service import KeyVaultService
 
 router = APIRouter(prefix="/api/agent-bot-providers", tags=["Agent Bot Providers"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+def _decode_credentials(raw: str | None) -> dict[str, str]:
+    if not raw:
+        return {}
+    try:
+        value = KeyVaultService.from_env().decrypt_json(raw)
+        if isinstance(value, dict) and value:
+            return {str(key): str(val) for key, val in value.items()}
+    except (RuntimeError, ValueError):
+        pass
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(value, dict):
+        return {}
+    return {str(key): str(val) for key, val in value.items()}
+
+
+def _encode_credentials(credentials: dict[str, str] | None) -> str | None:
+    if credentials is None:
+        return None
+    try:
+        return KeyVaultService.from_env().encrypt_json(credentials)
+    except (RuntimeError, ValueError):
+        pass
+    return json.dumps(credentials)
 
 
 def _serialize(row: AgentBotProvider) -> dict[str, Any]:
@@ -33,10 +61,9 @@ def _serialize(row: AgentBotProvider) -> dict[str, Any]:
         "agent_id": row.agent_id,
         "user_id": row.user_id,
         "platform": row.platform,
-        "credentials": row.credentials,
+        "application_id": row.application_id,
+        "credentials": _decode_credentials(row.credentials),
         "settings": row.settings,
-        "webhook_url": row.webhook_url,
-        "webhook_secret": row.webhook_secret,
         "enabled": row.enabled,
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
@@ -47,19 +74,19 @@ def _serialize(row: AgentBotProvider) -> dict[str, Any]:
 
 class CreateBotProviderBody(BaseModel):
     agent_id: str
-    application_id: Optional[str] = None
+    application_id: str
     platform: str
-    credentials: Optional[dict[str, str]] = None
-    settings: Optional[dict[str, Any]] = None
+    credentials: dict[str, str] | None = None
+    settings: dict[str, Any] | None = None
     enabled: bool = True
 
 
 class UpdateBotProviderBody(BaseModel):
-    application_id: Optional[str] = None
-    platform: Optional[str] = None
-    credentials: Optional[dict[str, str]] = None
-    settings: Optional[dict[str, Any]] = None
-    enabled: Optional[bool] = None
+    application_id: str | None = None
+    platform: str | None = None
+    credentials: dict[str, str] | None = None
+    settings: dict[str, Any] | None = None
+    enabled: bool | None = None
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -68,28 +95,14 @@ class UpdateBotProviderBody(BaseModel):
 async def list_platforms(
     user_id: str = Depends(get_current_user_id),
 ):
-    """List available bot platforms.
-
-    Note: Returns a static list. The TS backend uses a platform registry
-    with detailed schemas; this is a simplified version.
-    """
-    return {
-        "platforms": [
-            "discord",
-            "feishu",
-            "line",
-            "qq",
-            "slack",
-            "telegram",
-            "wechat",
-        ]
-    }
+    """List Python-migrated bot platforms with frontend form schemas."""
+    return platform_registry.list_serialized()
 
 
 @router.get("")
 async def list_bot_providers(
-    agent_id: Optional[str] = None,
-    platform: Optional[str] = None,
+    agent_id: str | None = None,
+    platform: str | None = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -152,13 +165,19 @@ async def create_bot_provider(
     session: AsyncSession = Depends(get_db),
 ):
     """Create a new bot provider."""
+    try:
+        platform = platform_registry.require(body.platform)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
     now = _now()
     provider = AgentBotProvider(
         agent_id=body.agent_id,
         user_id=user_id,
         platform=body.platform,
-        credentials=body.credentials,
-        settings=body.settings,
+        application_id=body.application_id,
+        credentials=_encode_credentials(body.credentials),
+        settings=platform.merge_settings(body.settings),
         enabled=body.enabled,
         created_at=now,
         updated_at=now,
@@ -174,7 +193,10 @@ async def create_bot_provider(
         if "23505" in str(exc) or "UniqueViolation" in str(exc) or "duplicate key" in str(exc):
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                f"A bot provider for agent '{body.agent_id}' on platform '{body.platform}' already exists.",
+                (
+                    f"A bot provider for platform '{body.platform}' and application "
+                    f"'{body.application_id}' already exists."
+                ),
             )
         raise
     return _serialize(provider)
@@ -199,6 +221,15 @@ async def update_bot_provider(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Bot provider not found")
 
     updates = body.model_dump(exclude_unset=True)
+    platform_id = updates.get("platform") or row.platform
+    try:
+        platform = platform_registry.require(platform_id)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+    if "settings" in updates:
+        updates["settings"] = platform.merge_settings(updates["settings"])
+    if "credentials" in updates:
+        updates["credentials"] = _encode_credentials(updates["credentials"])
     for key, value in updates.items():
         setattr(row, key, value)
     row.updated_at = _now()
@@ -237,11 +268,7 @@ async def connect_bot(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Start/connect a bot provider.
-
-    Note: In the Python backend, gateway lifecycle management is a placeholder.
-    The TS backend handles actual WebSocket/polling gateway connections.
-    """
+    """Start/connect a bot provider."""
     stmt = select(AgentBotProvider).where(
         and_(
             AgentBotProvider.id == provider_id,
@@ -252,7 +279,13 @@ async def connect_bot(
     if not row:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Bot provider not found")
 
-    return {"status": "queued"}
+    definition = platform_registry.get(row.platform)
+    if definition is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Unsupported bot platform: {row.platform}")
+    raise HTTPException(
+        status.HTTP_501_NOT_IMPLEMENTED,
+        f"Python runtime for {definition.name} {definition.connection_mode} connections is not implemented yet.",
+    )
 
 
 @router.post("/{provider_id}/test")
@@ -261,11 +294,7 @@ async def test_connection(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Test a bot provider's credentials.
-
-    Note: Full platform-specific validation requires the TS gateway infrastructure.
-    This endpoint validates that the provider record exists and has credentials.
-    """
+    """Test a bot provider's credentials through the Python platform registry."""
     stmt = select(AgentBotProvider).where(
         and_(
             AgentBotProvider.id == provider_id,
@@ -276,9 +305,57 @@ async def test_connection(
     if not row:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Bot provider not found")
 
-    if not row.credentials:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "No credentials configured")
+    definition = platform_registry.get(row.platform)
+    if definition is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Unsupported bot platform: {row.platform}")
 
-    return {"valid": True}
+    result = await definition.validate_credentials(
+        _decode_credentials(row.credentials),
+        row.settings,
+        row.application_id,
+    )
+    if not result.valid:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, result.to_dict())
+
+    return result.to_dict()
 
 
+@router.get("/runtime-status/get")
+async def get_runtime_status(
+    application_id: str,
+    platform: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Return Python runtime status for a bot provider.
+
+    Discord is registered for provider management first; its Python gateway is
+    not implemented in this migration slice, so it reports disconnected.
+    """
+    if platform_registry.get(platform) is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Unsupported bot platform: {platform}")
+    return {
+        "application_id": application_id,
+        "platform": platform,
+        "status": "disconnected",
+        "updated_at": int(datetime.now(UTC).timestamp() * 1000),
+    }
+
+
+@router.post("/runtime-status/refresh")
+async def refresh_runtime_status(
+    body: dict[str, str],
+    user_id: str = Depends(get_current_user_id),
+):
+    application_id = body.get("application_id")
+    platform = body.get("platform")
+    if not application_id or not platform:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "application_id and platform are required")
+    return await get_runtime_status(application_id=application_id, platform=platform, user_id=user_id)
+
+
+@router.post("/runtime-status/refresh-by-agent/{agent_id}")
+async def refresh_runtime_statuses_by_agent(
+    agent_id: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    return {"success": True}

@@ -42,6 +42,49 @@ import {
 import { type MCPPluginListParams } from '@/types/plugins';
 import { cleanObject } from '@/utils/object';
 
+type RawListResponse<T> =
+  | T[]
+  | {
+      categories?: unknown[];
+      current_page?: number;
+      currentPage?: number;
+      data?: T[];
+      items?: T[];
+      page_size?: number;
+      pageSize?: number;
+      total?: number;
+      total_count?: number;
+      total_pages?: number;
+      totalCount?: number;
+      totalPages?: number;
+    };
+
+const normalizeListResponse = <T>(
+  response: RawListResponse<T>,
+  defaults: { page: number; pageSize: number },
+) => {
+  const items = Array.isArray(response) ? response : (response.items ?? response.data ?? []);
+  const totalCount = Array.isArray(response)
+    ? response.length
+    : (response.totalCount ?? response.total_count ?? response.total ?? items.length);
+  const pageSize = Array.isArray(response)
+    ? defaults.pageSize
+    : (response.pageSize ?? response.page_size ?? defaults.pageSize);
+
+  return {
+    categories: Array.isArray(response) ? [] : (response.categories ?? []),
+    currentPage: Array.isArray(response)
+      ? defaults.page
+      : (response.currentPage ?? response.current_page ?? defaults.page),
+    items,
+    pageSize,
+    totalCount,
+    totalPages: Array.isArray(response)
+      ? Math.ceil(totalCount / pageSize)
+      : (response.totalPages ?? response.total_pages ?? Math.ceil(totalCount / pageSize)),
+  };
+};
+
 class DiscoverService {
   private _isRetrying = false;
   private _tokenRefreshPromise: Promise<void> | null = null;
@@ -160,29 +203,42 @@ class DiscoverService {
     await this.safeInjectMPToken();
 
     const locale = globalHelpers.getCurrentLanguage();
-    return restClient.get<McpListResponse>('/discover/mcp/list', {
-      params: {
-        ...params,
-        locale,
-        page: params.page ? Number(params.page) : 1,
-        pageSize: params.pageSize ? Number(params.pageSize) : 20,
-      } as any,
-    });
+    const page = params.page ? Number(params.page) : 1;
+    const pageSize = params.pageSize ? Number(params.pageSize) : 20;
+    const response = await restClient.get<RawListResponse<McpListResponse['items'][number]>>(
+      '/discover/mcp/list',
+      {
+        params: {
+          ...params,
+          locale,
+          page,
+          pageSize,
+        } as any,
+      },
+    );
+
+    return normalizeListResponse(response, { page, pageSize }) as McpListResponse;
   };
 
   getMCPPluginList = async (params: MCPPluginListParams): Promise<McpListResponse> => {
     await this.safeInjectMPToken();
 
     const locale = globalHelpers.getCurrentLanguage();
+    const page = params.page ? Number(params.page) : 1;
+    const pageSize = params.pageSize ? Number(params.pageSize) : 21;
+    const response = await restClient.get<RawListResponse<McpListResponse['items'][number]>>(
+      '/discover/mcp/list',
+      {
+        params: {
+          ...params,
+          locale,
+          page,
+          pageSize,
+        } as any,
+      },
+    );
 
-    return restClient.get<McpListResponse>('/discover/mcp/list', {
-      params: {
-        ...params,
-        locale,
-        page: params.page ? Number(params.page) : 1,
-        pageSize: params.pageSize ? Number(params.pageSize) : 21,
-      } as any,
-    });
+    return normalizeListResponse(response, { page, pageSize }) as McpListResponse;
   };
 
   getMcpManifest = async (params: { identifier: string; locale?: string; version?: string }) => {
@@ -565,14 +621,21 @@ class DiscoverService {
 
   getSkillList = async (params: SkillQueryParams = {}): Promise<SkillListResponse> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return restClient.get<SkillListResponse>('/discover/skill/list', {
-      params: {
-        ...params,
-        locale,
-        page: params.page ? Number(params.page) : 1,
-        pageSize: params.pageSize ? Number(params.pageSize) : 20,
-      } as any,
-    });
+    const page = params.page ? Number(params.page) : 1;
+    const pageSize = params.pageSize ? Number(params.pageSize) : 20;
+    const response = await restClient.get<RawListResponse<SkillListResponse['items'][number]>>(
+      '/discover/skill/list',
+      {
+        params: {
+          ...params,
+          locale,
+          page,
+          pageSize,
+        } as any,
+      },
+    );
+
+    return normalizeListResponse(response, { page, pageSize }) as SkillListResponse;
   };
 
   reportSkillEvent = async (eventData: { event: string; identifier: string; source?: string }) => {

@@ -28,6 +28,7 @@ def _build_server_config() -> dict:
         "defaultAgent": {},
         "disableEmailPassword": settings.auth_disable_email_password,
         "enableUploadFileToServer": bool(settings.s3_secret_access_key),
+        "enableLobehubSkill": settings.enable_lobehub_skill,
         "enableKlavis": bool(getattr(settings, "klavis_api_key", None)),
         "oAuthSSOProviders": oAuthSSOProviders,
         "telemetry": {},

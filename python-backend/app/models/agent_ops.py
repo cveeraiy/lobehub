@@ -7,31 +7,32 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Optional
+from uuid import uuid4
 
 from sqlalchemy import Index, UniqueConstraint, text
 from sqlmodel import Field, SQLModel
 
-from app.models._helpers import _utcnow, id_generator, create_nanoid, json_column
+from app.models._helpers import _utcnow, create_nanoid, id_generator, json_column
 
 
 class AgentBotProvider(SQLModel, table=True):
     __tablename__ = "agent_bot_providers"
     __table_args__ = (
-        UniqueConstraint("agent_id", "platform", name="agent_bot_providers_agent_id_platform_unique"),
+        UniqueConstraint("platform", "application_id", name="agent_bot_providers_platform_app_id_unique"),
+        Index("agent_bot_providers_platform_idx", "platform"),
+        Index("agent_bot_providers_agent_id_idx", "agent_id"),
         Index("agent_bot_providers_user_id_idx", "user_id"),
     )
 
-    id: str = Field(default_factory=lambda: create_nanoid(16), primary_key=True, max_length=255)
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     agent_id: str = Field(foreign_key="agents.id", nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
-    # 'slack' | 'discord' | 'telegram' | 'feishu' | 'qq' | 'wechat'
-    platform: str = Field(nullable=False, max_length=255)
+    platform: str = Field(nullable=False, max_length=50)
+    application_id: str = Field(nullable=False, max_length=255)
 
-    credentials: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("credentials"))
-    settings: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("settings"))
-    webhook_url: Optional[str] = None
-    webhook_secret: Optional[str] = None
+    credentials: str | None = None
+    settings: dict[str, Any] | None = Field(default=None, sa_column=json_column("settings"))
 
     enabled: bool = Field(default=True)
 
