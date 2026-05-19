@@ -132,6 +132,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.follow_up",
     "app.routers.ai_chat",
     "app.routers.bot_message",
+    "app.routers.bot_webhooks",
     # Files & knowledge
     "app.routers.files",
     "app.routers.upload",

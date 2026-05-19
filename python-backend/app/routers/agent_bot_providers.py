@@ -19,6 +19,11 @@ from app.dependencies import get_current_user_id
 from app.models.agent_ops import AgentBotProvider
 from app.services.bot.platforms import platform_registry
 from app.services.bot.platforms.line.definition import fetch_line_bot_info
+from app.services.bot.runtime_status import (
+    clear_bot_runtime_status,
+    get_bot_runtime_status,
+    update_bot_runtime_status,
+)
 from app.services.key_vault.service import KeyVaultService
 
 router = APIRouter(prefix="/api/agent-bot-providers", tags=["Agent Bot Providers"])
@@ -57,6 +62,7 @@ def _encode_credentials(credentials: dict[str, str] | None) -> str | None:
 
 
 def _serialize(row: AgentBotProvider) -> dict[str, Any]:
+    runtime_status = get_bot_runtime_status(row.platform, row.application_id)
     return {
         "id": row.id,
         "agent_id": row.agent_id,
@@ -66,9 +72,16 @@ def _serialize(row: AgentBotProvider) -> dict[str, Any]:
         "credentials": _decode_credentials(row.credentials),
         "settings": row.settings,
         "enabled": row.enabled,
+        "runtime_status": runtime_status["status"],
         "created_at": row.created_at.isoformat() if row.created_at else None,
         "updated_at": row.updated_at.isoformat() if row.updated_at else None,
     }
+
+
+def _resolve_connection_mode(platform_id: str, settings: dict[str, Any] | None) -> str:
+    definition = platform_registry.require(platform_id)
+    merged = definition.merge_settings(settings)
+    return str(merged.get("connectionMode") or definition.connection_mode)
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -242,6 +255,8 @@ async def update_bot_provider(
     session.add(row)
     await session.commit()
     await session.refresh(row)
+    if body.enabled is False:
+        clear_bot_runtime_status(row.platform, row.application_id)
     return _serialize(row)
 
 
@@ -262,6 +277,7 @@ async def delete_bot_provider(
     if not row:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Bot provider not found")
 
+    clear_bot_runtime_status(row.platform, row.application_id)
     await session.delete(row)
     await session.commit()
     return {"success": True}
@@ -287,9 +303,14 @@ async def connect_bot(
     definition = platform_registry.get(row.platform)
     if definition is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Unsupported bot platform: {row.platform}")
+    connection_mode = _resolve_connection_mode(row.platform, row.settings)
+    if connection_mode == "webhook":
+        update_bot_runtime_status(row.platform, row.application_id, "connected")
+        return {"status": "connected"}
+
     raise HTTPException(
         status.HTTP_501_NOT_IMPLEMENTED,
-        f"Python runtime for {definition.name} {definition.connection_mode} connections is not implemented yet.",
+        f"Python runtime for {definition.name} {connection_mode} connections is not implemented yet.",
     )
 
 
@@ -331,19 +352,10 @@ async def get_runtime_status(
     platform: str,
     user_id: str = Depends(get_current_user_id),
 ):
-    """Return Python runtime status for a bot provider.
-
-    Discord is registered for provider management first; its Python gateway is
-    not implemented in this migration slice, so it reports disconnected.
-    """
+    """Return Python runtime status for a bot provider."""
     if platform_registry.get(platform) is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Unsupported bot platform: {platform}")
-    return {
-        "application_id": application_id,
-        "platform": platform,
-        "status": "disconnected",
-        "updated_at": int(datetime.now(UTC).timestamp() * 1000),
-    }
+    return get_bot_runtime_status(platform, application_id)
 
 
 @router.post("/runtime-status/refresh")

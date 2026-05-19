@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 import os
 from dataclasses import dataclass, field
 from typing import Any, AsyncIterator, Optional
 
+import boto3
 import httpx
+from botocore.exceptions import BotoCoreError, ClientError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services import ai_infra_service
@@ -104,6 +107,109 @@ ENV_KEY_BY_PROVIDER: dict[str, str] = {
     "tencentcloud": "TENCENT_CLOUD_API_KEY",
     "vertexai": "VERTEXAI_CREDENTIALS",
 }
+
+BEDROCK_FALLBACK_MODELS: list[dict[str, Any]] = [
+    {
+        "abilities": {
+            "functionCall": True,
+            "reasoning": True,
+            "structuredOutput": True,
+            "vision": True,
+        },
+        "contextWindowTokens": 1_000_000,
+        "displayName": "Claude Opus 4.7",
+        "enabled": True,
+        "id": "global.anthropic.claude-opus-4-7",
+        "releasedAt": "2026-04-16",
+        "type": "chat",
+    },
+    {
+        "abilities": {
+            "functionCall": True,
+            "reasoning": True,
+            "structuredOutput": True,
+            "vision": True,
+        },
+        "contextWindowTokens": 1_000_000,
+        "displayName": "Claude Sonnet 4.6",
+        "enabled": True,
+        "id": "global.anthropic.claude-sonnet-4-6",
+        "releasedAt": "2026-02-17",
+        "type": "chat",
+    },
+    {
+        "abilities": {
+            "functionCall": True,
+            "reasoning": True,
+            "structuredOutput": True,
+            "vision": True,
+        },
+        "contextWindowTokens": 1_000_000,
+        "displayName": "Claude Sonnet 4.5",
+        "enabled": True,
+        "id": "global.anthropic.claude-sonnet-4-5-20250929-v1:0",
+        "releasedAt": "2025-09-29",
+        "type": "chat",
+    },
+    {
+        "abilities": {
+            "functionCall": True,
+            "reasoning": True,
+            "structuredOutput": True,
+            "vision": True,
+        },
+        "contextWindowTokens": 200_000,
+        "displayName": "Claude Sonnet 4",
+        "enabled": False,
+        "id": "global.anthropic.claude-sonnet-4-20250514-v1:0",
+        "releasedAt": "2025-05-14",
+        "type": "chat",
+    },
+    {
+        "abilities": {
+            "functionCall": True,
+            "reasoning": True,
+            "structuredOutput": True,
+            "vision": True,
+        },
+        "contextWindowTokens": 200_000,
+        "displayName": "Claude 3.7 Sonnet",
+        "enabled": True,
+        "id": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+        "releasedAt": "2025-02-19",
+        "type": "chat",
+    },
+    {
+        "abilities": {"functionCall": True, "vision": True},
+        "contextWindowTokens": 200_000,
+        "displayName": "Claude 3.5 Sonnet",
+        "id": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        "releasedAt": "2024-10-22",
+        "type": "chat",
+    },
+    {
+        "abilities": {"functionCall": True, "vision": True},
+        "contextWindowTokens": 200_000,
+        "displayName": "Claude 3 Haiku",
+        "id": "anthropic.claude-3-haiku-20240307-v1:0",
+        "releasedAt": "2024-03-07",
+        "type": "chat",
+    },
+    {
+        "abilities": {"functionCall": True},
+        "contextWindowTokens": 128_000,
+        "displayName": "Llama 3.3 70B Instruct",
+        "id": "us.meta.llama3-3-70b-instruct-v1:0",
+        "type": "chat",
+    },
+    {
+        "abilities": {"functionCall": True},
+        "contextWindowTokens": 8000,
+        "displayName": "Llama 3 70B Instruct",
+        "id": "meta.llama3-70b-instruct-v1:0",
+        "type": "chat",
+    },
+]
 
 
 @dataclass
@@ -259,11 +365,29 @@ def model_for_litellm(runtime: ProviderRuntimeConfig, model: str) -> str:
         return f"azure/{model}"
     if runtime.runtime_provider == "ollama":
         return f"ollama/{model}"
+    if runtime.runtime_provider == "bedrock":
+        model = _bedrock_inference_profile_model_id(model)
     prefix = LITELLM_PREFIXES.get(runtime.runtime_provider)
     if prefix:
         return f"{prefix}/{model}"
     if runtime.api_base:
         return f"openai/{model}"
+    return model
+
+
+def _bedrock_inference_profile_model_id(model: str) -> str:
+    if model.startswith(("global.", "us.", "eu.", "apac.")):
+        return model
+    if model.startswith(
+        (
+            "anthropic.claude-sonnet-4",
+            "anthropic.claude-opus-4",
+            "anthropic.claude-haiku-4",
+        )
+    ):
+        return f"global.{model}"
+    if model.startswith("anthropic.claude-3-7-sonnet"):
+        return f"us.{model}"
     return model
 
 
@@ -285,6 +409,12 @@ def chat_extra_kwargs(runtime: ProviderRuntimeConfig, body: dict[str, Any]) -> d
     extra.update(runtime.extra_kwargs)
     if body.get("top_p") is not None:
         extra["top_p"] = body["top_p"]
+    if runtime.runtime_provider == "bedrock":
+        # Bedrock models do not support OpenAI penalty params. Let LiteLLM
+        # drop any other provider-specific unsupported OpenAI params instead
+        # of failing connectivity checks and normal chat requests.
+        extra["drop_params"] = True
+        return extra
     if body.get("presence_penalty") is not None:
         extra["presence_penalty"] = body["presence_penalty"]
     if body.get("frequency_penalty") is not None:
@@ -293,6 +423,8 @@ def chat_extra_kwargs(runtime: ProviderRuntimeConfig, body: dict[str, Any]) -> d
 
 
 async def list_remote_models(runtime: ProviderRuntimeConfig) -> list[dict[str, Any]] | None:
+    if runtime.runtime_provider == "bedrock":
+        return await _list_bedrock_models(runtime)
     if runtime.runtime_provider == "ollama":
         return await _list_ollama_models(runtime)
     if runtime.runtime_provider == "cloudflare":
@@ -302,6 +434,92 @@ async def list_remote_models(runtime: ProviderRuntimeConfig) -> list[dict[str, A
     if runtime.api_base and runtime.api_key:
         return await _list_openai_compatible_models(runtime)
     return None
+
+
+async def _list_bedrock_models(runtime: ProviderRuntimeConfig) -> list[dict[str, Any]]:
+    region = runtime.extra_kwargs.get("aws_region_name") or os.getenv("AWS_REGION") or "us-east-1"
+
+    client_kwargs = {
+        "aws_access_key_id": runtime.extra_kwargs.get("aws_access_key_id"),
+        "aws_secret_access_key": runtime.extra_kwargs.get("aws_secret_access_key"),
+        "aws_session_token": runtime.extra_kwargs.get("aws_session_token"),
+        "region_name": region,
+    }
+    client_kwargs = {key: value for key, value in client_kwargs.items() if value}
+
+    def list_models() -> list[dict[str, Any]]:
+        client = boto3.client("bedrock", **client_kwargs)
+        summaries = client.list_foundation_models().get("modelSummaries", [])
+        inference_profile_by_model = _bedrock_inference_profile_map(client, region)
+        return [
+            _bedrock_model_card(summary, inference_profile_by_model.get(summary.get("modelId")))
+            for summary in summaries
+            if summary.get("modelId")
+        ]
+
+    try:
+        models = await asyncio.to_thread(list_models)
+        return models or BEDROCK_FALLBACK_MODELS
+    except (BotoCoreError, ClientError):
+        return BEDROCK_FALLBACK_MODELS
+
+
+def _bedrock_inference_profile_map(client: Any, region: str) -> dict[str, str]:
+    try:
+        profiles = client.list_inference_profiles().get("inferenceProfileSummaries", [])
+    except (BotoCoreError, ClientError, AttributeError):
+        return {}
+
+    candidates: dict[str, list[str]] = {}
+    for profile in profiles:
+        profile_id = profile.get("inferenceProfileId")
+        if not profile_id:
+            continue
+        for model in profile.get("models") or []:
+            model_arn = model.get("modelArn") or ""
+            model_id = model_arn.rsplit("/", 1)[-1]
+            if model_id:
+                candidates.setdefault(model_id, []).append(profile_id)
+
+    region_prefix = region.split("-", 1)[0]
+    return {
+        model_id: sorted(
+            profile_ids,
+            key=lambda profile_id: (
+                0 if profile_id.startswith("global.") else 1,
+                0 if profile_id.startswith(f"{region_prefix}.") else 1,
+                profile_id,
+            ),
+        )[0]
+        for model_id, profile_ids in candidates.items()
+    }
+
+
+def _bedrock_model_card(summary: dict[str, Any], inference_profile_id: str | None = None) -> dict[str, Any]:
+    model_id = summary.get("modelId")
+    input_modalities = set(summary.get("inputModalities") or [])
+    output_modalities = set(summary.get("outputModalities") or [])
+    display_name = summary.get("modelName") or model_id
+    provider_name = summary.get("providerName")
+    model_lifecycle = summary.get("modelLifecycle") or {}
+    is_legacy = model_lifecycle.get("status") == "LEGACY"
+
+    model_type = "chat"
+    if "EMBEDDING" in output_modalities:
+        model_type = "embedding"
+    elif "IMAGE" in output_modalities and "TEXT" not in output_modalities:
+        model_type = "image"
+
+    return {
+        "abilities": {
+            "functionCall": provider_name == "Anthropic",
+            "vision": "IMAGE" in input_modalities,
+        },
+        "displayName": display_name,
+        "enabled": not is_legacy,
+        "id": inference_profile_id or model_id,
+        "type": model_type,
+    }
 
 
 async def _list_openai_compatible_models(runtime: ProviderRuntimeConfig) -> list[dict[str, Any]]:

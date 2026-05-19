@@ -525,6 +525,7 @@
       "stylelint-config-clean-order": "7.0.0"
     },
     "patchedDependencies": {
+      "@lobehub/icons": "patches/@lobehub__icons.patch",
       "@upstash/qstash": "patches/@upstash__qstash.patch"
     }
   }

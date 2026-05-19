@@ -27,6 +27,7 @@ async def test_list_platforms(client: httpx.AsyncClient) -> None:
         "lark",
         "qq",
         "wechat",
+        "teams",
     ]
     assert data[0]["connectionMode"] == "websocket"
     assert any(field["key"] == "credentials" for field in data[0]["schema"])
@@ -39,6 +40,7 @@ async def test_list_platforms(client: httpx.AsyncClient) -> None:
     assert data[6]["supportsMessageEdit"] is False
     assert data[7]["connectionMode"] == "polling"
     assert data[7]["supportsMessageEdit"] is False
+    assert data[8]["connectionMode"] == "webhook"
 
 
 # ── 32.2  Setup: create an agent for bot provider tests ──────────────
@@ -131,13 +133,51 @@ async def test_test_connection(client: httpx.AsyncClient, state: SharedState) ->
     assert r.json()["detail"]["valid"] is False
 
 
-# ── 32.9  Connect bot (placeholder) ─────────────────────────────────
+# ── 32.9  Connect persistent bot (unsupported until gateway port) ───
 
 @pytest.mark.asyncio
-async def test_connect_bot(client: httpx.AsyncClient, state: SharedState) -> None:
+async def test_connect_persistent_bot_is_explicitly_unsupported(
+    client: httpx.AsyncClient,
+    state: SharedState,
+) -> None:
     assert state.provider_id
     r = await client.post(f"/api/agent-bot-providers/{state.provider_id}/connect")
     assert r.status_code == 501
+
+
+# ── 32.10  Connect webhook bot and read runtime status ───────────────
+
+@pytest.mark.asyncio
+async def test_connect_webhook_bot_updates_runtime_status(
+    client: httpx.AsyncClient,
+    state: SharedState,
+) -> None:
+    assert state.agent_id
+    create = await client.post("/api/agent-bot-providers", json={
+        "agent_id": state.agent_id,
+        "application_id": "telegram-runtime-test-123",
+        "platform": "telegram",
+        "credentials": {"botToken": "test-token-123"},
+    })
+    assert create.status_code == 201
+    provider = create.json()
+
+    try:
+        connect = await client.post(f"/api/agent-bot-providers/{provider['id']}/connect")
+        assert connect.status_code == 200
+        assert connect.json() == {"status": "connected"}
+
+        status_response = await client.get(
+            "/api/agent-bot-providers/runtime-status/get",
+            params={"application_id": "telegram-runtime-test-123", "platform": "telegram"},
+        )
+        assert status_response.status_code == 200
+        status_data = status_response.json()
+        assert status_data["application_id"] == "telegram-runtime-test-123"
+        assert status_data["platform"] == "telegram"
+        assert status_data["status"] == "connected"
+    finally:
+        await client.delete(f"/api/agent-bot-providers/{provider['id']}")
 
 
 # ── 32.10  Get nonexistent provider → 404 ────────────────────────────

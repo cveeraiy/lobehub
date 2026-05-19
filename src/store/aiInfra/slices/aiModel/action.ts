@@ -15,6 +15,34 @@ import { type StoreSetter } from '@/store/types';
 const FETCH_AI_PROVIDER_MODEL_LIST_KEY = 'FETCH_AI_PROVIDER_MODELS';
 
 type Setter = StoreSetter<AiInfraStore>;
+
+type RemoteModelAbilities = NonNullable<AiProviderModelListItem['abilities']>;
+
+interface RemoteModelWithAbilities extends AiProviderModelListItem {
+  files?: boolean;
+  functionCall?: boolean;
+  imageOutput?: boolean;
+  reasoning?: boolean;
+  search?: boolean;
+  video?: boolean;
+  vision?: boolean;
+}
+
+const normalizeRemoteModelAbilities = (model: RemoteModelWithAbilities): RemoteModelAbilities => {
+  const abilities = model.abilities;
+
+  return {
+    ...abilities,
+    files: model.files ?? abilities?.files,
+    functionCall: model.functionCall ?? abilities?.functionCall,
+    imageOutput: model.imageOutput ?? abilities?.imageOutput,
+    reasoning: model.reasoning ?? abilities?.reasoning,
+    search: model.search ?? abilities?.search,
+    video: model.video ?? abilities?.video,
+    vision: model.vision ?? abilities?.vision,
+  };
+};
+
 export const createAiModelSlice = (set: Setter, get: () => AiInfraStore, _api?: unknown) =>
   new AiModelActionImpl(set, get, _api);
 
@@ -67,15 +95,7 @@ export class AiModelActionImpl {
       await this.#get().batchUpdateAiModels(
         data.map((model) => ({
           ...model,
-          abilities: {
-            files: model.files,
-            functionCall: model.functionCall,
-            imageOutput: model.imageOutput,
-            reasoning: model.reasoning,
-            search: model.search,
-            video: model.video,
-            vision: model.vision,
-          },
+          abilities: normalizeRemoteModelAbilities(model as RemoteModelWithAbilities),
           enabled: model.enabled || false,
           source: 'remote',
           type: model.type || 'chat',

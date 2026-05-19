@@ -46,7 +46,7 @@ export const useCreateNewModal = () => {
           </Suspense>
         ),
         width: 420,
-        focusTriggerAfterClose: true,
+        focusable: { focusTriggerAfterClose: true },
         footer: null,
         title: isEditMode ? t('createNew.edit.title') : t('createNew.title'),
       });

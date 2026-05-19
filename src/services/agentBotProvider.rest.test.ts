@@ -76,6 +76,12 @@ describe('AgentBotProviderService REST', () => {
         schema: [{ key: 'settings', label: 'channel.settings', type: 'object' }],
         supportsMessageEdit: false,
       },
+      {
+        connectionMode: 'webhook',
+        id: 'teams',
+        name: 'Microsoft Teams',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+      },
     ]);
 
     const result = await agentBotProviderService.listPlatforms();
@@ -135,6 +141,12 @@ describe('AgentBotProviderService REST', () => {
         schema: [{ key: 'settings', label: 'channel.settings', type: 'object' }],
         supportsMessageEdit: false,
       },
+      {
+        connectionMode: 'webhook',
+        id: 'teams',
+        name: 'Microsoft Teams',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+      },
     ]);
   });
 
@@ -147,6 +159,7 @@ describe('AgentBotProviderService REST', () => {
         enabled: true,
         id: 'provider-1',
         platform: 'discord',
+        runtime_status: 'connected',
         settings: { charLimit: 2000 },
         user_id: 'user-1',
       },
@@ -163,6 +176,7 @@ describe('AgentBotProviderService REST', () => {
         enabled: true,
         id: 'provider-1',
         platform: 'discord',
+        runtimeStatus: 'connected',
         settings: { charLimit: 2000 },
         userId: 'user-1',
       },

@@ -1,0 +1,13 @@
+diff --git a/es/features/ProviderCombine/Combine.js b/es/features/ProviderCombine/Combine.js
+index d845496c6919afeb9147374f8bd545b9d65e4f86..f5d1efb0a8fbc1c196787b9ce060dc5e10f934d0 100644
+--- a/es/features/ProviderCombine/Combine.js
++++ b/es/features/ProviderCombine/Combine.js
+@@ -32,7 +32,7 @@ var Combine = /*#__PURE__*/memo(function (_ref) {
+         marginBlock: 0,
+         marginInline: size / 6
+       },
+-      type: 'vertical'
++      orientation: 'vertical'
+     }), right]
+   }));
+ });

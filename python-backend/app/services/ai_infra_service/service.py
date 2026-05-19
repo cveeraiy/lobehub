@@ -34,6 +34,19 @@ def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def _model_abilities(provider_id: str, model_id: str, abilities: Optional[dict[str, Any]]) -> dict[str, Any]:
+    values = dict(abilities or {})
+    if provider_id == "bedrock":
+        if (
+            model_id.startswith("anthropic.")
+            or model_id.startswith("global.anthropic.")
+            or model_id.startswith("us.anthropic.")
+        ):
+            values.setdefault("functionCall", True)
+            values.setdefault("vision", True)
+    return values
+
+
 # ─────────────────────────────────────────────────────────────────────
 #  Provider CRUD
 # ─────────────────────────────────────────────────────────────────────
@@ -413,7 +426,11 @@ async def get_provider_model_list(
             "type": bm.type,
             "enabled": (um.enabled if um is not None else bm.enabled),
             "source": "builtin",
-            "abilities": (um.abilities if um and um.abilities else bm.abilities),
+            "abilities": _model_abilities(
+                provider_id,
+                bm.id,
+                um.abilities if um and um.abilities else bm.abilities,
+            ),
             "context_window_tokens": (
                 um.context_window_tokens if um and um.context_window_tokens else bm.context_window_tokens
             ),
@@ -433,7 +450,7 @@ async def get_provider_model_list(
                 "type": um.type,
                 "enabled": um.enabled,
                 "source": um.source,
-                "abilities": um.abilities,
+                "abilities": _model_abilities(um.provider_id, um.id, um.abilities),
                 "context_window_tokens": um.context_window_tokens,
                 "description": um.description,
                 "sort": um.sort,
@@ -629,7 +646,11 @@ async def get_runtime_state(
                 "display_name": (um.display_name if um and um.display_name else bm.display_name),
                 "type": bm.type,
                 "enabled": (um.enabled if um is not None else bm.enabled),
-                "abilities": (um.abilities if um and um.abilities else bm.abilities),
+                "abilities": _model_abilities(
+                    pid,
+                    bm.id,
+                    um.abilities if um and um.abilities else bm.abilities,
+                ),
             }
             enabled_model_list.append(entry)
 
@@ -642,7 +663,7 @@ async def get_runtime_state(
                 "display_name": um.display_name,
                 "type": um.type,
                 "enabled": um.enabled,
-                "abilities": um.abilities,
+                "abilities": _model_abilities(um.provider_id, um.id, um.abilities),
             })
 
     # Runtime config per provider

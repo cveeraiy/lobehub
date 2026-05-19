@@ -40,6 +40,7 @@ def make_user_id_field(platform: str) -> Field:
         "feishu": "channel.userIdHint.feishu",
         "qq": "channel.userIdHint.qq",
         "slack": "channel.userIdHint.slack",
+        "teams": "channel.userIdHint.teams",
         "telegram": "channel.userIdHint.telegram",
     }
     return {
@@ -156,4 +157,3 @@ def merge_settings_with_defaults(platform_schema: list[Field], settings: dict[st
     settings_schema = next((field for field in platform_schema if field.get("key") == "settings"), None)
     defaults = extract_defaults(settings_schema.get("properties", []) if settings_schema else [])
     return {**defaults, **(settings or {})}
-

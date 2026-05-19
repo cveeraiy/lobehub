@@ -77,9 +77,11 @@ class UpdateProviderOrderBody(BaseModel):
 
 
 class CreateModelBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
     id: str
-    provider_id: str
-    display_name: Optional[str] = None
+    provider_id: str = Field(alias="providerId")
+    display_name: Optional[str] = Field(default=None, alias="displayName")
     description: Optional[str] = None
     type: str = "chat"
     enabled: bool = True
@@ -88,11 +90,13 @@ class CreateModelBody(BaseModel):
     config: Optional[dict[str, Any]] = None
     settings: Optional[dict[str, Any]] = None
     pricing: Optional[dict[str, Any]] = None
-    context_window_tokens: Optional[int] = None
+    context_window_tokens: Optional[int] = Field(default=None, alias="contextWindowTokens")
 
 
 class UpdateModelBody(BaseModel):
-    display_name: Optional[str] = None
+    model_config = {"populate_by_name": True}
+
+    display_name: Optional[str] = Field(default=None, alias="displayName")
     description: Optional[str] = None
     type: Optional[str] = None
     enabled: Optional[bool] = None
@@ -101,12 +105,14 @@ class UpdateModelBody(BaseModel):
     config: Optional[dict[str, Any]] = None
     settings: Optional[dict[str, Any]] = None
     pricing: Optional[dict[str, Any]] = None
-    context_window_tokens: Optional[int] = None
+    context_window_tokens: Optional[int] = Field(default=None, alias="contextWindowTokens")
 
 
 class ToggleModelBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
     id: str
-    provider_id: str
+    provider_id: str = Field(alias="providerId")
     enabled: bool
     type: Optional[str] = None
 
@@ -124,17 +130,22 @@ class ModelSortItem(BaseModel):
 
 
 class BatchUpdateModelItem(BaseModel):
+    model_config = {"populate_by_name": True}
+
     id: str
-    display_name: Optional[str] = None
+    display_name: Optional[str] = Field(default=None, alias="displayName")
     description: Optional[str] = None
     type: Optional[str] = None
     enabled: Optional[bool] = None
+    source: Optional[str] = None
+    sort: Optional[int] = None
     abilities: Optional[dict[str, Any]] = None
     parameters: Optional[dict[str, Any]] = None
     config: Optional[dict[str, Any]] = None
     settings: Optional[dict[str, Any]] = None
     pricing: Optional[dict[str, Any]] = None
-    context_window_tokens: Optional[int] = None
+    context_window_tokens: Optional[int] = Field(default=None, alias="contextWindowTokens")
+    released_at: Optional[str] = Field(default=None, alias="releasedAt")
 
 
 class BatchUpdateModelsBody(BaseModel):
@@ -142,9 +153,26 @@ class BatchUpdateModelsBody(BaseModel):
     models: list[BatchUpdateModelItem]
 
 
+class ProviderBatchUpdateModelsBody(BaseModel):
+    models: list[BatchUpdateModelItem]
+
+
+class ProviderBatchToggleModelsBody(BaseModel):
+    models: list[str]
+    enabled: bool
+
+
 class UpdateModelOrderBody(BaseModel):
-    provider_id: str
-    sort_map: list[ModelSortItem]
+    model_config = {"populate_by_name": True}
+
+    provider_id: str = Field(alias="providerId")
+    sort_map: list[ModelSortItem] = Field(alias="sortMap")
+
+
+class ProviderUpdateModelOrderBody(BaseModel):
+    model_config = {"populate_by_name": True}
+
+    sort_map: list[ModelSortItem] = Field(alias="sortMap")
 
 
 class CheckConnectivityBody(BaseModel):
@@ -417,6 +445,17 @@ async def batch_toggle_models(
     return {"ok": True}
 
 
+@router.put("/providers/{provider_id}/models/batch-toggle")
+async def batch_toggle_provider_models(
+    provider_id: str,
+    body: ProviderBatchToggleModelsBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await svc.batch_toggle_models(session, user_id, provider_id, body.models, body.enabled)
+    return {"ok": True}
+
+
 @router.put("/models/order")
 async def update_model_order(
     body: UpdateModelOrderBody,
@@ -425,6 +464,20 @@ async def update_model_order(
 ):
     await svc.update_model_order(
         session, user_id, body.provider_id,
+        [i.model_dump() for i in body.sort_map],
+    )
+    return {"ok": True}
+
+
+@router.put("/providers/{provider_id}/models/order")
+async def update_provider_model_order(
+    provider_id: str,
+    body: ProviderUpdateModelOrderBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await svc.update_model_order(
+        session, user_id, provider_id,
         [i.model_dump() for i in body.sort_map],
     )
     return {"ok": True}
@@ -468,11 +521,32 @@ async def batch_update_models(
     session: AsyncSession = Depends(get_db),
 ):
     """Batch update multiple models for a provider (upsert)."""
-    for m in body.models:
-        values = m.model_dump(exclude_none=True, exclude={"id"})
-        if values:
-            await svc.update_model(session, user_id, m.id, body.id, **values)
+    await _batch_update_models(session, user_id, body.id, body.models)
     return {"ok": True}
+
+
+@router.put("/providers/{provider_id}/models/batch")
+async def batch_update_provider_models(
+    provider_id: str,
+    body: ProviderBatchUpdateModelsBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Nested route alias used by the REST frontend service."""
+    await _batch_update_models(session, user_id, provider_id, body.models)
+    return {"ok": True}
+
+
+async def _batch_update_models(
+    session: AsyncSession,
+    user_id: str,
+    provider_id: str,
+    models: list[BatchUpdateModelItem],
+) -> None:
+    for model in models:
+        values = model.model_dump(exclude_none=True, exclude={"id"})
+        if values:
+            await svc.update_model(session, user_id, model.id, provider_id, **values)
 
 
 # =====================================================================

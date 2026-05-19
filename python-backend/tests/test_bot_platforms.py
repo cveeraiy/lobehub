@@ -8,6 +8,7 @@ from app.services.bot.platforms.feishu.definition import feishu, lark
 from app.services.bot.platforms.line.definition import line
 from app.services.bot.platforms.qq.definition import qq
 from app.services.bot.platforms.slack.definition import slack
+from app.services.bot.platforms.teams.definition import teams
 from app.services.bot.platforms.telegram.definition import telegram
 from app.services.bot.platforms.wechat.definition import wechat
 
@@ -31,6 +32,7 @@ def test_registry_exposes_only_python_migrated_platforms() -> None:
         "lark",
         "qq",
         "wechat",
+        "teams",
     ]
 
 
@@ -278,4 +280,37 @@ async def test_wechat_validate_credentials_reports_missing_bot_token() -> None:
     assert result.to_dict() == {
         "valid": False,
         "errors": [{"field": "botToken", "message": "Bot Token is required"}],
+    }
+
+
+def test_teams_platform_serializes_frontend_schema() -> None:
+    data = teams.serialize()
+
+    assert data["id"] == "teams"
+    assert data["connectionMode"] == "webhook"
+    assert data["documentation"]["portalUrl"] == "https://dev.botframework.com/"
+    assert any(field["key"] == "applicationId" for field in data["schema"])
+
+
+def test_teams_settings_merge_schema_defaults() -> None:
+    settings = teams.merge_settings({"charLimit": 1000})
+
+    assert settings["charLimit"] == 1000
+    assert settings["concurrency"] == "queue"
+    assert settings["historyLimit"] == 50
+    assert settings["dmPolicy"] == "open"
+    assert settings["groupPolicy"] == "open"
+
+
+@pytest.mark.asyncio
+async def test_teams_validate_credentials_reports_missing_fields() -> None:
+    result = await teams.validate_credentials({})
+
+    assert result.valid is False
+    assert result.to_dict() == {
+        "valid": False,
+        "errors": [
+            {"field": "applicationId", "message": "Microsoft App ID is required"},
+            {"field": "appPassword", "message": "Microsoft App Password is required"},
+        ],
     }

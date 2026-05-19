@@ -10,6 +10,7 @@ interface AgentBotProviderResponse {
   enabled: boolean;
   id: string;
   platform: string;
+  runtime_status?: BotRuntimeStatusSnapshot['status'];
   settings?: Record<string, unknown> | null;
   updated_at?: string | null;
   user_id?: string;
@@ -23,6 +24,7 @@ interface BotProviderItem {
   enabled: boolean;
   id: string;
   platform: string;
+  runtimeStatus?: BotRuntimeStatusSnapshot['status'];
   settings?: Record<string, unknown> | null;
   updatedAt?: string | null;
   userId?: string;
@@ -44,6 +46,7 @@ const mapProvider = (item: AgentBotProviderResponse): BotProviderItem => ({
   enabled: item.enabled,
   id: item.id,
   platform: item.platform,
+  runtimeStatus: item.runtime_status,
   settings: item.settings,
   updatedAt: item.updated_at,
   userId: item.user_id,
@@ -160,7 +163,7 @@ class AgentBotProviderService {
   connectBot = async (params: {
     applicationId: string;
     platform: string;
-  }): Promise<{ status: 'queued' | 'started' }> => {
+  }): Promise<{ status: 'connected' | 'connecting' | 'queued' | 'started' }> => {
     const providers = await this.list();
     const provider = providers.find(
       (item) => item.applicationId === params.applicationId && item.platform === params.platform,
