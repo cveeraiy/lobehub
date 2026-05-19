@@ -37,10 +37,28 @@ def test_chat_extra_kwargs_drops_openai_penalties_for_bedrock():
     assert "presence_penalty" not in kwargs
     assert "frequency_penalty" not in kwargs
     assert kwargs["drop_params"] is True
-    assert kwargs["top_p"] == 0.9
+    assert "top_p" not in kwargs
     assert kwargs["aws_access_key_id"] == "access"
     assert kwargs["aws_secret_access_key"] == "secret"
     assert kwargs["aws_region_name"] == "us-east-1"
+
+
+def test_chat_extra_kwargs_keeps_bedrock_top_p_when_temperature_absent():
+    runtime = ProviderRuntimeConfig(provider="bedrock", runtime_provider="bedrock")
+
+    kwargs = chat_extra_kwargs(
+        runtime,
+        {
+            "messages": [{"content": "hello", "role": "user"}],
+            "model": "anthropic.claude-instant-v1",
+            "provider": "bedrock",
+            "stream": False,
+            "top_p": 0.9,
+        },
+    )
+
+    assert kwargs["top_p"] == 0.9
+    assert kwargs["drop_params"] is True
 
 
 def test_chat_extra_kwargs_keeps_openai_penalties_for_non_bedrock():

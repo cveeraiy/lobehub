@@ -28,7 +28,7 @@ from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from itsdangerous import BadSignature, URLSafeTimedSerializer
 from jose import JWTError, jwt
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -510,6 +510,125 @@ def _http_error(status: int, message: str):
     return HTTPException(status_code=status, detail=message)
 
 
+def _quote_ident(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'
+
+
+def _qualified_table(schema: str, table: str) -> str:
+    return f"{_quote_ident(schema)}.{_quote_ident(table)}"
+
+
+async def _load_foreign_keys(db: AsyncSession) -> list[dict[str, Any]]:
+    rows = (
+        await db.execute(
+            text(
+                """
+                SELECT
+                  child_ns.nspname AS child_schema,
+                  child_cls.relname AS child_table,
+                  child_attr.attname AS child_column,
+                  child_attr.attnotnull AS child_not_null,
+                  parent_ns.nspname AS parent_schema,
+                  parent_cls.relname AS parent_table,
+                  parent_attr.attname AS parent_column
+                FROM pg_constraint constraint_row
+                JOIN pg_class child_cls ON child_cls.oid = constraint_row.conrelid
+                JOIN pg_namespace child_ns ON child_ns.oid = child_cls.relnamespace
+                JOIN pg_class parent_cls ON parent_cls.oid = constraint_row.confrelid
+                JOIN pg_namespace parent_ns ON parent_ns.oid = parent_cls.relnamespace
+                JOIN unnest(constraint_row.conkey) WITH ORDINALITY AS child_key(attnum, ord) ON true
+                JOIN unnest(constraint_row.confkey) WITH ORDINALITY AS parent_key(attnum, ord)
+                  ON parent_key.ord = child_key.ord
+                JOIN pg_attribute child_attr
+                  ON child_attr.attrelid = constraint_row.conrelid
+                  AND child_attr.attnum = child_key.attnum
+                JOIN pg_attribute parent_attr
+                  ON parent_attr.attrelid = constraint_row.confrelid
+                  AND parent_attr.attnum = parent_key.attnum
+                WHERE constraint_row.contype = 'f'
+                  AND array_length(constraint_row.conkey, 1) = 1
+                """
+            )
+        )
+    ).mappings()
+
+    return [dict(row) for row in rows]
+
+
+async def _delete_user_by_id(db: AsyncSession, user_id: str) -> None:
+    foreign_keys = await _load_foreign_keys(db)
+    by_parent: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for fk in foreign_keys:
+        by_parent.setdefault((fk["parent_schema"], fk["parent_table"]), []).append(fk)
+
+    params = {"user_id": user_id}
+
+    async def delete_dependents(
+        parent_schema: str,
+        parent_table: str,
+        parent_column: str,
+        parent_filter: str,
+        stack: set[tuple[str, str]],
+    ) -> None:
+        parent_key = (parent_schema, parent_table)
+        parent_sql = _qualified_table(parent_schema, parent_table)
+
+        for fk in by_parent.get(parent_key, []):
+            child_key = (fk["child_schema"], fk["child_table"])
+            if child_key == parent_key or child_key in stack:
+                continue
+
+            child_sql = _qualified_table(fk["child_schema"], fk["child_table"])
+            child_column = _quote_ident(fk["child_column"])
+            parent_column_sql = _quote_ident(parent_column)
+            child_filter = (
+                f"{child_column} IN (SELECT {parent_column_sql} FROM {parent_sql} "
+                f"WHERE {parent_filter})"
+            )
+
+            await delete_dependents(
+                fk["child_schema"],
+                fk["child_table"],
+                fk["child_column"],
+                child_filter,
+                {*stack, child_key},
+            )
+            await db.execute(text(f"DELETE FROM {child_sql} WHERE {child_filter}"), params)
+
+    async def null_reference(table: str, column: str, schema: str = "public") -> None:
+        await db.execute(
+            text(
+                f"UPDATE {_qualified_table(schema, table)} "
+                f"SET {_quote_ident(column)} = NULL WHERE {_quote_ident(column)} = :user_id"
+            ),
+            params,
+        )
+
+    # These columns point at a user but are not row ownership. Null them first so
+    # deleting the target account does not remove unrelated records.
+    for table, column in (
+        ("agent_documents", "deleted_by_user_id"),
+        ("task_comments", "author_user_id"),
+        ("tasks", "assignee_user_id"),
+    ):
+        await null_reference(table, column)
+
+    await delete_dependents(
+        "public",
+        "users",
+        "id",
+        f"{_quote_ident('id')} = :user_id",
+        {("public", "users")},
+    )
+    await db.execute(
+        text(
+            f"DELETE FROM {_qualified_table('public', 'users')} "
+            f"WHERE {_quote_ident('id')} = :user_id"
+        ),
+        params,
+    )
+
+
 def _user_to_admin_response(user: User) -> dict[str, Any]:
     """Map a User row to the Better Auth admin user shape."""
     return {
@@ -603,13 +722,19 @@ async def admin_remove_user(
     db: AsyncSession = Depends(get_db),
 ):
     """Better Auth compatible: delete a user."""
-    _require_admin_session(request)
+    session_data = _require_admin_session(request)
     body = await request.json()
     user_id = body.get("userId")
     if not user_id:
         raise _http_error(400, "userId required")
-    from sqlalchemy import delete as sql_delete
-    await db.execute(sql_delete(User).where(User.id == user_id))
+    if user_id == session_data.get("user_id"):
+        raise _http_error(400, "You cannot remove yourself")
+
+    user = (await db.execute(select(User.id).where(User.id == user_id))).scalar_one_or_none()
+    if not user:
+        raise _http_error(404, "User not found")
+
+    await _delete_user_by_id(db, user_id)
     await db.commit()
     return {"success": True}
 

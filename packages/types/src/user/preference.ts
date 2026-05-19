@@ -93,12 +93,29 @@ export type ReferralStatusString =
   | 'rewarded'
   | 'revoked';
 
+export interface EnterpriseAiManagedSettings {
+  model: boolean;
+  provider: boolean;
+  skills: boolean;
+}
+
+export interface EffectiveEnterpriseAiPolicy {
+  defaultAgent: Record<string, unknown>;
+  managedSettings: EnterpriseAiManagedSettings;
+  models: Record<string, unknown>;
+  providers: Record<string, unknown>;
+  restrictions: Record<string, unknown>;
+  skills: Record<string, unknown>;
+  sourcePolicyIds: string[];
+}
+
 export interface UserInitializationState {
   agentOnboarding?: UserAgentOnboarding;
   avatar?: string;
   canEnablePWAGuide?: boolean;
   canEnableTrace?: boolean;
   email?: string;
+  enterpriseAiPolicy?: EffectiveEnterpriseAiPolicy;
   firstName?: string;
   fullName?: string;
   hasConversation?: boolean;

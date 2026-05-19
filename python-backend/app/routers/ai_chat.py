@@ -20,6 +20,7 @@ from app.dependencies import get_current_user_id
 from app.models.message import Message
 from app.models.topic import Topic
 from app.models.topic_ext import Thread
+from app.routers.messages import _msg_dict
 
 logger = logging.getLogger(__name__)
 
@@ -224,10 +225,22 @@ async def send_message_in_server(
     session.add(asst_msg)
     await session.flush()
 
+    stmt = select(Message).where(Message.user_id == user_id)
+    if session_id:
+        stmt = stmt.where(Message.session_id == session_id)
+    if topic_id:
+        stmt = stmt.where(Message.topic_id == topic_id)
+    if body.agent_id:
+        stmt = stmt.where(Message.agent_id == body.agent_id)
+    if thread_id:
+        stmt = stmt.where(Message.thread_id == thread_id)
+    messages = (await session.execute(stmt.order_by(Message.created_at))).scalars().all()
+
     return {
         "assistantMessageId": asst_msg.id,
         "createdThreadId": created_thread_id,
         "isCreateNewTopic": is_create_new_topic,
+        "messages": [_msg_dict(m) for m in messages],
         "topicId": topic_id,
         "userMessageId": user_msg.id,
     }

@@ -1,3 +1,4 @@
+import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { agentService } from './agent.rest';
@@ -84,6 +85,26 @@ describe('AgentService REST', () => {
     });
     expect(result?.createdAt).toBeInstanceOf(Date);
     expect(result?.updatedAt).toBeInstanceOf(Date);
+  });
+
+  it('merges default config when REST agent fields are null or missing', async () => {
+    mockRestGet.mockResolvedValueOnce({
+      id: 'agent-1',
+      model: null,
+      provider: null,
+      title: 'Default-backed Agent',
+    });
+
+    const result = await agentService.getAgentConfigById('agent-1');
+
+    expect(result).toMatchObject({
+      id: 'agent-1',
+      model: DEFAULT_AGENT_CONFIG.model,
+      provider: DEFAULT_AGENT_CONFIG.provider,
+      title: 'Default-backed Agent',
+    });
+    expect(result?.params).toEqual(DEFAULT_AGENT_CONFIG.params);
+    expect(result?.chatConfig).toEqual(DEFAULT_AGENT_CONFIG.chatConfig);
   });
 
   it('updates agent meta with snake_case fields and returns the refreshed agent', async () => {

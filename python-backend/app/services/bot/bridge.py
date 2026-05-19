@@ -9,6 +9,7 @@ from fastapi import BackgroundTasks
 from app.models.agent_ops import AgentBotProvider
 from app.services.agent_runtime import agent_runtime
 from app.services.bot.inbound import NormalizedBotMessage
+from app.services.bot.platforms.discord.client import DiscordClient
 from app.services.bot.platforms.feishu.client import FeishuClient
 from app.services.bot.platforms.line.client import LineClient
 from app.services.bot.platforms.qq.client import QQClient
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 RuntimeFactory = Callable[..., Awaitable[dict[str, Any]]]
+DiscordClientFactory = Callable[[str], DiscordClient]
 TeamsClientFactory = Callable[[str, str], TeamsConnectorClient]
 TelegramClientFactory = Callable[[str], TelegramClient]
 LineClientFactory = Callable[[str], LineClient]
@@ -45,7 +47,10 @@ def _thread_key(message: NormalizedBotMessage) -> str:
 
 
 def normalize_command(text: str) -> str | None:
-    command = text.strip().split(maxsplit=1)[0].lower()
+    parts = text.strip().split(maxsplit=1)
+    if not parts:
+        return None
+    command = parts[0].lower()
     if "@" in command:
         command = command.split("@", 1)[0]
     return command if command in {"/new", "/stop"} else None
@@ -65,11 +70,38 @@ def extract_assistant_text(result: dict[str, Any]) -> str | None:
     return None
 
 
+def build_user_content(message: NormalizedBotMessage) -> str:
+    content = message.text.strip()
+    if not message.attachments:
+        return content
+
+    lines = ["Attachments:"]
+    for index, attachment in enumerate(message.attachments, start=1):
+        parts = [f"{index}. {attachment.type}"]
+        if attachment.name:
+            parts.append(f"name={attachment.name}")
+        if attachment.mime_type:
+            parts.append(f"mime={attachment.mime_type}")
+        if attachment.size is not None:
+            parts.append(f"size={attachment.size}")
+        if attachment.url:
+            parts.append(f"url={attachment.url}")
+        elif attachment.id:
+            parts.append(f"id={attachment.id}")
+        lines.append(" ".join(parts))
+
+    attachment_summary = "\n".join(lines)
+    if content:
+        return f"{content}\n\n{attachment_summary}"
+    return attachment_summary
+
+
 class BotBridge:
     def __init__(
         self,
         *,
         runtime: Any = agent_runtime,
+        discord_client_factory: DiscordClientFactory = DiscordClient,
         teams_client_factory: TeamsClientFactory = TeamsConnectorClient,
         telegram_client_factory: TelegramClientFactory = TelegramClient,
         line_client_factory: LineClientFactory = LineClient,
@@ -80,6 +112,7 @@ class BotBridge:
     ) -> None:
         self._runtime = runtime
         self._active_operations: dict[str, str] = {}
+        self._discord_client_factory = discord_client_factory
         self._teams_client_factory = teams_client_factory
         self._telegram_client_factory = telegram_client_factory
         self._line_client_factory = line_client_factory
@@ -96,7 +129,7 @@ class BotBridge:
         *,
         background_tasks: BackgroundTasks | None = None,
     ) -> BotBridgeDispatchResult:
-        if not message.text.strip():
+        if not message.text.strip() and not message.attachments:
             return BotBridgeDispatchResult(status="ignored", reason="empty_message")
 
         command = normalize_command(message.text)
@@ -123,7 +156,7 @@ class BotBridge:
 
         operation = await self._runtime.create_operation(
             provider.user_id,
-            [{"role": "user", "content": message.text}],
+            [{"role": "user", "content": build_user_content(message)}],
             agent_id=provider.agent_id,
             session_id=message.thread_id,
         )
@@ -173,6 +206,13 @@ class BotBridge:
                 logger.warning("Teams bot reply skipped because appPassword is missing")
                 return
             await self._teams_client_factory(message.application_id, app_password).send_reply(message.raw, text)
+            return
+        if message.platform == "discord":
+            bot_token = credentials.get("botToken")
+            if not isinstance(bot_token, str) or not bot_token:
+                logger.warning("Discord bot reply skipped because botToken is missing")
+                return
+            await self._discord_client_factory(bot_token).send_reply(message.raw, text)
             return
         if message.platform == "telegram":
             bot_token = credentials.get("botToken")

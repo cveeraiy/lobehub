@@ -12,6 +12,7 @@ import {
 import debug from 'debug';
 import { produce } from 'immer';
 
+import { DEFAULT_AGENT_CONFIG } from '@/const/settings';
 import { getAgentStoreState } from '@/store/agent';
 import { agentSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { getChatGroupStoreState } from '@/store/agentGroup';
@@ -19,6 +20,8 @@ import { agentGroupByIdSelectors, agentGroupSelectors } from '@/store/agentGroup
 import { useUserStore } from '@/store/user';
 import { userGeneralSettingsSelectors } from '@/store/user/selectors';
 import { isDev } from '@/utils/env';
+
+import { resolveEnabledChatModelConfig } from './modelFallback';
 
 const log = debug('mecha:agentConfigResolver');
 
@@ -175,7 +178,24 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
   const agentStoreState = getAgentStoreState();
 
   // Get base config from store
-  const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
+  const storedAgentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
+  const agentConfig = storedAgentConfig
+    ? (() => {
+        const modelConfig = resolveEnabledChatModelConfig(
+          storedAgentConfig.model,
+          storedAgentConfig.provider,
+        );
+
+        return {
+          ...storedAgentConfig,
+          chatConfig: storedAgentConfig.chatConfig ?? DEFAULT_AGENT_CONFIG.chatConfig,
+          model: modelConfig.model,
+          plugins: storedAgentConfig.plugins ?? DEFAULT_AGENT_CONFIG.plugins,
+          provider: modelConfig.provider,
+          tts: storedAgentConfig.tts ?? DEFAULT_AGENT_CONFIG.tts,
+        } as LobeAgentConfig;
+      })()
+    : storedAgentConfig;
   const chatConfig = chatConfigByIdSelectors.getChatConfigById(agentId)(agentStoreState);
 
   // Base plugins from agent config

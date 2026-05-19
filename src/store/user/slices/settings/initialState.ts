@@ -1,5 +1,5 @@
 import { DEFAULT_SETTINGS } from '@lobechat/config';
-import { type UserSettings } from '@lobechat/types';
+import type { EffectiveEnterpriseAiPolicy, UserSettings } from '@lobechat/types';
 import { type PartialDeep } from 'type-fest';
 
 export interface SettingsPermissions {
@@ -9,6 +9,7 @@ export interface SettingsPermissions {
 
 export interface UserSettingsState {
   defaultSettings: UserSettings;
+  enterpriseAiPolicy?: EffectiveEnterpriseAiPolicy;
   settings: PartialDeep<UserSettings>;
   settingsPermissions: SettingsPermissions;
   updateSettingsSignal?: AbortController;

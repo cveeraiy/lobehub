@@ -140,6 +140,7 @@ export class CommonActionImpl {
                 isUserHasConversation: data.hasConversation,
                 isUserStateInit: true,
                 agentOnboarding: data.agentOnboarding,
+                enterpriseAiPolicy: data.enterpriseAiPolicy,
                 onboarding: data.onboarding,
                 preference,
                 referralStatus: data.referralStatus,

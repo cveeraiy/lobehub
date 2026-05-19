@@ -47,6 +47,26 @@ vi.mock('@/services/electron/localFileService', () => ({
 // Mock lambdaClient to prevent network requests
 vi.mock('@/libs/trpc/client', () => ({
   lambdaClient: {
+    klavis: {
+      createServerInstance: {
+        mutate: vi.fn(),
+      },
+      deleteServerInstance: {
+        mutate: vi.fn(),
+      },
+      getKlavisPlugins: {
+        query: vi.fn(),
+      },
+      getServerInstance: {
+        query: vi.fn(),
+      },
+      removeKlavisPlugin: {
+        mutate: vi.fn(),
+      },
+      updateKlavisPlugin: {
+        mutate: vi.fn(),
+      },
+    },
     session: {
       updateSession: {
         mutate: vi.fn().mockResolvedValue(undefined),

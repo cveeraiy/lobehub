@@ -407,14 +407,19 @@ def chat_extra_kwargs(runtime: ProviderRuntimeConfig, body: dict[str, Any]) -> d
     }
     extra = {k: v for k, v in body.items() if k not in ignored and v is not None}
     extra.update(runtime.extra_kwargs)
-    if body.get("top_p") is not None:
-        extra["top_p"] = body["top_p"]
     if runtime.runtime_provider == "bedrock":
         # Bedrock models do not support OpenAI penalty params. Let LiteLLM
         # drop any other provider-specific unsupported OpenAI params instead
         # of failing connectivity checks and normal chat requests.
+        # Anthropic-on-Bedrock also rejects requests that include both
+        # temperature and top_p. The frontend sends both defaults, so prefer
+        # temperature and only forward top_p when temperature is absent.
+        if body.get("temperature") is None and body.get("top_p") is not None:
+            extra["top_p"] = body["top_p"]
         extra["drop_params"] = True
         return extra
+    if body.get("top_p") is not None:
+        extra["top_p"] = body["top_p"]
     if body.get("presence_penalty") is not None:
         extra["presence_penalty"] = body["presence_penalty"]
     if body.get("frequency_penalty") is not None:

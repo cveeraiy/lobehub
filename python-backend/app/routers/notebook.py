@@ -29,6 +29,7 @@ class CreateDocumentBody(BaseModel):
     description: Optional[str] = None
     type: str = "markdown"  # 'article' | 'markdown' | 'note' | 'report'
     source: str = "notebook"
+    source_type: str = "api"
     metadata: Optional[dict[str, Any]] = None
 
 
@@ -36,11 +37,13 @@ class UpdateDocumentBody(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     description: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 @router.get("/documents")
 async def list_notebook_documents(
     topic_id: Optional[str] = None,
+    type: Optional[str] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -58,6 +61,8 @@ async def list_notebook_documents(
             .where(and_(Document.user_id == user_id, Document.source_type == "api"))
             .order_by(desc(Document.updated_at))
         )
+    if type:
+        stmt = stmt.where(Document.file_type == type)
     rows = (await session.execute(stmt)).scalars().all()
     return [_doc_dict(d) for d in rows]
 
@@ -76,7 +81,7 @@ async def create_notebook_document(
         description=body.description,
         file_type=body.type,
         source="notebook" if body.source == "notebook" else body.source,
-        source_type="api",
+        source_type=body.source_type,
         total_char_count=len(body.content),
         total_line_count=body.content.count("\n") + 1,
         metadata_=body.metadata,
@@ -93,7 +98,8 @@ async def create_notebook_document(
     session.add(assoc)
     await session.flush()
 
-    return {"id": doc.id}
+    await session.refresh(doc)
+    return _doc_dict(doc, include_content=True)
 
 
 @router.get("/documents/{document_id}")
@@ -125,15 +131,27 @@ async def update_notebook_document(
         values["total_line_count"] = body.content.count("\n") + 1
     if body.description is not None:
         values["description"] = body.description
+    if body.metadata is not None:
+        values["metadata_"] = body.metadata
     if not values:
-        return {"ok": True}
+        doc = (await session.execute(
+            select(Document).where(and_(Document.id == document_id, Document.user_id == user_id))
+        )).scalar_one_or_none()
+        if not doc:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+        return _doc_dict(doc, include_content=True)
     values["updated_at"] = _now()
     await session.execute(
         update(Document)
         .where(and_(Document.id == document_id, Document.user_id == user_id))
         .values(**values)
     )
-    return {"ok": True}
+    doc = (await session.execute(
+        select(Document).where(and_(Document.id == document_id, Document.user_id == user_id))
+    )).scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
+    return _doc_dict(doc, include_content=True)
 
 
 @router.delete("/documents/{document_id}")
@@ -159,6 +177,7 @@ def _doc_dict(d: Document, include_content: bool = False) -> dict[str, Any]:
         "title": d.title,
         "description": d.description,
         "file_type": d.file_type,
+        "metadata": d.metadata_,
         "total_char_count": d.total_char_count,
         "total_line_count": d.total_line_count,
         "created_at": d.created_at.isoformat() if d.created_at else None,

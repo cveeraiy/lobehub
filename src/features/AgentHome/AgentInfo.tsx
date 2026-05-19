@@ -54,7 +54,7 @@ const AgentInfo = memo(() => {
         {displayTitle}
       </Text>
       <Flexbox width={'min(100%, 640px)'}>
-        <Markdown fontSize={fontSize} variant={'chat'}>
+        <Markdown enableImageGallery={false} fontSize={fontSize} variant={'chat'}>
           {message}
         </Markdown>
       </Flexbox>

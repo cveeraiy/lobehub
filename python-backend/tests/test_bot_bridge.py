@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 
 from app.models.agent_ops import AgentBotProvider
-from app.services.bot.bridge import BotBridge, extract_assistant_text
-from app.services.bot.inbound import NormalizedBotMessage
+from app.services.bot.bridge import BotBridge, build_user_content, extract_assistant_text
+from app.services.bot.inbound import NormalizedAttachment, NormalizedBotMessage
 
 
 class FakeRuntime:
@@ -52,6 +52,17 @@ class FakeTeamsClient:
                 "text": text,
             }
         )
+        return {"id": "reply-1"}
+
+
+class FakeDiscordClient:
+    replies: list[dict[str, Any]] = []
+
+    def __init__(self, bot_token: str) -> None:
+        self.bot_token = bot_token
+
+    async def send_reply(self, activity: dict[str, Any], text: str) -> dict[str, Any]:
+        self.replies.append({"activity": activity, "bot_token": self.bot_token, "text": text})
         return {"id": "reply-1"}
 
 
@@ -190,6 +201,15 @@ def test_extract_assistant_text_returns_last_assistant_message() -> None:
     ) == "last"
 
 
+def test_build_user_content_includes_attachment_summary() -> None:
+    message = make_message(text="see attached")
+    message = NormalizedBotMessage(
+        **{**message.to_dict(), "attachments": [NormalizedAttachment(type="image", id="file-1", mime_type="image/png")]}
+    )
+
+    assert build_user_content(message) == "see attached\n\nAttachments:\n1. image mime=image/png id=file-1"
+
+
 def test_normalize_command_handles_bot_mentions() -> None:
     from app.services.bot.bridge import normalize_command
 
@@ -213,6 +233,23 @@ async def test_enqueue_creates_agent_runtime_operation() -> None:
             "agent_id": "agent-1",
             "session_id": "teams:thread-1",
         }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_enqueue_passes_attachment_summary_to_runtime() -> None:
+    runtime = FakeRuntime()
+    bridge = BotBridge(runtime=runtime)
+    message = make_message(text="")
+    message = NormalizedBotMessage(
+        **{**message.to_dict(), "attachments": [NormalizedAttachment(type="file", name="report.pdf", size=123)]}
+    )
+
+    result = await bridge.enqueue(make_provider(), message, {"appPassword": "secret"})
+
+    assert result.to_dict() == {"status": "queued", "operation_id": "op-1"}
+    assert runtime.created[0]["messages"] == [
+        {"role": "user", "content": "Attachments:\n1. file name=report.pdf size=123"}
     ]
 
 
@@ -291,6 +328,24 @@ async def test_run_and_reply_sends_teams_reply() -> None:
             "activity": make_message().raw,
             "app_id": "app-1",
             "app_password": "secret",
+            "text": "hello from agent",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_run_and_reply_sends_discord_reply() -> None:
+    runtime = FakeRuntime()
+    FakeDiscordClient.replies = []
+    bridge = BotBridge(runtime=runtime, discord_client_factory=FakeDiscordClient)
+
+    await bridge.run_and_reply("op-1", make_message("discord"), {"botToken": "bot-token"})
+
+    assert runtime.ran == ["op-1"]
+    assert FakeDiscordClient.replies == [
+        {
+            "activity": make_message("discord").raw,
+            "bot_token": "bot-token",
             "text": "hello from agent",
         }
     ]

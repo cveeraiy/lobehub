@@ -24,6 +24,7 @@ from app.feature_flags import get_feature_flags
 from app.models.message import Message
 from app.models.session import Session
 from app.models.user import User, UserSettings
+from app.services.enterprise_ai_policy import get_enterprise_ai_policy_service
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +69,9 @@ class UpdateOnboardingBody(BaseModel):
         extra = "allow"
 
 
+ENTERPRISE_SETTING_MANAGED = "ENTERPRISE_SETTING_MANAGED"
+
+
 # ── getUserState (SPA boot) ──────────────────────────────────────────
 
 @router.get("/state")
@@ -81,7 +85,9 @@ async def get_user_state(
     """
     user = (await session.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
     if not user:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        user = User(id=user_id)
+        session.add(user)
+        await session.flush()
 
     # Get settings
     user_settings = (
@@ -119,6 +125,7 @@ async def get_user_state(
             logger.warning("Failed to decrypt key_vaults for user %s", user_id)
 
     ff = get_feature_flags(user_id)
+    enterprise_policy = await get_enterprise_ai_policy_service().resolve_for_user(user_id, session)
 
     return {
         "userId": user.id,
@@ -134,6 +141,12 @@ async def get_user_state(
         "canEnablePWAGuide": msg_count > 4,
         "canEnableTrace": msg_count > 4,
         "settings": _settings_dict(user_settings, decrypted_key_vaults) if user_settings else {},
+        "settingsPermissions": (
+            user_settings.settings_permissions
+            if user_settings and user_settings.settings_permissions
+            else _default_settings_permissions()
+        ),
+        "enterpriseAiPolicy": _effective_policy_dict(enterprise_policy),
         "featureFlags": ff.__dict__,
         "agentOnboarding": user.agent_onboarding,
         "onboarding": user.onboarding,
@@ -155,6 +168,16 @@ async def update_settings(
     ).scalar_one_or_none()
 
     values = body.model_dump(exclude_none=True)
+    enterprise_policy = await get_enterprise_ai_policy_service().resolve_for_user(user_id, session)
+    blocked_paths = _blocked_managed_setting_paths(values, enterprise_policy.managed_settings)
+    if blocked_paths:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": ENTERPRISE_SETTING_MANAGED,
+                "paths": blocked_paths,
+            },
+        )
 
     # Encrypt key_vaults if provided
     if "key_vaults" in values and values["key_vaults"] is not None:
@@ -522,6 +545,44 @@ async def get_user_registration_duration(
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
+
+def _default_settings_permissions() -> dict[str, bool]:
+    return {"agentSettings": False, "systemSettings": False}
+
+
+def _blocked_managed_setting_paths(values: dict[str, Any], managed_settings: Any) -> list[str]:
+    blocked: list[str] = []
+
+    if managed_settings.provider:
+        for key in ("key_vaults", "language_model"):
+            if key in values:
+                blocked.append(key)
+
+    if managed_settings.model and "default_agent" in values:
+        blocked.append("default_agent")
+
+    if managed_settings.skills:
+        for key in ("tool", "market"):
+            if key in values:
+                blocked.append(key)
+
+    return blocked
+
+
+def _effective_policy_dict(policy: Any) -> dict[str, Any]:
+    return {
+        "defaultAgent": policy.default_agent,
+        "managedSettings": {
+            "model": policy.managed_settings.model,
+            "provider": policy.managed_settings.provider,
+            "skills": policy.managed_settings.skills,
+        },
+        "models": policy.models,
+        "providers": policy.providers,
+        "restrictions": policy.restrictions,
+        "skills": policy.skills,
+        "sourcePolicyIds": policy.source_policy_ids,
+    }
 
 def _settings_dict(us: Optional[UserSettings], decrypted_kv: Optional[dict] = None) -> dict[str, Any]:
     if not us:

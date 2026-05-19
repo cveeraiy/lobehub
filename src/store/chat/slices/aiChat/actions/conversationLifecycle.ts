@@ -28,6 +28,7 @@ import { markUserValidAction } from '@/business/client/markUserValidAction';
 import { agentService } from '@/services/agent.resolved';
 import { aiChatService } from '@/services/aiChat.resolved';
 import { chatService } from '@/services/chat';
+import { resolveEnabledChatModelConfig } from '@/services/chat/mecha/modelFallback';
 import { resolveSelectedSkillsWithContent } from '@/services/chat/mecha/skillPreload';
 import { resolveSelectedToolsWithContent } from '@/services/chat/mecha/toolPreload';
 import { messageService } from '@/services/message/resolved';
@@ -460,7 +461,12 @@ export class ConversationLifecycleActionImpl {
     // ── Client mode: send via server API then run agent locally ──
     let data: SendMessageServerResponse | undefined;
     try {
-      const { model, provider } = agentSelectors.getAgentConfigById(agentId)(getAgentStoreState());
+      const agentConfig = agentSelectors.getAgentConfigById(agentId)(getAgentStoreState());
+      const isHeterogeneousAgent = !!agentConfig.agencyConfig?.heterogeneousProvider;
+      const { model, provider } = resolveEnabledChatModelConfig(
+        agentConfig.model,
+        agentConfig.agencyConfig?.heterogeneousProvider?.type ?? agentConfig.provider,
+      );
 
       const topicId = operationContext.topicId;
 
@@ -527,7 +533,7 @@ export class ConversationLifecycleActionImpl {
           newAssistantMessage: {
             // Pass isSupervisor metadata for group orchestration
             metadata: operationContext.isSupervisor ? { isSupervisor: true } : undefined,
-            model,
+            model: isHeterogeneousAgent ? undefined : model,
             provider: provider!,
           },
         },
@@ -764,6 +770,9 @@ export class ConversationLifecycleActionImpl {
           const displayMessages = displayMessageSelectors.getDisplayMessagesByKey(
             messageMapKey(execContext),
           )(this.#get());
+          const runtimeMessages = displayMessages.some((item) => item.id === data.userMessageId)
+            ? displayMessages
+            : data.messages;
 
           // When agents are @mentioned, inject a slim callAgent-only manifest
           // so the AI can delegate directly without activating the full agent-management tool
@@ -795,7 +804,7 @@ export class ConversationLifecycleActionImpl {
           await internal_execAgentRuntime({
             context: execContext,
             initialContext: mergedAgentRuntimeInitialContext,
-            messages: displayMessages,
+            messages: runtimeMessages,
             parentMessageId: data.assistantMessageId,
             parentMessageType: 'assistant',
             parentOperationId: operationId,

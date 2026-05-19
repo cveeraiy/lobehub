@@ -44,6 +44,69 @@ def _sse(data: Any) -> str:
     return f"data: {json.dumps(_jsonable(data), separators=(',', ':'))}\n\n"
 
 
+def _get_field(value: Any, key: str, default: Any = None) -> Any:
+    if isinstance(value, dict):
+        return value.get(key, default)
+    return getattr(value, key, default)
+
+
+def _event_sse(event: str, data: Any, event_id: str | None = None) -> str:
+    lines = []
+    if event_id:
+        lines.append(f"id: {event_id}")
+    lines.append(f"event: {event}")
+    lines.append(f"data: {json.dumps(_jsonable(data), separators=(',', ':'))}")
+    return "\n".join(lines) + "\n\n"
+
+
+def _usage_payload(usage: Any) -> dict[str, Any]:
+    if isinstance(usage, dict):
+        return {
+            "input_tokens": usage.get("input_tokens") or usage.get("prompt_tokens"),
+            "output_tokens": usage.get("output_tokens") or usage.get("completion_tokens"),
+            "total_tokens": usage.get("total_tokens"),
+        }
+    return {
+        "input_tokens": getattr(usage, "input_tokens", None) or getattr(usage, "prompt_tokens", None),
+        "output_tokens": getattr(usage, "output_tokens", None) or getattr(usage, "completion_tokens", None),
+        "total_tokens": getattr(usage, "total_tokens", None),
+    }
+
+
+def _chunk_events(chunk: Any) -> list[str]:
+    """Convert LiteLLM/OpenAI stream chunks into Lobe frontend SSE events."""
+    event_id = _get_field(chunk, "id")
+    events: list[str] = []
+
+    choices = _get_field(chunk, "choices") or []
+    for choice in choices:
+        delta = _get_field(choice, "delta") or {}
+        content = _get_field(delta, "content")
+        if content:
+            events.append(_event_sse("text", content, event_id))
+
+        reasoning = _get_field(delta, "reasoning_content")
+        if reasoning:
+            events.append(_event_sse("reasoning", reasoning, event_id))
+
+        tool_calls = _get_field(delta, "tool_calls")
+        if tool_calls:
+            events.append(_event_sse("tool_calls", _jsonable(tool_calls), event_id))
+
+        finish_reason = _get_field(choice, "finish_reason")
+        if finish_reason:
+            events.append(_event_sse("stop", finish_reason, event_id))
+
+    usage = _get_field(chunk, "usage")
+    if usage:
+        events.append(_event_sse("usage", _usage_payload(usage), event_id))
+
+    if not events and isinstance(chunk, str):
+        events.append(_event_sse("text", chunk, event_id))
+
+    return events
+
+
 def _error_message(exc: Exception) -> str:
     if isinstance(exc, httpx.HTTPStatusError):
         try:
@@ -142,7 +205,8 @@ def _provider_error_payload(provider: str, exc: Exception) -> tuple[dict[str, An
 async def _stream_openai_chunks(provider: str, chunks: AsyncIterator[Any]) -> AsyncIterator[str]:
     try:
         async for chunk in chunks:
-            yield _sse(chunk)
+            for event in _chunk_events(chunk):
+                yield event
     except Exception as exc:
         payload, _ = _provider_error_payload(provider, exc)
         logger.warning(
@@ -160,7 +224,6 @@ async def _stream_openai_chunks(provider: str, chunks: AsyncIterator[Any]) -> As
                 "type": payload["type"],
             },
         )
-    yield "data: [DONE]\n\n"
 
 
 def _provider_error(provider: str, exc: Exception) -> JSONResponse:

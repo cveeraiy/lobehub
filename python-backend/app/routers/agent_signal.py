@@ -14,7 +14,7 @@ import logging
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.services.agent_signal.orchestrator import get_orchestrator
 from app.services.agent_signal.types import Signal, SignalAction, SignalPolicy
@@ -29,13 +29,19 @@ router = APIRouter(prefix="/api/agent-signal", tags=["agent-signal"])
 # ---------------------------------------------------------------------------
 
 class EmitSignalRequest(BaseModel):
-    source: str
-    type: str
+    model_config = ConfigDict(populate_by_name=True)
+
+    source: Optional[str] = None
+    type: Optional[str] = None
     agent_id: Optional[str] = None
     user_id: Optional[str] = None
     payload: dict[str, Any] = Field(default_factory=dict)
     scope: Optional[str] = None
     dedup_key: Optional[str] = None
+    scope_key: Optional[str] = Field(default=None, alias="scopeKey")
+    source_id: Optional[str] = Field(default=None, alias="sourceId")
+    source_type: Optional[str] = Field(default=None, alias="sourceType")
+    timestamp: Optional[int] = None
 
 
 class EmitSignalResponse(BaseModel):
@@ -82,15 +88,20 @@ class CleanupResponse(BaseModel):
 async def emit_signal(body: EmitSignalRequest):
     """Emit a signal into the orchestrator pipeline."""
     orchestrator = get_orchestrator()
+    source = body.source or body.source_type
+    signal_type = body.type or body.source_type
+
+    if not source or not signal_type:
+        raise HTTPException(status_code=422, detail="source/sourceType is required")
 
     signal = Signal(
-        source=body.source,
-        type=body.type,
+        source=source,
+        type=signal_type,
         agent_id=body.agent_id,
         user_id=body.user_id,
         payload=body.payload,
-        scope=body.scope,
-        dedup_key=body.dedup_key,
+        scope=body.scope or body.scope_key,
+        dedup_key=body.dedup_key or body.source_id,
     )
 
     actions: list[SignalAction] = await orchestrator.emit(signal)

@@ -1,4 +1,5 @@
-import { type DocumentType } from '@lobechat/builtin-tool-notebook';
+import type { DocumentType } from '@lobechat/builtin-tool-notebook';
+import type { NotebookDocument } from '@lobechat/types';
 
 import { restClient } from '@/libs/rest';
 
@@ -29,28 +30,83 @@ interface ListDocumentsParams {
   type?: ExtendedDocumentType;
 }
 
+interface RawNotebookDocument {
+  associated_at?: string | null;
+  content?: string | null;
+  created_at?: string | null;
+  description?: string | null;
+  file_type?: string | null;
+  id: string;
+  metadata?: Record<string, any> | null;
+  title?: string | null;
+  total_char_count?: number | null;
+  total_line_count?: number | null;
+  updated_at?: string | null;
+}
+
+const toNotebookDocument = (item: RawNotebookDocument): NotebookDocument => ({
+  associatedAt: item.associated_at ? new Date(item.associated_at) : new Date(0),
+  content: item.content ?? null,
+  createdAt: item.created_at ? new Date(item.created_at) : new Date(0),
+  description: item.description ?? null,
+  fileType: item.file_type ?? 'markdown',
+  id: item.id,
+  metadata: item.metadata ?? null,
+  title: item.title ?? null,
+  totalCharCount: item.total_char_count ?? item.content?.length ?? 0,
+  totalLineCount: item.total_line_count ?? item.content?.split('\n').length ?? 0,
+  updatedAt: item.updated_at ? new Date(item.updated_at) : new Date(0),
+});
+
 class NotebookService {
   createDocument = async (params: CreateDocumentParams) => {
-    return restClient.post('/notebook', { body: params });
+    const result = await restClient.post<RawNotebookDocument>('/notebook/documents', {
+      body: {
+        content: params.content,
+        description: params.description,
+        metadata: params.metadata,
+        source: params.source,
+        source_type: params.sourceType,
+        title: params.title,
+        topic_id: params.topicId,
+        type: params.type,
+      },
+    });
+
+    return toNotebookDocument(result);
   };
 
   updateDocument = async (params: UpdateDocumentParams) => {
     const { id, ...body } = params;
-    return restClient.put(`/notebook/${id}`, { body });
+    const result = await restClient.put<RawNotebookDocument>(`/notebook/documents/${id}`, {
+      body,
+    });
+
+    return toNotebookDocument(result);
   };
 
   getDocument = async (id: string) => {
-    return restClient.get(`/notebook/${id}`);
+    const result = await restClient.get<RawNotebookDocument>(`/notebook/documents/${id}`);
+
+    return toNotebookDocument(result);
   };
 
   listDocuments = async (params: ListDocumentsParams) => {
-    return restClient.get('/notebook', {
-      params: { topic_id: params.topicId, type: params.type } as any,
+    const result = await restClient.get<
+      RawNotebookDocument[] | { data: RawNotebookDocument[]; total: number }
+    >('/notebook/documents', {
+      params: { topic_id: params.topicId, type: params.type },
     });
+    const data = Array.isArray(result) ? result : result.data;
+
+    return {
+      data: data.map(toNotebookDocument),
+      total: Array.isArray(result) ? data.length : result.total,
+    };
   };
 
   deleteDocument = async (id: string) => {
-    return restClient.delete(`/notebook/${id}`);
+    return restClient.delete(`/notebook/documents/${id}`);
   };
 }
 

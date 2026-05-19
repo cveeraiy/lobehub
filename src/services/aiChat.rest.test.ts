@@ -74,4 +74,43 @@ describe('AiChatService REST', () => {
       signal: abortController.signal,
     });
   });
+
+  it('normalizes Python message fields in the send response', async () => {
+    mockRestPost.mockResolvedValueOnce({
+      assistantMessageId: 'assistant-1',
+      messages: [
+        {
+          agent_id: 'agent-1',
+          content: 'Hello',
+          created_at: '2026-05-18T12:00:00',
+          id: 'message-1',
+          parent_id: 'parent-1',
+          role: 'user',
+          topic_id: 'topic-1',
+          updated_at: '2026-05-18T12:00:01',
+        },
+      ],
+      topicId: 'topic-1',
+      userMessageId: 'message-1',
+    });
+
+    const result = await aiChatService.sendMessageInServer(
+      {
+        agentId: 'agent-1',
+        newAssistantMessage: {},
+        newUserMessage: { content: 'Hello' },
+      },
+      new AbortController(),
+    );
+
+    expect(result.messages).toEqual([
+      expect.objectContaining({
+        agentId: 'agent-1',
+        content: 'Hello',
+        id: 'message-1',
+        parentId: 'parent-1',
+        topicId: 'topic-1',
+      }),
+    ]);
+  });
 });

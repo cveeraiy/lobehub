@@ -1,4 +1,6 @@
+import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import type { AgentItem, LobeAgentConfig } from '@lobechat/types';
+import { cleanObject, merge } from '@lobechat/utils';
 import type { PartialDeep } from 'type-fest';
 
 import { restClient, RestClientError } from '@/libs/rest';
@@ -68,6 +70,9 @@ const normalizeMarketAgentModel = (config?: PartialDeep<AgentItem>): PartialDeep
   };
 };
 
+const mergeDefaultAgentConfig = (item: Partial<AgentItem>): AgentItem =>
+  merge(DEFAULT_AGENT_CONFIG, cleanObject(item as Record<string, any>)) as AgentItem;
+
 const toAgentItem = (item: RawAgentItem | null): AgentItem | null => {
   if (!item) return null;
 
@@ -84,7 +89,7 @@ const toAgentItem = (item: RawAgentItem | null): AgentItem | null => {
     ...rest
   } = item;
 
-  return {
+  return mergeDefaultAgentConfig({
     ...rest,
     backgroundColor: rest.backgroundColor ?? background_color,
     chatConfig: rest.chatConfig ?? chat_config ?? undefined,
@@ -96,7 +101,7 @@ const toAgentItem = (item: RawAgentItem | null): AgentItem | null => {
     systemRole: rest.systemRole ?? system_role ?? undefined,
     updatedAt: rest.updatedAt ?? (updated_at ? new Date(updated_at) : new Date(0)),
     userId: rest.userId ?? '',
-  };
+  });
 };
 
 const toAgentList = (items: RawAgentItem[]): AgentItem[] =>

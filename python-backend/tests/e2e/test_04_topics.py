@@ -60,6 +60,21 @@ async def test_update_topic(client: httpx.AsyncClient, state: SharedState) -> No
 
 
 @pytest.mark.asyncio
+async def test_create_message_for_topic_delete(client: httpx.AsyncClient, state: SharedState) -> None:
+    assert state.session_id and state.topic_id
+    r = await client.post(
+        "/api/messages",
+        json={
+            "content": "Topic delete should remove this message",
+            "role": "user",
+            "session_id": state.session_id,
+            "topic_id": state.topic_id,
+        },
+    )
+    assert r.status_code == 201
+
+
+@pytest.mark.asyncio
 async def test_delete_topic(client: httpx.AsyncClient, state: SharedState) -> None:
     assert state.topic_id
     r = await client.delete(f"/api/topics/{state.topic_id}")

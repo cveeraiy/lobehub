@@ -94,6 +94,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.home",
     "app.routers.recent",
     "app.routers.admin",
+    "app.routers.enterprise_ai_policies",
     # User
     "app.routers.user",
     "app.routers.user_memory",

@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import and_, delete, desc, func, select, update
+from sqlalchemy import and_, delete, desc, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -21,6 +21,130 @@ router = APIRouter(prefix="/api/topics", tags=["Topics"])
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+async def _delete_topics_by_ids(
+    session: AsyncSession,
+    user_id: str,
+    topic_ids: list[str],
+) -> None:
+    if not topic_ids:
+        return
+
+    await session.execute(
+        text("DELETE FROM agent_eval_run_topics WHERE topic_id = ANY(:topic_ids)"),
+        {"topic_ids": topic_ids},
+    )
+    await session.execute(
+        text("DELETE FROM task_topics WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+    await session.execute(
+        text(
+            "UPDATE tasks SET current_topic_id = NULL "
+            "WHERE created_by_user_id = :uid AND current_topic_id = ANY(:topic_ids)"
+        ),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+    await session.execute(
+        text(
+            "UPDATE task_comments SET topic_id = NULL "
+            "WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"
+        ),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+    await session.execute(
+        text("DELETE FROM topic_documents WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+    await session.execute(
+        text("DELETE FROM topic_shares WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+    await session.execute(
+        text(
+            "UPDATE threads SET parent_thread_id = NULL, source_message_id = NULL "
+            "WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"
+        ),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+
+    message_ids = (
+        await session.execute(
+            select(Message.id).where(
+                and_(Message.user_id == user_id, Message.topic_id.in_(topic_ids))
+            )
+        )
+    ).scalars().all()
+
+    if message_ids:
+        query_ids = (
+            await session.execute(
+                text(
+                    "SELECT id FROM message_queries "
+                    "WHERE user_id = :uid AND message_id = ANY(:message_ids)"
+                ),
+                {"message_ids": message_ids, "uid": user_id},
+            )
+        ).scalars().all()
+        if query_ids:
+            await session.execute(
+                text(
+                    "DELETE FROM message_query_chunks "
+                    "WHERE user_id = :uid AND query_id = ANY(:query_ids)"
+                ),
+                {"query_ids": query_ids, "uid": user_id},
+            )
+
+        await session.execute(
+            text("DELETE FROM message_queries WHERE user_id = :uid AND message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM messages_files WHERE user_id = :uid AND message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM message_chunks WHERE user_id = :uid AND message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text("DELETE FROM message_plugins WHERE message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids},
+        )
+        await session.execute(
+            text("DELETE FROM message_tts WHERE message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids},
+        )
+        await session.execute(
+            text("DELETE FROM message_translates WHERE message_id = ANY(:message_ids)"),
+            {"message_ids": message_ids},
+        )
+        await session.execute(
+            text(
+                "UPDATE message_groups SET parent_message_id = NULL "
+                "WHERE user_id = :uid AND parent_message_id = ANY(:message_ids)"
+            ),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(
+            text(
+                "UPDATE messages SET parent_id = NULL "
+                "WHERE user_id = :uid AND parent_id = ANY(:message_ids)"
+            ),
+            {"message_ids": message_ids, "uid": user_id},
+        )
+        await session.execute(delete(Message).where(Message.id.in_(message_ids)))
+
+    await session.execute(
+        text("DELETE FROM message_groups WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+    await session.execute(
+        text("DELETE FROM threads WHERE user_id = :uid AND topic_id = ANY(:topic_ids)"),
+        {"topic_ids": topic_ids, "uid": user_id},
+    )
+    await session.execute(delete(Topic).where(and_(Topic.id.in_(topic_ids), Topic.user_id == user_id)))
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -83,9 +207,12 @@ async def batch_delete_topics(
 ):
     """Alias: POST /batch-delete — frontend path."""
     if body.ids:
-        await session.execute(
-            delete(Topic).where(and_(Topic.id.in_(body.ids), Topic.user_id == user_id))
-        )
+        topic_ids = (
+            await session.execute(
+                select(Topic.id).where(and_(Topic.id.in_(body.ids), Topic.user_id == user_id))
+            )
+        ).scalars().all()
+        await _delete_topics_by_ids(session, user_id, topic_ids)
     return {"ok": True}
 
 
@@ -292,9 +419,12 @@ async def delete_topic(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    await session.execute(
-        delete(Topic).where(and_(Topic.id == topic_id, Topic.user_id == user_id))
-    )
+    topic_ids = (
+        await session.execute(
+            select(Topic.id).where(and_(Topic.id == topic_id, Topic.user_id == user_id))
+        )
+    ).scalars().all()
+    await _delete_topics_by_ids(session, user_id, topic_ids)
     return {"ok": True}
 
 
@@ -306,12 +436,13 @@ async def batch_delete_topics(
     session: AsyncSession = Depends(get_db),
 ):
     """Delete all topics matching filters."""
-    stmt = delete(Topic).where(Topic.user_id == user_id)
+    stmt = select(Topic.id).where(Topic.user_id == user_id)
     if session_id:
         stmt = stmt.where(Topic.session_id == session_id)
     if agent_id:
         stmt = stmt.where(Topic.agent_id == agent_id)
-    await session.execute(stmt)
+    topic_ids = (await session.execute(stmt)).scalars().all()
+    await _delete_topics_by_ids(session, user_id, topic_ids)
     return {"ok": True}
 
 
@@ -336,9 +467,12 @@ async def batch_delete_by_agent(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    await session.execute(
-        delete(Topic).where(and_(Topic.agent_id == agent_id, Topic.user_id == user_id))
-    )
+    topic_ids = (
+        await session.execute(
+            select(Topic.id).where(and_(Topic.agent_id == agent_id, Topic.user_id == user_id))
+        )
+    ).scalars().all()
+    await _delete_topics_by_ids(session, user_id, topic_ids)
     return {"ok": True}
 
 
@@ -348,9 +482,12 @@ async def batch_delete_by_session(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    await session.execute(
-        delete(Topic).where(and_(Topic.session_id == session_id, Topic.user_id == user_id))
-    )
+    topic_ids = (
+        await session.execute(
+            select(Topic.id).where(and_(Topic.session_id == session_id, Topic.user_id == user_id))
+        )
+    ).scalars().all()
+    await _delete_topics_by_ids(session, user_id, topic_ids)
     return {"ok": True}
 
 

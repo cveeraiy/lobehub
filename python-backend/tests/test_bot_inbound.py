@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.services.bot.inbound import (
+    normalize_discord_message,
     normalize_feishu_event,
     normalize_inbound_webhook,
     normalize_line_webhook,
@@ -64,6 +65,34 @@ def test_normalize_telegram_caption_dm_message() -> None:
     assert result.message is not None
     assert result.message.is_dm is True
     assert result.message.text == "image caption"
+
+
+def test_normalize_telegram_photo_without_caption_as_attachment() -> None:
+    result = normalize_telegram_update(
+        {
+            "message": {
+                "message_id": 8,
+                "from": {"id": 1001},
+                "chat": {"id": 1001, "type": "private"},
+                "photo": [
+                    {"file_id": "small", "file_size": 10},
+                    {"file_id": "large", "file_size": 100},
+                ],
+            },
+        },
+        "123456789",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.text == ""
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].to_dict() == {
+        "type": "image",
+        "id": "large",
+        "size": 100,
+        "raw": {"file_id": "large", "file_size": 100},
+    }
 
 
 def test_normalize_telegram_ignores_unsupported_update() -> None:
@@ -154,6 +183,32 @@ def test_normalize_line_unsupported_event_is_ignored() -> None:
     assert result.reason == "no_supported_message"
 
 
+def test_normalize_line_image_message_as_attachment() -> None:
+    result = normalize_line_webhook(
+        {
+            "events": [
+                {
+                    "type": "message",
+                    "source": {"type": "user", "userId": "Uuser"},
+                    "message": {"type": "image", "id": "line-img-1"},
+                },
+            ],
+        },
+        "Ubot",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.text == ""
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].to_dict() == {
+        "type": "image",
+        "id": "line-img-1",
+        "mime_type": "image/jpeg",
+        "raw": {"type": "image", "id": "line-img-1"},
+    }
+
+
 def test_normalize_slack_app_mention() -> None:
     result = normalize_slack_event(
         {
@@ -239,6 +294,128 @@ def test_normalize_slack_url_verification_is_ignored() -> None:
     assert result.reason == "url_verification"
 
 
+def test_normalize_slack_file_without_text_as_attachment() -> None:
+    result = normalize_slack_event(
+        {
+            "type": "event_callback",
+            "event": {
+                "type": "message",
+                "channel": "C123",
+                "user": "U123",
+                "ts": "1710000000.000100",
+                "files": [
+                    {
+                        "id": "F123",
+                        "name": "screenshot.png",
+                        "mimetype": "image/png",
+                        "size": 123,
+                        "url_private": "https://files.slack.com/files-pri/T/F/screenshot.png",
+                    }
+                ],
+            },
+        },
+        "A123",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.text == ""
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].type == "image"
+    assert result.message.attachments[0].url == "https://files.slack.com/files-pri/T/F/screenshot.png"
+
+
+def test_normalize_discord_guild_message_sanitizes_bot_mention() -> None:
+    result = normalize_discord_message(
+        {
+            "id": "discord-msg-1",
+            "channel_id": "channel-1",
+            "guild_id": "guild-1",
+            "author": {"id": "user-1"},
+            "content": "<@123456789> hello discord",
+        },
+        "123456789",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.to_dict() == {
+        "platform": "discord",
+        "application_id": "123456789",
+        "message_id": "discord-msg-1",
+        "thread_id": "discord:guild-1:channel-1",
+        "channel_id": "channel-1",
+        "author_id": "user-1",
+        "text": "hello discord",
+        "is_dm": False,
+        "raw": {
+            "id": "discord-msg-1",
+            "channel_id": "channel-1",
+            "guild_id": "guild-1",
+            "author": {"id": "user-1"},
+            "content": "<@123456789> hello discord",
+        },
+        "author_locale": None,
+    }
+
+
+def test_normalize_discord_dm_attachment_without_text() -> None:
+    result = normalize_discord_message(
+        {
+            "id": "discord-msg-2",
+            "channel_id": "dm-channel-1",
+            "author": {"id": "user-1"},
+            "content": "",
+            "attachments": [
+                {
+                    "content_type": "image/png",
+                    "filename": "screenshot.png",
+                    "id": "att-1",
+                    "size": 123,
+                    "url": "https://cdn.discordapp.com/attachments/file.png",
+                }
+            ],
+        },
+        "123456789",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.thread_id == "discord:@me:dm-channel-1"
+    assert result.message.is_dm is True
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].to_dict() == {
+        "type": "image",
+        "id": "att-1",
+        "name": "screenshot.png",
+        "mime_type": "image/png",
+        "size": 123,
+        "url": "https://cdn.discordapp.com/attachments/file.png",
+        "raw": {
+            "content_type": "image/png",
+            "filename": "screenshot.png",
+            "id": "att-1",
+            "size": 123,
+            "url": "https://cdn.discordapp.com/attachments/file.png",
+        },
+    }
+
+
+def test_normalize_discord_ignores_bot_message() -> None:
+    result = normalize_discord_message(
+        {
+            "id": "discord-msg-3",
+            "channel_id": "channel-1",
+            "author": {"id": "bot-1", "bot": True},
+            "content": "bot text",
+        },
+        "123456789",
+    )
+
+    assert result.status == "ignored"
+    assert result.reason == "bot_message"
+
+
 def test_normalize_feishu_p2p_text_message() -> None:
     result = normalize_feishu_event(
         "feishu",
@@ -321,6 +498,36 @@ def test_normalize_feishu_unsupported_event_is_ignored() -> None:
     assert result.reason == "unsupported_event"
 
 
+def test_normalize_feishu_image_without_text_as_attachment() -> None:
+    result = normalize_feishu_event(
+        "feishu",
+        {
+            "header": {"event_type": "im.message.receive_v1"},
+            "event": {
+                "sender": {"sender_id": {"open_id": "ou_sender"}},
+                "message": {
+                    "message_id": "om_img",
+                    "chat_id": "oc_chat",
+                    "chat_type": "p2p",
+                    "message_type": "image",
+                    "content": '{"image_key":"img-key"}',
+                },
+            },
+        },
+        "cli_app",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.text == ""
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].to_dict() == {
+        "type": "image",
+        "id": "img-key",
+        "raw": {"image_key": "img-key"},
+    }
+
+
 def test_normalize_qq_group_message() -> None:
     result = normalize_qq_webhook(
         {
@@ -369,6 +576,37 @@ def test_normalize_qq_verification_is_ignored() -> None:
 
     assert result.status == "ignored"
     assert result.reason == "verification"
+
+
+def test_normalize_qq_attachment_without_text() -> None:
+    result = normalize_qq_webhook(
+        {
+            "op": 0,
+            "t": "GROUP_AT_MESSAGE_CREATE",
+            "d": {
+                "id": "qq-msg-3",
+                "group_openid": "group_openid",
+                "author": {"id": "author_openid"},
+                "attachments": [
+                    {
+                        "content_type": "image/png",
+                        "filename": "screenshot.png",
+                        "id": "att-1",
+                        "size": 100,
+                        "url": "https://multimedia.nt.qq.com.cn/download?fileid=abc",
+                    }
+                ],
+            },
+        },
+        "qq-app",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.text == ""
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].type == "image"
+    assert result.message.attachments[0].url == "https://multimedia.nt.qq.com.cn/download?fileid=abc"
 
 
 def test_normalize_wechat_text_message() -> None:
@@ -422,6 +660,31 @@ def test_normalize_wechat_ignores_unfinished_message() -> None:
 
     assert result.status == "ignored"
     assert result.reason == "unfinished_message"
+
+
+def test_normalize_wechat_image_without_text_as_attachment() -> None:
+    result = normalize_wechat_message(
+        {
+            "context_token": "ctx",
+            "from_user_id": "user@im.wechat",
+            "item_list": [
+                {
+                    "type": 1,
+                    "image_item": {"media": {"encrypt_query_param": "enc"}},
+                }
+            ],
+            "message_id": 45,
+            "message_state": 2,
+            "message_type": 1,
+        },
+        "wechat-app",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.text == ""
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].type == "image"
 
 
 def test_normalize_teams_message_activity() -> None:

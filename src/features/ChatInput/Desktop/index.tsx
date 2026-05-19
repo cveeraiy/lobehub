@@ -31,6 +31,10 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
       opacity: 0;
     }
 
+    div:has(> [contenteditable='true']) {
+      display: block !important;
+    }
+
     &:hover {
       .show-on-hover {
         opacity: 1;
