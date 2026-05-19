@@ -8,6 +8,7 @@ from app.services.bot.platforms.slack.definition import slack
 from app.services.bot.platforms.teams.definition import teams
 from app.services.bot.platforms.telegram.definition import telegram
 from app.services.bot.platforms.types import PlatformDefinition
+from app.services.bot.platforms.webex.definition import webex
 from app.services.bot.platforms.wechat.definition import wechat
 
 
@@ -46,3 +47,4 @@ platform_registry.register(lark)
 platform_registry.register(qq)
 platform_registry.register(wechat)
 platform_registry.register(teams)
+platform_registry.register(webex)

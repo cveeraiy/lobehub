@@ -25,6 +25,7 @@ from app.services.bot.bridge import bot_bridge
 from app.services.bot.inbound import normalize_inbound_webhook
 from app.services.bot.platforms import platform_registry
 from app.services.bot.platforms.teams.client import BotFrameworkAuthError, validate_bot_framework_authorization
+from app.services.bot.platforms.webex.client import WebexApiError, WebexClient
 from app.services.bot.runtime_status import update_bot_runtime_status
 
 router = APIRouter(prefix="/api/agent/webhooks", tags=["Bot Webhooks"])
@@ -66,6 +67,7 @@ async def handle_bot_webhook(
     x_line_signature: str | None = Header(default=None),
     x_slack_request_timestamp: str | None = Header(default=None),
     x_slack_signature: str | None = Header(default=None),
+    x_spark_signature: str | None = Header(default=None),
     x_telegram_bot_api_secret_token: str | None = Header(default=None),
     session: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
@@ -108,6 +110,13 @@ async def handle_bot_webhook(
         expected_signature = f"v0={digest}"
         if not hmac.compare_digest(x_slack_signature, expected_signature):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid Slack signature")
+    if platform == "webex":
+        webhook_secret = credentials.get("webhookSecret")
+        if not webhook_secret:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Webex webhook secret is not configured")
+        expected_signature = hmac.new(webhook_secret.encode(), raw_body, hashlib.sha1).hexdigest()
+        if not x_spark_signature or not hmac.compare_digest(x_spark_signature, expected_signature):
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid Webex signature")
 
     try:
         payload = json.loads(raw_body)
@@ -151,6 +160,22 @@ async def handle_bot_webhook(
             )
         except BotFrameworkAuthError as exc:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, str(exc)) from exc
+    if platform == "webex":
+        data = payload.get("data")
+        message_id = data.get("id") if isinstance(data, dict) else None
+        has_content = isinstance(data, dict) and (
+            isinstance(data.get("text"), str)
+            or isinstance(data.get("markdown"), str)
+            or isinstance(data.get("files"), list)
+            or isinstance(data.get("attachments"), list)
+        )
+        bot_token = credentials.get("botToken")
+        if message_id and not has_content and isinstance(bot_token, str) and bot_token:
+            try:
+                message = await WebexClient(bot_token).get_message(str(message_id))
+            except WebexApiError as exc:
+                raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(exc)) from exc
+            payload = {**payload, "data": {**data, **message}}
 
     result = normalize_inbound_webhook(platform, application_id, payload)
     if platform == "slack" and result.reason == "url_verification":

@@ -82,6 +82,15 @@ describe('AgentBotProviderService REST', () => {
         name: 'Microsoft Teams',
         schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
       },
+      {
+        connectionMode: 'webhook',
+        id: 'webex',
+        name: 'Cisco Webex',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        showWebhookUrl: true,
+        supportsMarkdown: true,
+        supportsMessageEdit: false,
+      },
     ]);
 
     const result = await agentBotProviderService.listPlatforms();
@@ -146,6 +155,15 @@ describe('AgentBotProviderService REST', () => {
         id: 'teams',
         name: 'Microsoft Teams',
         schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+      },
+      {
+        connectionMode: 'webhook',
+        id: 'webex',
+        name: 'Cisco Webex',
+        schema: [{ key: 'applicationId', label: 'channel.applicationId', type: 'string' }],
+        showWebhookUrl: true,
+        supportsMarkdown: true,
+        supportsMessageEdit: false,
       },
     ]);
   });

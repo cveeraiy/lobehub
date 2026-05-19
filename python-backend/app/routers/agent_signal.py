@@ -13,9 +13,10 @@ from __future__ import annotations
 import logging
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.dependencies import get_current_user_id
 from app.services.agent_signal.orchestrator import get_orchestrator
 from app.services.agent_signal.types import Signal, SignalAction, SignalPolicy
 
@@ -85,7 +86,10 @@ class CleanupResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 @router.post("/emit", response_model=EmitSignalResponse)
-async def emit_signal(body: EmitSignalRequest):
+async def emit_signal(
+    body: EmitSignalRequest,
+    user_id: str = Depends(get_current_user_id),
+):
     """Emit a signal into the orchestrator pipeline."""
     orchestrator = get_orchestrator()
     source = body.source or body.source_type
@@ -98,7 +102,7 @@ async def emit_signal(body: EmitSignalRequest):
         source=source,
         type=signal_type,
         agent_id=body.agent_id,
-        user_id=body.user_id,
+        user_id=user_id,
         payload=body.payload,
         scope=body.scope or body.scope_key,
         dedup_key=body.dedup_key or body.source_id,
@@ -122,7 +126,7 @@ async def emit_signal(body: EmitSignalRequest):
 
 
 @router.get("/policies", response_model=list[PolicyResponse])
-async def list_policies():
+async def list_policies(_user_id: str = Depends(get_current_user_id)):
     """List all registered signal policies."""
     orchestrator = get_orchestrator()
     return [
@@ -142,7 +146,10 @@ async def list_policies():
 
 
 @router.post("/policies", response_model=PolicyResponse, status_code=201)
-async def register_policy(body: RegisterPolicyRequest):
+async def register_policy(
+    body: RegisterPolicyRequest,
+    _user_id: str = Depends(get_current_user_id),
+):
     """Register a new signal policy."""
     orchestrator = get_orchestrator()
 
@@ -179,7 +186,10 @@ async def register_policy(body: RegisterPolicyRequest):
 
 
 @router.delete("/policies/{policy_id}")
-async def unregister_policy(policy_id: str):
+async def unregister_policy(
+    policy_id: str,
+    _user_id: str = Depends(get_current_user_id),
+):
     """Remove a signal policy by ID."""
     orchestrator = get_orchestrator()
     original_len = len(orchestrator._policies)
@@ -192,7 +202,10 @@ async def unregister_policy(policy_id: str):
 
 
 @router.post("/cleanup", response_model=CleanupResponse)
-async def cleanup_dedup(max_age_seconds: int = 3600):
+async def cleanup_dedup(
+    max_age_seconds: int = 3600,
+    _user_id: str = Depends(get_current_user_id),
+):
     """Cleanup stale dedup cache entries."""
     orchestrator = get_orchestrator()
     evicted = orchestrator.cleanup_dedup_cache(max_age_seconds)

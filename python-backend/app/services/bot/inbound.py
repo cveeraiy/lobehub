@@ -258,6 +258,27 @@ def _wechat_attachments(payload: dict[str, Any]) -> list[NormalizedAttachment]:
     return attachments
 
 
+def _webex_attachments(data: dict[str, Any]) -> list[NormalizedAttachment]:
+    attachments: list[NormalizedAttachment] = []
+    files = data.get("files")
+    if isinstance(files, list):
+        for item in files:
+            if isinstance(item, str):
+                attachments.append(NormalizedAttachment(type="file", url=item))
+    card_attachments = data.get("attachments")
+    if isinstance(card_attachments, list):
+        for index, item in enumerate(card_attachments, start=1):
+            if isinstance(item, dict):
+                attachments.append(
+                    NormalizedAttachment(
+                        type="file",
+                        name=f"webex-card-{index}",
+                        raw=item,
+                    )
+                )
+    return attachments
+
+
 @dataclass(frozen=True)
 class InboundWebhookResult:
     status: InboundStatus
@@ -681,6 +702,48 @@ def normalize_teams_activity(payload: dict[str, Any], application_id: str) -> In
     )
 
 
+def normalize_webex_webhook(payload: dict[str, Any], application_id: str) -> InboundWebhookResult:
+    resource = payload.get("resource")
+    event = payload.get("event")
+    if resource is not None and (resource != "messages" or event != "created"):
+        return InboundWebhookResult(status="ignored", reason="unsupported_event")
+
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else payload
+    if not isinstance(data, dict):
+        return InboundWebhookResult(status="ignored", reason="missing_data")
+    if data.get("personId") == application_id:
+        return InboundWebhookResult(status="ignored", reason="bot_message")
+
+    text = data.get("markdown") or data.get("text")
+    attachments = _webex_attachments(data)
+    if not _has_text(text) and not attachments:
+        return InboundWebhookResult(status="ignored", reason="empty_message")
+
+    message_id = data.get("id")
+    room_id = data.get("roomId")
+    author_id = data.get("personId")
+    if message_id is None or room_id is None or author_id is None:
+        return InboundWebhookResult(status="ignored", reason="missing_message_identifiers")
+
+    parent_id = data.get("parentId")
+    thread_id = f"webex:room:{room_id}:{parent_id}" if parent_id else f"webex:room:{room_id}"
+    return InboundWebhookResult(
+        status="accepted",
+        message=NormalizedBotMessage(
+            platform="webex",
+            application_id=application_id,
+            message_id=str(message_id),
+            thread_id=thread_id,
+            channel_id=str(room_id),
+            author_id=str(author_id),
+            text=text if isinstance(text, str) else "",
+            is_dm=data.get("roomType") == "direct",
+            attachments=attachments or None,
+            raw=payload,
+        ),
+    )
+
+
 def normalize_inbound_webhook(
     platform: str,
     application_id: str,
@@ -702,4 +765,6 @@ def normalize_inbound_webhook(
         return normalize_wechat_message(payload, application_id)
     if platform == "teams":
         return normalize_teams_activity(payload, application_id)
+    if platform == "webex":
+        return normalize_webex_webhook(payload, application_id)
     return InboundWebhookResult(status="ignored", reason=f"unsupported_platform:{platform}")

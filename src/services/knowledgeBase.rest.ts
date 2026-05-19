@@ -3,7 +3,8 @@ import { type CreateKnowledgeBaseParams } from '@/types/knowledgeBase';
 
 class KnowledgeBaseService {
   createKnowledgeBase = async (params: CreateKnowledgeBaseParams) => {
-    return restClient.post('/knowledge-bases', { body: params });
+    const result = await restClient.post<{ id: string }>('/knowledge-bases', { body: params });
+    return result.id;
   };
 
   getKnowledgeBaseList = async () => {
@@ -27,7 +28,9 @@ class KnowledgeBaseService {
   };
 
   removeFilesFromKnowledgeBase = async (knowledgeBaseId: string, ids: string[]) => {
-    return restClient.post(`/knowledge-bases/${knowledgeBaseId}/files/remove`, { body: { ids } });
+    return restClient.post(`/knowledge-bases/${knowledgeBaseId}/files/batch-remove`, {
+      body: { ids },
+    });
   };
 }
 

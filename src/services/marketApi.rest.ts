@@ -5,7 +5,7 @@ import {
 } from '@lobehub/market-sdk';
 
 import { restClient } from '@/libs/rest';
-import { discoverService } from '@/services/discover';
+import { discoverService } from '@/services/discover.resolved';
 import {
   type AgentForkRequest,
   type AgentForkResponse,
@@ -44,6 +44,24 @@ interface PublishAgentResult {
 interface PublishAgentGroupResult {
   identifier: string;
   isNewGroup: boolean;
+  success: boolean;
+}
+
+interface SubmitFeedbackParams {
+  clientInfo?: {
+    language?: string;
+    timezone?: string;
+    url?: string;
+    userAgent?: string;
+  };
+  email?: string;
+  message: string;
+  screenshotUrl?: string;
+  title: string;
+}
+
+interface SubmitFeedbackResult {
+  issueUrl?: string;
   success: boolean;
 }
 
@@ -203,6 +221,25 @@ export class MarketApiService {
 
   async deprecateAgentGroup(identifier: string): Promise<void> {
     await restClient.post('/market/agent-group/deprecate', { body: { identifier } });
+  }
+
+  async submitFeedback(params: SubmitFeedbackParams): Promise<SubmitFeedbackResult> {
+    return restClient.post('/market/feedback', {
+      body: {
+        client_info: params.clientInfo
+          ? {
+              language: params.clientInfo.language,
+              timezone: params.clientInfo.timezone,
+              url: params.clientInfo.url,
+              user_agent: params.clientInfo.userAgent,
+            }
+          : undefined,
+        email: params.email,
+        message: params.message,
+        screenshot_url: params.screenshotUrl,
+        title: params.title,
+      },
+    });
   }
 
   // ==================== Fork Agent Group API ====================

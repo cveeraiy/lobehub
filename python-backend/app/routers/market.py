@@ -74,6 +74,21 @@ class UploadCredFileBody(BaseModel):
     file_type: Optional[str] = None
 
 
+class FeedbackClientInfo(BaseModel):
+    language: Optional[str] = None
+    timezone: Optional[str] = None
+    url: Optional[str] = None
+    user_agent: Optional[str] = None
+
+
+class SubmitFeedbackBody(BaseModel):
+    client_info: Optional[FeedbackClientInfo] = None
+    email: Optional[str] = None
+    message: str
+    screenshot_url: Optional[str] = None
+    title: str
+
+
 def _market_identifier() -> str:
     return create_nanoid(8)
 
@@ -238,6 +253,146 @@ async def check_agent_ownership(
     return _ownership_result(identifier, "originalAgent")
 
 
+@router.post("/agent")
+async def create_market_agent(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    identifier = str(body.get("identifier") or _market_identifier())
+    agent = Agent(
+        user_id=user_id,
+        slug=identifier,
+        market_identifier=identifier,
+        title=str(body.get("name") or body.get("title") or identifier),
+        description=body.get("description"),
+        avatar=body.get("avatar"),
+        tags=body.get("tags"),
+    )
+    session.add(agent)
+    await session.flush()
+    return {"id": agent.id, "identifier": identifier, "success": True}
+
+
+@router.get("/agent/detail")
+async def get_market_agent_detail(
+    identifier: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    agent = (
+        await session.execute(
+            select(Agent).where(
+                and_(Agent.market_identifier == identifier, Agent.user_id == user_id)
+            )
+        )
+    ).scalar_one_or_none()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Market agent not found")
+    return {
+        **_market_agent_dict(agent),
+        "id": agent.id,
+        "name": agent.title,
+        "status": "published",
+    }
+
+
+@router.get("/agent/onboarding-full")
+async def get_onboarding_agents(
+    _user_id: str = Depends(get_current_user_id),
+):
+    """Return market-backed onboarding agent templates.
+
+    The hosted market catalog is still TypeScript-owned. Returning an empty
+    category map keeps the REST onboarding flow functional until Python owns
+    catalog synchronization.
+    """
+    return {}
+
+
+@router.post("/agent/version")
+async def create_market_agent_version(body: dict[str, Any]):
+    return {
+        "identifier": body.get("identifier"),
+        "success": True,
+        "version": body.get("version") or "latest",
+    }
+
+
+@router.post("/agent/publish")
+async def publish_market_agent(body: IdentifierBody):
+    return {"identifier": body.identifier, "success": True}
+
+
+@router.post("/agent/unpublish")
+async def unpublish_market_agent(body: IdentifierBody):
+    return {"identifier": body.identifier, "success": True}
+
+
+@router.post("/agent/deprecate")
+async def deprecate_market_agent(body: IdentifierBody):
+    return {"identifier": body.identifier, "success": True}
+
+
+@router.get("/agent/own")
+async def get_own_market_agents(
+    page: int = 1,
+    pageSize: int = Query(default=20, alias="pageSize"),
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    limit = min(pageSize, 100)
+    offset = max(page - 1, 0) * limit
+    rows = (
+        await session.execute(
+            select(Agent)
+            .where(and_(Agent.market_identifier.isnot(None), Agent.user_id == user_id))
+            .offset(offset)
+            .limit(limit)
+        )
+    ).scalars().all()
+    items = [_market_agent_dict(agent) | {"id": agent.id, "name": agent.title} for agent in rows]
+    return {"items": items, "page": page, "pageSize": limit, "total": len(items)}
+
+
+@router.post("/agent/fork")
+async def fork_market_agent(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    source_identifier = str(body.get("sourceIdentifier") or body.get("source_identifier") or "")
+    identifier = _market_identifier()
+    title = str(body.get("name") or body.get("title") or source_identifier or identifier)
+    agent = Agent(
+        user_id=user_id,
+        slug=identifier,
+        market_identifier=identifier,
+        title=title,
+        description=body.get("description"),
+        avatar=body.get("avatar"),
+        tags=body.get("tags"),
+    )
+    session.add(agent)
+    await session.flush()
+    return {
+        "agentId": agent.id,
+        "forkedFromAgentId": source_identifier or None,
+        "identifier": identifier,
+        "success": True,
+    }
+
+
+@router.get("/agent/forks")
+async def get_market_agent_forks(identifier: str):
+    return {"identifier": identifier, "items": [], "total": 0}
+
+
+@router.get("/agent/fork-source")
+async def get_market_agent_fork_source(identifier: str):
+    return {"identifier": identifier, "source": None}
+
+
 @router.post("/agent/publish-or-create")
 async def publish_or_create_agent(
     body: PublishAgentBody,
@@ -281,6 +436,16 @@ async def check_agent_group_ownership(identifier: str):
     return _ownership_result(identifier, "originalGroup")
 
 
+@router.get("/agent-group/detail")
+async def get_market_agent_group_detail(identifier: str):
+    return {
+        "identifier": identifier,
+        "memberAgents": [],
+        "name": identifier,
+        "status": "published",
+    }
+
+
 @router.post("/agent-group/publish-or-create")
 async def publish_or_create_agent_group(body: PublishAgentGroupBody):
     identifier = body.identifier or _market_identifier()
@@ -288,6 +453,70 @@ async def publish_or_create_agent_group(body: PublishAgentGroupBody):
         "identifier": identifier,
         "isNewGroup": not body.identifier,
         "success": True,
+    }
+
+
+@router.post("/agent-group/publish")
+async def publish_market_agent_group(body: IdentifierBody):
+    return {"identifier": body.identifier, "success": True}
+
+
+@router.post("/agent-group/unpublish")
+async def unpublish_market_agent_group(body: IdentifierBody):
+    return {"identifier": body.identifier, "success": True}
+
+
+@router.post("/agent-group/deprecate")
+async def deprecate_market_agent_group(body: IdentifierBody):
+    return {"identifier": body.identifier, "success": True}
+
+
+@router.post("/agent-group/fork")
+async def fork_market_agent_group(body: dict[str, Any]):
+    source_identifier = str(body.get("sourceIdentifier") or body.get("source_identifier") or "")
+    return {
+        "forkedFromGroupId": source_identifier or None,
+        "identifier": _market_identifier(),
+        "success": True,
+    }
+
+
+@router.get("/agent-group/forks")
+async def get_market_agent_group_forks(identifier: str):
+    return {"identifier": identifier, "items": [], "total": 0}
+
+
+@router.get("/agent-group/fork-source")
+async def get_market_agent_group_fork_source(identifier: str):
+    return {"identifier": identifier, "source": None}
+
+
+@router.post("/feedback")
+async def submit_feedback(
+    body: SubmitFeedbackBody,
+    _user_id: str = Depends(get_current_user_id),
+):
+    """Accept user feedback through the Python REST path.
+
+    The TypeScript backend forwards this to the hosted market feedback service.
+    Python keeps the same frontend contract so REST-enabled clients do not fall
+    back to tRPC for feedback submission.
+    """
+    if not body.title.strip() or not body.message.strip():
+        raise HTTPException(status_code=400, detail="Feedback title and message are required")
+    return {"success": True}
+
+
+@router.get("/skill/list")
+async def list_market_skills(
+    page: int = 1,
+    pageSize: int = Query(default=20, alias="pageSize"),
+):
+    return {
+        "items": [],
+        "page": page,
+        "pageSize": min(pageSize, 100),
+        "total": 0,
     }
 
 

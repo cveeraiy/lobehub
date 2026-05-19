@@ -196,9 +196,14 @@ async def require_admin(
 ) -> str:
     """FastAPI dependency — like ``get_current_user_id`` but requires ``admin`` role.
 
-    Note: service-token auth does not carry role info, so admin endpoints
-    always require a real JWT.
+    Accepts the signed SPA session cookie first, then falls back to a real JWT.
+    Service-token auth intentionally does not grant admin privileges because it
+    carries no role information.
     """
+    cookie_admin_user_id = _validate_admin_session_cookie(request)
+    if cookie_admin_user_id is not None:
+        return await _ensure_user_exists(session, cookie_admin_user_id)
+
     token = await get_current_user(
         credentials=await _extract_bearer(request),
     )
@@ -209,3 +214,28 @@ async def require_admin(
         )
     user = await get_or_create_user(session, token)
     return user.id
+
+
+def _validate_admin_session_cookie(request: Request) -> Optional[str]:
+    """Return the session user ID when the signed SPA cookie has an admin role."""
+    from app.routers.auth import _get_session_from_request, _resolve_role
+
+    session_data = _get_session_from_request(request)
+    if session_data is None:
+        return None
+
+    role = _resolve_role(session_data.get("roles", []))
+    if role not in ("admin", "super_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required",
+        )
+
+    user_id = session_data.get("user_id")
+    if not user_id or not isinstance(user_id, str):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    return user_id

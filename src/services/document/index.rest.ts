@@ -123,7 +123,18 @@ export interface DocumentHistoryClientSurface {
 
 export class DocumentService {
   async createDocument(params: CreateDocumentParams): Promise<DocumentItem> {
-    return restClient.post<DocumentItem>('/documents', { body: params });
+    return restClient.post<DocumentItem>('/documents', {
+      body: {
+        content: params.content,
+        editor_data: params.editorData,
+        file_type: params.fileType,
+        knowledge_base_id: params.knowledgeBaseId,
+        metadata: params.metadata,
+        parent_id: params.parentId,
+        slug: params.slug,
+        title: params.title,
+      },
+    });
   }
 
   async createDocuments(documents: CreateDocumentParams[]): Promise<DocumentItem[]> {

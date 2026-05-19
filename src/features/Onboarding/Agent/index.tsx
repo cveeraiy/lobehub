@@ -14,7 +14,7 @@ import Loading from '@/components/Loading/BrandTextLoading';
 import ModeSwitch from '@/features/Onboarding/components/ModeSwitch';
 import { useClientDataSWR, useOnlyFetchOnceSWR } from '@/libs/swr';
 import OnboardingContainer from '@/routes/onboarding/_layout';
-import { fetchOnboardingAgentTemplates } from '@/services/agentMarketplace';
+import { fetchOnboardingAgentTemplates } from '@/services/agentMarketplace.resolved';
 import { topicService } from '@/services/topic/resolved';
 import { userService } from '@/services/user/resolved';
 import { useAgentStore } from '@/store/agent';

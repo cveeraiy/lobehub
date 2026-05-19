@@ -300,6 +300,13 @@ export const webRoutes: RouteObject[] = [
             ),
             path: 'users/:userId/settings/:tab?',
           },
+          {
+            element: dynamicElement(
+              () => import('@/routes/(main)/admin/ai-governance'),
+              'Web > Admin > AiGovernance',
+            ),
+            path: 'ai-governance',
+          },
         ],
         element: dynamicLayout(
           () => import('@/routes/(main)/admin/_layout'),

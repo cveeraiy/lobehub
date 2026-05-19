@@ -28,6 +28,7 @@ async def test_list_platforms(client: httpx.AsyncClient) -> None:
         "qq",
         "wechat",
         "teams",
+        "webex",
     ]
     assert data[0]["connectionMode"] == "websocket"
     assert any(field["key"] == "credentials" for field in data[0]["schema"])
@@ -41,6 +42,8 @@ async def test_list_platforms(client: httpx.AsyncClient) -> None:
     assert data[7]["connectionMode"] == "polling"
     assert data[7]["supportsMessageEdit"] is False
     assert data[8]["connectionMode"] == "webhook"
+    assert data[9]["connectionMode"] == "webhook"
+    assert data[9]["showWebhookUrl"] is True
 
 
 # ── 32.2  Setup: create an agent for bot provider tests ──────────────

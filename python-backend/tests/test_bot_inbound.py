@@ -9,6 +9,7 @@ from app.services.bot.inbound import (
     normalize_slack_event,
     normalize_teams_activity,
     normalize_telegram_update,
+    normalize_webex_webhook,
     normalize_wechat_message,
 )
 
@@ -732,3 +733,94 @@ def test_normalize_teams_ignores_non_message_activity() -> None:
 
     assert result.status == "ignored"
     assert result.reason == "unsupported_activity"
+
+
+def test_normalize_webex_message_webhook() -> None:
+    result = normalize_webex_webhook(
+        {
+            "id": "webhook-event-1",
+            "resource": "messages",
+            "event": "created",
+            "data": {
+                "id": "webex-msg-1",
+                "roomId": "room-1",
+                "roomType": "group",
+                "personId": "person-1",
+                "markdown": "**hello** webex",
+            },
+        },
+        "bot-person-1",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.to_dict() == {
+        "platform": "webex",
+        "application_id": "bot-person-1",
+        "message_id": "webex-msg-1",
+        "thread_id": "webex:room:room-1",
+        "channel_id": "room-1",
+        "author_id": "person-1",
+        "text": "**hello** webex",
+        "is_dm": False,
+        "raw": {
+            "id": "webhook-event-1",
+            "resource": "messages",
+            "event": "created",
+            "data": {
+                "id": "webex-msg-1",
+                "roomId": "room-1",
+                "roomType": "group",
+                "personId": "person-1",
+                "markdown": "**hello** webex",
+            },
+        },
+        "author_locale": None,
+    }
+
+
+def test_normalize_webex_direct_file_message() -> None:
+    result = normalize_webex_webhook(
+        {
+            "resource": "messages",
+            "event": "created",
+            "data": {
+                "id": "webex-msg-2",
+                "roomId": "room-2",
+                "roomType": "direct",
+                "personId": "person-1",
+                "files": ["https://webexapis.com/v1/contents/file-1"],
+            },
+        },
+        "bot-person-1",
+    )
+
+    assert result.status == "accepted"
+    assert result.message is not None
+    assert result.message.text == ""
+    assert result.message.is_dm is True
+    assert result.message.attachments is not None
+    assert result.message.attachments[0].to_dict() == {
+        "type": "file",
+        "url": "https://webexapis.com/v1/contents/file-1",
+    }
+
+
+def test_normalize_webex_ignores_bot_message() -> None:
+    result = normalize_webex_webhook(
+        {
+            "resource": "messages",
+            "event": "created",
+            "data": {
+                "id": "webex-msg-3",
+                "roomId": "room-1",
+                "roomType": "group",
+                "personId": "bot-person-1",
+                "text": "bot text",
+            },
+        },
+        "bot-person-1",
+    )
+
+    assert result.status == "ignored"
+    assert result.reason == "bot_message"

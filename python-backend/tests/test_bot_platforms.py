@@ -10,6 +10,7 @@ from app.services.bot.platforms.qq.definition import qq
 from app.services.bot.platforms.slack.definition import slack
 from app.services.bot.platforms.teams.definition import teams
 from app.services.bot.platforms.telegram.definition import telegram
+from app.services.bot.platforms.webex.definition import webex
 from app.services.bot.platforms.wechat.definition import wechat
 
 
@@ -33,6 +34,7 @@ def test_registry_exposes_only_python_migrated_platforms() -> None:
         "qq",
         "wechat",
         "teams",
+        "webex",
     ]
 
 
@@ -312,5 +314,42 @@ async def test_teams_validate_credentials_reports_missing_fields() -> None:
         "errors": [
             {"field": "applicationId", "message": "Microsoft App ID is required"},
             {"field": "appPassword", "message": "Microsoft App Password is required"},
+        ],
+    }
+
+
+def test_webex_platform_serializes_frontend_schema() -> None:
+    data = webex.serialize()
+
+    assert data["id"] == "webex"
+    assert data["connectionMode"] == "webhook"
+    assert data["documentation"]["portalUrl"] == "https://developer.webex.com/my-apps"
+    assert data["showWebhookUrl"] is True
+    assert data["supportsMarkdown"] is True
+    assert data["supportsMessageEdit"] is False
+    assert any(field["key"] == "applicationId" for field in data["schema"])
+
+
+def test_webex_settings_merge_schema_defaults() -> None:
+    settings = webex.merge_settings({"charLimit": 1000})
+
+    assert settings["charLimit"] == 1000
+    assert settings["concurrency"] == "queue"
+    assert settings["historyLimit"] == 50
+    assert settings["dmPolicy"] == "open"
+    assert settings["groupPolicy"] == "open"
+
+
+@pytest.mark.asyncio
+async def test_webex_validate_credentials_reports_missing_fields() -> None:
+    result = await webex.validate_credentials({})
+
+    assert result.valid is False
+    assert result.to_dict() == {
+        "valid": False,
+        "errors": [
+            {"field": "botToken", "message": "Bot Token is required"},
+            {"field": "webhookSecret", "message": "Webhook Secret is required"},
+            {"field": "applicationId", "message": "Bot Person ID is required"},
         ],
     }

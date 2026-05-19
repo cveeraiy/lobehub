@@ -89,4 +89,13 @@ describe('EnterpriseAiPolicyService REST', () => {
     });
     expect(result.targets).toEqual([{ targetId: 'org-1', targetType: 'organization' }]);
   });
+
+  it('loads configured group targets', async () => {
+    mockRestGet.mockResolvedValueOnce([{ id: 'engineering' }, { id: 'finance' }]);
+
+    const result = await enterpriseAiPolicyService.listGroupTargets();
+
+    expect(mockRestGet).toHaveBeenCalledWith('/admin/enterprise-ai-policies/group-targets');
+    expect(result).toEqual(['engineering', 'finance']);
+  });
 });

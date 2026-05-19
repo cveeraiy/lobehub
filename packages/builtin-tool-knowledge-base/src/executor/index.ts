@@ -2,8 +2,10 @@ import { formatSearchResults, promptFileContents, promptNoSearchResults } from '
 import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
-import { ragService } from '@/services/rag';
+import { documentService } from '@/services/document/resolved';
+import { fileService } from '@/services/file/resolved';
+import { knowledgeBaseService } from '@/services/knowledgeBase.resolved';
+import { ragService } from '@/services/rag.resolved';
 import { agentSelectors } from '@/store/agent/selectors';
 import { getAgentStoreState } from '@/store/agent/store';
 
@@ -42,7 +44,7 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
 
   listKnowledgeBases = async (): Promise<BuiltinToolResult> => {
     try {
-      const knowledgeBases = await lambdaClient.knowledgeBase.getKnowledgeBases.query();
+      const knowledgeBases = await knowledgeBaseService.getKnowledgeBaseList();
 
       if (knowledgeBases.length === 0) {
         return {
@@ -85,13 +87,13 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
       const { id, limit = 50, offset = 0 } = params;
       const cappedLimit = Math.min(limit, 100);
 
-      const knowledgeBase = await lambdaClient.knowledgeBase.getKnowledgeBaseById.query({ id });
+      const knowledgeBase = await knowledgeBaseService.getKnowledgeBaseById(id);
 
       if (!knowledgeBase) {
         return { content: `Knowledge base with ID "${id}" not found.`, success: false };
       }
 
-      const result = await lambdaClient.file.getKnowledgeItems.query({
+      const result = await fileService.getKnowledgeItems({
         knowledgeBaseId: id,
         limit: cappedLimit,
         offset,
@@ -222,7 +224,7 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
     try {
       const { name, description } = params;
 
-      const id = await lambdaClient.knowledgeBase.createKnowledgeBase.mutate({
+      const id = await knowledgeBaseService.createKnowledgeBase({
         description,
         name,
       });
@@ -251,7 +253,7 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
     try {
       const { id } = params;
 
-      await lambdaClient.knowledgeBase.removeKnowledgeBase.mutate({ id });
+      await knowledgeBaseService.deleteKnowledgeBase(id);
 
       return {
         content: `Knowledge base \`${id}\` deleted successfully.`,
@@ -270,8 +272,9 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
     try {
       const { knowledgeBaseId, title, content, parentId } = params;
 
-      const result = await lambdaClient.document.createDocument.mutate({
+      const result = await documentService.createDocument({
         content,
+        editorData: '{}',
         fileType: 'custom/document',
         knowledgeBaseId,
         parentId,
@@ -306,10 +309,7 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
         return { content: 'Error: No file IDs provided.', success: false };
       }
 
-      await lambdaClient.knowledgeBase.addFilesToKnowledgeBase.mutate({
-        ids: fileIds,
-        knowledgeBaseId,
-      });
+      await knowledgeBaseService.addFilesToKnowledgeBase(knowledgeBaseId, fileIds);
 
       return {
         content: `Successfully added ${fileIds.length} file(s) to knowledge base \`${knowledgeBaseId}\`.`,
@@ -340,10 +340,7 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
         return { content: 'Error: No file IDs provided.', success: false };
       }
 
-      await lambdaClient.knowledgeBase.removeFilesFromKnowledgeBase.mutate({
-        ids: fileIds,
-        knowledgeBaseId,
-      });
+      await knowledgeBaseService.removeFilesFromKnowledgeBase(knowledgeBaseId, fileIds);
 
       return {
         content: `Successfully removed ${fileIds.length} file(s) from knowledge base \`${knowledgeBaseId}\`.`,
@@ -364,7 +361,7 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
     try {
       const { category, q, limit = 50, offset = 0 } = params;
 
-      const result = await lambdaClient.file.getKnowledgeItems.query({
+      const result = await fileService.getKnowledgeItems({
         category,
         limit,
         offset,
@@ -416,7 +413,7 @@ class KnowledgeBaseExecutor extends BaseExecutor<typeof KnowledgeBaseApiName> {
     try {
       const { id } = params;
 
-      const item = await lambdaClient.file.getFileItemById.query({ id });
+      const item = await fileService.getKnowledgeItem(id);
 
       if (!item) {
         return { content: `File with ID "${id}" not found.`, success: false };

@@ -117,6 +117,20 @@ async def test_admin_policy_crud_and_effective_policy(client: httpx.AsyncClient)
 
 
 @pytest.mark.asyncio
+async def test_admin_group_targets_are_selectable(client: httpx.AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv(
+        "ENTERPRISE_AI_USER_GROUPS_JSON",
+        '{"user-1": ["engineering"], "user-2": ["finance", "engineering"]}',
+    )
+    get_enterprise_ai_policy_service.cache_clear()
+
+    response = await client.get("/api/admin/enterprise-ai-policies/group-targets")
+
+    assert response.status_code == 200
+    assert response.json() == [{"id": "engineering"}, {"id": "finance"}]
+
+
+@pytest.mark.asyncio
 async def test_user_settings_update_rejects_managed_paths(client: httpx.AsyncClient) -> None:
     create = await client.post(
         "/api/admin/enterprise-ai-policies",

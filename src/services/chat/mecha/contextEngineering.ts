@@ -47,7 +47,7 @@ import { VARIABLE_GENERATORS } from '@/helpers/parserPlaceholder';
 import { agentService } from '@/services/agent.resolved';
 import { agentCronJobService } from '@/services/agentCronJob.resolved';
 import { marketApiService } from '@/services/marketApi.resolved';
-import { notebookService } from '@/services/notebook';
+import { notebookService } from '@/services/notebook.resolved';
 import { getAgentStoreState } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 import { getChatGroupStoreState } from '@/store/agentGroup';

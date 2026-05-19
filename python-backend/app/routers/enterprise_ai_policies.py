@@ -32,6 +32,15 @@ async def list_enterprise_ai_policies(
     return [policy.model_dump(mode="json", by_alias=True) for policy in policies]
 
 
+@router.get("/api/admin/enterprise-ai-policies/group-targets")
+async def list_enterprise_ai_policy_group_targets(
+    admin_id: str = Depends(require_admin),
+):
+    service = get_enterprise_ai_policy_service()
+    group_ids = await service.list_group_ids()
+    return [{"id": group_id} for group_id in group_ids]
+
+
 @router.post("/api/admin/enterprise-ai-policies", status_code=status.HTTP_201_CREATED)
 async def create_enterprise_ai_policy(
     body: EnterpriseAiPolicyInput,

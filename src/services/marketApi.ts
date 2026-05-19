@@ -47,6 +47,24 @@ interface PublishAgentGroupResult {
   success: boolean;
 }
 
+interface SubmitFeedbackParams {
+  clientInfo?: {
+    language?: string;
+    timezone?: string;
+    url?: string;
+    userAgent?: string;
+  };
+  email?: string;
+  message: string;
+  screenshotUrl?: string;
+  title: string;
+}
+
+interface SubmitFeedbackResult {
+  issueUrl?: string;
+  success: boolean;
+}
+
 export class MarketApiService {
   /**
    * @deprecated This method is no longer needed as authentication is now handled
@@ -209,6 +227,10 @@ export class MarketApiService {
 
   async deprecateAgentGroup(identifier: string): Promise<void> {
     await lambdaClient.market.agentGroup.deprecateAgentGroup.mutate({ identifier });
+  }
+
+  async submitFeedback(params: SubmitFeedbackParams): Promise<SubmitFeedbackResult> {
+    return lambdaClient.market.submitFeedback.mutate(params);
   }
 
   // ==================== Fork Agent Group API ====================

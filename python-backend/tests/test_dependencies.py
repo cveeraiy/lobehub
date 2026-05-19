@@ -152,3 +152,41 @@ class TestGetCurrentUserIdServiceToken:
         assert result == "jwt-user-1"
         mock_validate.assert_called_once_with(mock_request)
         mock_extract.assert_called_once_with(mock_request)
+
+
+class TestRequireAdminSessionCookie:
+    @pytest.mark.asyncio
+    @patch("app.dependencies._ensure_user_exists", new_callable=AsyncMock)
+    @patch("app.routers.auth._get_session_from_request")
+    async def test_accepts_admin_session_cookie(
+        self,
+        mock_get_session: MagicMock,
+        mock_ensure: AsyncMock,
+    ) -> None:
+        from app.dependencies import require_admin
+
+        mock_get_session.return_value = {
+            "roles": ["admin"],
+            "user_id": "admin-user",
+        }
+        mock_ensure.return_value = "admin-user"
+
+        result = await require_admin(request=MagicMock(), session=AsyncMock())
+
+        assert result == "admin-user"
+        mock_ensure.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("app.routers.auth._get_session_from_request")
+    async def test_rejects_non_admin_session_cookie(self, mock_get_session: MagicMock) -> None:
+        from app.dependencies import require_admin
+
+        mock_get_session.return_value = {
+            "roles": ["user"],
+            "user_id": "regular-user",
+        }
+
+        with pytest.raises(HTTPException) as exc_info:
+            await require_admin(request=MagicMock(), session=AsyncMock())
+
+        assert exc_info.value.status_code == 403

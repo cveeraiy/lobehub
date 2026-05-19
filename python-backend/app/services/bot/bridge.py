@@ -16,6 +16,7 @@ from app.services.bot.platforms.qq.client import QQClient
 from app.services.bot.platforms.slack.client import SlackClient
 from app.services.bot.platforms.teams.client import TeamsConnectorClient
 from app.services.bot.platforms.telegram.client import TelegramClient
+from app.services.bot.platforms.webex.client import WebexClient
 from app.services.bot.platforms.wechat.client import WechatClient
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ RuntimeFactory = Callable[..., Awaitable[dict[str, Any]]]
 DiscordClientFactory = Callable[[str], DiscordClient]
 TeamsClientFactory = Callable[[str, str], TeamsConnectorClient]
 TelegramClientFactory = Callable[[str], TelegramClient]
+WebexClientFactory = Callable[[str], WebexClient]
 LineClientFactory = Callable[[str], LineClient]
 SlackClientFactory = Callable[[str], SlackClient]
 FeishuClientFactory = Callable[[str, str, str], FeishuClient]
@@ -104,6 +106,7 @@ class BotBridge:
         discord_client_factory: DiscordClientFactory = DiscordClient,
         teams_client_factory: TeamsClientFactory = TeamsConnectorClient,
         telegram_client_factory: TelegramClientFactory = TelegramClient,
+        webex_client_factory: WebexClientFactory = WebexClient,
         line_client_factory: LineClientFactory = LineClient,
         slack_client_factory: SlackClientFactory = SlackClient,
         feishu_client_factory: FeishuClientFactory = FeishuClient,
@@ -115,6 +118,7 @@ class BotBridge:
         self._discord_client_factory = discord_client_factory
         self._teams_client_factory = teams_client_factory
         self._telegram_client_factory = telegram_client_factory
+        self._webex_client_factory = webex_client_factory
         self._line_client_factory = line_client_factory
         self._slack_client_factory = slack_client_factory
         self._feishu_client_factory = feishu_client_factory
@@ -220,6 +224,13 @@ class BotBridge:
                 logger.warning("Telegram bot reply skipped because botToken is missing")
                 return
             await self._telegram_client_factory(bot_token).send_reply(message.raw, text)
+            return
+        if message.platform == "webex":
+            bot_token = credentials.get("botToken")
+            if not isinstance(bot_token, str) or not bot_token:
+                logger.warning("Webex bot reply skipped because botToken is missing")
+                return
+            await self._webex_client_factory(bot_token).send_reply(message.raw, text)
             return
         if message.platform == "line":
             channel_access_token = credentials.get("channelAccessToken")

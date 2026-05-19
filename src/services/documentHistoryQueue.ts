@@ -1,7 +1,7 @@
 import debug from 'debug';
 
 import { normalizeEditorDataDiffNodes } from '@/libs/editor/normalizeDiffNodes';
-import { documentService } from '@/services/document';
+import { documentService } from '@/services/document/resolved';
 
 const log = debug('page:editor:history-queue');
 

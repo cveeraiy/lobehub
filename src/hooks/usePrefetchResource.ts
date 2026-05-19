@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { mutate } from '@/libs/swr';
-import { fileService } from '@/services/file';
+import { fileService } from '@/services/file/resolved';
 
 /**
  * Returns a callback to prefetch resource/file data into the SWR cache.

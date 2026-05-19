@@ -40,6 +40,10 @@ interface RestEffectiveEnterpriseAiPolicy {
   source_policy_ids: string[];
 }
 
+interface RestGroupTarget {
+  id: string;
+}
+
 export interface EnterpriseAiPolicyTarget {
   targetId: string;
   targetType: 'global' | 'organization' | 'group' | 'user';
@@ -147,6 +151,13 @@ class EnterpriseAiPolicyService {
       '/admin/enterprise-ai-policies',
     );
     return policies.map(toPolicy);
+  };
+
+  listGroupTargets = async (): Promise<string[]> => {
+    const groups = await restClient.get<RestGroupTarget[]>(
+      '/admin/enterprise-ai-policies/group-targets',
+    );
+    return groups.map((group) => group.id);
   };
 
   createPolicy = async (policy: EnterpriseAiPolicyInput): Promise<EnterpriseAiPolicy> => {

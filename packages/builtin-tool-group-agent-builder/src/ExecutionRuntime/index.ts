@@ -1,9 +1,9 @@
 import { formatAgentProfile } from '@lobechat/prompts';
 import type { BuiltinToolResult } from '@lobechat/types';
 
-import { agentService } from '@/services/agent';
+import { agentService } from '@/services/agent.resolved';
 import type { GroupMemberConfig } from '@/services/chatGroup';
-import { chatGroupService } from '@/services/chatGroup';
+import { chatGroupService } from '@/services/chatGroup/resolved';
 import { useAgentStore } from '@/store/agent';
 import { getChatGroupStoreState } from '@/store/agentGroup';
 import { agentGroupSelectors } from '@/store/agentGroup/selectors';

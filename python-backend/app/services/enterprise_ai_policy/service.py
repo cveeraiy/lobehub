@@ -39,6 +39,15 @@ class EnterpriseAiPolicyService:
     async def list_policies(self) -> list[EnterpriseAiPolicy]:
         return await self._repository.list_policies()
 
+    async def list_group_ids(self) -> list[str]:
+        groups = set(_configured_group_ids())
+        policies = await self._repository.list_policies()
+        for policy in policies:
+            for target in policy.targets:
+                if target.target_type == "group" and target.target_id:
+                    groups.add(target.target_id)
+        return sorted(groups)
+
     async def create_policy(self, body: EnterpriseAiPolicyInput, admin_user_id: str) -> EnterpriseAiPolicy:
         now = utcnow()
         policy = EnterpriseAiPolicy(
@@ -149,20 +158,34 @@ def _organization_ids(user: User | None) -> list[str]:
 
 
 def _group_ids_for_user(user_id: str) -> list[str]:
-    raw = os.environ.get(USER_GROUPS_ENV)
-    if not raw:
-        return []
-
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError:
-        return []
-
-    groups = payload.get(user_id) if isinstance(payload, dict) else None
+    mapping = _user_group_mapping()
+    groups = mapping.get(user_id)
     if not isinstance(groups, list):
         return []
 
     return [group for group in groups if isinstance(group, str)]
+
+
+def _configured_group_ids() -> list[str]:
+    groups: set[str] = set()
+    for values in _user_group_mapping().values():
+        if not isinstance(values, list):
+            continue
+        groups.update(group for group in values if isinstance(group, str))
+    return sorted(groups)
+
+
+def _user_group_mapping() -> dict[str, object]:
+    raw = os.environ.get(USER_GROUPS_ENV)
+    if not raw:
+        return {}
+
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+
+    return payload if isinstance(payload, dict) else {}
 
 
 @lru_cache(maxsize=1)

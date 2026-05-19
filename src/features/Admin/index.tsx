@@ -1,7 +1,15 @@
 import { Avatar, Tag } from '@lobehub/ui';
 import { App, Button, Input, Popconfirm, Select, Table, type TableColumnType } from 'antd';
 import { createStaticStyles } from 'antd-style';
-import { Ban, CheckCircle, Search, Shield, ShieldCheck, Users } from 'lucide-react';
+import {
+  Ban,
+  CheckCircle,
+  Search,
+  Shield,
+  ShieldCheck,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -97,6 +105,12 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   toolbar: css`
     display: flex;
     gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  `,
+  toolbarActions: css`
+    display: flex;
+    gap: 8px;
     align-items: center;
   `,
 }));
@@ -330,6 +344,14 @@ const AdminPanel = memo(() => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        <div className={styles.toolbarActions}>
+          <Button
+            icon={<SlidersHorizontal size={16} />}
+            onClick={() => navigate('/admin/ai-governance')}
+          >
+            AI Governance
+          </Button>
+        </div>
       </div>
 
       <Table

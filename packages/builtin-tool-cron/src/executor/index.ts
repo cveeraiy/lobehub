@@ -3,7 +3,7 @@ import { BaseExecutor } from '@lobechat/types';
 import debug from 'debug';
 
 import { mutate } from '@/libs/swr';
-import { lambdaClient } from '@/libs/trpc/client';
+import { agentCronJobService } from '@/services/agentCronJob.resolved';
 
 import { CronIdentifier } from '../manifest';
 import {
@@ -48,7 +48,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
 
       log('[CronExecutor] createCronJob - params:', params, 'agentId:', agentId);
 
-      const result = await lambdaClient.agentCronJob.create.mutate({
+      const result = await agentCronJobService.create({
         agentId,
         content: params.content,
         cronPattern: params.cronPattern,
@@ -110,7 +110,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
 
       log('[CronExecutor] listCronJobs - agentId:', agentId, 'params:', params);
 
-      const result = await lambdaClient.agentCronJob.list.query({
+      const result = await agentCronJobService.list({
         agentId,
         enabled: params.enabled,
         limit: params.limit || 20,
@@ -178,7 +178,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
     try {
       log('[CronExecutor] getCronJob - id:', params.id);
 
-      const result = await lambdaClient.agentCronJob.findById.query({ id: params.id });
+      const result = await agentCronJobService.getById(params.id);
       const cronJob = result.data as CronJobSummary;
 
       const status = cronJob.enabled ? 'enabled' : 'disabled';
@@ -223,10 +223,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
       log('[CronExecutor] updateCronJob - id:', params.id, 'params:', params);
 
       const { id, ...updateData } = params;
-      const result = await lambdaClient.agentCronJob.update.mutate({
-        data: updateData,
-        id,
-      });
+      const result = await agentCronJobService.update(id, updateData);
 
       const cronJob = result.data as CronJobSummary;
 
@@ -282,7 +279,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
     try {
       log('[CronExecutor] deleteCronJob - id:', params.id);
 
-      await lambdaClient.agentCronJob.delete.mutate({ id: params.id });
+      await agentCronJobService.delete(params.id);
 
       // Refresh the cron jobs list in sidebar
       if (ctx?.agentId) {
@@ -324,10 +321,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
     try {
       log('[CronExecutor] toggleCronJob - id:', params.id, 'enabled:', params.enabled);
 
-      const result = await lambdaClient.agentCronJob.update.mutate({
-        data: { enabled: params.enabled },
-        id: params.id,
-      });
+      const result = await agentCronJobService.update(params.id, { enabled: params.enabled });
 
       const cronJob = result.data as CronJobSummary;
 
@@ -375,10 +369,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
         params.newMaxExecutions,
       );
 
-      const result = await lambdaClient.agentCronJob.resetExecutions.mutate({
-        id: params.id,
-        newMaxExecutions: params.newMaxExecutions,
-      });
+      const result = await agentCronJobService.resetExecutions(params.id, params.newMaxExecutions);
 
       const cronJob = result.data as CronJobSummary;
 
@@ -421,7 +412,7 @@ class CronExecutor extends BaseExecutor<typeof CronApiName> {
     try {
       log('[CronExecutor] getStats');
 
-      const result = await lambdaClient.agentCronJob.getStats.query();
+      const result = await agentCronJobService.getStats();
       const stats = result.data;
 
       return {

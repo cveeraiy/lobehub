@@ -7,7 +7,7 @@ import {
 import { resourcesTreePrompt } from '@lobechat/prompts';
 import type { RuntimeSelectedSkill, UserCredSummary } from '@lobechat/types';
 
-import { agentSkillService } from '@/services/skill';
+import { agentSkillService } from '@/services/skill/resolved';
 import { getToolStoreState } from '@/store/tool';
 
 interface PreloadedSkill {

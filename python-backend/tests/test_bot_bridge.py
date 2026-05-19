@@ -156,6 +156,17 @@ class FakeWechatClient:
         return {"ret": 0}
 
 
+class FakeWebexClient:
+    replies: list[dict[str, Any]] = []
+
+    def __init__(self, bot_token: str) -> None:
+        self.bot_token = bot_token
+
+    async def send_reply(self, activity: dict[str, Any], text: str) -> dict[str, Any]:
+        self.replies.append({"activity": activity, "bot_token": self.bot_token, "text": text})
+        return {"id": "reply-1"}
+
+
 def make_provider(platform: str = "teams") -> AgentBotProvider:
     return AgentBotProvider(
         id="provider-1",
@@ -456,6 +467,24 @@ async def test_run_and_reply_sends_wechat_reply() -> None:
     assert FakeWechatClient.replies == [
         {
             "activity": make_message("wechat").raw,
+            "bot_token": "bot-token",
+            "text": "hello from agent",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_run_and_reply_sends_webex_reply() -> None:
+    runtime = FakeRuntime()
+    FakeWebexClient.replies = []
+    bridge = BotBridge(runtime=runtime, webex_client_factory=FakeWebexClient)
+
+    await bridge.run_and_reply("op-1", make_message("webex"), {"botToken": "bot-token"})
+
+    assert runtime.ran == ["op-1"]
+    assert FakeWebexClient.replies == [
+        {
+            "activity": make_message("webex").raw,
             "bot_token": "bot-token",
             "text": "hello from agent",
         }

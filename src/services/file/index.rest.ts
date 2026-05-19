@@ -160,7 +160,8 @@ export class FileService {
         url: doc.source || '',
       } as FileListItem;
     } else {
-      return restClient.get(`/files/${id}/item`);
+      const item = await restClient.get(`/files/${id}/item`);
+      return toFileListItem(item);
     }
   };
 
