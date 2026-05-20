@@ -5,19 +5,19 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import and_, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.file import Document, File
-from app.models.rag import Chunk, DocumentChunk, Embedding
-from app.models.knowledge import KnowledgeBaseFile
-from app.models.document_ext import DocumentHistory
 from app.models.agent_ops import AgentDocument
+from app.models.document_ext import DocumentHistory
+from app.models.file import Document
+from app.models.rag import Chunk, DocumentChunk, Embedding
 from app.models.topic_ext import TopicDocument
+from app.services.rag_parsing import parse_document_to_chunks, parse_file_to_chunks
 
 router = APIRouter(prefix="/api/documents", tags=["Documents"])
 
@@ -63,6 +63,11 @@ class SaveDocumentHistoryBody(BaseModel):
     document_id: str
     editor_data: str  # JSON string
     save_source: str = "manual"
+
+
+class ParseBody(BaseModel):
+    skip_exist: Optional[bool] = None
+    skipExist: Optional[bool] = None
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -356,34 +361,32 @@ async def save_document_history(
 @router.post("/{document_id}/parse")
 async def parse_document(
     document_id: str,
+    body: Optional[ParseBody] = Body(default=None),
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Parse a document (placeholder — actual parsing requires file service)."""
+    """Parse a document into chunks."""
     doc = await _find_doc(session, user_id, document_id)
     if not doc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
-    return _doc_dict(doc)
+    skip = bool(body and (body.skip_exist or body.skipExist))
+    return await parse_document_to_chunks(session, user_id, doc, skip_exist=skip)
 
 
 @router.post("/parse-file/{file_id}")
 async def parse_file_content(
     file_id: str,
     skip_exist: bool = False,
+    body: Optional[ParseBody] = Body(default=None),
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Parse file content into a document (placeholder — needs file service)."""
-    # Check for existing document linked to this file
-    existing = (await session.execute(
-        select(Document).where(
-            and_(Document.file_id == file_id, Document.user_id == user_id)
-        )
-    )).scalar_one_or_none()
-    if existing and skip_exist:
-        return {"id": existing.id, "content": existing.content, "metadata": existing.metadata_}
-    # Placeholder — actual parsing requires unstructured/file service integration
-    return {"id": existing.id if existing else None, "content": existing.content if existing else None}
+    """Parse file content into a document and chunks."""
+    skip = skip_exist or bool(body and (body.skip_exist or body.skipExist))
+    result = await parse_file_to_chunks(session, user_id, file_id, skip_exist=skip)
+    if not result:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found")
+    return result
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -504,11 +507,11 @@ async def delete_document(
     if chunk_ids:
         # Delete embeddings for those chunks
         await session.execute(delete(Embedding).where(Embedding.chunk_id.in_(chunk_ids)))
-        # Delete chunks
-        await session.execute(delete(Chunk).where(Chunk.id.in_(chunk_ids)))
 
     # Delete junction rows
     await session.execute(delete(DocumentChunk).where(DocumentChunk.document_id == document_id))
+    if chunk_ids:
+        await session.execute(delete(Chunk).where(Chunk.id.in_(chunk_ids)))
     # Delete history entries
     await session.execute(delete(DocumentHistory).where(DocumentHistory.document_id == document_id))
     # Delete agent_documents references
@@ -564,8 +567,9 @@ async def remove_all_documents(
         )).scalars().all()
         if chunk_ids:
             await session.execute(delete(Embedding).where(Embedding.chunk_id.in_(chunk_ids)))
-            await session.execute(delete(Chunk).where(Chunk.id.in_(chunk_ids)))
         await session.execute(delete(DocumentChunk).where(DocumentChunk.document_id.in_(doc_ids)))
+        if chunk_ids:
+            await session.execute(delete(Chunk).where(Chunk.id.in_(chunk_ids)))
         await session.execute(delete(DocumentHistory).where(DocumentHistory.document_id.in_(doc_ids)))
         await session.execute(delete(Document).where(Document.user_id == user_id))
     return {"ok": True}
@@ -584,8 +588,9 @@ async def batch_delete_documents(
     )).scalars().all()
     if chunk_ids:
         await session.execute(delete(Embedding).where(Embedding.chunk_id.in_(chunk_ids)))
-        await session.execute(delete(Chunk).where(Chunk.id.in_(chunk_ids)))
     await session.execute(delete(DocumentChunk).where(DocumentChunk.document_id.in_(body.ids)))
+    if chunk_ids:
+        await session.execute(delete(Chunk).where(Chunk.id.in_(chunk_ids)))
     await session.execute(delete(DocumentHistory).where(DocumentHistory.document_id.in_(body.ids)))
     await session.execute(
         delete(Document).where(and_(Document.id.in_(body.ids), Document.user_id == user_id))

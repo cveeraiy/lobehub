@@ -92,6 +92,35 @@ async def test_get_subtasks(client: httpx.AsyncClient, state: SharedState) -> No
 
 
 @pytest.mark.asyncio
+async def test_run_task_review(client: httpx.AsyncClient, state: SharedState) -> None:
+    assert state.task_id
+    config = {
+        "enabled": True,
+        "rubrics": [
+            {
+                "id": "keyword-parity",
+                "name": "Keyword parity",
+                "type": "keyword",
+                "config": {"criteria": "alpha, beta"},
+                "threshold": 0.5,
+            }
+        ],
+    }
+    update = await client.put(f"/api/tasks/{state.task_id}/review", json={"review": config})
+    assert update.status_code == 200
+
+    r = await client.post(
+        f"/api/tasks/{state.task_id}/review/run",
+        json={"content": "The output includes alpha and beta."},
+    )
+    assert r.status_code == 200
+    data = r.json()["data"]
+    assert data["passed"] is True
+    assert data["overallScore"] == 1
+    assert data["rubricResults"][0]["passed"] is True
+
+
+@pytest.mark.asyncio
 async def test_delete_task(client: httpx.AsyncClient, state: SharedState) -> None:
     assert state.task_id
     r = await client.delete(f"/api/tasks/{state.task_id}")

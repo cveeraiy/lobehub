@@ -184,7 +184,7 @@ class Brief(SQLModel, table=True):
     title: str = Field(nullable=False)
     summary: str = Field(nullable=False)
     artifacts: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("artifacts"))
-    actions: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("actions"))
+    actions: Optional[Any] = Field(default=None, sa_column=json_column("actions"))
 
     resolved_action: Optional[str] = None
     resolved_comment: Optional[str] = None

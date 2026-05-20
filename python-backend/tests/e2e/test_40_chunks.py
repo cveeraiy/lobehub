@@ -33,12 +33,14 @@ async def test_setup_document(client):
         "/api/documents",
         json={
             "title": "Chunk Source Doc",
-            "content": "Some content for chunking.",
+            "content": "Some content for chunking. This chunk mentions alpha parity search.",
             "knowledge_base_id": _KB_ID,
         },
     )
     assert r.status_code == 201
     _DOC_ID = r.json()["id"]
+    parse = await client.post(f"/api/documents/{_DOC_ID}/parse")
+    assert parse.status_code == 200
 
 
 # ── Count ───────────────────────────────────────────────────────────
@@ -80,16 +82,39 @@ async def test_create_embedding_task(client):
     assert data["success"] is True
 
 
-# ── Chunk CRUD (no chunks exist yet, test empty states) ────────────
+# ── Chunk CRUD/search ──────────────────────────────────────────────
 
 
 async def test_get_chunks_by_knowledge_base_empty(client):
-    """GET /api/chunks/by-knowledge-base/{kb_id} returns empty for new KB."""
+    """GET /api/chunks/by-knowledge-base/{kb_id} returns chunks for parsed docs."""
     assert _KB_ID
     r = await client.get(f"{PREFIX}/by-knowledge-base/{_KB_ID}")
     assert r.status_code == 200
     data = r.json()
     assert isinstance(data, list)
+    assert len(data) >= 1
+
+
+async def test_get_chunks_by_document_id(client):
+    """GET /api/chunks/by-file/{id} accepts a document id fallback."""
+    assert _DOC_ID
+    r = await client.get(f"{PREFIX}/by-file/{_DOC_ID}")
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["items"]) >= 1
+
+
+async def test_semantic_search_chat_lexical_fallback(client):
+    """POST /api/chunks/semantic-search-chat works without an embedding provider."""
+    assert _DOC_ID
+    r = await client.post(
+        f"{PREFIX}/semantic-search-chat",
+        json={"query": "alpha parity", "file_ids": [_DOC_ID], "top_k": 5},
+    )
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["chunks"]) >= 1
+    assert len(data["fileResults"]) >= 1
 
 
 async def test_get_chunk_nonexistent(client):

@@ -7,17 +7,19 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field as PField
-from sqlalchemy import and_, delete, desc, func, or_, select, update
+from pydantic import BaseModel
+from pydantic import Field as PField
+from sqlalchemy import and_, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models.task import Brief, Task, TaskComment, TaskDependency, TaskDocument, TaskTopic
 from app.models.topic import Topic
-from app.services.task.service import TaskService
-from app.services.task.runner import TaskRunnerService
 from app.services.task.lifecycle import TaskLifecycleService, TopicCompleteParams
+from app.services.task.runner import TaskRunnerService
+from app.services.task.service import TaskService
+from app.services.task_review.service import EvalRubric, ReviewJudge, TaskReviewService
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,26 @@ def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
+
+
+def _review_value(data: dict[str, Any], snake_key: str, camel_key: str, default: Any = None) -> Any:
+    return data.get(snake_key, data.get(camel_key, default))
+
+
+def _build_eval_rubric(raw: dict[str, Any]) -> EvalRubric:
+    config = raw.get("config") if isinstance(raw.get("config"), dict) else {}
+    threshold = raw.get("threshold", raw.get("passThreshold", raw.get("pass_threshold")))
+    criteria = raw.get("criteria") or config.get("criteria") or config.get("keywords") or raw.get("description")
+    if isinstance(criteria, list):
+        criteria = ", ".join(str(item) for item in criteria)
+    return EvalRubric(
+        name=str(raw.get("name") or raw.get("id") or "Rubric"),
+        description=str(raw.get("description") or config.get("description") or criteria or ""),
+        weight=float(raw.get("weight") or 1.0),
+        type=str(raw.get("type") or "keyword"),
+        criteria=str(criteria or ""),
+        pass_threshold=float(threshold if threshold is not None else 0.6),
+    )
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -900,7 +922,7 @@ async def run_review(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Run review on task output (placeholder — needs TaskReviewService)."""
+    """Run review on task output."""
     svc = TaskService(session, user_id)
     task = await svc.resolve(task_id)
     if not task:
@@ -911,13 +933,45 @@ async def run_review(
         raise HTTPException(400, "Review is not enabled for this task")
     if not body.content:
         raise HTTPException(400, "Content is required for review")
+
+    rubrics = [
+        _build_eval_rubric(item)
+        for item in review_config.get("rubrics", [])
+        if isinstance(item, dict)
+    ]
+    if not rubrics:
+        raise HTTPException(400, "At least one review rubric is required")
+
+    judge_config = review_config.get("judge") if isinstance(review_config.get("judge"), dict) else {}
+    reviewer = TaskReviewService(session, user_id)
+    result = await reviewer.review(
+        content=body.content,
+        task_name=task.name or task.identifier,
+        rubrics=rubrics,
+        judge=ReviewJudge(
+            model=judge_config.get("model"),
+            provider=judge_config.get("provider"),
+            prompt=judge_config.get("prompt"),
+        ),
+        iteration=int(_review_value(review_config, "iteration", "iteration", 1) or 1),
+    )
     return {
         "success": True,
         "data": {
-            "passed": True,
-            "overallScore": 1.0,
-            "rubricResults": [],
-            "message": "Review placeholder — implement TaskReviewService integration",
+            "passed": result.passed,
+            "overallScore": result.overall_score / 100,
+            "rubricResults": [
+                {
+                    "name": item.name,
+                    "score": item.score,
+                    "passed": item.passed,
+                    "reasoning": item.reasoning,
+                    "weight": item.weight,
+                }
+                for item in result.rubric_results
+            ],
+            "suggestions": result.suggestions,
+            "iteration": result.iteration,
         },
     }
 

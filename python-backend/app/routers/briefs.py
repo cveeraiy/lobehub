@@ -43,7 +43,8 @@ class CreateBriefRequest(BaseModel):
     topic_id: Optional[str] = None
     agent_id: Optional[str] = None
     priority: str = "info"
-    actions: Optional[dict[str, Any]] = None
+    artifacts: Optional[dict[str, Any]] = None
+    actions: Optional[Any] = None
     trigger: Optional[str] = None
 
 
@@ -63,7 +64,10 @@ class BriefResponse(BaseModel):
     priority: Optional[str] = None
     title: str
     summary: str
-    actions: Optional[dict[str, Any]] = None
+    actions: Optional[Any] = None
+    artifacts: Optional[dict[str, Any]] = None
+    agents: list[dict[str, Any]] = Field(default_factory=list)
+    task_status: Optional[str] = None
     resolved_action: Optional[str] = None
     resolved_comment: Optional[str] = None
     read_at: Optional[str] = None
@@ -75,24 +79,46 @@ class BriefResponse(BaseModel):
 
 
 def _brief_to_response(brief: Any) -> dict[str, Any]:
+    if isinstance(brief, dict):
+        get = brief.get
+    else:
+        get = lambda key, default=None: getattr(brief, key, default)
+
+    read_at = get("read_at")
+    resolved_at = get("resolved_at")
+    created_at = get("created_at")
+
     return {
-        "id": brief.id,
-        "user_id": brief.user_id,
-        "task_id": brief.task_id,
-        "cron_job_id": brief.cron_job_id,
-        "topic_id": brief.topic_id,
-        "agent_id": brief.agent_id,
-        "type": brief.type,
-        "priority": brief.priority,
-        "title": brief.title,
-        "summary": brief.summary,
-        "actions": brief.actions,
-        "agents": getattr(brief, "agents", None) or [],
-        "resolved_action": brief.resolved_action,
-        "resolved_comment": brief.resolved_comment,
-        "read_at": brief.read_at.isoformat() if brief.read_at else None,
-        "resolved_at": brief.resolved_at.isoformat() if brief.resolved_at else None,
-        "created_at": brief.created_at.isoformat() if brief.created_at else None,
+        "id": get("id"),
+        "user_id": get("user_id"),
+        "userId": get("user_id"),
+        "task_id": get("task_id"),
+        "taskId": get("task_id"),
+        "cron_job_id": get("cron_job_id"),
+        "cronJobId": get("cron_job_id"),
+        "topic_id": get("topic_id"),
+        "topicId": get("topic_id"),
+        "agent_id": get("agent_id"),
+        "agentId": get("agent_id"),
+        "type": get("type"),
+        "priority": get("priority"),
+        "title": get("title"),
+        "summary": get("summary"),
+        "artifacts": get("artifacts"),
+        "actions": get("actions"),
+        "agents": get("agents") or [],
+        "task_status": get("task_status"),
+        "taskStatus": get("task_status"),
+        "resolved_action": get("resolved_action"),
+        "resolvedAction": get("resolved_action"),
+        "resolved_comment": get("resolved_comment"),
+        "resolvedComment": get("resolved_comment"),
+        "read_at": read_at.isoformat() if hasattr(read_at, "isoformat") else read_at,
+        "readAt": read_at.isoformat() if hasattr(read_at, "isoformat") else read_at,
+        "resolved_at": resolved_at.isoformat() if hasattr(resolved_at, "isoformat") else resolved_at,
+        "resolvedAt": resolved_at.isoformat() if hasattr(resolved_at, "isoformat") else resolved_at,
+        "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else created_at,
+        "createdAt": created_at.isoformat() if hasattr(created_at, "isoformat") else created_at,
     }
 
 
@@ -111,9 +137,10 @@ async def list_briefs(
     """List briefs with pagination."""
     svc = BriefService(session, user_id)
     result = await svc.list_briefs(limit=limit, offset=offset, brief_type=type)
+    briefs = await svc.enrich_briefs_with_agents(result["briefs"])
     return {
         "success": True,
-        "data": [_brief_to_response(b) for b in result["briefs"]],
+        "data": [_brief_to_response(b) for b in briefs],
         "total": result["total"],
     }
 
@@ -125,7 +152,7 @@ async def list_unresolved(
 ):
     """List all unresolved briefs."""
     svc = BriefService(session, user_id)
-    briefs = await svc.list_unresolved()
+    briefs = await svc.enrich_briefs_with_agents(await svc.list_unresolved())
     return {
         "success": True,
         "data": [_brief_to_response(b) for b in briefs],
@@ -149,6 +176,7 @@ async def create_brief(
         topic_id=body.topic_id,
         agent_id=body.agent_id,
         priority=body.priority,
+        artifacts=body.artifacts,
         actions=body.actions,
         trigger=body.trigger,
     )
@@ -164,7 +192,7 @@ async def list_briefs_by_task(
 ):
     """List all briefs for a task."""
     svc = BriefService(session, user_id)
-    briefs = await svc.find_by_task_id(task_id)
+    briefs = await svc.enrich_briefs_with_agents(await svc.find_by_task_id(task_id))
     return {
         "success": True,
         "data": [_brief_to_response(b) for b in briefs],
@@ -182,7 +210,8 @@ async def get_brief(
     brief = await svc.find_by_id(brief_id)
     if not brief:
         raise HTTPException(status_code=404, detail="Brief not found")
-    return {"success": True, "data": _brief_to_response(brief)}
+    enriched = await svc.enrich_briefs_with_agents([brief])
+    return {"success": True, "data": _brief_to_response(enriched[0])}
 
 
 @router.post("/{brief_id}/resolve")
@@ -198,7 +227,8 @@ async def resolve_brief(
     if not brief:
         raise HTTPException(status_code=404, detail="Brief not found")
     await session.commit()
-    return {"success": True, "data": _brief_to_response(brief)}
+    enriched = await svc.enrich_briefs_with_agents([brief])
+    return {"success": True, "data": _brief_to_response(enriched[0])}
 
 
 @router.post("/{brief_id}/read")

@@ -6,9 +6,10 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Optional, Sequence
 
-from sqlalchemy import select, update, func, delete
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.file import Document
 from app.models.task import Brief, Task, TaskComment, TaskDependency, TaskDocument, TaskTopic
 
 logger = logging.getLogger(__name__)
@@ -230,6 +231,50 @@ class TaskService:
         self._db.add(brief)
         await self._db.flush()
         return brief
+
+    async def get_documents_pinned_since(
+        self,
+        task_id: str,
+        since: datetime,
+    ) -> list[dict[str, str | None]]:
+        stmt = (
+            select(Document.id, Document.file_type, Document.title)
+            .join(TaskDocument, TaskDocument.document_id == Document.id)
+            .where(
+                TaskDocument.task_id == task_id,
+                TaskDocument.user_id == self._uid,
+                TaskDocument.created_at >= since,
+            )
+        )
+        rows = (await self._db.execute(stmt)).all()
+        return [
+            {
+                "id": row.id,
+                "kind": row.file_type,
+                "title": row.title,
+            }
+            for row in rows
+        ]
+
+    async def update_topic_brief_decision(
+        self,
+        task_id: str,
+        topic_id: str,
+        decision: dict[str, Any],
+    ) -> None:
+        stmt = select(TaskTopic).where(
+            TaskTopic.task_id == task_id,
+            TaskTopic.topic_id == topic_id,
+            TaskTopic.user_id == self._uid,
+        )
+        topic = (await self._db.execute(stmt)).scalar_one_or_none()
+        if topic is None:
+            return
+
+        handoff = dict(topic.handoff or {})
+        handoff["briefDecision"] = decision
+        topic.handoff = handoff
+        self._db.add(topic)
 
     # ── Comment helpers ──────────────────────────────────────────────
 

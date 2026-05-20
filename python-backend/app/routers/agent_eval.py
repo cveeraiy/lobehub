@@ -5,10 +5,14 @@ Covers TS parity for all agentEvalProcedure endpoints.
 
 from __future__ import annotations
 
+import csv
+import json
+from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field as PField
+from pydantic import BaseModel
+from pydantic import Field as PField
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -16,6 +20,65 @@ from app.dependencies import get_current_user_id
 from app.services.agent_eval.service import AgentEvalService
 
 router = APIRouter(prefix="/api/agent-eval", tags=["Agent Eval"])
+
+
+def _detect_dataset_format(pathname: str, filename: Optional[str], requested: Optional[str] = None) -> str:
+    if requested and requested != "auto":
+        return requested
+    name = (filename or pathname).lower()
+    if name.endswith(".jsonl"):
+        return "jsonl"
+    if name.endswith(".json"):
+        return "json"
+    if name.endswith(".csv"):
+        return "csv"
+    if name.endswith(".xlsx") or name.endswith(".xls"):
+        return "xlsx"
+    return "csv"
+
+
+def _read_dataset_file(pathname: str, fmt: str) -> str | bytes:
+    path = Path(pathname)
+    if not path.exists() or not path.is_file():
+        raise HTTPException(400, f"Dataset file not found: {pathname}")
+    return path.read_bytes() if fmt == "xlsx" else path.read_text(encoding="utf-8-sig")
+
+
+def _parse_dataset_rows(content: str | bytes, *, fmt: str, preview: Optional[int] = None) -> dict[str, Any]:
+    rows: list[dict[str, Any]]
+    if fmt == "json":
+        data = json.loads(content.decode("utf-8") if isinstance(content, bytes) else content)
+        if isinstance(data, dict):
+            data = data.get("data") or data.get("rows") or data.get("testCases") or data.get("test_cases") or []
+        if not isinstance(data, list):
+            raise HTTPException(400, "JSON dataset must be an array or contain a rows/data array")
+        rows = [item if isinstance(item, dict) else {"input": item} for item in data]
+    elif fmt == "jsonl":
+        text = content.decode("utf-8") if isinstance(content, bytes) else content
+        rows = [json.loads(line) for line in text.splitlines() if line.strip()]
+    elif fmt == "xlsx":
+        try:
+            from openpyxl import load_workbook
+        except Exception as exc:
+            raise HTTPException(400, f"XLSX parsing is unavailable: {exc}") from exc
+        from io import BytesIO
+
+        workbook = load_workbook(
+            BytesIO(content if isinstance(content, bytes) else content.encode()),
+            read_only=True,
+            data_only=True,
+        )
+        sheet = workbook.active
+        values = list(sheet.iter_rows(values_only=True))
+        headers = [str(value or "") for value in (values[0] if values else [])]
+        rows = [dict(zip(headers, row)) for row in values[1:]]
+    else:
+        text = content.decode("utf-8") if isinstance(content, bytes) else content
+        rows = list(csv.DictReader(text.splitlines()))
+
+    headers = list(rows[0].keys()) if rows else []
+    visible_rows = rows[:preview] if preview is not None else rows
+    return {"headers": headers, "rows": visible_rows, "totalCount": len(rows), "format": fmt}
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -357,6 +420,7 @@ class ParseDatasetFileBody(BaseModel):
     model_config = {"populate_by_name": True}
     pathname: str
     filename: Optional[str] = None
+    format: Optional[str] = None
 
 
 class ImportDatasetBody(BaseModel):
@@ -480,11 +544,15 @@ async def parse_dataset_file(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Parse a file and return candidate test cases (placeholder)."""
+    """Parse a local dataset file and return preview rows."""
+    fmt = _detect_dataset_format(body.pathname, body.filename, body.format)
+    content = _read_dataset_file(body.pathname, fmt)
+    parsed = _parse_dataset_rows(content, fmt=fmt, preview=50)
     return {
-        "success": True,
-        "data": [],
-        "message": "File parsing placeholder — implement with FileService integration",
+        "headers": parsed["headers"],
+        "preview": parsed["rows"],
+        "totalCount": parsed["totalCount"],
+        "format": parsed["format"],
     }
 
 
@@ -496,9 +564,41 @@ async def import_dataset(
 ):
     """Batch import test cases into a dataset."""
     svc = AgentEvalService(session, user_id)
-    cases = await svc.batch_create_test_cases(body.dataset_id, body.test_cases)
+    if body.test_cases is not None:
+        case_inputs = body.test_cases
+    else:
+        fmt = _detect_dataset_format(body.pathname, body.filename, body.format)
+        content = _read_dataset_file(body.pathname, fmt)
+        parsed = _parse_dataset_rows(content, fmt=fmt)
+        mapping = body.field_mapping or {}
+        input_col = mapping.get("input")
+        if not input_col:
+            raise HTTPException(400, "fieldMapping.input is required")
+        expected_col = mapping.get("expected")
+        expected_delimiter = mapping.get("expectedDelimiter")
+        case_inputs = []
+        for row in parsed["rows"]:
+            expected_output = None
+            if expected_col and row.get(expected_col) is not None:
+                expected_raw = str(row.get(expected_col))
+                if expected_delimiter:
+                    parts = [part.strip() for part in expected_raw.split(expected_delimiter) if part.strip()]
+                    expected_output = json.dumps(parts) if len(parts) > 1 else expected_raw
+                else:
+                    expected_output = expected_raw
+            metadata = {}
+            if isinstance(mapping.get("metadata"), dict):
+                metadata = {key: row.get(column) for key, column in mapping["metadata"].items()}
+            case_inputs.append(
+                {
+                    "input": str(row.get(input_col) or ""),
+                    "expected_output": expected_output,
+                    "metadata": metadata,
+                }
+            )
+    cases = await svc.batch_create_test_cases(body.dataset_id, case_inputs)
     await session.commit()
-    return {"imported": len(cases)}
+    return {"count": len(cases), "data": cases}
 
 
 # ── TestCase: get, update, delete ───────────────────────────────────

@@ -20,16 +20,15 @@ BRIEF_IDENTIFIER = "lobehub_brief"
 # Default brief actions by type (mirrors TS DEFAULT_BRIEF_ACTIONS)
 _DEFAULT_ACTIONS: dict[str, list[dict[str, str]]] = {
     "decision": [
-        {"key": "approve", "label": "Approve", "type": "primary"},
-        {"key": "reject", "label": "Reject", "type": "default"},
-        {"key": "feedback", "label": "Feedback", "type": "default"},
+        {"key": "approve", "label": "✅ 确认", "type": "resolve"},
+        {"key": "feedback", "label": "💬 修改意见", "type": "comment"},
     ],
     "insight": [
-        {"key": "acknowledge", "label": "Got it", "type": "primary"},
+        {"key": "acknowledge", "label": "👍 知悉", "type": "resolve"},
     ],
     "error": [
-        {"key": "retry", "label": "Retry", "type": "primary"},
-        {"key": "acknowledge", "label": "Dismiss", "type": "default"},
+        {"key": "retry", "label": "🔄 重试", "type": "resolve"},
+        {"key": "feedback", "label": "💬 反馈", "type": "comment"},
     ],
 }
 

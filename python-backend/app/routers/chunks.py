@@ -12,10 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.rag import Chunk, DocumentChunk, Embedding
 from app.models.file import Document, File
 from app.models.knowledge import KnowledgeBaseFile
 from app.models.misc import AsyncTask
+from app.models.rag import Chunk, DocumentChunk, Embedding
+from app.services.rag_parsing import group_and_rank_files, lexical_search_chunks, parse_file_to_chunks
 
 router = APIRouter(prefix="/api/chunks", tags=["Chunks"])
 
@@ -148,6 +149,11 @@ async def create_parse_file_task(
         .where(and_(File.id == body.id, File.user_id == user_id))
         .values(chunk_task_id=task.id)
     )
+    result = await parse_file_to_chunks(session, user_id, body.id, skip_exist=bool(body.skip_exist))
+    if result:
+        task.status = "success"
+    else:
+        task.status = "pending"
     return {"id": task.id, "success": True}
 
 
@@ -179,6 +185,8 @@ async def retry_parse_file_task(
         .where(and_(File.id == body.id, File.user_id == user_id))
         .values(chunk_task_id=task.id)
     )
+    result = await parse_file_to_chunks(session, user_id, body.id, skip_exist=bool(body.skip_exist))
+    task.status = "success" if result else "error"
     return {"id": task.id, "success": True}
 
 
@@ -215,7 +223,10 @@ async def get_chunks_by_file_id(
     """Get chunks belonging to a file (via its document)."""
     doc = (await session.execute(
         select(Document).where(
-            and_(Document.file_id == file_id, Document.user_id == user_id)
+            and_(
+                Document.user_id == user_id,
+                (Document.file_id == file_id) | (Document.id == file_id),
+            )
         )
     )).scalar_one_or_none()
     if not doc:
@@ -249,7 +260,14 @@ async def get_file_contents(
             select(File).where(and_(File.id == file_id, File.user_id == user_id))
         )).scalar_one_or_none()
         if not file:
-            results.append({"fileId": file_id, "filename": f"Unknown file {file_id}", "content": "", "error": "File not found"})
+            results.append(
+                {
+                    "fileId": file_id,
+                    "filename": f"Unknown file {file_id}",
+                    "content": "",
+                    "error": "File not found",
+                }
+            )
             continue
 
         doc = (await session.execute(
@@ -278,14 +296,8 @@ async def semantic_search_for_chat(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Semantic search for chat with file grouping (placeholder — needs embedding service)."""
+    """Semantic search for chat with file grouping and lexical fallback."""
     from app.services import knowledge_service, llm_service
-
-    try:
-        query = body.query[:8000] if len(body.query) > 8000 else body.query
-        vectors = await llm_service.embed([query])
-    except Exception as exc:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Embedding failed: {exc}")
 
     # Collect file IDs from explicit list + knowledge bases
     file_ids = list(body.file_ids or [])
@@ -297,12 +309,28 @@ async def semantic_search_for_chat(
         )).scalars().all()
         file_ids.extend(kb_file_ids)
 
-    results = await knowledge_service.vector_search(
-        session, user_id, vectors[0],
-        file_ids=file_ids if file_ids else None,
-        limit=body.top_k or 15,
-    )
-    return {"chunks": results, "fileResults": []}
+    results: list[dict[str, Any]] = []
+    query = body.query[:8000] if len(body.query) > 8000 else body.query
+    try:
+        vectors = await llm_service.embed([query])
+        results = await knowledge_service.vector_search(
+            session, user_id, vectors[0],
+            file_ids=file_ids if file_ids else None,
+            limit=body.top_k or 15,
+        )
+    except Exception:
+        results = []
+
+    if not results:
+        results = await lexical_search_chunks(
+            session,
+            user_id,
+            query,
+            file_ids=file_ids if file_ids else None,
+            kb_ids=body.knowledge_ids,
+            limit=body.top_k or 15,
+        )
+    return {"chunks": results, "fileResults": group_and_rank_files(results)}
 
 
 @router.get("/count")
@@ -328,8 +356,13 @@ async def list_chunks_by_knowledge_base(
     # Get documents in this KB, then their chunks
     doc_ids = (await session.execute(
         select(Document.id)
-        .join(KnowledgeBaseFile, KnowledgeBaseFile.file_id == Document.id)
-        .where(KnowledgeBaseFile.knowledge_base_id == kb_id)
+        .outerjoin(KnowledgeBaseFile, KnowledgeBaseFile.file_id == Document.file_id)
+        .where(
+            and_(
+                Document.user_id == user_id,
+                (Document.knowledge_base_id == kb_id) | (KnowledgeBaseFile.knowledge_base_id == kb_id),
+            )
+        )
     )).scalars().all()
     if not doc_ids:
         return []
@@ -365,21 +398,32 @@ async def search_chunks(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Vector search across chunks (requires embedding the query first)."""
+    """Vector search across chunks with lexical fallback."""
     from app.services import knowledge_service, llm_service
 
+    results: list[dict[str, Any]] = []
     try:
         vectors = await llm_service.embed([body.query])
-    except Exception as exc:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Embedding failed: {exc}")
+        results = await knowledge_service.vector_search(
+            session,
+            user_id,
+            vectors[0],
+            kb_id=body.knowledge_base_id,
+            file_ids=[body.document_id] if body.document_id else None,
+            limit=body.limit,
+        )
+    except Exception:
+        results = []
 
-    results = await knowledge_service.vector_search(
-        session,
-        user_id,
-        vectors[0],
-        kb_id=body.knowledge_base_id,
-        limit=body.limit,
-    )
+    if not results:
+        results = await lexical_search_chunks(
+            session,
+            user_id,
+            body.query,
+            limit=body.limit,
+            kb_ids=[body.knowledge_base_id] if body.knowledge_base_id else None,
+            document_id=body.document_id,
+        )
     return results
 
 

@@ -217,16 +217,17 @@ async def test_document_stats(client):
     assert "total_char_count" in data
 
 
-# ── Parse (placeholder) ────────────────────────────────────────────
+# ── Parse ──────────────────────────────────────────────────────────
 
 
 async def test_parse_document(client):
-    """POST /api/documents/{id}/parse returns content."""
+    """POST /api/documents/{id}/parse creates chunks."""
     assert _DOC_ID
     r = await client.post(f"{PREFIX}/{_DOC_ID}/parse")
     assert r.status_code == 200
     data = r.json()
     assert data["id"] == _DOC_ID
+    assert data["chunkCount"] >= 1
 
 
 # ── Delete ──────────────────────────────────────────────────────────

@@ -12,12 +12,11 @@ import uuid as _uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from sqlalchemy import and_, delete, func, select, update
+from sqlalchemy import and_, delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent import AgentKnowledgeBase
-from app.models.file import File
-from app.models.file import Document
+from app.models.file import Document, File
 from app.models.knowledge import KnowledgeBase, KnowledgeBaseFile
 from app.models.rag import Chunk, DocumentChunk, Embedding
 from app.models.rag_eval import (
@@ -374,9 +373,17 @@ async def vector_search(
             Chunk.text,
             Chunk.metadata_,
             Chunk.index,
+            Document.id.label("document_id"),
+            Document.file_id,
+            Document.title.label("document_title"),
+            Document.filename.label("document_filename"),
+            File.name.label("file_name"),
             distance.label("distance"),
         )
         .join(Embedding, Embedding.chunk_id == Chunk.id)
+        .join(DocumentChunk, DocumentChunk.chunk_id == Chunk.id)
+        .join(Document, Document.id == DocumentChunk.document_id)
+        .outerjoin(File, File.id == Document.file_id)
         .where(Chunk.user_id == user_id)
         .order_by(distance)
         .limit(limit)
@@ -395,15 +402,16 @@ async def vector_search(
         )
         doc_subq = (
             select(DocumentChunk.chunk_id)
-            .join(File, File.id == DocumentChunk.document_id)  # document_id ↔ file
-            .where(File.id.in_(file_subq))
+            .join(Document, Document.id == DocumentChunk.document_id)
+            .where(or_(Document.knowledge_base_id == kb_id, Document.file_id.in_(file_subq)))
         )
         stmt = stmt.where(Chunk.id.in_(doc_subq))
 
     if file_ids:
         doc_subq2 = (
             select(DocumentChunk.chunk_id)
-            .where(DocumentChunk.document_id.in_(file_ids))
+            .join(Document, Document.id == DocumentChunk.document_id)
+            .where(or_(DocumentChunk.document_id.in_(file_ids), Document.file_id.in_(file_ids)))
         )
         stmt = stmt.where(Chunk.id.in_(doc_subq2))
 
@@ -415,6 +423,10 @@ async def vector_search(
             "metadata": r.metadata_,
             "index": r.index,
             "distance": float(r.distance),
+            "similarity": max(0.0, 1.0 - float(r.distance)),
+            "documentId": r.document_id,
+            "fileId": r.file_id or r.document_id,
+            "fileName": r.file_name or r.document_title or r.document_filename or "Untitled",
         }
         for r in rows
     ]

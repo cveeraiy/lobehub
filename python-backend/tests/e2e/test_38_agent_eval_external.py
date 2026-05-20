@@ -95,6 +95,35 @@ async def test_setup_test_case(client):
     _TEST_CASE_ID = r.json()["id"]
 
 
+async def test_parse_and_import_dataset_file(client, tmp_path):
+    """Parse and import a CSV dataset file."""
+    if not _DATASET_ID:
+        pytest.skip("No dataset")
+    csv_path = tmp_path / "agent-eval.csv"
+    csv_path.write_text("input,expected\nWhat is 2+2?,4\n", encoding="utf-8")
+
+    preview = await client.post(
+        f"{EVAL_PREFIX}/datasets/parse-file",
+        json={"pathname": str(csv_path), "filename": "agent-eval.csv"},
+    )
+    assert preview.status_code == 200
+    preview_data = preview.json()
+    assert preview_data["headers"] == ["input", "expected"]
+    assert preview_data["totalCount"] == 1
+
+    imported = await client.post(
+        f"{EVAL_PREFIX}/datasets/import",
+        json={
+            "datasetId": _DATASET_ID,
+            "pathname": str(csv_path),
+            "filename": "agent-eval.csv",
+            "fieldMapping": {"input": "input", "expected": "expected"},
+        },
+    )
+    assert imported.status_code == 200
+    assert imported.json()["count"] == 1
+
+
 async def test_setup_run(client):
     """Create a run with benchmarkId."""
     global _RUN_ID

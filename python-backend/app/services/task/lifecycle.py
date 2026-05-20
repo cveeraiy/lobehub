@@ -16,6 +16,7 @@ from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.services.system_agent.service import SystemAgentService
 from app.services.task.service import TaskService, TERMINAL_STATUSES
 from app.services.task.scheduler import get_task_scheduler
 
@@ -42,6 +43,7 @@ class TaskLifecycleService:
         self._db = session
         self._uid = user_id
         self._task_svc = TaskService(session, user_id)
+        self._system_agent = SystemAgentService(session, user_id)
 
     async def on_topic_complete(self, params: TopicCompleteParams) -> None:
         """Core lifecycle method — called when a topic run finishes."""
@@ -70,7 +72,7 @@ class TaskLifecycleService:
                 task.id, params.topic_id, topic_status
             )
 
-        # Synthesize a brief
+        # Synthesize a brief when this topic is worth surfacing to the user.
         brief = await self._synthesize_brief(task, params)
         if brief:
             logger.info(
@@ -110,6 +112,9 @@ class TaskLifecycleService:
                 user_id=self._uid,
                 delay=task.heartbeat_interval,
             )
+            await self._task_svc.update_status(task.id, "scheduled")
+        elif task.automation_mode == "schedule":
+            await self._task_svc.update_status(task.id, "scheduled")
         else:
             # Non-automated task: pause after completion
             await self._task_svc.update_status(task.id, "paused")
@@ -148,21 +153,76 @@ class TaskLifecycleService:
     async def _synthesize_brief(
         self, task: Any, params: TopicCompleteParams
     ) -> Any:
-        """Create a brief summarising what happened in the topic.
+        """Create a user-facing brief for topic completion.
 
-        For now, uses a simple heuristic. The TS version uses an LLM chain
-        (chainGenerateBrief + chainJudgeBriefEmit) to decide whether to emit.
+        Mirrors the TS rule layer where possible. Python does not yet persist
+        the full TS briefDecision audit record, but it avoids surfacing trivial
+        manual ticks and uses SystemAgentService for title/summary generation
+        when available.
         """
         content = params.last_assistant_content or ""
-        if not content and params.reason == "done":
+        is_trivial = len(content.strip()) < 16
+
+        if params.reason == "done" and task.automation_mode != "schedule" and is_trivial:
+            if params.topic_id:
+                await self._task_svc.update_topic_brief_decision(
+                    task.id,
+                    params.topic_id,
+                    {
+                        "emit": False,
+                        "reason": "Trivial manual completion",
+                        "source": "rule",
+                    },
+                )
             return None
 
-        # Determine type and priority
         brief_type = "error" if params.reason == "error" else "result"
         priority = "urgent" if params.reason == "error" else "normal"
 
-        title = f"Task {params.task_identifier}: topic {params.reason}"
+        title = f"{params.task_identifier} topic {params.reason}"
         summary = content[:500] if content else (params.error_message or params.reason)
+
+        decision_source = "rule"
+        if params.reason == "done" and content:
+            generated = await self._system_agent.generate_brief_synthesis(
+                [{"role": "assistant", "content": content}],
+                task.name or params.task_identifier,
+            )
+            if generated:
+                title = generated["title"]
+                summary = generated["summary"]
+                decision_source = "system-agent"
+
+        artifacts = None
+        if params.topic_id:
+            topic_rows = await self._task_svc.find_topics(task.id)
+            topic_link = next((t for t in topic_rows if t.topic_id == params.topic_id), None)
+            since = (
+                topic_link.created_at
+                if topic_link
+                else datetime.fromtimestamp(0, timezone.utc).replace(tzinfo=None)
+            )
+            documents = await self._task_svc.get_documents_pinned_since(task.id, since)
+            if documents:
+                artifacts = {"documents": documents}
+
+        actions = None
+        if brief_type == "error":
+            actions = [
+                {"key": "retry", "label": "🔄 重试", "type": "resolve"},
+                {"key": "feedback", "label": "💬 反馈", "type": "comment"},
+            ]
+
+        if params.topic_id:
+            await self._task_svc.update_topic_brief_decision(
+                task.id,
+                params.topic_id,
+                {
+                    "emit": True,
+                    "reason": params.error_message or "Topic completion should be shown to the user",
+                    "source": "rule-error" if params.reason == "error" else decision_source,
+                },
+            )
 
         return await self._task_svc.create_brief(
             task_id=task.id,
@@ -172,5 +232,7 @@ class TaskLifecycleService:
             priority=priority,
             title=title,
             summary=summary,
+            artifacts=artifacts,
+            actions=actions,
             trigger="topic_complete",
         )
