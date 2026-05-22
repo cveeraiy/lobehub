@@ -26,15 +26,26 @@ def _now() -> datetime:
 
 class CreateThreadBody(BaseModel):
     topic_id: str
+    id: Optional[str] = None
     title: Optional[str] = None
     source_message_id: Optional[str] = None
     type: Optional[str] = "standalone"
+    status: Optional[str] = "active"
     parent_thread_id: Optional[str] = None
+    agent_id: Optional[str] = None
+    group_id: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 class UpdateThreadBody(BaseModel):
     title: Optional[str] = None
     status: Optional[str] = None
+    source_message_id: Optional[str] = None
+    type: Optional[str] = None
+    parent_thread_id: Optional[str] = None
+    agent_id: Optional[str] = None
+    group_id: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
 
 
 class CreateThreadWithMessageBody(BaseModel):
@@ -43,6 +54,9 @@ class CreateThreadWithMessageBody(BaseModel):
     source_message_id: Optional[str] = None
     type: Optional[str] = "standalone"
     parent_thread_id: Optional[str] = None
+    agent_id: Optional[str] = None
+    group_id: Optional[str] = None
+    status: Optional[str] = "active"
     id: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
     message: Optional[dict[str, Any]] = None
@@ -67,7 +81,11 @@ async def create_thread_with_message(
         title=body.message.get("content", "")[:20] if body.message and body.message.get("content") else body.title,
         source_message_id=body.source_message_id,
         type=body.type,
+        status=body.status,
         parent_thread_id=body.parent_thread_id,
+        agent_id=body.agent_id,
+        group_id=body.group_id,
+        metadata_=body.metadata,
     )
     if body.id:
         thread.id = body.id
@@ -84,8 +102,8 @@ async def create_thread_with_message(
             provider=body.message.get("provider"),
             topic_id=body.topic_id,
             thread_id=thread.id,
-            agent_id=body.message.get("agent_id"),
-            session_id=body.message.get("session_id"),
+            agent_id=body.message.get("agent_id") or body.message.get("agentId"),
+            session_id=body.message.get("session_id") or body.message.get("sessionId"),
         )
         session.add(msg)
         await session.flush()
@@ -99,6 +117,9 @@ async def remove_all_threads(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
+    thread_ids = (await session.execute(select(Thread.id).where(Thread.user_id == user_id))).scalars().all()
+    if thread_ids:
+        await session.execute(delete(Message).where(and_(Message.thread_id.in_(thread_ids), Message.user_id == user_id)))
     await session.execute(delete(Thread).where(Thread.user_id == user_id))
     return {"ok": True}
 
@@ -130,8 +151,14 @@ async def create_thread(
         title=body.title,
         source_message_id=body.source_message_id,
         type=body.type,
+        status=body.status,
         parent_thread_id=body.parent_thread_id,
+        agent_id=body.agent_id,
+        group_id=body.group_id,
+        metadata_=body.metadata,
     )
+    if body.id:
+        thread.id = body.id
     session.add(thread)
     await session.flush()
     return {"id": thread.id}
@@ -157,6 +184,8 @@ async def update_thread(
     session: AsyncSession = Depends(get_db),
 ):
     values = body.model_dump(exclude_none=True)
+    if "metadata" in values:
+        values["metadata_"] = values.pop("metadata")
     values["updated_at"] = _now()
     stmt = (
         update(Thread)
@@ -173,6 +202,9 @@ async def delete_thread(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
+    await session.execute(
+        delete(Message).where(and_(Message.thread_id == thread_id, Message.user_id == user_id))
+    )
     await session.execute(
         delete(Thread).where(and_(Thread.id == thread_id, Thread.user_id == user_id))
     )
@@ -210,6 +242,13 @@ async def remove_threads_by_topic(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
+    thread_ids = (
+        await session.execute(
+            select(Thread.id).where(and_(Thread.topic_id == topic_id, Thread.user_id == user_id))
+        )
+    ).scalars().all()
+    if thread_ids:
+        await session.execute(delete(Message).where(and_(Message.thread_id.in_(thread_ids), Message.user_id == user_id)))
     await session.execute(
         delete(Thread).where(and_(Thread.topic_id == topic_id, Thread.user_id == user_id))
     )
@@ -223,6 +262,7 @@ async def batch_delete_threads(
     session: AsyncSession = Depends(get_db),
 ):
     if body.ids:
+        await session.execute(delete(Message).where(and_(Message.thread_id.in_(body.ids), Message.user_id == user_id)))
         await session.execute(
             delete(Thread).where(and_(Thread.id.in_(body.ids), Thread.user_id == user_id))
         )
@@ -239,6 +279,9 @@ async def _find_thread(db: AsyncSession, user_id: str, thread_id: str) -> Thread
 def _thread_dict(t: Thread) -> dict[str, Any]:
     return {
         "id": t.id,
+        "agent_id": t.agent_id,
+        "group_id": t.group_id,
+        "metadata": t.metadata_,
         "topic_id": t.topic_id,
         "title": t.title,
         "type": t.type,
@@ -246,5 +289,7 @@ def _thread_dict(t: Thread) -> dict[str, Any]:
         "source_message_id": t.source_message_id,
         "parent_thread_id": t.parent_thread_id,
         "created_at": t.created_at.isoformat() if t.created_at else None,
+        "last_active_at": t.last_active_at.isoformat() if t.last_active_at else None,
         "updated_at": t.updated_at.isoformat() if t.updated_at else None,
+        "user_id": t.user_id,
     }

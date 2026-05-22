@@ -15,7 +15,7 @@ import {
   agentDocumentSWRKeys,
   mapAgentDocumentsToContext,
   resolveAgentDocumentsContext,
-} from '@/services/agentDocument.resolved';
+} from '@/services/agentDocument';
 import type { StoreSetter } from '@/store/types';
 import { getUserStoreState } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';

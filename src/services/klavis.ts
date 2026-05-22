@@ -22,6 +22,20 @@ interface KlavisPlugin {
 }
 
 class KlavisService {
+  callTool = async (params: {
+    serverUrl: string;
+    toolArgs?: Record<string, unknown>;
+    toolName: string;
+  }) => {
+    return restClient.post('/klavis/tools/call', {
+      body: {
+        server_url: params.serverUrl,
+        tool_args: params.toolArgs,
+        tool_name: params.toolName,
+      },
+    });
+  };
+
   createServerInstance = async (params: CreateKlavisServerParams) => {
     return restClient.post('/klavis/create-server-instance', {
       body: {
@@ -45,9 +59,21 @@ class KlavisService {
     return restClient.get<KlavisPlugin[]>('/klavis/plugins');
   };
 
+  getTools = async (params: { serverName: string }) => {
+    return restClient.get<{ tools: KlavisTool[] }>('/klavis/tools', {
+      params: { server_name: params.serverName },
+    });
+  };
+
   getServerInstance = async (params: { instanceId: string }) => {
     return restClient.get('/klavis/server-instance', {
       params: { instanceId: params.instanceId },
+    });
+  };
+
+  listTools = async (params: { serverUrl: string }) => {
+    return restClient.get<{ tools: KlavisTool[] }>('/klavis/tools/list', {
+      params: { server_url: params.serverUrl },
     });
   };
 

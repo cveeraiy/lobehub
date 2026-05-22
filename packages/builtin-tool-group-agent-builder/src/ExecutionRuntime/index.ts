@@ -3,7 +3,7 @@ import type { BuiltinToolResult } from '@lobechat/types';
 
 import { agentService } from '@/services/agent';
 import type { GroupMemberConfig } from '@/services/chatGroup';
-import { chatGroupService } from '@/services/chatGroup/resolved';
+import { chatGroupService } from '@/services/chatGroup';
 import { useAgentStore } from '@/store/agent';
 import { getChatGroupStoreState } from '@/store/agentGroup';
 import { agentGroupSelectors } from '@/store/agentGroup/selectors';

@@ -6,8 +6,6 @@ Create Date: 2026-05-16
 """
 
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
 revision = "0004"
@@ -17,12 +15,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("users", sa.Column("agent_onboarding", JSONB, nullable=True))
-    op.add_column("users", sa.Column("onboarding", JSONB, nullable=True))
-    op.add_column("users", sa.Column("interests", JSONB, nullable=True))
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS agent_onboarding JSONB")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding JSONB")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS interests JSONB")
 
 
 def downgrade() -> None:
-    op.drop_column("users", "interests")
-    op.drop_column("users", "onboarding")
-    op.drop_column("users", "agent_onboarding")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS interests")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS onboarding")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS agent_onboarding")

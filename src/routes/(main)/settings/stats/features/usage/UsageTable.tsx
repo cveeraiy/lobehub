@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import InlineTable from '@/components/InlineTable';
 import { parseAsInteger, useQueryParam } from '@/hooks/useQueryParam';
 import { useClientDataSWR } from '@/libs/swr';
-import { usageService } from '@/services/usage.resolved';
+import { usageService } from '@/services/usage';
 import { formatDate, formatNumber } from '@/utils/format';
 
 import { type UsageChartProps } from '../../types';

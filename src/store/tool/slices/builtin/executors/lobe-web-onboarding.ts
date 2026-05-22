@@ -11,7 +11,7 @@ import {
 import { type BuiltinToolContext, type BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
-import { userService } from '@/services/user/resolved';
+import { userService } from '@/services/user';
 import { useAgentStore } from '@/store/agent';
 import { useUserStore } from '@/store/user';
 

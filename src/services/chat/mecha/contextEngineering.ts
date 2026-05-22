@@ -659,7 +659,7 @@ export const contextEngineering = async ({
       return topic ?? null;
     },
     async (topicId: string) => {
-      const { messageService } = await import('@/services/message/resolved');
+      const { messageService } = await import('@/services/message');
       const msgs = await messageService.getMessages({ agentId, groupId, topicId });
       return msgs.map((m) => ({
         content: typeof m.content === 'string' ? m.content : '',

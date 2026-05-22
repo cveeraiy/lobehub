@@ -8,7 +8,7 @@ import { type SearchResult } from '@/database/repositories/search';
 import { useCreateNewModal } from '@/features/LibraryModal';
 import { useGroupWizard } from '@/layout/GlobalProvider/GroupWizardProvider';
 import { useCreateMenuItems } from '@/routes/(main)/home/_layout/hooks';
-import { commandSearchService } from '@/services/commandSearch.resolved';
+import { commandSearchService } from '@/services/commandSearch';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors/builtinAgentSelectors';
 import { useChatStore } from '@/store/chat';

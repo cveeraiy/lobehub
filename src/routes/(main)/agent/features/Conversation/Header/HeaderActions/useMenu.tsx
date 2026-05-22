@@ -16,7 +16,7 @@ import type {
   DocumentHistoryListItem,
   DocumentHistorySaveSource,
 } from '@/server/routers/lambda/_schema/documentHistory';
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
 import { useDocumentStore } from '@/store/document';

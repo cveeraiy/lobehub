@@ -1,33 +1,36 @@
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { type CreateKnowledgeBaseParams, type KnowledgeBaseItem } from '@/types/knowledgeBase';
 
 class KnowledgeBaseService {
   createKnowledgeBase = async (params: CreateKnowledgeBaseParams): Promise<string> => {
-    return lambdaClient.knowledgeBase.createKnowledgeBase.mutate(params);
+    const result = await restClient.post<{ id: string }>('/knowledge-bases', { body: params });
+    return result.id;
   };
 
   getKnowledgeBaseList = async (): Promise<KnowledgeBaseItem[]> => {
-    return lambdaClient.knowledgeBase.getKnowledgeBases.query();
+    return restClient.get<KnowledgeBaseItem[]>('/knowledge-bases');
   };
 
   getKnowledgeBaseById = async (id: string): Promise<KnowledgeBaseItem | undefined> => {
-    return lambdaClient.knowledgeBase.getKnowledgeBaseById.query({ id });
+    return restClient.get<KnowledgeBaseItem | undefined>(`/knowledge-bases/${id}`);
   };
 
   updateKnowledgeBaseList = async (id: string, value: any) => {
-    return lambdaClient.knowledgeBase.updateKnowledgeBase.mutate({ id, value });
+    return restClient.put(`/knowledge-bases/${id}`, { body: value });
   };
 
   deleteKnowledgeBase = async (id: string) => {
-    return lambdaClient.knowledgeBase.removeKnowledgeBase.mutate({ id });
+    return restClient.delete(`/knowledge-bases/${id}`);
   };
 
   addFilesToKnowledgeBase = async (knowledgeBaseId: string, ids: string[]) => {
-    return lambdaClient.knowledgeBase.addFilesToKnowledgeBase.mutate({ ids, knowledgeBaseId });
+    return restClient.post(`/knowledge-bases/${knowledgeBaseId}/files`, { body: { ids } });
   };
 
   removeFilesFromKnowledgeBase = async (knowledgeBaseId: string, ids: string[]) => {
-    return lambdaClient.knowledgeBase.removeFilesFromKnowledgeBase.mutate({ ids, knowledgeBaseId });
+    return restClient.post(`/knowledge-bases/${knowledgeBaseId}/files/batch-remove`, {
+      body: { ids },
+    });
   };
 }
 

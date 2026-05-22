@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { enterpriseAiPolicyService } from './enterpriseAiPolicy.rest';
+import { enterpriseAiPolicyService } from './enterpriseAiPolicy';
 
 const mockRestDelete = vi.hoisted(() => vi.fn());
 const mockRestGet = vi.hoisted(() => vi.fn());

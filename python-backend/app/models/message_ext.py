@@ -12,7 +12,7 @@ from typing import Any, Optional
 from sqlalchemy import Index, text
 from sqlmodel import Field, SQLModel
 
-from app.models._helpers import _utcnow, id_generator
+from app.models._helpers import _utcnow, id_generator, json_column
 
 
 class MessageGroup(SQLModel, table=True):
@@ -32,7 +32,16 @@ class MessageGroup(SQLModel, table=True):
     session_id: Optional[str] = Field(default=None, foreign_key="sessions.id")
     topic_id: Optional[str] = Field(default=None, foreign_key="topics.id")
 
+    parent_group_id: Optional[str] = Field(default=None, foreign_key="message_groups.id")
     parent_message_id: Optional[str] = Field(default=None, foreign_key="messages.id")
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    type: Optional[str] = None
+    content: Optional[str] = None
+    editor_data: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("editor_data"))
+    metadata_: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("metadata"))
+    client_id: Optional[str] = None
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})

@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import CircleLoading from '@/components/Loading/CircleLoading';
 import { useClientDataSWR } from '@/libs/swr';
 import type { CompareHistoryItemsOutput } from '@/server/routers/lambda/_schema/documentHistory';
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { useDocumentStore } from '@/store/document';
 import { editorSelectors } from '@/store/document/slices/editor';
 

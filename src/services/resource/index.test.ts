@@ -12,7 +12,7 @@ const { mockGetKnowledgeItems, mockUpdateDocument, mockGetKnowledgeItem, mockUpd
     mockUpdateFile: vi.fn(),
   }));
 
-vi.mock('../document/resolved', () => ({
+vi.mock('../document', () => ({
   documentService: {
     updateDocument: mockUpdateDocument,
   },

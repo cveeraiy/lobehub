@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { messageService } from './index.rest';
+import { messageService } from './index';
 
 const mockRestDelete = vi.hoisted(() => vi.fn());
 const mockRestGet = vi.hoisted(() => vi.fn());
@@ -22,7 +22,7 @@ beforeEach(() => {
 
 describe('MessageService REST', () => {
   it('creates messages with snake_case context fields', async () => {
-    mockRestPost.mockResolvedValueOnce({ id: 'message-1' });
+    mockRestPost.mockResolvedValueOnce({ id: 'message-1', messages: [] });
 
     const result = await messageService.createMessage({
       agentId: 'agent-1',
@@ -34,11 +34,12 @@ describe('MessageService REST', () => {
       topicId: 'topic-1',
     });
 
-    expect(result).toEqual({ id: 'message-1' });
+    expect(result).toEqual({ id: 'message-1', messages: [] });
     expect(mockRestPost).toHaveBeenCalledWith('/messages', {
       body: expect.objectContaining({
         agent_id: 'agent-1',
         content: 'Hello REST',
+        group_id: undefined,
         parent_id: 'parent-1',
         role: 'user',
         session_id: 'session-1',

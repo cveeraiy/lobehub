@@ -80,10 +80,49 @@ def test_oauth_request_bodies_accept_camel_case():
 
 
 @pytest.mark.asyncio
+async def test_oauth_auth_status_reads_legacy_trpc_token_keys(monkeypatch):
+    provider = SimpleNamespace(
+        key_vaults=oauth_device_flow._encode_key_vaults(
+            {
+                "githubAvatarUrl": "https://example.test/avatar.png",
+                "githubUsername": "octo",
+                "oauthAccessToken": "a",
+                "oauthTokenExpiresAt": "123",
+            }
+        )
+    )
+
+    async def fake_provider(_session, _user_id, _provider_id):
+        return provider
+
+    monkeypatch.setattr(oauth_device_flow, "_provider", fake_provider)
+    result = await oauth_device_flow.get_auth_status(
+        provider_id="githubcopilot",
+        user_id="user_1",
+        session=object(),
+    )
+
+    assert result == {
+        "avatarUrl": "https://example.test/avatar.png",
+        "expiresAt": "123",
+        "isAuthenticated": True,
+        "username": "octo",
+    }
+
+
+@pytest.mark.asyncio
 async def test_oauth_revoke_clears_provider_tokens(monkeypatch):
     provider = SimpleNamespace(
         key_vaults=oauth_device_flow._encode_key_vaults(
-            {"oauthAccessToken": "a", "bearerToken": "b", "githubUserInfo": {"username": "u"}, "other": "kept"}
+            {
+                "bearerToken": "b",
+                "githubAvatarUrl": "https://example.test/avatar.png",
+                "githubUserInfo": {"username": "u"},
+                "githubUsername": "u",
+                "oauthAccessToken": "a",
+                "oauthTokenExpiresAt": "123",
+                "other": "kept",
+            }
         ),
         updated_at=None,
     )
@@ -109,6 +148,9 @@ async def test_oauth_revoke_clears_provider_tokens(monkeypatch):
     decoded = oauth_device_flow._decode_key_vaults(provider)
     assert "oauthAccessToken" not in decoded
     assert "bearerToken" not in decoded
+    assert "githubAvatarUrl" not in decoded
+    assert "githubUsername" not in decoded
+    assert "oauthTokenExpiresAt" not in decoded
     assert decoded["other"] == "kept"
 
 

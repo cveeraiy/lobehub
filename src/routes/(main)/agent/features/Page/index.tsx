@@ -12,8 +12,8 @@ import TopicCanvas from '@/features/TopicCanvas';
 import { useAutoCreateTopicDocument } from '@/features/TopicCanvas/useAutoCreateTopicDocument';
 import { useClientDataSWR } from '@/libs/swr';
 import HeaderSlot from '@/routes/(main)/agent/(chat)/_layout/HeaderSlot';
+import { documentService } from '@/services/document';
 import { invalidateDocumentMutation } from '@/services/document/invalidation';
-import { documentService } from '@/services/document/resolved';
 import { documentSWRKeys } from '@/services/document/swrKeys';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 

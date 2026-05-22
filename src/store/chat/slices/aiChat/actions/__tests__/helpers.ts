@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 import { chatService } from '@/services/chat';
-import { messageService } from '@/services/message/resolved';
+import { messageService } from '@/services/message';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 
 import { useChatStore } from '../../../../store';

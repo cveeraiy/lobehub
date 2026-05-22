@@ -1,4 +1,4 @@
-import { userService } from '@/services/user/resolved';
+import { userService } from '@/services/user';
 import type { StoreSetter } from '@/store/types';
 import type { UserStore } from '@/store/user';
 import type { UserAgentOnboarding } from '@/types/user';

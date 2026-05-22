@@ -3,7 +3,7 @@
 import type { NotebookDocument } from '@lobechat/types';
 import { useEffect, useState } from 'react';
 
-import { agentDocumentService } from '@/services/agentDocument.resolved';
+import { agentDocumentService } from '@/services/agentDocument';
 import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
 import { notebookSelectors, useNotebookStore } from '@/store/notebook';

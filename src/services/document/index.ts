@@ -1,6 +1,6 @@
 import { type DocumentItem } from '@lobechat/database/schemas';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import type {
   CompareHistoryItemsInput,
   CompareHistoryItemsOutput,
@@ -123,11 +123,22 @@ export interface DocumentHistoryClientSurface {
 
 export class DocumentService {
   async createDocument(params: CreateDocumentParams): Promise<DocumentItem> {
-    return lambdaClient.document.createDocument.mutate(params);
+    return restClient.post<DocumentItem>('/documents', {
+      body: {
+        content: params.content,
+        editor_data: params.editorData,
+        file_type: params.fileType,
+        knowledge_base_id: params.knowledgeBaseId,
+        metadata: params.metadata,
+        parent_id: params.parentId,
+        slug: params.slug,
+        title: params.title,
+      },
+    });
   }
 
   async createDocuments(documents: CreateDocumentParams[]): Promise<DocumentItem[]> {
-    return lambdaClient.document.createDocuments.mutate({ documents });
+    return restClient.post<DocumentItem[]>('/documents/batch', { body: { documents } });
   }
 
   async queryDocuments(params?: {
@@ -136,12 +147,11 @@ export class DocumentService {
     pageSize?: number;
     sourceTypes?: string[];
   }): Promise<{ items: DocumentItem[]; total: number }> {
-    return lambdaClient.document.queryDocuments.query(params);
+    return restClient.get('/documents', { params: params as any });
   }
 
   async listDocumentHistory(params: ListDocumentHistoryParams): Promise<ListHistoryOutput> {
-    const result = await lambdaClient.document.listDocumentHistory.query(params);
-
+    const result = await restClient.get<any>('/documents/history', { params: params as any });
     return serializeHistoryList(result);
   }
 
@@ -151,24 +161,26 @@ export class DocumentService {
   ): Promise<GetHistoryItemOutput> {
     if (uniqueKey) {
       return abortableRequest.execute(uniqueKey, async (signal) => {
-        const result = await lambdaClient.document.getDocumentHistoryItem.query(params, {
+        const result = await restClient.get<any>('/documents/history/item', {
+          params: params as any,
           signal,
         });
-
         return serializeHistoryItem(result);
       });
     }
 
-    const result = await lambdaClient.document.getDocumentHistoryItem.query(params);
-
+    const result = await restClient.get<any>('/documents/history/item', {
+      params: params as any,
+    });
     return serializeHistoryItem(result);
   }
 
   async compareDocumentHistoryItems(
     params: CompareDocumentHistoryItemsParams,
   ): Promise<CompareHistoryItemsOutput> {
-    const result = await lambdaClient.document.compareDocumentHistoryItems.query(params);
-
+    const result = await restClient.get<any>('/documents/history/compare', {
+      params: params as any,
+    });
     return serializeHistoryComparison(result);
   }
 
@@ -191,30 +203,44 @@ export class DocumentService {
 
   async getDocumentById(id: string, uniqueKey?: string): Promise<DocumentItem | undefined> {
     if (uniqueKey) {
-      // Use fixed key so switching documents cancels the previous request
-      // This prevents race conditions where old document's data overwrites new document's editor
       return abortableRequest.execute(uniqueKey, async (signal) =>
-        lambdaClient.document.getDocumentById.query({ id }, { signal }),
+        restClient.get(`/documents/${id}`, { signal }),
       );
     }
 
-    return lambdaClient.document.getDocumentById.query({ id });
+    return restClient.get(`/documents/${id}`);
   }
 
   async parseDocument(id: string): Promise<DocumentItem> {
-    return lambdaClient.document.parseDocument.mutate({ id }) as Promise<DocumentItem>;
+    const result = await restClient.post<any>(`/documents/${id}/parse`);
+    return {
+      content: result.content ?? '',
+      createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
+      editorData: result.editorData ?? null,
+      fileType: result.fileType ?? 'custom/document',
+      filename: result.filename,
+      id: result.id,
+      metadata: result.metadata ?? {},
+      source: result.source ?? 'document',
+      sourceType: result.sourceType ?? 'file',
+      title: result.title ?? result.filename ?? 'Untitled',
+      totalCharCount: result.totalCharCount ?? 0,
+      totalLineCount: result.totalLineCount ?? 0,
+      updatedAt: result.updatedAt ? new Date(result.updatedAt) : new Date(),
+    } as DocumentItem;
   }
 
   async deleteDocument(id: string): Promise<void> {
-    await lambdaClient.document.deleteDocument.mutate({ id });
+    await restClient.delete(`/documents/${id}`);
   }
 
   async deleteDocuments(ids: string[]): Promise<void> {
-    await lambdaClient.document.deleteDocuments.mutate({ ids });
+    await restClient.post('/documents/batch-delete', { body: { ids } });
   }
 
   async updateDocument(params: UpdateDocumentParams): Promise<UpdateDocumentOutput> {
-    const result = await lambdaClient.document.updateDocument.mutate(params);
+    const { id, ...body } = params as any;
+    const result = await restClient.put<any>(`/documents/${id}`, { body });
 
     return {
       ...result,
@@ -227,7 +253,7 @@ export class DocumentService {
   }
 
   async saveDocumentHistory(params: SaveDocumentHistoryInput): Promise<SaveDocumentHistoryOutput> {
-    const result = await lambdaClient.document.saveDocumentHistory.mutate(params);
+    const result = await restClient.post<any>('/documents/history', { body: params });
 
     return {
       savedAt: result.savedAt instanceof Date ? result.savedAt.toISOString() : result.savedAt,

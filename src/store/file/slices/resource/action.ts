@@ -1,6 +1,6 @@
 import debug from 'debug';
 
-import { knowledgeBaseService } from '@/services/knowledgeBase.resolved';
+import { knowledgeBaseService } from '@/services/knowledgeBase';
 import { resourceService } from '@/services/resource';
 import type { StoreSetter } from '@/store/types';
 import { OptimisticEngine } from '@/store/utils/optimisticEngine';

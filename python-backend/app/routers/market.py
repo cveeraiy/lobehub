@@ -117,6 +117,23 @@ class ClaimResourcesBody(BaseModel):
     skillIds: list[str] | None = None
 
 
+class ConnectAuthorizeBody(BaseModel):
+    provider: str
+    redirectUri: str | None = None
+    scopes: list[str] | None = None
+
+
+class ConnectProviderBody(BaseModel):
+    provider: str
+
+
+class ConnectCallToolBody(BaseModel):
+    args: dict[str, Any] | None = None
+    provider: str
+    toolName: str
+    topicId: str | None = None
+
+
 def _market_identifier() -> str:
     return create_nanoid(8)
 
@@ -179,6 +196,39 @@ async def _market_access_headers(
         headers["Cookie"] = cookie
 
     return headers
+
+
+async def _market_get(
+    path: str,
+    *,
+    request: Request,
+    session: AsyncSession,
+    user_id: str,
+    params: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    headers = await _market_access_headers(request, session, user_id)
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.get(f"{MARKET_BASE_URL}{path}", headers=headers, params=params)
+    await _raise_market_error(resp, "Market request failed")
+    data = resp.json()
+    return data if isinstance(data, dict) else {"data": data}
+
+
+async def _market_post(
+    path: str,
+    *,
+    request: Request,
+    session: AsyncSession,
+    user_id: str,
+    json: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    headers = await _market_access_headers(request, session, user_id)
+    headers["Content-Type"] = "application/json"
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.post(f"{MARKET_BASE_URL}{path}", headers=headers, json=json or {})
+    await _raise_market_error(resp, "Market request failed")
+    data = resp.json()
+    return data if isinstance(data, dict) else {"data": data}
 
 
 def _market_profile(user: dict[str, Any]) -> dict[str, Any]:
@@ -280,6 +330,57 @@ def _file_hash(content: str) -> str:
     except Exception:
         raw = content.encode()
     return hashlib.sha256(raw).hexdigest()
+
+
+def _inject_credential_keys(
+    *,
+    creds: list[dict[str, Any]],
+    keys: list[Any],
+    sandbox: bool,
+) -> dict[str, Any]:
+    env: dict[str, Any] = {}
+    headers: dict[str, Any] = {}
+    files: list[dict[str, Any]] = []
+    not_found: list[str] = []
+    unsupported_in_sandbox: list[str] = []
+
+    for key in keys:
+        normalized_key = str(key)
+        cred = _find_cred_by_key(creds, normalized_key)
+        if cred is None:
+            not_found.append(normalized_key)
+            continue
+
+        cred_type = str(cred.get("type") or "")
+        values = _decode_secret(cred.get("secret"))
+        if cred_type in {"kv", "kv-env"}:
+            env.update(values)
+        elif cred_type == "kv-header":
+            headers.update(values)
+        elif cred_type == "file":
+            if sandbox:
+                unsupported_in_sandbox.append(normalized_key)
+            else:
+                files.append(
+                    {
+                        "fileHashId": cred.get("file_hash_id") or cred.get("fileHashId"),
+                        "fileName": cred.get("file_name") or cred.get("fileName"),
+                        "key": normalized_key,
+                    }
+                )
+        elif cred_type == "oauth":
+            env.update(values)
+        else:
+            env.update(values)
+
+    credentials = {"env": env, "files": files, "headers": headers}
+    return {
+        "credentials": credentials,
+        "data": credentials,
+        "notFound": not_found,
+        "success": len(not_found) == 0,
+        "unsupportedInSandbox": unsupported_in_sandbox,
+    }
 
 
 @router.post("/oidc/userinfo")
@@ -521,6 +622,145 @@ async def uninstall_market_agent(
     return {"ok": True}
 
 
+@router.post("/connect/tool")
+async def connect_call_tool(
+    body: ConnectCallToolBody,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    provider = quote(body.provider, safe="")
+    data = await _market_post(
+        f"/api/v1/connect/{provider}/tools/{quote(body.toolName, safe='')}/call",
+        request=request,
+        session=session,
+        user_id=user_id,
+        json={"args": body.args or {}, "topicId": body.topicId, "tool": body.toolName},
+    )
+    return {"data": data.get("data"), "success": bool(data.get("success", True))}
+
+
+@router.get("/connect/health")
+async def connect_get_all_health(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    data = await _market_get("/api/v1/connect/health", request=request, session=session, user_id=user_id)
+    return {"connections": data.get("connections", []), "summary": data.get("summary")}
+
+
+@router.post("/connect/authorize")
+async def connect_get_authorize_url(
+    body: ConnectAuthorizeBody,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    provider = quote(body.provider, safe="")
+    data = await _market_post(
+        f"/api/v1/connect/{provider}/authorize",
+        request=request,
+        session=session,
+        user_id=user_id,
+        json={"redirect_uri": body.redirectUri, "scopes": body.scopes},
+    )
+    return {
+        "authorizeUrl": data.get("authorizeUrl") or data.get("authorize_url"),
+        "code": data.get("code"),
+        "expiresIn": data.get("expiresIn") or data.get("expires_in"),
+    }
+
+
+@router.get("/connect/status")
+async def connect_get_status(
+    provider: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    data = await _market_get(
+        f"/api/v1/connect/{quote(provider, safe='')}/status",
+        request=request,
+        session=session,
+        user_id=user_id,
+    )
+    return {
+        "connected": bool(data.get("connected")),
+        "connection": data.get("connection"),
+        "icon": data.get("icon"),
+        "providerName": data.get("providerName"),
+    }
+
+
+@router.get("/connect/connections")
+async def connect_list_connections(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    data = await _market_get("/api/v1/connect/connections", request=request, session=session, user_id=user_id)
+    return {"connections": data.get("connections", [])}
+
+
+@router.get("/connect/providers")
+async def connect_list_providers(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    data = await _market_get("/api/v1/skills/providers", request=request, session=session, user_id=user_id)
+    return {"providers": data.get("providers", [])}
+
+
+@router.get("/connect/tools")
+async def connect_list_tools(
+    provider: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    data = await _market_get(
+        f"/api/v1/skills/{quote(provider, safe='')}/tools",
+        request=request,
+        session=session,
+        user_id=user_id,
+    )
+    return {"provider": provider, "tools": data.get("tools", [])}
+
+
+@router.post("/connect/refresh")
+async def connect_refresh(
+    body: ConnectProviderBody,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    data = await _market_post(
+        f"/api/v1/connect/{quote(body.provider, safe='')}/refresh",
+        request=request,
+        session=session,
+        user_id=user_id,
+    )
+    return {"connection": data.get("connection"), "refreshed": bool(data.get("refreshed"))}
+
+
+@router.post("/connect/revoke")
+async def connect_revoke(
+    body: ConnectProviderBody,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    await _market_post(
+        f"/api/v1/connect/{quote(body.provider, safe='')}/revoke",
+        request=request,
+        session=session,
+        user_id=user_id,
+    )
+    return {"success": True}
+
+
 @router.get("/creds/list")
 async def list_market_creds(
     user_id: str = Depends(get_current_user_id),
@@ -689,12 +929,39 @@ async def inject_market_creds(
     keys = body.get("keys") or body.get("credentialKeys") or []
     settings_row = await _get_or_create_user_settings(session, user_id)
     creds = _market_state(settings_row)["creds"]
-    injected = {
-        key: _decode_secret(cred.get("secret"))
-        for key in keys
-        if (cred := _find_cred_by_key(creds, str(key))) is not None
+    return _inject_credential_keys(creds=creds, keys=keys, sandbox=bool(body.get("sandbox", True)))
+
+
+@router.post("/creds/inject-for-skill")
+async def inject_market_creds_for_skill(
+    body: dict[str, Any],
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    skill_identifier = str(body.get("skillIdentifier") or body.get("skill_identifier") or "").strip()
+    if not skill_identifier:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "skillIdentifier is required")
+
+    settings_row = await _get_or_create_user_settings(session, user_id)
+    creds = _market_state(settings_row)["creds"]
+    keys = [skill_identifier] if _find_cred_by_key(creds, skill_identifier) is not None else []
+    injected = _inject_credential_keys(creds=creds, keys=keys, sandbox=bool(body.get("sandbox", True)))
+    missing = [
+        {
+            "key": key,
+            "name": key,
+            "type": "kv-env",
+        }
+        for key in injected["notFound"]
+    ]
+    return {
+        "credentials": injected["credentials"],
+        "data": injected["data"],
+        "missing": missing,
+        "notFound": injected["notFound"],
+        "success": injected["success"],
+        "unsupportedInSandbox": injected["unsupportedInSandbox"],
     }
-    return {"data": injected}
 
 
 @router.get("/creds/skill-status")

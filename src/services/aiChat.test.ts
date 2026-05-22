@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { aiChatService } from './aiChat.rest';
+import { aiChatService } from './aiChat';
 
 const mockRestPost = vi.hoisted(() => vi.fn());
 

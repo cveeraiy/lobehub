@@ -3,7 +3,7 @@ import { produce } from 'immer';
 import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
-import { toolsClient } from '@/libs/trpc/client';
+import { marketConnectService } from '@/services/marketConnect';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 
@@ -60,7 +60,7 @@ export class LobehubSkillStoreActionImpl {
     );
 
     try {
-      const response = await toolsClient.market.connectCallTool.mutate({
+      const response = await marketConnectService.callTool({
         args,
         provider,
         toolName,
@@ -114,7 +114,7 @@ export class LobehubSkillStoreActionImpl {
     );
 
     try {
-      const response = await toolsClient.market.connectGetStatus.query({ provider });
+      const response = await marketConnectService.getStatus({ provider });
       // Get provider config from local definition for correct display name
       const providerConfig = getLobehubSkillProviderById(provider);
 
@@ -173,7 +173,7 @@ export class LobehubSkillStoreActionImpl {
     provider: string,
     options?: { redirectUri?: string; scopes?: string[] },
   ): Promise<{ authorizeUrl: string; code: string; expiresIn: number }> => {
-    const response = await toolsClient.market.connectGetAuthorizeUrl.query({
+    const response = await marketConnectService.getAuthorizeUrl({
       provider,
       redirectUri: options?.redirectUri,
       scopes: options?.scopes,
@@ -207,7 +207,7 @@ export class LobehubSkillStoreActionImpl {
 
   refreshLobehubSkillToken = async (provider: string): Promise<boolean> => {
     try {
-      const response = await toolsClient.market.connectRefresh.mutate({ provider });
+      const response = await marketConnectService.refresh({ provider });
 
       if (response.refreshed) {
         this.#get().internal_updateLobehubSkillServer(provider, {
@@ -225,7 +225,7 @@ export class LobehubSkillStoreActionImpl {
 
   refreshLobehubSkillTools = async (provider: string): Promise<void> => {
     try {
-      const response = await toolsClient.market.connectListTools.query({ provider });
+      const response = await marketConnectService.listTools({ provider });
 
       this.#set(
         produce((draft: LobehubSkillStoreState) => {
@@ -252,7 +252,7 @@ export class LobehubSkillStoreActionImpl {
     );
 
     try {
-      await toolsClient.market.connectRevoke.mutate({ provider });
+      await marketConnectService.revoke({ provider });
 
       this.#set(
         produce((draft: LobehubSkillStoreState) => {
@@ -283,7 +283,7 @@ export class LobehubSkillStoreActionImpl {
     return useSWR<LobehubSkillServer[]>(
       shouldFetch ? 'fetchLobehubSkillConnections' : null,
       async () => {
-        const response = await toolsClient.market.connectListConnections.query({});
+        const response = await marketConnectService.listConnections();
 
         // Debug logging
 
@@ -334,7 +334,7 @@ export class LobehubSkillStoreActionImpl {
     return useSWR<LobehubSkillTool[]>(
       provider ? `lobehub-skill-tools-${provider}` : null,
       async () => {
-        const response = await toolsClient.market.connectListTools.query({ provider: provider! });
+        const response = await marketConnectService.listTools({ provider: provider! });
         return (response.tools || []).map((tool: any) => ({
           description: tool.description,
           inputSchema: tool.inputSchema,

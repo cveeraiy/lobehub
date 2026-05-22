@@ -24,13 +24,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { adminService } from '@/services/admin';
 import { aiProviderService } from '@/services/aiProvider';
-import {
-  type EnterpriseAiPolicy,
-  type EnterpriseAiPolicyInput,
-  enterpriseAiPolicyService,
-  type EnterpriseAiPolicyTarget,
-} from '@/services/enterpriseAiPolicy.resolved';
-import { agentSkillService } from '@/services/skill/index.rest';
+import type {
+  EnterpriseAiPolicy,
+  EnterpriseAiPolicyInput,
+  EnterpriseAiPolicyTarget,
+} from '@/services/enterpriseAiPolicy';
+import { enterpriseAiPolicyService } from '@/services/enterpriseAiPolicy';
+import { agentSkillService } from '@/services/skill';
 
 interface PolicyFormValues {
   allowModels?: string[];

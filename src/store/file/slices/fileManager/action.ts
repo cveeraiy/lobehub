@@ -11,7 +11,7 @@ import { type SWRResponse } from 'swr';
 import { message } from '@/components/AntdStaticMethods';
 import { FILE_UPLOAD_BLACKLIST, MAX_UPLOAD_FILE_COUNT } from '@/const/file';
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { fileService } from '@/services/file';
 import { ragService } from '@/services/rag';
 import { type UploadFileListDispatch } from '@/store/file/reducers/uploadFileList';

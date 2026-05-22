@@ -1,37 +1,26 @@
 import { type UIChatMessage } from '@lobechat/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { restClient } from '@/libs/rest';
+
 import { agentRuntimeService } from '../index';
 
-const {
-  contextEngineeringMock,
-  createOperationMutateMock,
-  createAgentToolsEngineMock,
-  getAgentStoreStateMock,
-} = vi.hoisted(() => ({
-  contextEngineeringMock: vi.fn(),
-  createAgentToolsEngineMock: vi.fn(),
-  createOperationMutateMock: vi.fn(),
-  getAgentStoreStateMock: vi.fn(),
-}));
+const { contextEngineeringMock, createAgentToolsEngineMock, getAgentStoreStateMock } = vi.hoisted(
+  () => ({
+    contextEngineeringMock: vi.fn(),
+    createAgentToolsEngineMock: vi.fn(),
+    getAgentStoreStateMock: vi.fn(),
+  }),
+);
 
 vi.mock('@/helpers/toolEngineering', () => ({
   createAgentToolsEngine: createAgentToolsEngineMock,
 }));
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    aiAgent: {
-      createOperation: {
-        mutate: createOperationMutateMock,
-      },
-      getOperationStatus: {
-        query: vi.fn(),
-      },
-      processHumanIntervention: {
-        mutate: vi.fn(),
-      },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
@@ -74,7 +63,7 @@ describe('AgentRuntimeService', () => {
     });
 
     contextEngineeringMock.mockResolvedValue([{ content: 'compiled', role: 'system' }]);
-    createOperationMutateMock.mockResolvedValue({ operationId: 'op-1' });
+    vi.mocked(restClient.post).mockResolvedValue({ operationId: 'op-1' });
   });
 
   it('should keep agent documents optional when hydration returns undefined', async () => {
@@ -98,11 +87,23 @@ describe('AgentRuntimeService', () => {
         agentDocuments: undefined,
       }),
     );
-    expect(createOperationMutateMock).toHaveBeenCalledWith(
-      expect.objectContaining({
+    expect(restClient.post).toHaveBeenCalledWith('/ai-agent/create-operation', {
+      body: expect.objectContaining({
+        agent_config: expect.objectContaining({
+          enableSearch: false,
+          maxSteps: 50,
+        }),
         messages: [{ content: 'compiled', role: 'system' }],
+        model_runtime_config: {
+          model: 'gpt-4o',
+          provider: 'openai',
+        },
+        tool_manifest_map: {
+          'plugin-1': { identifier: 'plugin-1' },
+        },
+        user_message_id: 'msg-1',
       }),
-    );
+    });
   });
 
   it('should use current agent plugins when creating operation tools', async () => {

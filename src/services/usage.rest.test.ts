@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { usageService } from './usage.rest';
+import { usageService } from './usage';
 
 const mockRestGet = vi.hoisted(() => vi.fn());
 

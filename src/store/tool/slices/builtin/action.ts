@@ -4,7 +4,7 @@ import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
 import { mutate } from '@/libs/swr';
-import { userService } from '@/services/user/resolved';
+import { userService } from '@/services/user';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 

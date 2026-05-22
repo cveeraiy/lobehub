@@ -8,7 +8,7 @@ import type {
 import type { ChatMessageError, ConversationContext } from '@lobechat/types';
 import { AgentRuntimeErrorType } from '@lobechat/types';
 
-import { messageService } from '@/services/message/resolved';
+import { messageService } from '@/services/message';
 import { emitClientAgentSignalSourceEvent } from '@/store/chat/slices/aiChat/actions/agentSignalBridge';
 import type { ChatStore } from '@/store/chat/store';
 

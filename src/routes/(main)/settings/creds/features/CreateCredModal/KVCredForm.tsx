@@ -8,7 +8,7 @@ import { Minus, Plus } from 'lucide-react';
 import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { credsService } from '@/services/creds.resolved';
+import { credsService } from '@/services/creds';
 
 const styles = createStaticStyles(({ css }) => ({
   footer: css`

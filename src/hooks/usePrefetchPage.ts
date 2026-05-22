@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { mutate } from '@/libs/swr';
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { documentSWRKeys } from '@/services/document/swrKeys';
 
 /**

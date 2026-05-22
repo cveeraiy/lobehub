@@ -4,9 +4,9 @@ import { type SendGroupMessageParams } from '@lobechat/types';
 import { nanoid } from '@lobechat/utils';
 import debug from 'debug';
 
-import { type StreamEvent } from '@/services/agentRuntime/resolved';
-import { agentRuntimeClient } from '@/services/agentRuntime/resolved';
-import { aiAgentService } from '@/services/aiAgent.resolved';
+import { type StreamEvent } from '@/services/agentRuntime';
+import { agentRuntimeClient } from '@/services/agentRuntime';
+import { aiAgentService } from '@/services/aiAgent';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';

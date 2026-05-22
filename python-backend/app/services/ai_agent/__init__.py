@@ -3,7 +3,6 @@
 Mirrors the TS ``AiAgentService`` in ``src/server/services/aiAgent/index.ts``.
 """
 
-from app.services.ai_agent.service import AiAgentService
 from app.services.ai_agent.types import (
     AgentError,
     AgentErrorType,
@@ -15,6 +14,14 @@ from app.services.ai_agent.types import (
     ExecSubAgentTaskParams,
     ExecSubAgentTaskResult,
 )
+
+
+def __getattr__(name: str):
+    if name == "AiAgentService":
+        from app.services.ai_agent.service import AiAgentService
+
+        return AiAgentService
+    raise AttributeError(name)
 
 __all__ = [
     "AiAgentService",

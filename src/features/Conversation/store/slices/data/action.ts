@@ -5,7 +5,7 @@ import { type SWRResponse } from 'swr';
 import { type StateCreator } from 'zustand/vanilla';
 
 import { useClientDataSWRWithSync } from '@/libs/swr';
-import { messageService } from '@/services/message/resolved';
+import { messageService } from '@/services/message';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
 import { type Store as ConversationStore } from '../../action';

@@ -30,12 +30,16 @@ class CreateMessageBody(BaseModel):
     session_id: Optional[str] = None
     topic_id: Optional[str] = None
     agent_id: Optional[str] = None
+    group_id: Optional[str] = None
+    thread_id: Optional[str] = None
     parent_id: Optional[str] = None
     model: Optional[str] = None
     provider: Optional[str] = None
     tools: Optional[list[dict[str, Any]]] = None
     tool_call_id: Optional[str] = None
     reasoning_content: Optional[str] = None
+    metadata: Optional[dict[str, Any]] = None
+    error: Optional[dict[str, Any]] = None
 
 
 class UpdateMessageBody(BaseModel):
@@ -123,6 +127,14 @@ class DateRangeParams(BaseModel):
     end_date: Optional[str] = None
 
 
+class MessageContextParams(BaseModel):
+    agent_id: Optional[str] = None
+    group_id: Optional[str] = None
+    session_id: Optional[str] = None
+    thread_id: Optional[str] = None
+    topic_id: Optional[str] = None
+
+
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @router.get("")
@@ -130,21 +142,26 @@ async def list_messages(
     session_id: Optional[str] = None,
     topic_id: Optional[str] = None,
     agent_id: Optional[str] = None,
+    group_id: Optional[str] = None,
+    thread_id: Optional[str] = None,
     limit: int = Query(default=50, le=200),
     offset: int = 0,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    stmt = select(Message).where(Message.user_id == user_id)
-    if session_id:
-        stmt = stmt.where(Message.session_id == session_id)
-    if topic_id:
-        stmt = stmt.where(Message.topic_id == topic_id)
-    if agent_id:
-        stmt = stmt.where(Message.agent_id == agent_id)
-    stmt = stmt.order_by(Message.created_at).offset(offset).limit(limit)
-    rows = (await session.execute(stmt)).scalars().all()
-    return [_msg_dict(r) for r in rows]
+    return await _query_messages(
+        session,
+        user_id,
+        MessageContextParams(
+            agent_id=agent_id,
+            group_id=group_id,
+            session_id=session_id,
+            thread_id=thread_id,
+            topic_id=topic_id,
+        ),
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get("/{message_id}")
@@ -165,10 +182,20 @@ async def create_message(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    msg = Message(user_id=user_id, **body.model_dump(exclude_none=True))
+    data = body.model_dump(exclude_none=True)
+    metadata = data.pop("metadata", None)
+    data.pop("group_id", None)
+    msg = Message(user_id=user_id, metadata_=metadata, **data)
     session.add(msg)
     await session.flush()
-    return {"id": msg.id}
+    context = MessageContextParams(
+        agent_id=body.agent_id,
+        group_id=body.group_id,
+        session_id=body.session_id,
+        thread_id=body.thread_id,
+        topic_id=body.topic_id,
+    )
+    return {"id": msg.id, "messages": await _query_messages(session, user_id, context)}
 
 
 @router.post("/batch", status_code=status.HTTP_201_CREATED)
@@ -190,6 +217,11 @@ async def create_messages_batch(
 async def update_message(
     message_id: str,
     body: UpdateMessageBody,
+    agent_id: Optional[str] = None,
+    group_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    thread_id: Optional[str] = None,
+    topic_id: Optional[str] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -201,12 +233,27 @@ async def update_message(
         .values(**values)
     )
     await session.execute(stmt)
-    return {"ok": True}
+    return await _mutation_result(
+        session,
+        user_id,
+        MessageContextParams(
+            agent_id=agent_id,
+            group_id=group_id,
+            session_id=session_id,
+            thread_id=thread_id,
+            topic_id=topic_id,
+        ),
+    )
 
 
 @router.delete("/{message_id}")
 async def delete_message(
     message_id: str,
+    agent_id: Optional[str] = None,
+    group_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    thread_id: Optional[str] = None,
+    topic_id: Optional[str] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -219,7 +266,17 @@ async def delete_message(
     await session.execute(
         delete(Message).where(and_(Message.id == message_id, Message.user_id == user_id))
     )
-    return {"ok": True}
+    return await _mutation_result(
+        session,
+        user_id,
+        MessageContextParams(
+            agent_id=agent_id,
+            group_id=group_id,
+            session_id=session_id,
+            thread_id=thread_id,
+            topic_id=topic_id,
+        ),
+    )
 
 
 @router.delete("")
@@ -283,6 +340,11 @@ async def compression_group_finalize_alias(
 @router.put("/tool-arguments")
 async def update_tool_arguments_alias(
     body: UpdateToolArgsBody,
+    agent_id: Optional[str] = None,
+    group_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    thread_id: Optional[str] = None,
+    topic_id: Optional[str] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -294,7 +356,17 @@ async def update_tool_arguments_alias(
         await session.execute(
             update(MessagePlugin).where(MessagePlugin.id == existing.id).values(arguments=args_str)
         )
-    return {"ok": True}
+    return await _mutation_result(
+        session,
+        user_id,
+        MessageContextParams(
+            agent_id=agent_id,
+            group_id=group_id,
+            session_id=session_id,
+            thread_id=thread_id,
+            topic_id=topic_id,
+        ),
+    )
 
 
 # ── Batch / bulk deletes ─────────────────────────────────────────────
@@ -311,6 +383,11 @@ async def remove_all_messages(
 @router.post("/remove-batch")
 async def remove_messages_batch(
     body: RemoveMessagesBody,
+    agent_id: Optional[str] = None,
+    group_id: Optional[str] = None,
+    session_id: Optional[str] = None,
+    thread_id: Optional[str] = None,
+    topic_id: Optional[str] = None,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
@@ -318,7 +395,17 @@ async def remove_messages_batch(
         await session.execute(
             delete(Message).where(and_(Message.id.in_(body.ids), Message.user_id == user_id))
         )
-    return {"ok": True}
+    return await _mutation_result(
+        session,
+        user_id,
+        MessageContextParams(
+            agent_id=agent_id,
+            group_id=group_id,
+            session_id=session_id,
+            thread_id=thread_id,
+            topic_id=topic_id,
+        ),
+    )
 
 
 @router.post("/remove-by-assistant")
@@ -491,6 +578,9 @@ async def create_compression_group(
     session: AsyncSession = Depends(get_db),
 ):
     group = MessageGroup(
+        content="",
+        metadata_={"expanded": True},
+        type="compression",
         user_id=user_id,
         topic_id=body.topic_id,
     )
@@ -503,7 +593,18 @@ async def create_compression_group(
             .where(and_(Message.id.in_(body.message_ids), Message.user_id == user_id))
             .values(message_group_id=group.id)
         )
-    return {"message_group_id": group.id}
+    context = MessageContextParams(
+        agent_id=body.agent_id,
+        group_id=body.group_id,
+        thread_id=body.thread_id,
+        topic_id=body.topic_id,
+    )
+    return {
+        "message_group_id": group.id,
+        "messages": await _query_messages(session, user_id, context),
+        "messages_to_summarize": await _query_messages_by_ids(session, user_id, body.message_ids),
+        "success": True,
+    }
 
 
 @router.post("/compression/cancel")
@@ -524,7 +625,13 @@ async def cancel_compression(
             and_(MessageGroup.id == body.message_group_id, MessageGroup.user_id == user_id)
         )
     )
-    return {"ok": True}
+    context = MessageContextParams(
+        agent_id=body.agent_id,
+        group_id=body.group_id,
+        thread_id=body.thread_id,
+        topic_id=body.topic_id,
+    )
+    return {"messages": await _query_messages(session, user_id, context), "success": True}
 
 
 @router.post("/compression/finalize")
@@ -533,17 +640,18 @@ async def finalize_compression(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    # Create a summary message in the group
-    summary_msg = Message(
-        user_id=user_id,
-        role="assistant",
-        content=body.content,
-        topic_id=body.topic_id,
-        message_group_id=body.message_group_id,
+    await session.execute(
+        update(MessageGroup)
+        .where(and_(MessageGroup.id == body.message_group_id, MessageGroup.user_id == user_id))
+        .values(content=body.content, updated_at=_now())
     )
-    session.add(summary_msg)
-    await session.flush()
-    return {"ok": True, "summary_message_id": summary_msg.id}
+    context = MessageContextParams(
+        agent_id=body.agent_id,
+        group_id=body.group_id,
+        thread_id=body.thread_id,
+        topic_id=body.topic_id,
+    )
+    return {"messages": await _query_messages(session, user_id, context), "success": True}
 
 
 # ── File links ───────────────────────────────────────────────────────
@@ -758,18 +866,20 @@ async def update_message_group_metadata(
     # body may contain: {expanded: bool, context: {agentId, topicId, ...}}
     expanded = body.get("expanded")
     if expanded is not None:
-        # Store in message metadata
-        stmt = select(Message).where(and_(Message.id == message_id, Message.user_id == user_id))
-        msg = (await session.execute(stmt)).scalar_one_or_none()
-        if msg:
-            meta = msg.metadata_ or {}
-            meta["expanded"] = expanded
-            await session.execute(
-                update(Message)
-                .where(Message.id == message_id)
-                .values(metadata_=meta, updated_at=_now())
-            )
-    return {"ok": True}
+        metadata = {"expanded": expanded}
+        await session.execute(
+            update(MessageGroup)
+            .where(and_(MessageGroup.id == message_id, MessageGroup.user_id == user_id))
+            .values(metadata_=metadata, updated_at=_now())
+        )
+    context_body = body.get("context") or {}
+    context = MessageContextParams(
+        agent_id=context_body.get("agentId") or context_body.get("agent_id"),
+        group_id=context_body.get("groupId") or context_body.get("group_id"),
+        thread_id=context_body.get("threadId") or context_body.get("thread_id"),
+        topic_id=context_body.get("topicId") or context_body.get("topic_id"),
+    )
+    return {"messages": await _query_messages(session, user_id, context)}
 
 
 # ── TTS / Translate ──────────────────────────────────────────────────
@@ -843,6 +953,100 @@ async def update_translate(
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
+
+def _has_query_context(ctx: MessageContextParams) -> bool:
+    return any([ctx.agent_id, ctx.group_id, ctx.session_id, ctx.thread_id, ctx.topic_id])
+
+
+async def _mutation_result(
+    session: AsyncSession,
+    user_id: str,
+    ctx: MessageContextParams,
+) -> dict[str, Any]:
+    if not _has_query_context(ctx):
+        return {"success": True}
+    return {"messages": await _query_messages(session, user_id, ctx), "success": True}
+
+
+async def _query_messages_by_ids(
+    session: AsyncSession,
+    user_id: str,
+    ids: list[str],
+) -> list[dict[str, Any]]:
+    if not ids:
+        return []
+    rows = (
+        await session.execute(
+            select(Message)
+            .where(and_(Message.id.in_(ids), Message.user_id == user_id))
+            .order_by(Message.created_at)
+        )
+    ).scalars().all()
+    return [_msg_dict(row) for row in rows]
+
+
+async def _query_messages(
+    session: AsyncSession,
+    user_id: str,
+    ctx: MessageContextParams,
+    limit: int = 1000,
+    offset: int = 0,
+) -> list[dict[str, Any]]:
+    stmt = select(Message).where(and_(Message.user_id == user_id, Message.message_group_id.is_(None)))
+    if ctx.session_id:
+        stmt = stmt.where(Message.session_id == ctx.session_id)
+    if ctx.topic_id:
+        stmt = stmt.where(Message.topic_id == ctx.topic_id)
+    if ctx.agent_id:
+        stmt = stmt.where(Message.agent_id == ctx.agent_id)
+    if ctx.thread_id:
+        stmt = stmt.where(Message.thread_id == ctx.thread_id)
+
+    rows = (await session.execute(stmt.order_by(Message.created_at).offset(offset).limit(limit))).scalars().all()
+    items = [_msg_dict(row) for row in rows]
+
+    if ctx.topic_id:
+        groups = (
+            await session.execute(
+                select(MessageGroup)
+                .where(and_(MessageGroup.user_id == user_id, MessageGroup.topic_id == ctx.topic_id))
+                .order_by(MessageGroup.created_at)
+            )
+        ).scalars().all()
+
+        for group in groups:
+            group_messages = await _query_group_messages(session, user_id, group.id)
+            items.append(
+                {
+                    "compressedMessages": group_messages,
+                    "content": group.content or "",
+                    "created_at": group.created_at.isoformat() if group.created_at else None,
+                    "id": group.id,
+                    "lastMessageId": group_messages[-1]["id"] if group_messages else None,
+                    "metadata": group.metadata_ or {"expanded": True},
+                    "role": "compressedGroup",
+                    "topic_id": group.topic_id,
+                    "updated_at": group.updated_at.isoformat() if group.updated_at else None,
+                }
+            )
+
+    return sorted(items, key=lambda item: item.get("created_at") or "")
+
+
+async def _query_group_messages(
+    session: AsyncSession,
+    user_id: str,
+    group_id: str,
+) -> list[dict[str, Any]]:
+    rows = (
+        await session.execute(
+            select(Message)
+            .where(and_(Message.user_id == user_id, Message.message_group_id == group_id))
+            .order_by(Message.created_at)
+        )
+    ).scalars().all()
+    return [_msg_dict(row) for row in rows]
+
 
 async def _find_msg(db: AsyncSession, user_id: str, message_id: str) -> Message | None:
     stmt = select(Message).where(and_(Message.id == message_id, Message.user_id == user_id))

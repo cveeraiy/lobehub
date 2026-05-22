@@ -27,7 +27,7 @@ import { z } from 'zod';
 
 import { FormInput, FormPassword } from '@/components/FormInput';
 import { SkeletonInput, SkeletonSwitch } from '@/components/Skeleton';
-import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow.resolved';
+import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow';
 import { aiProviderSelectors, useAiInfraStore } from '@/store/aiInfra';
 import { type AiProviderDetailItem, type AiProviderSourceType } from '@/types/aiProvider';
 import { AiProviderSourceEnum } from '@/types/aiProvider';

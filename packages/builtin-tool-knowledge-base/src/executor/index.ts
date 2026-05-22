@@ -2,9 +2,9 @@ import { formatSearchResults, promptFileContents, promptNoSearchResults } from '
 import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { fileService } from '@/services/file/resolved';
-import { knowledgeBaseService } from '@/services/knowledgeBase.resolved';
+import { knowledgeBaseService } from '@/services/knowledgeBase';
 import { ragService } from '@/services/rag';
 import { agentSelectors } from '@/store/agent/selectors';
 import { getAgentStoreState } from '@/store/agent/store';

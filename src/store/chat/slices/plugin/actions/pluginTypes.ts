@@ -3,8 +3,8 @@ import debug from 'debug';
 
 import { type MCPToolCallResult } from '@/libs/mcp';
 import { truncateToolResult } from '@/server/utils/truncateToolResult';
-import { mcpService } from '@/services/mcp.resolved';
-import { messageService } from '@/services/message/resolved';
+import { mcpService } from '@/services/mcp';
+import { messageService } from '@/services/message';
 import { AI_RUNTIME_OPERATION_TYPES } from '@/store/chat/slices/operation';
 import { type ChatStore } from '@/store/chat/store';
 import { useToolStore } from '@/store/tool';

@@ -193,7 +193,7 @@ const PageExplorerPlaceholder = memo<PageExplorerPlaceholderProps>(
             }
 
             // Parse file as document on server - this creates a clean document from the file
-            const { documentService } = await import('@/services/document/resolved');
+            const { documentService } = await import('@/services/document');
             const parsedDocument = await documentService.parseDocument(uploadResult.id);
 
             // Convert to LobeDocument format

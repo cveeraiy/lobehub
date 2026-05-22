@@ -9,7 +9,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { type FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { credsService } from '@/services/creds.resolved';
+import { credsService } from '@/services/creds';
 
 const { Text } = Typography;
 

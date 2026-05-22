@@ -8,7 +8,7 @@ import { SkillStoreExecutionRuntime } from '@lobechat/builtin-tool-skill-store/e
 import { SkillStoreExecutor } from '@lobechat/builtin-tool-skill-store/executor';
 
 import { marketApiService } from '@/services/marketApi';
-import { agentSkillService } from '@/services/skill/resolved';
+import { agentSkillService } from '@/services/skill';
 
 // Create runtime with client-side service
 const runtime = new SkillStoreExecutionRuntime({

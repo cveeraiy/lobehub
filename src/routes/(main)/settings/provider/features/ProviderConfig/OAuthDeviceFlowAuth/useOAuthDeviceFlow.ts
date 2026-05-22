@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow.resolved';
+import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow';
 
 type AuthState = 'idle' | 'requesting' | 'pending_user_auth' | 'polling' | 'success' | 'error';
 type PollStatus = 'pending' | 'success' | 'expired' | 'denied' | 'slow_down';

@@ -1,7 +1,7 @@
 import type { AgentRuntimeContext } from '@lobechat/agent-runtime';
 import type { ConversationContext, RuntimeActiveTopicDocumentContext } from '@lobechat/types';
 
-import { agentDocumentService } from '@/services/agentDocument.resolved';
+import { agentDocumentService } from '@/services/agentDocument';
 
 export const mergeAgentRuntimeInitialContexts = (
   ...contexts: Array<AgentRuntimeContext | undefined>

@@ -8,7 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Index, text
+from sqlalchemy import Index, UniqueConstraint, text
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import _utcnow, id_generator, json_column
@@ -17,8 +17,9 @@ from app.models._helpers import _utcnow, id_generator, json_column
 class ChatGroup(SQLModel, table=True):
     __tablename__ = "chat_groups"
     __table_args__ = (
+        UniqueConstraint("client_id", "user_id", name="chat_groups_client_id_user_id_unique"),
         Index("chat_groups_user_id_idx", "user_id"),
-        Index("chat_groups_session_id_idx", "session_id"),
+        Index("chat_groups_group_id_idx", "group_id"),
     )
 
     id: str = Field(
@@ -27,11 +28,18 @@ class ChatGroup(SQLModel, table=True):
         max_length=255,
     )
     user_id: str = Field(foreign_key="users.id", nullable=False)
-    session_id: Optional[str] = Field(default=None, foreign_key="sessions.id")
+    group_id: Optional[str] = Field(default=None, foreign_key="session_groups.id")
 
-    name: Optional[str] = None
+    title: Optional[str] = None
     description: Optional[str] = None
     avatar: Optional[str] = None
+    background_color: Optional[str] = None
+    market_identifier: Optional[str] = None
+    content: Optional[str] = None
+    editor_data: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("editor_data"))
+    config: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("config"))
+    client_id: Optional[str] = None
+    pinned: bool = Field(default=False)
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
@@ -41,16 +49,17 @@ class ChatGroup(SQLModel, table=True):
 class ChatGroupAgent(SQLModel, table=True):
     __tablename__ = "chat_groups_agents"
     __table_args__ = (
-        Index("chat_groups_agents_group_id_idx", "group_id"),
-        Index("chat_groups_agents_agent_id_idx", "agent_id"),
+        Index("chat_groups_agents_user_id_idx", "user_id"),
     )
 
-    group_id: str = Field(foreign_key="chat_groups.id", primary_key=True, nullable=False)
+    chat_group_id: str = Field(foreign_key="chat_groups.id", primary_key=True, nullable=False)
+    group_id: Optional[str] = Field(default=None)
     agent_id: str = Field(foreign_key="agents.id", primary_key=True, nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
-    # 'main' | 'participant'
+    enabled: bool = Field(default=True)
+    order: int = Field(default=0)
     role: Optional[str] = Field(default="participant", max_length=255)
-    config: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("config"))
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})

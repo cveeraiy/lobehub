@@ -18,7 +18,7 @@ import RepoIcon from '@/components/LibIcon';
 import { useKnowledgeBaseListContext } from '@/features/ResourceManager/components/KnowledgeBaseListProvider';
 import { PAGE_FILE_TYPE } from '@/features/ResourceManager/constants';
 import { useAppOrigin } from '@/hooks/useAppOrigin';
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { useFileStore } from '@/store/file';
 import { useKnowledgeBaseStore } from '@/store/library';
 import { useTreeStore } from '@/store/tree';

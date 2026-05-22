@@ -11,7 +11,7 @@ import { type FC } from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { apiKeyService } from '@/services/apiKey.resolved';
+import { apiKeyService } from '@/services/apiKey';
 import { type ApiKeyItem, type CreateApiKeyParams, type UpdateApiKeyParams } from '@/types/apiKey';
 
 import { ApiKeyDisplay, ApiKeyModal, EditableCell } from './index';

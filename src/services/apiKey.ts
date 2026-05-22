@@ -31,6 +31,7 @@ class ApiKeyService {
   updateApiKey = async (id: string, params: UpdateApiKeyParams) => {
     return restClient.put(`/api-keys/${id}`, {
       body: {
+        enabled: params.enabled,
         expires_at: params.expiresAt,
         name: params.name,
       },

@@ -16,13 +16,13 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.services.ai_agent import (
-    AiAgentService,
+from app.services.ai_agent.types import (
+    AppContext,
     ExecAgentParams,
     ExecGroupAgentParams,
     ExecSubAgentTaskParams,
+    ResumeApproval,
 )
-from app.services.ai_agent.types import AppContext, ResumeApproval
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,16 @@ _THREAD_TO_TASK = {
 }
 
 router = APIRouter(prefix="/api/ai-agent", tags=["ai-agent"])
+
+
+def _load_ai_agent_service():
+    try:
+        from app.services.ai_agent.service import AiAgentService
+
+        return AiAgentService
+    except ImportError as exc:
+        logger.error("AI agent runtime dependencies unavailable: %s", exc, exc_info=True)
+        raise HTTPException(status_code=503, detail="AI agent runtime dependencies unavailable")
 
 
 # ---------------------------------------------------------------------------
@@ -196,7 +206,7 @@ async def exec_agent(
 
     Mirrors TS ``aiAgent.execAgent``.
     """
-    service = AiAgentService(user_id)
+    service = _load_ai_agent_service()(user_id)
 
     params = ExecAgentParams(
         prompt=body.prompt,
@@ -243,9 +253,13 @@ async def exec_agent_stream(
 
     Creates the operation and then streams events from the runtime.
     """
-    from app.services.agent_runtime import agent_runtime
+    try:
+        from app.services.agent_runtime import agent_runtime
+    except ImportError as exc:
+        logger.error("AI agent runtime dependencies unavailable: %s", exc, exc_info=True)
+        raise HTTPException(status_code=503, detail="AI agent runtime dependencies unavailable")
 
-    service = AiAgentService(user_id)
+    service = _load_ai_agent_service()(user_id)
 
     params = ExecAgentParams(
         prompt=body.prompt,
@@ -303,7 +317,7 @@ async def exec_group_agent(
     user_id: str = Depends(get_current_user_id),
 ) -> dict[str, Any]:
     """Execute Group Agent (Supervisor)."""
-    service = AiAgentService(user_id)
+    service = _load_ai_agent_service()(user_id)
 
     params = ExecGroupAgentParams(
         agent_id=body.agent_id,
@@ -329,7 +343,7 @@ async def exec_sub_agent_task(
     user_id: str = Depends(get_current_user_id),
 ) -> dict[str, Any]:
     """Execute SubAgent task with Thread isolation."""
-    service = AiAgentService(user_id)
+    service = _load_ai_agent_service()(user_id)
 
     params = ExecSubAgentTaskParams(
         agent_id=body.agent_id,
@@ -357,7 +371,12 @@ async def interrupt_task(
     user_id: str = Depends(get_current_user_id),
 ) -> dict[str, Any]:
     """Interrupt a running task."""
-    service = AiAgentService(user_id)
+    try:
+        service = _load_ai_agent_service()(user_id)
+    except HTTPException as exc:
+        if exc.status_code == 503:
+            return {"operationId": body.operation_id, "success": False}
+        raise
 
     try:
         return await service.interrupt_task(

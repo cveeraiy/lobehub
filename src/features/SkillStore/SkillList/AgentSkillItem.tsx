@@ -9,7 +9,7 @@ import { lazy, memo, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import SkillAvatar from '@/components/SkillAvatar';
-import { agentSkillService } from '@/services/skill/resolved';
+import { agentSkillService } from '@/services/skill';
 import { useToolStore } from '@/store/tool';
 import { type SkillListItem } from '@/types/index';
 import { downloadFile } from '@/utils/client/downloadFile';

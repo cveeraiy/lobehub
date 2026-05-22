@@ -1,7 +1,7 @@
 import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { knowledgeBaseService } from '@/services/knowledgeBase.resolved';
+import { knowledgeBaseService } from '@/services/knowledgeBase';
 import { type KnowledgeBaseStore } from '@/store/library/store';
 import { type StoreSetter } from '@/store/types';
 import { type CreateKnowledgeBaseParams, type KnowledgeBaseItem } from '@/types/knowledgeBase';

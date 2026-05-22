@@ -6,8 +6,8 @@ import {
 } from '@lobechat/agent-gateway-client';
 import type { ConversationContext, ExecAgentResult } from '@lobechat/types';
 
-import { aiAgentService, type ResumeApprovalParam } from '@/services/aiAgent.resolved';
-import { messageService } from '@/services/message/resolved';
+import { aiAgentService, type ResumeApprovalParam } from '@/services/aiAgent';
+import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
 import type { ChatStore } from '@/store/chat/store';
 import type { StoreSetter } from '@/store/types';

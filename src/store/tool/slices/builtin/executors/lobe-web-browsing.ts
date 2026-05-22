@@ -16,9 +16,9 @@ import {
 } from '@lobechat/types';
 import { BaseExecutor, SEARCH_SEARXNG_NOT_CONFIG } from '@lobechat/types';
 
-import { agentDocumentService } from '@/services/agentDocument.resolved';
+import { agentDocumentService } from '@/services/agentDocument';
 import { notebookService } from '@/services/notebook';
-import { searchService } from '@/services/search.resolved';
+import { searchService } from '@/services/search';
 
 const searchRuntime = new WebBrowsingExecutionRuntime({ searchService });
 

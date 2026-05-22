@@ -3,8 +3,7 @@ import { produce } from 'immer';
 import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
-import { toolsClient } from '@/libs/trpc/client';
-import { klavisService } from '@/services/klavis.resolved';
+import { klavisService } from '@/services/klavis';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 
@@ -56,14 +55,11 @@ export class KlavisStoreActionImpl {
     );
 
     try {
-      // Call tRPC server interface to execute tool (use toolsClient for longer timeout)
-      const response = await toolsClient.klavis.callTool.mutate({
+      const response = await klavisService.callTool({
         serverUrl,
         toolArgs,
         toolName,
       });
-
-      console.info('toolsClient.klavis.callTool-response', response);
 
       this.#set(
         produce((draft: KlavisStoreState) => {
@@ -245,8 +241,7 @@ export class KlavisStoreActionImpl {
         return;
       }
 
-      // Authentication successful, get tool list (use toolsClient for longer timeout)
-      const response = await toolsClient.klavis.listTools.query({
+      const response = await klavisService.listTools({
         serverUrl: server.serverUrl,
       });
 
@@ -332,7 +327,7 @@ export class KlavisStoreActionImpl {
     return useSWR<KlavisTool[]>(
       serverName ? `klavis-server-tools-${serverName}` : null,
       async () => {
-        const response = await toolsClient.klavis.getTools.query({ serverName: serverName! });
+        const response = await klavisService.getTools({ serverName: serverName! });
         return (response.tools || []).map((tool: any) => ({
           description: tool.description,
           inputSchema: tool.inputSchema,

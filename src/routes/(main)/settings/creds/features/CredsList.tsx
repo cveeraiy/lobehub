@@ -10,7 +10,7 @@ import { type FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { credsService } from '@/services/creds.resolved';
+import { credsService } from '@/services/creds';
 
 import CredItem from './CredItem';
 import EditCredModal from './EditCredModal';

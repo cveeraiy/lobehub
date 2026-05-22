@@ -8,7 +8,7 @@ import { type PartialDeep } from 'type-fest';
 import { message } from '@/components/AntdStaticMethods';
 import { DEFAULT_AGENT_LOBE_SESSION, INBOX_SESSION_ID } from '@/const/session';
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { chatGroupService } from '@/services/chatGroup/resolved';
+import { chatGroupService } from '@/services/chatGroup';
 import { sessionService } from '@/services/session';
 import { getChatGroupStoreState } from '@/store/agentGroup';
 import { type SessionStore } from '@/store/session';

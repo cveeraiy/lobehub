@@ -100,12 +100,24 @@ async def get_auth_status(
 ):
     provider = await _provider(session, user_id, provider_id)
     vaults = _decode_key_vaults(provider)
-    expires_at = vaults.get("oauthAccessTokenExpiresAt") or vaults.get("bearerTokenExpiresAt")
+    expires_at = (
+        vaults.get("oauthAccessTokenExpiresAt")
+        or vaults.get("oauthTokenExpiresAt")
+        or vaults.get("bearerTokenExpiresAt")
+    )
     return {
-        "avatarUrl": vaults.get("githubUserInfo", {}).get("avatarUrl") or vaults.get("avatarUrl"),
+        "avatarUrl": (
+            vaults.get("githubUserInfo", {}).get("avatarUrl")
+            or vaults.get("githubAvatarUrl")
+            or vaults.get("avatarUrl")
+        ),
         "expiresAt": expires_at,
         "isAuthenticated": bool(vaults.get("oauthAccessToken") or vaults.get("bearerToken")),
-        "username": vaults.get("githubUserInfo", {}).get("username") or vaults.get("username"),
+        "username": (
+            vaults.get("githubUserInfo", {}).get("username")
+            or vaults.get("githubUsername")
+            or vaults.get("username")
+        ),
     }
 
 
@@ -202,11 +214,14 @@ async def revoke_auth(
         "apiKey",
         "bearerToken",
         "bearerTokenExpiresAt",
+        "githubAvatarUrl",
         "githubUserInfo",
+        "githubUsername",
         "oauthAccessToken",
         "oauthAccessTokenExpiresAt",
         "oauthScope",
         "oauthTokenType",
+        "oauthTokenExpiresAt",
     ]:
         vaults.pop(key, None)
     provider.key_vaults = _encode_key_vaults(vaults)

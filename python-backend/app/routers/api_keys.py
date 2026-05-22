@@ -93,10 +93,6 @@ async def update_api_key(
     session: AsyncSession = Depends(get_db),
 ):
     values = body.model_dump(exclude_unset=True)
-    # The current Python-owned schema does not include api_keys.enabled yet.
-    # Accept the REST field for frontend compatibility and ignore it until the
-    # database column is available.
-    values.pop("enabled", None)
     if not values:
         return {"ok": True}
     values["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -144,6 +140,8 @@ async def validate_api_key(
     )).scalar_one_or_none()
     if not row:
         return {"valid": False}
+    if not row.enabled:
+        return {"valid": False, "reason": "disabled"}
     # Check expiration
     if row.expires_at:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -168,7 +166,7 @@ def _key_dict(k: ApiKey) -> dict[str, Any]:
         "name": k.name,
         "key": k.key_prefix or "",
         "prefix": k.key_prefix,
-        "enabled": True,
+        "enabled": k.enabled,
         "lastUsedAt": k.last_used_at.isoformat() if k.last_used_at else None,
         "expiresAt": k.expires_at.isoformat() if k.expires_at else None,
         "usageCount": k.usage_count,

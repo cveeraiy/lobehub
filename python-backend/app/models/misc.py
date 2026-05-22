@@ -59,6 +59,7 @@ class ApiKey(SQLModel, table=True):
     key_hash: str = Field(nullable=False, max_length=255)
     # First 8 chars for display
     key_prefix: Optional[str] = Field(default=None, max_length=255)
+    enabled: bool = Field(default=True)
 
     expires_at: Optional[datetime] = None
     last_used_at: Optional[datetime] = None

@@ -1,26 +1,16 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
 import { agentRuntimeClient } from '@/services/agentRuntime';
+import { aiAgentService } from '@/services/aiAgent';
 import { useChatStore } from '@/store/chat/store';
 
 // Keep zustand mock as it's needed globally
 vi.mock('zustand/traditional');
 
-// Mock lambdaClient
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    aiAgent: {
-      execGroupAgent: {
-        mutate: vi.fn(),
-      },
-    },
-    session: {
-      updateSession: {
-        mutate: vi.fn().mockResolvedValue(undefined),
-      },
-    },
+vi.mock('@/services/aiAgent', () => ({
+  aiAgentService: {
+    execGroupAgent: vi.fn(),
   },
 }));
 
@@ -153,7 +143,7 @@ describe('agentGroup actions', () => {
           });
         });
 
-        expect(lambdaClient.aiAgent.execGroupAgent.mutate).not.toHaveBeenCalled();
+        expect(aiAgentService.execGroupAgent).not.toHaveBeenCalled();
       });
 
       it('should not send when message is whitespace only', async () => {
@@ -166,7 +156,7 @@ describe('agentGroup actions', () => {
           });
         });
 
-        expect(lambdaClient.aiAgent.execGroupAgent.mutate).not.toHaveBeenCalled();
+        expect(aiAgentService.execGroupAgent).not.toHaveBeenCalled();
       });
 
       it('should not send when message is empty with empty files array', async () => {
@@ -180,7 +170,7 @@ describe('agentGroup actions', () => {
           });
         });
 
-        expect(lambdaClient.aiAgent.execGroupAgent.mutate).not.toHaveBeenCalled();
+        expect(aiAgentService.execGroupAgent).not.toHaveBeenCalled();
       });
 
       it('should not send when agentId is missing', async () => {
@@ -193,7 +183,7 @@ describe('agentGroup actions', () => {
           });
         });
 
-        expect(lambdaClient.aiAgent.execGroupAgent.mutate).not.toHaveBeenCalled();
+        expect(aiAgentService.execGroupAgent).not.toHaveBeenCalled();
       });
 
       it('should not send when groupId is missing', async () => {
@@ -206,7 +196,7 @@ describe('agentGroup actions', () => {
           });
         });
 
-        expect(lambdaClient.aiAgent.execGroupAgent.mutate).not.toHaveBeenCalled();
+        expect(aiAgentService.execGroupAgent).not.toHaveBeenCalled();
       });
     });
 
@@ -214,7 +204,7 @@ describe('agentGroup actions', () => {
       it('should create execServerAgentRuntime operation first for loading state', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -245,7 +235,7 @@ describe('agentGroup actions', () => {
       it('should create temp user and assistant messages without operationId (optimistic update)', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -285,7 +275,7 @@ describe('agentGroup actions', () => {
         const { result } = renderHook(() => useChatStore());
 
         let capturedState: boolean | undefined;
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockImplementation(async () => {
+        vi.mocked(aiAgentService.execGroupAgent).mockImplementation(async () => {
           // Capture state during the API call
           capturedState = useChatStore.getState().isCreatingMessage;
           return createMockExecGroupAgentResponse();
@@ -309,7 +299,7 @@ describe('agentGroup actions', () => {
       it('should call execGroupAgent with correct parameters', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -324,7 +314,7 @@ describe('agentGroup actions', () => {
           });
         });
 
-        expect(lambdaClient.aiAgent.execGroupAgent.mutate).toHaveBeenCalledWith(
+        expect(aiAgentService.execGroupAgent).toHaveBeenCalledWith(
           {
             agentId: TEST_IDS.AGENT_ID,
             groupId: TEST_IDS.GROUP_ID,
@@ -332,7 +322,7 @@ describe('agentGroup actions', () => {
             topicId: TEST_IDS.TOPIC_ID,
             files: ['file-1'],
           },
-          expect.objectContaining({ signal: expect.any(AbortSignal) }),
+          expect.any(AbortSignal),
         );
       });
 
@@ -340,7 +330,7 @@ describe('agentGroup actions', () => {
         const { result } = renderHook(() => useChatStore());
 
         const mockResponse = createMockExecGroupAgentResponse();
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(mockResponse);
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(mockResponse);
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
 
         const context = createTestContext();
@@ -367,7 +357,7 @@ describe('agentGroup actions', () => {
       it('should create groupAgentStream child operation with backend operationId', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -396,7 +386,7 @@ describe('agentGroup actions', () => {
       it('should register cancel handler for SSE stream', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -417,7 +407,7 @@ describe('agentGroup actions', () => {
       it('should associate assistant message with both execServerAgentRuntime and groupAgentStream operations', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -448,7 +438,7 @@ describe('agentGroup actions', () => {
       it('should create stream connection with operationId', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -475,7 +465,7 @@ describe('agentGroup actions', () => {
       it('should complete operations on stream disconnect', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
 
@@ -511,7 +501,7 @@ describe('agentGroup actions', () => {
           items: [{ id: 'topic-1', title: 'New Topic' }],
           total: 1,
         };
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse({
             isCreateNewTopic: true,
             topics: mockTopics,
@@ -539,7 +529,7 @@ describe('agentGroup actions', () => {
       it('should switch to new topic when isCreateNewTopic is true', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse({
             isCreateNewTopic: true,
             topics: { items: [], total: 1 },
@@ -563,7 +553,7 @@ describe('agentGroup actions', () => {
       it('should not switch topic when using existing topic', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse({
             isCreateNewTopic: false,
           }),
@@ -586,7 +576,7 @@ describe('agentGroup actions', () => {
         const { result } = renderHook(() => useChatStore());
 
         const testError = new Error('Backend error');
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockRejectedValue(testError);
+        vi.mocked(aiAgentService.execGroupAgent).mockRejectedValue(testError);
 
         await act(async () => {
           await result.current.sendGroupMessage({
@@ -620,7 +610,7 @@ describe('agentGroup actions', () => {
         const { result } = renderHook(() => useChatStore());
 
         const testError = new Error('Backend error');
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockRejectedValue(testError);
+        vi.mocked(aiAgentService.execGroupAgent).mockRejectedValue(testError);
 
         await act(async () => {
           await result.current.sendGroupMessage({
@@ -639,9 +629,7 @@ describe('agentGroup actions', () => {
       it('should reset isCreatingMessage state on error', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockRejectedValue(
-          new Error('Backend error'),
-        );
+        vi.mocked(aiAgentService.execGroupAgent).mockRejectedValue(new Error('Backend error'));
 
         await act(async () => {
           await result.current.sendGroupMessage({
@@ -656,9 +644,7 @@ describe('agentGroup actions', () => {
       it('should toggle loading state off on error', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockRejectedValue(
-          new Error('Backend error'),
-        );
+        vi.mocked(aiAgentService.execGroupAgent).mockRejectedValue(new Error('Backend error'));
 
         await act(async () => {
           await result.current.sendGroupMessage({
@@ -674,7 +660,7 @@ describe('agentGroup actions', () => {
         // Create an AbortError
         const abortError = new Error('The operation was aborted');
         abortError.name = 'AbortError';
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockRejectedValue(abortError);
+        vi.mocked(aiAgentService.execGroupAgent).mockRejectedValue(abortError);
 
         await act(async () => {
           await result.current.sendGroupMessage({
@@ -700,7 +686,7 @@ describe('agentGroup actions', () => {
       it('should send message with files when message is empty but files provided', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);
@@ -713,18 +699,18 @@ describe('agentGroup actions', () => {
           });
         });
 
-        expect(lambdaClient.aiAgent.execGroupAgent.mutate).toHaveBeenCalledWith(
+        expect(aiAgentService.execGroupAgent).toHaveBeenCalledWith(
           expect.objectContaining({
             files: ['file-1', 'file-2'],
           }),
-          expect.objectContaining({ signal: expect.any(AbortSignal) }),
+          expect.any(AbortSignal),
         );
       });
 
       it('should include file ids in temp user message', async () => {
         const { result } = renderHook(() => useChatStore());
 
-        vi.mocked(lambdaClient.aiAgent.execGroupAgent.mutate).mockResolvedValue(
+        vi.mocked(aiAgentService.execGroupAgent).mockResolvedValue(
           createMockExecGroupAgentResponse(),
         );
         vi.mocked(agentRuntimeClient.createStreamConnection).mockReturnValue({} as any);

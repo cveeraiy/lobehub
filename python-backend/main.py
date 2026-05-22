@@ -145,6 +145,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.bot_webhooks",
     "app.routers.device",
     # Files & knowledge
+    "app.routers.file_proxy",
     "app.routers.files",
     "app.routers.upload",
     "app.routers.documents",

@@ -20,6 +20,11 @@ interface InjectCredParams {
   userId?: string;
 }
 
+interface InjectForSkillParams {
+  sandbox?: boolean;
+  skillIdentifier: string;
+}
+
 const toSnakeBody = (params: CredMutationParams) => ({
   description: params.description,
   file_hash_id: params.fileHashId,
@@ -66,6 +71,10 @@ class CredsService {
 
   inject = async (params: InjectCredParams) => {
     return restClient.post('/market/creds/inject', { body: params });
+  };
+
+  injectForSkill = async (params: InjectForSkillParams) => {
+    return restClient.post('/market/creds/inject-for-skill', { body: params });
   };
 
   list = async (): Promise<{ data: UserCredSummary[] }> => {

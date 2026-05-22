@@ -1,7 +1,7 @@
 import { CURRENT_ONBOARDING_VERSION, INBOX_SESSION_ID } from '@lobechat/const';
 import { MAX_ONBOARDING_STEPS } from '@lobechat/types';
 
-import { userService } from '@/services/user/resolved';
+import { userService } from '@/services/user';
 import { getAgentStoreState } from '@/store/agent';
 import { type StoreSetter } from '@/store/types';
 import { type UserStore } from '@/store/user';

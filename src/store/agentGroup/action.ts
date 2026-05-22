@@ -5,7 +5,7 @@ import { type StateCreator } from 'zustand/vanilla';
 
 import { type ChatGroupItem } from '@/database/schemas/chatGroup';
 import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
-import { chatGroupService } from '@/services/chatGroup/resolved';
+import { chatGroupService } from '@/services/chatGroup';
 import { getAgentStoreState } from '@/store/agent';
 import { type ChatGroupStore } from '@/store/agentGroup/store';
 import { useChatStore } from '@/store/chat';

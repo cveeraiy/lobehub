@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy import and_, delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,6 +53,7 @@ async def list_plugins(
     return [_plugin_dict(r) for r in rows]
 
 
+@router.post("", status_code=status.HTTP_201_CREATED)
 @router.post("/install", status_code=status.HTTP_201_CREATED)
 async def install_plugin(
     body: InstallPluginBody,

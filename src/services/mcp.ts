@@ -10,7 +10,7 @@ import { type PluginManifest } from '@lobehub/market-sdk';
 import { type CallReportRequest } from '@lobehub/market-types';
 
 import { type MCPToolCallResult } from '@/libs/mcp';
-import { toolsClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 import { discoverService } from './discover';
 
@@ -124,19 +124,22 @@ class MCPService {
         // Parse args
         const apiParams = safeParseJSON(args) || {};
 
-        // Call cloud gateway via tools market endpoint
-        // Server will automatically get user access token from database
-        // and format the result to MCPToolCallResult
-        // Server-side also handles telemetry reporting
-        result = await toolsClient.market.callCloudMcpEndpoint.mutate({
-          apiParams,
-          identifier,
-          meta,
-          toolName: apiName,
+        // Call cloud gateway via REST endpoint
+        result = await restClient.post<MCPToolCallResult>('/mcp/tools/call', {
+          body: {
+            apiParams,
+            identifier,
+            meta,
+            toolName: apiName,
+          },
+          signal,
         });
       } else {
-        // Use the toolsClient (via server relay)
-        result = await toolsClient.mcp.callTool.mutate(data, { signal });
+        // Use the REST MCP call endpoint
+        result = await restClient.post<MCPToolCallResult>('/mcp/tools/call', {
+          body: data,
+          signal,
+        });
       }
 
       success = true;
@@ -206,7 +209,16 @@ class MCPService {
     },
     signal?: AbortSignal,
   ): Promise<ToolManifest> {
-    return toolsClient.mcp.getStreamableMcpServerManifest.query(params, { signal });
+    return restClient.post<ToolManifest>('/mcp/manifest/http', {
+      body: {
+        auth: params.auth,
+        headers: params.headers,
+        identifier: params.identifier,
+        metadata: params.metadata,
+        url: params.url,
+      },
+      signal,
+    });
   }
 
   async getStdioMcpServerManifest(

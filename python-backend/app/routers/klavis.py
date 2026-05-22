@@ -57,6 +57,12 @@ class RemoveKlavisPluginBody(BaseModel):
     identifier: str
 
 
+class CallToolBody(BaseModel):
+    server_url: str
+    tool_args: Optional[dict[str, Any]] = None
+    tool_name: str
+
+
 # ---------------------------------------------------------------------------
 # Helper — call Klavis API
 # ---------------------------------------------------------------------------
@@ -190,6 +196,58 @@ async def get_klavis_plugins(
                 "updatedAt": p.updated_at.isoformat() if p.updated_at else None,
             })
     return result
+
+
+@router.post("/tools/call")
+async def call_tool(
+    body: CallToolBody,
+    user_id: str = Depends(get_current_user_id),
+) -> dict[str, Any]:
+    """Call a tool on a Klavis server."""
+    response = await _klavis_request(
+        "POST",
+        "/mcp/call-tool",
+        json={
+            "serverUrl": body.server_url,
+            "toolArgs": body.tool_args,
+            "toolName": body.tool_name,
+        },
+    )
+    if not response.get("success", True):
+        error = response.get("error") or "Unknown error"
+        return {
+            "content": error,
+            "state": {"content": [{"text": error, "type": "text"}], "isError": True},
+            "success": False,
+        }
+    result = response.get("result") if isinstance(response.get("result"), dict) else response
+    return {
+        "content": result.get("content", []),
+        "state": {
+            "content": result.get("content", []),
+            "isError": bool(result.get("isError")),
+        },
+        "success": not bool(result.get("isError")),
+    }
+
+
+@router.get("/tools")
+async def get_tools(
+    server_name: str,
+) -> dict[str, Any]:
+    """Get tools by Klavis server name."""
+    response = await _klavis_request("GET", f"/mcp/tools?serverName={server_name}")
+    return {"tools": response.get("tools", [])}
+
+
+@router.get("/tools/list")
+async def list_tools(
+    server_url: str,
+    user_id: str = Depends(get_current_user_id),
+) -> dict[str, Any]:
+    """List tools available on a Klavis server instance."""
+    response = await _klavis_request("POST", "/mcp/list-tools", json={"serverUrl": server_url})
+    return {"tools": response.get("tools", [])}
 
 
 @router.get("/server-instance")

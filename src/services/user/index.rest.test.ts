@@ -3,16 +3,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserSettings } from '@/types/user/settings';
 
-import { userService } from './index.rest';
+import { userService } from './index';
 
 const mockRestPut = vi.hoisted(() => vi.fn());
+const mockRestGet = vi.hoisted(() => vi.fn());
+const mockRestPost = vi.hoisted(() => vi.fn());
+const mockRestDelete = vi.hoisted(() => vi.fn());
 
 vi.mock('@/libs/rest', () => ({
   restClient: {
-    delete: vi.fn(),
-    get: vi.fn(),
+    delete: mockRestDelete,
+    get: mockRestGet,
     patch: vi.fn(),
-    post: vi.fn(),
+    post: mockRestPost,
     put: mockRestPut,
   },
 }));
@@ -22,6 +25,41 @@ beforeEach(() => {
 });
 
 describe('UserService REST', () => {
+  it('loads user state from the REST endpoint', async () => {
+    const state = { isOnboard: true, preference: {}, settings: {}, userId: 'user-1' };
+    mockRestGet.mockResolvedValueOnce(state);
+
+    await expect(userService.getUserState()).resolves.toBe(state);
+
+    expect(mockRestGet).toHaveBeenCalledWith('/user/state');
+  });
+
+  it('updates avatar with the REST body shape', async () => {
+    mockRestPut.mockResolvedValueOnce({ ok: true });
+
+    await userService.updateAvatar('https://example.com/avatar.png');
+
+    expect(mockRestPut).toHaveBeenCalledWith('/user/avatar', {
+      body: { avatar: 'https://example.com/avatar.png' },
+    });
+  });
+
+  it('marks the user onboarded through REST', async () => {
+    mockRestPost.mockResolvedValueOnce({ ok: true });
+
+    await userService.makeUserOnboarded();
+
+    expect(mockRestPost).toHaveBeenCalledWith('/user/onboarded');
+  });
+
+  it('resets settings through REST', async () => {
+    mockRestDelete.mockResolvedValueOnce({ ok: true });
+
+    await userService.resetUserSettings();
+
+    expect(mockRestDelete).toHaveBeenCalledWith('/user/settings');
+  });
+
   describe('updateUserSettings', () => {
     it('maps frontend setting keys to the Python REST body shape', async () => {
       const signal = new AbortController().signal;

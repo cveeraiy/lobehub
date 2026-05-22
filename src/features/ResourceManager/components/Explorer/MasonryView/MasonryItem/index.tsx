@@ -7,7 +7,7 @@ import {
   useDragActive,
   useSetCurrentDrag,
 } from '@/routes/(main)/resource/features/DndContextWrapper';
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { useFileStore } from '@/store/file';
 import { type FileListItem } from '@/types/files';
 

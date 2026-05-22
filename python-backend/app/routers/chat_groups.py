@@ -30,17 +30,43 @@ def _now() -> datetime:
 # ── Schemas ──────────────────────────────────────────────────────────
 
 class CreateChatGroupBody(BaseModel):
+    title: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
     avatar: Optional[str] = None
+    background_color: Optional[str] = None
+    backgroundColor: Optional[str] = None
+    market_identifier: Optional[str] = None
+    marketIdentifier: Optional[str] = None
+    content: Optional[str] = None
+    editor_data: Optional[dict[str, Any]] = None
+    editorData: Optional[dict[str, Any]] = None
     config: Optional[dict[str, Any]] = None
+    client_id: Optional[str] = None
+    clientId: Optional[str] = None
+    group_id: Optional[str] = None
+    groupId: Optional[str] = None
+    pinned: Optional[bool] = None
 
 
 class UpdateChatGroupBody(BaseModel):
+    title: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
     avatar: Optional[str] = None
+    background_color: Optional[str] = None
+    backgroundColor: Optional[str] = None
+    market_identifier: Optional[str] = None
+    marketIdentifier: Optional[str] = None
+    content: Optional[str] = None
+    editor_data: Optional[dict[str, Any]] = None
+    editorData: Optional[dict[str, Any]] = None
     config: Optional[dict[str, Any]] = None
+    client_id: Optional[str] = None
+    clientId: Optional[str] = None
+    group_id: Optional[str] = None
+    groupId: Optional[str] = None
+    pinned: Optional[bool] = None
 
 
 class CreateGroupWithMembersBody(BaseModel):
@@ -60,7 +86,7 @@ class RemoveAgentsBody(BaseModel):
 
 class BatchCreateAgentsBody(BaseModel):
     agents: list[dict[str, Any]]
-    group_id: str
+    group_id: Optional[str] = None
 
 
 class UpdateAgentInGroupBody(BaseModel):
@@ -105,9 +131,7 @@ async def create_chat_group(
 ):
     group = ChatGroup(
         user_id=user_id,
-        name=body.name,
-        description=body.description,
-        avatar=body.avatar,
+        **_group_values(body),
     )
     session.add(group)
     await session.flush()
@@ -116,7 +140,7 @@ async def create_chat_group(
     supervisor = Agent(
         user_id=user_id,
         slug=f"supervisor-{group.id[:8]}",
-        title=body.name or "Supervisor",
+        title=body.title or body.name or "Supervisor",
         virtual=True,
     )
     session.add(supervisor)
@@ -124,10 +148,12 @@ async def create_chat_group(
 
     # Link supervisor to group
     link = ChatGroupAgent(
+        chat_group_id=group.id,
         group_id=group.id,
         agent_id=supervisor.id,
         user_id=user_id,
-        role="main",
+        role="supervisor",
+        order=-1,
     )
     session.add(link)
     await session.flush()
@@ -164,7 +190,7 @@ async def create_group_with_members(
     supervisor = Agent(
         user_id=user_id,
         slug=f"supervisor-{_uuid.uuid4().hex[:8]}",
-        title=sup_cfg.get("title") or body.group_config.name or "Supervisor",
+        title=sup_cfg.get("title") or body.group_config.title or body.group_config.name or "Supervisor",
         model=sup_cfg.get("model"),
         provider=sup_cfg.get("provider"),
         system_role=sup_cfg.get("systemRole") or sup_cfg.get("system_role"),
@@ -176,22 +202,30 @@ async def create_group_with_members(
     # 3. Create group
     group = ChatGroup(
         user_id=user_id,
-        name=body.group_config.name,
-        description=body.group_config.description,
-        avatar=body.group_config.avatar,
+        **_group_values(body.group_config),
     )
     session.add(group)
     await session.flush()
 
     # 4. Link supervisor
     session.add(ChatGroupAgent(
-        group_id=group.id, agent_id=supervisor.id, user_id=user_id, role="main"
+        chat_group_id=group.id,
+        group_id=group.id,
+        agent_id=supervisor.id,
+        user_id=user_id,
+        role="supervisor",
+        order=-1,
     ))
 
     # 5. Link members
-    for mid in member_ids:
+    for index, mid in enumerate(member_ids):
         session.add(ChatGroupAgent(
-            group_id=group.id, agent_id=mid, user_id=user_id, role="participant"
+            chat_group_id=group.id,
+            group_id=group.id,
+            agent_id=mid,
+            user_id=user_id,
+            role="participant",
+            order=index,
         ))
 
     await session.flush()
@@ -200,6 +234,25 @@ async def create_group_with_members(
         "supervisor_agent_id": supervisor.id,
         "agent_ids": member_ids,
     }
+
+
+@router.get("/by-forked-from/{identifier}")
+async def get_group_by_forked_from_identifier(
+    identifier: str,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    stmt = (
+        select(ChatGroup.id)
+        .where(
+            and_(
+                ChatGroup.user_id == user_id,
+                ChatGroup.config["forkedFromIdentifier"].as_string() == identifier,
+            )
+        )
+        .order_by(desc(ChatGroup.updated_at))
+    )
+    return (await session.execute(stmt)).scalar_one_or_none()
 
 
 @router.get("/{group_id}")
@@ -234,7 +287,7 @@ async def update_chat_group(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    values = body.model_dump(exclude_none=True)
+    values = _group_values(body)
     if not values:
         return {"ok": True}
     values["updated_at"] = _now()
@@ -258,7 +311,7 @@ async def delete_chat_group(
         .join(Agent, Agent.id == ChatGroupAgent.agent_id)
         .where(
             and_(
-                ChatGroupAgent.group_id == group_id,
+                ChatGroupAgent.chat_group_id == group_id,
                 ChatGroupAgent.user_id == user_id,
                 Agent.virtual == True,
             )
@@ -268,7 +321,7 @@ async def delete_chat_group(
     # Delete links
     await session.execute(
         delete(ChatGroupAgent).where(
-            and_(ChatGroupAgent.group_id == group_id, ChatGroupAgent.user_id == user_id)
+            and_(ChatGroupAgent.chat_group_id == group_id, ChatGroupAgent.user_id == user_id)
         )
     )
 
@@ -298,9 +351,14 @@ async def duplicate_chat_group(
 
     new_group = ChatGroup(
         user_id=user_id,
-        name=body.new_title or f"{grp.name or ''} (copy)",
+        title=body.new_title or f"{grp.title or ''} (copy)",
         description=grp.description,
         avatar=grp.avatar,
+        background_color=grp.background_color,
+        config=grp.config,
+        content=grp.content,
+        editor_data=grp.editor_data,
+        pinned=grp.pinned,
     )
     session.add(new_group)
     await session.flush()
@@ -309,9 +367,11 @@ async def duplicate_chat_group(
     members = (await session.execute(
         select(ChatGroupAgent, Agent)
         .join(Agent, Agent.id == ChatGroupAgent.agent_id)
-        .where(and_(ChatGroupAgent.group_id == group_id, ChatGroupAgent.user_id == user_id))
+        .where(and_(ChatGroupAgent.chat_group_id == group_id, ChatGroupAgent.user_id == user_id))
+        .order_by(ChatGroupAgent.order)
     )).all()
 
+    new_supervisor_id: str | None = None
     for cga, agent in members:
         if agent.virtual:
             # Copy virtual agents
@@ -329,16 +389,30 @@ async def duplicate_chat_group(
             session.add(new_agent)
             await session.flush()
             session.add(ChatGroupAgent(
-                group_id=new_group.id, agent_id=new_agent.id, user_id=user_id, role=cga.role
+                chat_group_id=new_group.id,
+                group_id=new_group.id,
+                agent_id=new_agent.id,
+                user_id=user_id,
+                role=cga.role,
+                order=cga.order,
+                enabled=cga.enabled,
             ))
+            if cga.role == "supervisor":
+                new_supervisor_id = new_agent.id
         else:
             # Reference non-virtual agents
             session.add(ChatGroupAgent(
-                group_id=new_group.id, agent_id=agent.id, user_id=user_id, role=cga.role
+                chat_group_id=new_group.id,
+                group_id=new_group.id,
+                agent_id=agent.id,
+                user_id=user_id,
+                role=cga.role,
+                order=cga.order,
+                enabled=cga.enabled,
             ))
 
     await session.flush()
-    return {"id": new_group.id}
+    return {"id": new_group.id, "group_id": new_group.id, "supervisor_agent_id": new_supervisor_id}
 
 
 @router.get("/{group_id}/agents")
@@ -350,18 +424,6 @@ async def get_group_agents(
     return await _get_group_agents(session, user_id, group_id)
 
 
-@router.get("/{group_id}/by-forked-from/{identifier}")
-async def get_group_by_forked_from_identifier(
-    identifier: str,
-    user_id: str = Depends(get_current_user_id),
-    session: AsyncSession = Depends(get_db),
-):
-    # Look for a chat group whose config contains forkedFromIdentifier
-    # Since config is jsonb, this needs a json query
-    # For now, return null/None if not found
-    return None
-
-
 @router.post("/{group_id}/agents")
 async def add_agents_to_group(
     group_id: str,
@@ -369,22 +431,36 @@ async def add_agents_to_group(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
+    added = []
+    existing_ids = []
     for agent_id in body.agent_ids:
         # Check if already linked
         existing = (await session.execute(
             select(ChatGroupAgent).where(
                 and_(
-                    ChatGroupAgent.group_id == group_id,
+                    ChatGroupAgent.chat_group_id == group_id,
                     ChatGroupAgent.agent_id == agent_id,
                 )
             )
         )).scalar_one_or_none()
         if not existing:
             session.add(ChatGroupAgent(
-                group_id=group_id, agent_id=agent_id, user_id=user_id, role="participant"
+                chat_group_id=group_id,
+                group_id=group_id,
+                agent_id=agent_id,
+                user_id=user_id,
+                role="participant",
             ))
+            added.append({
+                "agent_id": agent_id,
+                "chat_group_id": group_id,
+                "role": "participant",
+                "user_id": user_id,
+            })
+        else:
+            existing_ids.append(agent_id)
     await session.flush()
-    return {"ok": True}
+    return {"added": added, "existing": existing_ids}
 
 
 @router.post("/{group_id}/agents/batch-create")
@@ -396,7 +472,7 @@ async def batch_create_agents_in_group(
 ):
     agent_ids = []
     created_agents = []
-    for agent_cfg in body.agents:
+    for index, agent_cfg in enumerate(body.agents):
         agent = Agent(
             user_id=user_id,
             slug=agent_cfg.get("slug") or f"agent-{_uuid.uuid4().hex[:8]}",
@@ -414,7 +490,12 @@ async def batch_create_agents_in_group(
         created_agents.append({"id": agent.id, "title": agent.title})
 
         session.add(ChatGroupAgent(
-            group_id=group_id, agent_id=agent.id, user_id=user_id, role="participant"
+            chat_group_id=group_id,
+            group_id=group_id,
+            agent_id=agent.id,
+            user_id=user_id,
+            role="participant",
+            order=index,
         ))
 
     await session.flush()
@@ -444,7 +525,7 @@ async def remove_agents_from_group(
     await session.execute(
         delete(ChatGroupAgent).where(
             and_(
-                ChatGroupAgent.group_id == group_id,
+                ChatGroupAgent.chat_group_id == group_id,
                 ChatGroupAgent.agent_id.in_(body.agent_ids),
             )
         )
@@ -469,7 +550,9 @@ async def update_agent_in_group(
 ):
     values: dict[str, Any] = {}
     if body.enabled is not None:
-        values["config"] = {"enabled": body.enabled}  # Store in config jsonb
+        values["enabled"] = body.enabled
+    if body.order is not None:
+        values["order"] = body.order
     if body.role is not None:
         values["role"] = body.role
     if not values:
@@ -478,7 +561,7 @@ async def update_agent_in_group(
         update(ChatGroupAgent)
         .where(
             and_(
-                ChatGroupAgent.group_id == group_id,
+                ChatGroupAgent.chat_group_id == group_id,
                 ChatGroupAgent.agent_id == agent_id,
                 ChatGroupAgent.user_id == user_id,
             )
@@ -523,7 +606,8 @@ async def _get_group_agents(db: AsyncSession, user_id: str, group_id: str) -> li
     stmt = (
         select(ChatGroupAgent, Agent)
         .join(Agent, Agent.id == ChatGroupAgent.agent_id)
-        .where(and_(ChatGroupAgent.group_id == group_id, ChatGroupAgent.user_id == user_id))
+        .where(and_(ChatGroupAgent.chat_group_id == group_id, ChatGroupAgent.user_id == user_id))
+        .order_by(ChatGroupAgent.order)
     )
     rows = (await db.execute(stmt)).all()
     return [
@@ -531,11 +615,20 @@ async def _get_group_agents(db: AsyncSession, user_id: str, group_id: str) -> li
             "id": agent.id,
             "title": agent.title,
             "avatar": agent.avatar,
+            "background_color": agent.background_color,
+            "description": agent.description,
             "model": agent.model,
             "provider": agent.provider,
+            "system_role": agent.system_role,
+            "agent_id": cga.agent_id,
+            "chat_group_id": cga.chat_group_id,
             "role": cga.role,
-            "config": cga.config,
+            "enabled": cga.enabled,
+            "order": cga.order,
+            "user_id": cga.user_id,
             "virtual": agent.virtual,
+            "created_at": cga.created_at.isoformat() if cga.created_at else None,
+            "updated_at": cga.updated_at.isoformat() if cga.updated_at else None,
         }
         for cga, agent in rows
     ]
@@ -544,10 +637,39 @@ async def _get_group_agents(db: AsyncSession, user_id: str, group_id: str) -> li
 def _group_dict(g: ChatGroup) -> dict[str, Any]:
     return {
         "id": g.id,
-        "name": g.name,
+        "title": g.title,
+        "name": g.title,
         "description": g.description,
         "avatar": g.avatar,
-        "session_id": g.session_id,
+        "background_color": g.background_color,
+        "market_identifier": g.market_identifier,
+        "content": g.content,
+        "editor_data": g.editor_data,
+        "config": g.config,
+        "client_id": g.client_id,
+        "group_id": g.group_id,
+        "pinned": g.pinned,
         "created_at": g.created_at.isoformat() if g.created_at else None,
         "updated_at": g.updated_at.isoformat() if g.updated_at else None,
     }
+
+
+def _group_values(body: CreateChatGroupBody | UpdateChatGroupBody) -> dict[str, Any]:
+    values: dict[str, Any] = {}
+    field_map = {
+        "title": body.title if body.title is not None else body.name,
+        "description": body.description,
+        "avatar": body.avatar,
+        "background_color": body.background_color if body.background_color is not None else body.backgroundColor,
+        "market_identifier": body.market_identifier if body.market_identifier is not None else body.marketIdentifier,
+        "content": body.content,
+        "editor_data": body.editor_data if body.editor_data is not None else body.editorData,
+        "config": body.config,
+        "client_id": body.client_id if body.client_id is not None else body.clientId,
+        "group_id": body.group_id if body.group_id is not None else body.groupId,
+        "pinned": body.pinned,
+    }
+    for key, value in field_map.items():
+        if value is not None:
+            values[key] = value
+    return values

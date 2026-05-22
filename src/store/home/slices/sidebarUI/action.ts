@@ -2,7 +2,7 @@ import { t } from 'i18next';
 
 import { message } from '@/components/AntdStaticMethods';
 import { agentService } from '@/services/agent';
-import { chatGroupService } from '@/services/chatGroup/resolved';
+import { chatGroupService } from '@/services/chatGroup';
 import { homeService } from '@/services/home';
 import { sessionService } from '@/services/session';
 import { getAgentStoreState } from '@/store/agent';

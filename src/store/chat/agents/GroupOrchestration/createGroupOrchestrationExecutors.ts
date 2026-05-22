@@ -14,7 +14,7 @@ import {
 import { type ConversationContext, type UIChatMessage } from '@lobechat/types';
 import debug from 'debug';
 
-import { aiAgentService } from '@/services/aiAgent.resolved';
+import { aiAgentService } from '@/services/aiAgent';
 import { dbMessageSelectors } from '@/store/chat/slices/message/selectors';
 import { type ChatStore } from '@/store/chat/store';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';

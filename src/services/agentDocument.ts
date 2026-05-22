@@ -4,7 +4,7 @@ import {
   type AgentContextDocument,
 } from '@lobechat/context-engine';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { invalidateDocumentMutation } from '@/services/document/invalidation';
 
 export { agentDocumentSWRKeys } from '@/services/document/swrKeys';
@@ -70,18 +70,19 @@ export interface AgentDocumentTemplateItem {
 
 class AgentDocumentService {
   getTemplates = async (): Promise<AgentDocumentTemplateItem[]> => {
-    return lambdaClient.agentDocument.getTemplates.query();
+    return restClient.get<AgentDocumentTemplateItem[]>('/agent-documents/templates');
   };
 
   getDocuments = async (params: { agentId: string }): Promise<AgentDocumentItem[]> => {
-    return lambdaClient.agentDocument.getDocuments.query(params) as Promise<AgentDocumentItem[]>;
+    return restClient.get<AgentDocumentItem[]>('/agent-documents', {
+      params: { agent_id: params.agentId } as any,
+    });
   };
 
   initializeFromTemplate = async (params: { agentId: string; templateSet: string }) => {
-    const result = await lambdaClient.agentDocument.initializeFromTemplate.mutate(params);
+    const result = await restClient.post('/agent-documents/initialize-template', { body: params });
     await revalidateAgentDocuments(params.agentId);
-
-    return result as unknown as AgentDocumentItem | undefined;
+    return result;
   };
 
   listDocuments = async (params: {
@@ -89,19 +90,18 @@ class AgentDocumentService {
     target?: 'agent' | 'currentTopic';
     topicId?: string;
   }): Promise<AgentDocumentItem[]> => {
-    return lambdaClient.agentDocument.listDocuments.query(params) as Promise<AgentDocumentItem[]>;
+    return restClient.get<AgentDocumentItem[]>('/agent-documents/list', { params: params as any });
   };
 
   associateDocument = async (params: { agentId: string; documentId: string }) => {
-    const result = await lambdaClient.agentDocument.associateDocument.mutate(params);
+    const result = await restClient.post<any>('/agent-documents/associate', { body: params });
     await invalidateDocumentMutation({
       agentDocumentId: getAgentDocumentId(result),
       agentId: params.agentId,
       cause: 'agent-document',
       documentId: params.documentId,
     });
-
-    return result as unknown as AgentDocumentItem | undefined;
+    return result;
   };
 
   createDocument = async (params: {
@@ -109,15 +109,14 @@ class AgentDocumentService {
     content: string;
     title: string;
   }): Promise<AgentDocumentItem> => {
-    const result = await lambdaClient.agentDocument.createDocument.mutate(params);
+    const result = await restClient.post<any>('/agent-documents', { body: params });
     await invalidateDocumentMutation({
       agentDocumentId: getAgentDocumentId(result),
       agentId: params.agentId,
       cause: 'agent-document',
       documentId: getDocumentId(result),
     });
-
-    return result as unknown as AgentDocumentItem;
+    return result;
   };
 
   createForTopic = async (params: {
@@ -126,7 +125,7 @@ class AgentDocumentService {
     title: string;
     topicId: string;
   }): Promise<AgentDocumentItem> => {
-    const result = await lambdaClient.agentDocument.createForTopic.mutate(params);
+    const result = await restClient.post<any>('/agent-documents/for-topic', { body: params });
     await invalidateDocumentMutation({
       agentDocumentId: getAgentDocumentId(result),
       agentId: params.agentId,
@@ -134,8 +133,7 @@ class AgentDocumentService {
       documentId: getDocumentId(result),
       topicId: params.topicId,
     });
-
-    return result as unknown as AgentDocumentItem;
+    return result;
   };
 
   readDocument = async (params: {
@@ -143,9 +141,9 @@ class AgentDocumentService {
     format?: 'xml' | 'markdown' | 'both';
     id: string;
   }): Promise<AgentDocumentItem | undefined> => {
-    return lambdaClient.agentDocument.readDocument.query(params) as Promise<
-      AgentDocumentItem | undefined
-    >;
+    return restClient.get(`/agent-documents/${params.id}/read`, {
+      params: { agent_id: params.agentId, format: params.format } as any,
+    });
   };
 
   replaceDocumentContent = async (params: {
@@ -153,50 +151,38 @@ class AgentDocumentService {
     content: string;
     id: string;
   }): Promise<AgentDocumentItem | undefined> => {
-    const result = await lambdaClient.agentDocument.replaceDocumentContent.mutate(params);
+    const result = await restClient.put<any>(`/agent-documents/${params.id}/content`, {
+      body: { agentId: params.agentId, content: params.content },
+    });
     await invalidateDocumentMutation({
       agentDocumentId: params.id,
       agentId: params.agentId,
       cause: 'agent-document',
       documentId: getDocumentId(result),
     });
-
-    return result as unknown as AgentDocumentItem | undefined;
+    return result;
   };
 
   modifyNodes = async (params: {
     agentId: string;
     id: string;
     operations: Array<
-      | {
-          action: 'insert';
-          afterId: string;
-          litexml: string;
-        }
-      | {
-          action: 'insert';
-          beforeId: string;
-          litexml: string;
-        }
-      | {
-          action: 'modify';
-          litexml: string | string[];
-        }
-      | {
-          action: 'remove';
-          id: string;
-        }
+      | { action: 'insert'; afterId: string; litexml: string }
+      | { action: 'insert'; beforeId: string; litexml: string }
+      | { action: 'modify'; litexml: string | string[] }
+      | { action: 'remove'; id: string }
     >;
   }): Promise<AgentDocumentItem | undefined> => {
-    const result = await lambdaClient.agentDocument.modifyNodes.mutate(params);
+    const result = await restClient.post<any>(`/agent-documents/${params.id}/modify-nodes`, {
+      body: { agentId: params.agentId, operations: params.operations },
+    });
     await invalidateDocumentMutation({
       agentDocumentId: params.id,
       agentId: params.agentId,
       cause: 'agent-document',
       documentId: getDocumentId(result),
     });
-
-    return result as unknown as AgentDocumentItem | undefined;
+    return result;
   };
 
   removeDocument = async (params: {
@@ -206,7 +192,12 @@ class AgentDocumentService {
     topicId?: string;
   }): Promise<{ deleted: boolean; id: string }> => {
     const { agentId, documentId, id, topicId } = params;
-    const result = await lambdaClient.agentDocument.removeDocument.mutate({ agentId, id });
+    const result = await restClient.delete<{ deleted: boolean; id: string }>(
+      `/agent-documents/${id}`,
+      {
+        params: { agent_id: agentId } as any,
+      },
+    );
     await invalidateDocumentMutation({
       agentDocumentId: id,
       agentId,
@@ -214,8 +205,7 @@ class AgentDocumentService {
       documentId,
       topicId,
     });
-
-    return result as unknown as { deleted: boolean; id: string };
+    return result;
   };
 
   copyDocument = async (params: {
@@ -223,15 +213,16 @@ class AgentDocumentService {
     id: string;
     newTitle?: string;
   }): Promise<AgentDocumentItem | undefined> => {
-    const result = await lambdaClient.agentDocument.copyDocument.mutate(params);
+    const result = await restClient.post<any>(`/agent-documents/${params.id}/copy`, {
+      body: { agentId: params.agentId, newTitle: params.newTitle },
+    });
     await invalidateDocumentMutation({
       agentDocumentId: getAgentDocumentId(result),
       agentId: params.agentId,
       cause: 'agent-document',
       documentId: getDocumentId(result),
     });
-
-    return result as unknown as AgentDocumentItem | undefined;
+    return result;
   };
 
   renameDocument = async (params: {
@@ -239,15 +230,16 @@ class AgentDocumentService {
     id: string;
     newTitle: string;
   }): Promise<AgentDocumentItem | undefined> => {
-    const result = await lambdaClient.agentDocument.renameDocument.mutate(params);
+    const result = await restClient.put<any>(`/agent-documents/${params.id}/rename`, {
+      body: { agentId: params.agentId, newTitle: params.newTitle },
+    });
     await invalidateDocumentMutation({
       agentDocumentId: params.id,
       agentId: params.agentId,
       cause: 'agent-document',
       documentId: getDocumentId(result),
     });
-
-    return result as unknown as AgentDocumentItem | undefined;
+    return result;
   };
 
   updateLoadRule = async (params: {
@@ -261,23 +253,24 @@ class AgentDocumentService {
       priority?: number;
       regexp?: string;
       rule?: DocumentLoadRule;
-      timeRange?: {
-        from?: string;
-        to?: string;
-      };
+      timeRange?: { from?: string; to?: string };
     };
   }): Promise<AgentDocumentItem | undefined> => {
-    const result = await lambdaClient.agentDocument.updateLoadRule.mutate(params);
+    const result = await restClient.put<AgentDocumentItem | undefined>(
+      `/agent-documents/${params.id}/load-rule`,
+      {
+        body: { agentId: params.agentId, rule: params.rule },
+      },
+    );
     await revalidateAgentDocuments(params.agentId);
-
-    return result as unknown as AgentDocumentItem | undefined;
+    return result;
   };
 }
 
 export const mapAgentDocumentsToContext = (
   documents: Awaited<ReturnType<AgentDocumentService['getDocuments']>>,
 ): AgentContextDocument[] =>
-  documents.map((doc) => ({
+  (documents as any[]).map((doc: any) => ({
     content: doc.content ?? undefined,
     description: doc.description,
     filename: doc.filename,

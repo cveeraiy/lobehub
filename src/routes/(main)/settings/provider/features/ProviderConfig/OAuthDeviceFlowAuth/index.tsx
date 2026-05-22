@@ -11,7 +11,7 @@ import { type ReactNode } from 'react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow.resolved';
+import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow';
 
 import { useOAuthDeviceFlow } from './useOAuthDeviceFlow';
 

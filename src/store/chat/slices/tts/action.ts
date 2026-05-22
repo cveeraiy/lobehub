@@ -1,6 +1,6 @@
 import { type ChatTTS } from '@lobechat/types';
 
-import { messageService } from '@/services/message/resolved';
+import { messageService } from '@/services/message';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 

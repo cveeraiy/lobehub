@@ -3,7 +3,8 @@ import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 import debug from 'debug';
 
-import { lambdaClient, toolsClient } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds';
+import { marketConnectService } from '@/services/marketConnect';
 import { getToolStoreState, useToolStore } from '@/store/tool';
 import { klavisStoreSelectors } from '@/store/tool/selectors';
 import { KlavisServerStatus } from '@/store/tool/slices/klavisStore/types';
@@ -178,7 +179,7 @@ class CredsExecutor extends BaseExecutor<typeof CredsApiName> {
       }
 
       // Check if already connected
-      const statusResponse = await toolsClient.market.connectGetStatus.query({ provider });
+      const statusResponse = await marketConnectService.getStatus({ provider });
       if (statusResponse.connected) {
         return {
           content: `You are already connected to ${providerConfig.label}. The credential is available for use.`,
@@ -196,7 +197,7 @@ class CredsExecutor extends BaseExecutor<typeof CredsApiName> {
         typeof window !== 'undefined' && window.location.protocol.startsWith('http')
           ? `${window.location.origin}/oauth/callback/success?provider=${provider}`
           : undefined;
-      const response = await toolsClient.market.connectGetAuthorizeUrl.query({
+      const response = await marketConnectService.getAuthorizeUrl({
         provider,
         redirectUri,
       });
@@ -286,7 +287,7 @@ class CredsExecutor extends BaseExecutor<typeof CredsApiName> {
 
           // Check if authorization succeeded before window closed
           try {
-            const status = await toolsClient.market.connectGetStatus.query({ provider });
+            const status = await marketConnectService.getStatus({ provider });
             cleanup();
             resolve({ success: status.connected });
           } catch {
@@ -406,10 +407,7 @@ class CredsExecutor extends BaseExecutor<typeof CredsApiName> {
       log('[CredsExecutor] getPlaintextCred - key:', params.key);
 
       // Get the decrypted credential directly by key
-      const result = await lambdaClient.market.creds.getByKey.query({
-        decrypt: true,
-        key: params.key,
-      });
+      const result = await credsService.getByKey(params.key, { decrypt: true });
 
       const credType = (result as any).type;
       const credName = (result as any).name || params.key;
@@ -525,7 +523,7 @@ class CredsExecutor extends BaseExecutor<typeof CredsApiName> {
       log('[CredsExecutor] injectCredsToSandbox - keys:', params.keys, 'topicId:', topicId);
 
       // Call the inject API with keys, topicId and userId from context
-      const result = await lambdaClient.market.creds.inject.mutate({
+      const result = await credsService.inject({
         keys: params.keys,
         sandbox: true,
         topicId,
@@ -621,7 +619,7 @@ class CredsExecutor extends BaseExecutor<typeof CredsApiName> {
 
       log('[CredsExecutor] saveCreds - key:', params.key, 'name:', name);
 
-      await lambdaClient.market.creds.createKV.mutate({
+      await credsService.createKV({
         description: params.description,
         key: params.key,
         name,

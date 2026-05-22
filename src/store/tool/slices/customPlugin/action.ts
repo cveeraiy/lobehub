@@ -3,8 +3,8 @@ import { merge } from 'es-toolkit/compat';
 import { t } from 'i18next';
 
 import { notification } from '@/components/AntdStaticMethods';
-import { mcpService } from '@/services/mcp.resolved';
-import { pluginService } from '@/services/plugin/resolved';
+import { mcpService } from '@/services/mcp';
+import { pluginService } from '@/services/plugin';
 import { toolService } from '@/services/tool';
 import { pluginHelpers } from '@/store/tool/helpers';
 import { type StoreSetter } from '@/store/types';

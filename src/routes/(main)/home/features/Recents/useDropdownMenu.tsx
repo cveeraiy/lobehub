@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { type RecentItem } from '@/server/routers/lambda/recent';
-import { documentService } from '@/services/document/resolved';
+import { documentService } from '@/services/document';
 import { taskService } from '@/services/task';
 import { topicService } from '@/services/topic';
 import { useHomeStore } from '@/store/home';

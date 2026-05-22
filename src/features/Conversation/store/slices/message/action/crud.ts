@@ -18,7 +18,7 @@ import { merge, nanoid, safeParseJSON } from '@lobechat/utils';
 import isEqual from 'fast-deep-equal';
 import { type StateCreator } from 'zustand';
 
-import { messageService } from '@/services/message/resolved';
+import { messageService } from '@/services/message';
 
 import { type Store as ConversationStore } from '../../../action';
 import { dataSelectors } from '../../data/selectors';

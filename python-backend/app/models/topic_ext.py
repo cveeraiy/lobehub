@@ -30,17 +30,21 @@ class Thread(SQLModel, table=True):
     topic_id: str = Field(foreign_key="topics.id", nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
+    agent_id: Optional[str] = Field(default=None, foreign_key="agents.id")
+    group_id: Optional[str] = Field(default=None, foreign_key="chat_groups.id")
+    metadata_: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("metadata"))
     title: Optional[str] = None
     source_message_id: Optional[str] = Field(default=None, foreign_key="messages.id")
     # 'standalone' | 'continuation' | 'isolation' | 'eval'
     type: Optional[str] = Field(default="standalone", max_length=255)
-    status: Optional[str] = Field(default=None, max_length=255)
+    status: Optional[str] = Field(default="active", max_length=255)
 
     parent_thread_id: Optional[str] = Field(default=None, foreign_key="threads.id")
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     accessed_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    last_active_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
 
 
 class TopicDocument(SQLModel, table=True):

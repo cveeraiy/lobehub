@@ -72,6 +72,60 @@ async def test_update_message(client: httpx.AsyncClient, state: SharedState) -> 
 
 
 @pytest.mark.asyncio
+async def test_compression_group_persists_summary_and_metadata(
+    client: httpx.AsyncClient,
+    state: SharedState,
+) -> None:
+    assert state.session_id and state.topic_id
+
+    message_ids: list[str] = []
+    for content in ["Compress me 1", "Compress me 2"]:
+        r = await client.post(
+            "/api/messages",
+            json={
+                "content": content,
+                "role": "assistant",
+                "session_id": state.session_id,
+                "topic_id": state.topic_id,
+            },
+        )
+        assert r.status_code == 201
+        message_ids.append(r.json()["id"])
+
+    r = await client.post(
+        "/api/messages/compression-group",
+        json={
+            "agent_id": "agent-e2e",
+            "message_ids": message_ids,
+            "topic_id": state.topic_id,
+        },
+    )
+    assert r.status_code == 200
+    group_id = r.json()["message_group_id"]
+
+    r = await client.post(
+        "/api/messages/compression-group/finalize",
+        json={
+            "agent_id": "agent-e2e",
+            "content": "Compressed summary",
+            "message_group_id": group_id,
+            "topic_id": state.topic_id,
+        },
+    )
+    assert r.status_code == 200
+
+    r = await client.put(
+        f"/api/messages/{group_id}/group-metadata",
+        json={"context": {"topic_id": state.topic_id}, "expanded": False},
+    )
+    assert r.status_code == 200
+    groups = [item for item in r.json()["messages"] if item["id"] == group_id]
+    assert groups
+    assert groups[0]["content"] == "Compressed summary"
+    assert groups[0]["metadata"] == {"expanded": False}
+
+
+@pytest.mark.asyncio
 async def test_remove_message(client: httpx.AsyncClient, state: SharedState) -> None:
     if not state.message_id:
         pytest.skip("No message to delete")

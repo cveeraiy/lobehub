@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { aiAgentService } from './aiAgent.rest';
+import { aiAgentService } from './aiAgent';
 
 const mockRestGet = vi.hoisted(() => vi.fn());
 const mockRestPost = vi.hoisted(() => vi.fn());
