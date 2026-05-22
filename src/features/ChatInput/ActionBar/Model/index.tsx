@@ -70,7 +70,7 @@ const ModelSwitch = memo(() => {
   const { model, provider } = resolveEnabledChatModelConfig(storedModel, storedProvider);
 
   const isModelHasExtendParams = useAiInfraStore(
-    aiModelSelectors.isModelHasExtendParams(model, provider),
+    aiModelSelectors.isModelHasExtendParams(model ?? '', provider ?? ''),
   );
 
   const showExtendParams = isDevMode && isModelHasExtendParams;

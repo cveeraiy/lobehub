@@ -46,7 +46,7 @@ import { isCanUseFC } from '@/helpers/isCanUseFC';
 import { VARIABLE_GENERATORS } from '@/helpers/parserPlaceholder';
 import { agentService } from '@/services/agent';
 import { agentCronJobService } from '@/services/agentCronJob';
-import { marketApiService } from '@/services/marketApi.resolved';
+import { marketApiService } from '@/services/marketApi';
 import { notebookService } from '@/services/notebook';
 import { getAgentStoreState } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';

@@ -10,7 +10,11 @@
 
 import debug from 'debug';
 
-import { callPythonBackend, isPythonBackendEnabled } from '@/server/utils/pythonBackend';
+import {
+  callPythonBackend,
+  callPythonBackendStream,
+  isPythonBackendEnabled,
+} from '@/server/utils/pythonBackend';
 
 const log = debug('ethos-server:python-agent-proxy');
 

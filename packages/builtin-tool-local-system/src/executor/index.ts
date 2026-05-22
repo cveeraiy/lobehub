@@ -29,19 +29,19 @@ class LocalSystemExecutor extends BaseExecutor<typeof LocalSystemApiEnum> {
   readonly identifier = LocalSystemIdentifier;
   protected readonly apiEnum = LocalSystemApiEnum;
 
-  listLocalFiles = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  readLocalFile = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  readLocalFiles = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  searchLocalFiles = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  moveLocalFiles = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  renameLocalFile = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  writeLocalFile = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  editLocalFile = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  runCommand = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  getCommandOutput = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  killCommand = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  grepContent = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
-  globLocalFiles = async (): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  listLocalFiles = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  readLocalFile = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  readLocalFiles = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  searchLocalFiles = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  moveLocalFiles = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  renameLocalFile = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  writeLocalFile = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  editLocalFile = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  runCommand = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  getCommandOutput = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  killCommand = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  grepContent = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
+  globLocalFiles = async (_params?: unknown): Promise<BuiltinToolResult> => NOT_AVAILABLE;
 }
 
 export const localSystemExecutor = new LocalSystemExecutor();

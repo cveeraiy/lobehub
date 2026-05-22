@@ -1,6 +1,7 @@
 import { restClient } from '@/libs/rest';
 import {
   type AiProviderDetailItem,
+  type AiProviderListItem,
   type AiProviderRuntimeConfig,
   type AiProviderRuntimeState,
   type AiProviderSortMap,
@@ -79,12 +80,12 @@ const normalizeRuntimeState = (data: RestAiProviderRuntimeState): AiProviderRunt
 });
 
 export class AiProviderService {
-  createAiProvider = async (params: CreateAiProviderParams) => {
+  createAiProvider = async (params: CreateAiProviderParams): Promise<string> => {
     return restClient.post('/ai-infra/providers', { body: params });
   };
 
-  getAiProviderList = async () => {
-    return restClient.get('/ai-infra/providers');
+  getAiProviderList = async (): Promise<AiProviderListItem[]> => {
+    return restClient.get<AiProviderListItem[]>('/ai-infra/providers');
   };
 
   getAiProviderById = async (id: string): Promise<AiProviderDetailItem | undefined> => {

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { message } from '@/components/AntdStaticMethods';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { marketApiService } from '@/services/marketApi.resolved';
+import { marketApiService } from '@/services/marketApi';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { agentGroupSelectors } from '@/store/agentGroup/selectors';
 import { useGlobalStore } from '@/store/global';

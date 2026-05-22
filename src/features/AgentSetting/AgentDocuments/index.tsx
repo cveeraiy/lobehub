@@ -40,7 +40,7 @@ const AgentDocuments = memo(() => {
     mutate: mutateDocuments,
   } = useClientDataSWR<AgentDocumentItem[]>(
     agentId ? ([`agent-documents`, agentId] as const) : null,
-    async ([, id]: readonly [string, string]) => agentDocumentService.getDocuments({ agentId: id }),
+    (async () => agentDocumentService.getDocuments({ agentId: agentId! })) as any,
   );
 
   const { data: templates = [], isLoading: isTemplatesLoading } = useClientDataSWR<TemplateItem[]>(

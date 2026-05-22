@@ -3,6 +3,7 @@ import {
   type ChatToolPayload,
   type CheckMcpInstallResult,
   type CustomPluginMetadata,
+  type ToolManifest,
 } from '@lobechat/types';
 import { safeParseJSON } from '@lobechat/utils';
 import { type PluginManifest } from '@lobehub/market-sdk';
@@ -204,7 +205,7 @@ class MCPService {
       url: string;
     },
     signal?: AbortSignal,
-  ) {
+  ): Promise<ToolManifest> {
     return toolsClient.mcp.getStreamableMcpServerManifest.query(params, { signal });
   }
 
@@ -217,7 +218,7 @@ class MCPService {
     },
     _metadata?: CustomPluginMetadata,
     _signal?: AbortSignal,
-  ) {
+  ): Promise<ToolManifest> {
     // stdio MCP requires desktop IPC — not available in web
     throw new Error('stdio MCP servers are not supported in web builds');
   }

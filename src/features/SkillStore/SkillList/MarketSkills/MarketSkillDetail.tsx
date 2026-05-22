@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import PublishedTime from '@/components/PublishedTime';
 import ContentViewer from '@/features/AgentSkillDetail/ContentViewer';
 import FileTree from '@/features/FileTree';
-import { marketApiService } from '@/services/marketApi.resolved';
+import { marketApiService } from '@/services/marketApi';
 import { useDiscoverStore } from '@/store/discover';
 import { useToolStore } from '@/store/tool';
 import { agentSkillsSelectors } from '@/store/tool/selectors';

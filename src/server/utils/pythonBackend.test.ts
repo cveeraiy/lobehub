@@ -215,7 +215,7 @@ describe('callPythonBackendStream', () => {
       body: fakeBody,
       ok: true,
       status: 200,
-    });
+    } as Response);
 
     const response = await callPythonBackendStream('/api/stream', 'user-1', {
       body: { prompt: 'hi' },
@@ -240,12 +240,12 @@ describe('callPythonBackendStream', () => {
   });
 
   it('does not set a timeout (SSE streams can run indefinitely)', async () => {
-    mockFetch.mockResolvedValue({ body: new ReadableStream(), ok: true, status: 200 });
+    mockFetch.mockResolvedValue({ body: new ReadableStream(), ok: true, status: 200 } as Response);
 
     await callPythonBackendStream('/api/stream', 'user-1');
 
     // Verify no AbortSignal timeout was passed (signal comes from caller or undefined)
-    const callArgs = mockFetch.mock.calls[0][1];
+    const callArgs = mockFetch.mock.calls[0]![1]!;
     expect(callArgs.signal).toBeUndefined();
   });
 
@@ -254,7 +254,7 @@ describe('callPythonBackendStream', () => {
       json: vi.fn().mockResolvedValue({ detail: 'Bad request' }),
       ok: false,
       status: 400,
-    });
+    } as unknown as Response);
 
     try {
       await callPythonBackendStream('/api/stream', 'user-1');
@@ -269,11 +269,11 @@ describe('callPythonBackendStream', () => {
 
   it('passes signal through for client-side cancellation', async () => {
     const controller = new AbortController();
-    mockFetch.mockResolvedValue({ body: new ReadableStream(), ok: true, status: 200 });
+    mockFetch.mockResolvedValue({ body: new ReadableStream(), ok: true, status: 200 } as Response);
 
     await callPythonBackendStream('/api/stream', 'user-1', { signal: controller.signal });
 
-    const callArgs = mockFetch.mock.calls[0][1];
+    const callArgs = mockFetch.mock.calls[0]![1]!;
     expect(callArgs.signal).toBe(controller.signal);
   });
 });

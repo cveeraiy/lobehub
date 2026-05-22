@@ -9,7 +9,7 @@ import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
 import { agentService } from '@/services/agent';
-import { discoverService } from '@/services/discover.resolved';
+import { discoverService } from '@/services/discover';
 
 import type {
   GetAvailableModelsParams,

@@ -104,13 +104,15 @@ export const GroupManagementManifest: BuiltinToolManifest = {
               'Clear instruction describing the task to perform. Be specific about expected deliverables.',
             type: 'string',
           },
-          ...(isDesktop && {
-            runInClient: {
-              description:
-                'Whether to run on the desktop client (for local file/shell access). MUST be true when task requires local-system tools. Default is false (server execution).',
-              type: 'boolean',
-            },
-          }),
+          ...(isDesktop
+            ? {
+                runInClient: {
+                  description:
+                    'Whether to run on the desktop client (for local file/shell access). MUST be true when task requires local-system tools. Default is false (server execution).',
+                  type: 'boolean',
+                },
+              }
+            : {}),
           timeout: {
             default: 1_800_000,
             description:

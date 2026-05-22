@@ -2,6 +2,8 @@ import type {
   ChatTopic,
   ExecAgentAppContext,
   ExecAgentResult,
+  ExecSubAgentTaskResult,
+  TaskStatusResult,
   UIChatMessage,
 } from '@lobechat/types';
 
@@ -153,6 +155,15 @@ export interface UpdateClientTaskThreadStatusParams {
   threadId: string;
 }
 
+export interface CreateClientTaskThreadResult {
+  messages: UIChatMessage[];
+  startedAt: string;
+  success: boolean;
+  threadId: string;
+  threadMessages: UIChatMessage[];
+  userMessageId: string;
+}
+
 class AiAgentService {
   /**
    * Execute a single Agent task.
@@ -182,7 +193,7 @@ class AiAgentService {
     return await lambdaClient.aiAgent.refreshGatewayToken.query({ topicId });
   }
 
-  async execSubAgentTask(params: ExecSubAgentTaskParams) {
+  async execSubAgentTask(params: ExecSubAgentTaskParams): Promise<ExecSubAgentTaskResult> {
     return await lambdaClient.aiAgent.execSubAgentTask.mutate(params);
   }
 
@@ -190,14 +201,16 @@ class AiAgentService {
    * Get SubAgent task status by threadId
    * Works for both Group and Single Agent mode tasks
    */
-  async getSubAgentTaskStatus(params: GetSubAgentTaskStatusParams) {
+  async getSubAgentTaskStatus(params: GetSubAgentTaskStatusParams): Promise<TaskStatusResult> {
     return await lambdaClient.aiAgent.getSubAgentTaskStatus.query(params);
   }
 
   /**
    * Interrupt a running task
    */
-  async interruptTask(params: InterruptTaskParams) {
+  async interruptTask(
+    params: InterruptTaskParams,
+  ): Promise<{ operationId?: string; success: boolean }> {
     return await lambdaClient.aiAgent.interruptTask.mutate(params);
   }
 
@@ -207,7 +220,9 @@ class AiAgentService {
    * This method is called when runInClient=true on desktop client.
    * It creates the Thread but does NOT execute the task - execution happens locally.
    */
-  async createClientTaskThread(params: CreateClientTaskThreadParams) {
+  async createClientTaskThread(
+    params: CreateClientTaskThreadParams,
+  ): Promise<CreateClientTaskThreadResult> {
     return await lambdaClient.aiAgent.createClientTaskThread.mutate(params);
   }
 
@@ -218,7 +233,9 @@ class AiAgentService {
    * - Messages may have different agentIds (supervisor, workers)
    * - Thread messages query should not filter by agentId
    */
-  async createClientGroupAgentTaskThread(params: CreateClientGroupAgentTaskThreadParams) {
+  async createClientGroupAgentTaskThread(
+    params: CreateClientGroupAgentTaskThreadParams,
+  ): Promise<CreateClientTaskThreadResult> {
     return await lambdaClient.aiAgent.createClientGroupAgentTaskThread.mutate(params);
   }
 
@@ -227,7 +244,9 @@ class AiAgentService {
    *
    * This method is called by desktop client after task execution finishes.
    */
-  async updateClientTaskThreadStatus(params: UpdateClientTaskThreadStatusParams) {
+  async updateClientTaskThreadStatus(
+    params: UpdateClientTaskThreadStatusParams,
+  ): Promise<{ success: boolean }> {
     return await lambdaClient.aiAgent.updateClientTaskThreadStatus.mutate(params);
   }
 }

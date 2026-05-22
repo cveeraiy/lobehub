@@ -1,16 +1,16 @@
 import { lambdaClient } from '@/libs/trpc/client';
-import { type CreateKnowledgeBaseParams } from '@/types/knowledgeBase';
+import { type CreateKnowledgeBaseParams, type KnowledgeBaseItem } from '@/types/knowledgeBase';
 
 class KnowledgeBaseService {
-  createKnowledgeBase = async (params: CreateKnowledgeBaseParams) => {
+  createKnowledgeBase = async (params: CreateKnowledgeBaseParams): Promise<string> => {
     return lambdaClient.knowledgeBase.createKnowledgeBase.mutate(params);
   };
 
-  getKnowledgeBaseList = async () => {
+  getKnowledgeBaseList = async (): Promise<KnowledgeBaseItem[]> => {
     return lambdaClient.knowledgeBase.getKnowledgeBases.query();
   };
 
-  getKnowledgeBaseById = async (id: string) => {
+  getKnowledgeBaseById = async (id: string): Promise<KnowledgeBaseItem | undefined> => {
     return lambdaClient.knowledgeBase.getKnowledgeBaseById.query({ id });
   };
 

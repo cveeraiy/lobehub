@@ -10,7 +10,7 @@ import {
   type PluginEventRequest,
 } from '@lobehub/market-types';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { globalHelpers } from '@/store/global/helpers';
 import { useUserStore } from '@/store/user';
 import { userGeneralSettingsSelectors } from '@/store/user/selectors';
@@ -41,6 +41,49 @@ import {
 } from '@/types/discover';
 import { type MCPPluginListParams } from '@/types/plugins';
 import { cleanObject } from '@/utils/object';
+
+type RawListResponse<T> =
+  | T[]
+  | {
+      categories?: unknown[];
+      current_page?: number;
+      currentPage?: number;
+      data?: T[];
+      items?: T[];
+      page_size?: number;
+      pageSize?: number;
+      total?: number;
+      total_count?: number;
+      total_pages?: number;
+      totalCount?: number;
+      totalPages?: number;
+    };
+
+const normalizeListResponse = <T>(
+  response: RawListResponse<T>,
+  defaults: { page: number; pageSize: number },
+) => {
+  const items = Array.isArray(response) ? response : (response.items ?? response.data ?? []);
+  const totalCount = Array.isArray(response)
+    ? response.length
+    : (response.totalCount ?? response.total_count ?? response.total ?? items.length);
+  const pageSize = Array.isArray(response)
+    ? defaults.pageSize
+    : (response.pageSize ?? response.page_size ?? defaults.pageSize);
+
+  return {
+    categories: Array.isArray(response) ? [] : (response.categories ?? []),
+    currentPage: Array.isArray(response)
+      ? defaults.page
+      : (response.currentPage ?? response.current_page ?? defaults.page),
+    items,
+    pageSize,
+    totalCount,
+    totalPages: Array.isArray(response)
+      ? Math.ceil(totalCount / pageSize)
+      : (response.totalPages ?? response.total_pages ?? Math.ceil(totalCount / pageSize)),
+  };
+};
 
 class DiscoverService {
   private _isRetrying = false;
@@ -75,10 +118,8 @@ class DiscoverService {
   ): Promise<CategoryItem[]> => {
     const locale = globalHelpers.getCurrentLanguage();
     const { source, ...rest } = params;
-    return lambdaClient.market.getAssistantCategories.query({
-      ...rest,
-      locale,
-      source,
+    return restClient.get<CategoryItem[]>('/discover/assistant/categories', {
+      params: { ...rest, locale, source } as any,
     });
   };
 
@@ -89,33 +130,36 @@ class DiscoverService {
     version?: string;
   }): Promise<DiscoverAssistantDetail | undefined> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getAssistantDetail.query({
-      identifier: params.identifier,
-      locale,
-      source: params.source,
-      version: params.version,
+    return restClient.get<DiscoverAssistantDetail>('/discover/assistant/detail', {
+      params: {
+        identifier: params.identifier,
+        locale,
+        source: params.source,
+        version: params.version,
+      } as any,
     });
   };
 
   getAssistantIdentifiers = async (
     params: { source?: AssistantMarketSource } = {},
   ): Promise<IdentifiersResponse> => {
-    return lambdaClient.market.getAssistantIdentifiers.query(params);
+    return restClient.get<IdentifiersResponse>('/discover/assistant/identifiers', {
+      params: params as any,
+    });
   };
 
   getAssistantList = async (params: AssistantQueryParams = {}): Promise<AssistantListResponse> => {
     await this.safeInjectMPToken();
 
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getAssistantList.query(
-      {
+    return restClient.get<AssistantListResponse>('/discover/assistant/list', {
+      params: {
         ...params,
         locale,
         page: params.page ? Number(params.page) : 1,
         pageSize: params.pageSize ? Number(params.pageSize) : 20,
-      },
-      { context: { showNotification: false } },
-    );
+      } as any,
+    });
   };
 
   getAgentsByPlugin = async (params: {
@@ -125,11 +169,13 @@ class DiscoverService {
     pluginId: string;
   }): Promise<AssistantListResponse> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getAgentsByPlugin.query({
-      ...params,
-      locale,
-      page: params.page ? Number(params.page) : 1,
-      pageSize: params.pageSize ? Number(params.pageSize) : 20,
+    return restClient.get<AssistantListResponse>('/discover/assistant/by-plugin', {
+      params: {
+        ...params,
+        locale,
+        page: params.page ? Number(params.page) : 1,
+        pageSize: params.pageSize ? Number(params.pageSize) : 20,
+      } as any,
     });
   };
 
@@ -137,9 +183,8 @@ class DiscoverService {
 
   getMcpCategories = async (params: CategoryListQuery = {}): Promise<CategoryItem[]> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getMcpCategories.query({
-      ...params,
-      locale,
+    return restClient.get<CategoryItem[]>('/discover/mcp/categories', {
+      params: { ...params, locale } as any,
     });
   };
 
@@ -149,9 +194,8 @@ class DiscoverService {
     version?: string;
   }): Promise<DiscoverMcpDetail> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getMcpDetail.query({
-      ...params,
-      locale,
+    return restClient.get<DiscoverMcpDetail>('/discover/mcp/detail', {
+      params: { ...params, locale } as any,
     });
   };
 
@@ -159,32 +203,48 @@ class DiscoverService {
     await this.safeInjectMPToken();
 
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getMcpList.query({
-      ...params,
-      locale,
-      page: params.page ? Number(params.page) : 1,
-      pageSize: params.pageSize ? Number(params.pageSize) : 20,
-    });
+    const page = params.page ? Number(params.page) : 1;
+    const pageSize = params.pageSize ? Number(params.pageSize) : 20;
+    const response = await restClient.get<RawListResponse<McpListResponse['items'][number]>>(
+      '/discover/mcp/list',
+      {
+        params: {
+          ...params,
+          locale,
+          page,
+          pageSize,
+        } as any,
+      },
+    );
+
+    return normalizeListResponse(response, { page, pageSize }) as McpListResponse;
   };
 
   getMCPPluginList = async (params: MCPPluginListParams): Promise<McpListResponse> => {
     await this.safeInjectMPToken();
 
     const locale = globalHelpers.getCurrentLanguage();
+    const page = params.page ? Number(params.page) : 1;
+    const pageSize = params.pageSize ? Number(params.pageSize) : 21;
+    const response = await restClient.get<RawListResponse<McpListResponse['items'][number]>>(
+      '/discover/mcp/list',
+      {
+        params: {
+          ...params,
+          locale,
+          page,
+          pageSize,
+        } as any,
+      },
+    );
 
-    return lambdaClient.market.getMcpList.query({
-      ...params,
-      locale,
-      page: params.page ? Number(params.page) : 1,
-      pageSize: params.pageSize ? Number(params.pageSize) : 21,
-    });
+    return normalizeListResponse(response, { page, pageSize }) as McpListResponse;
   };
 
   getMcpManifest = async (params: { identifier: string; locale?: string; version?: string }) => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getMcpManifest.query({
-      ...params,
-      locale,
+    return restClient.get('/discover/mcp/manifest', {
+      params: { ...params, locale } as any,
     });
   };
 
@@ -194,15 +254,16 @@ class DiscoverService {
   ): Promise<PluginManifest> => {
     const locale = globalHelpers.getCurrentLanguage();
 
-    return lambdaClient.market.getMcpManifest.query({
-      identifier,
-      install: options.install,
-      locale,
+    return restClient.get<PluginManifest>('/discover/mcp/manifest', {
+      params: { identifier, install: options.install, locale } as any,
     });
   };
 
   registerClient = () => {
-    return lambdaClient.market.registerClientInMarketplace.mutate({});
+    return restClient.post<{ clientId: string; clientSecret: string }>(
+      '/discover/register-client',
+      {},
+    );
   };
 
   /**
@@ -229,8 +290,8 @@ class DiscoverService {
       ...params,
     };
 
-    lambdaClient.market.reportMcpInstallResult
-      .mutate(cleanObject(reportData))
+    restClient
+      .post('/discover/report/mcp-install', { body: cleanObject(reportData) })
       .catch((reportError) => {
         console.warn('Failed to report MCP installation result:', reportError);
       });
@@ -247,9 +308,11 @@ class DiscoverService {
 
     await this.safeInjectMPToken();
 
-    lambdaClient.market.reportCall.mutate(cleanObject(reportData)).catch((reportError) => {
-      console.warn('Failed to report call:', reportError);
-    });
+    restClient
+      .post('/discover/report/call', { body: cleanObject(reportData) })
+      .catch((reportError) => {
+        console.warn('Failed to report call:', reportError);
+      });
   };
 
   reportMcpEvent = async (eventData: PluginEventRequest) => {
@@ -263,7 +326,7 @@ class DiscoverService {
       source: eventData.source ?? 'community/mcp',
     });
 
-    lambdaClient.market.reportMcpEvent.mutate(payload).catch((error) => {
+    restClient.post('/discover/report/mcp-event', { body: payload }).catch((error) => {
       console.warn('Failed to report MCP event:', error);
     });
   };
@@ -279,9 +342,11 @@ class DiscoverService {
 
     await this.safeInjectMPToken();
 
-    lambdaClient.market.reportAgentInstall.mutate({ identifier }).catch((reportError) => {
-      console.warn('Failed to report agent installation:', reportError);
-    });
+    restClient
+      .post('/discover/report/agent-install', { body: { identifier } })
+      .catch((reportError) => {
+        console.warn('Failed to report agent installation:', reportError);
+      });
   };
 
   reportAgentEvent = async (eventData: AgentEventRequest) => {
@@ -295,7 +360,7 @@ class DiscoverService {
       source: eventData.source ?? 'community/agent',
     });
 
-    lambdaClient.market.reportAgentEvent.mutate(payload).catch((error) => {
+    restClient.post('/discover/report/agent-event', { body: payload }).catch((error) => {
       console.warn('Failed to report Agent event:', error);
     });
   };
@@ -303,7 +368,9 @@ class DiscoverService {
   // ============================== Models ==============================
 
   getModelCategories = async (params: CategoryListQuery = {}): Promise<CategoryItem[]> => {
-    return lambdaClient.market.getModelCategories.query(params);
+    return restClient.get<CategoryItem[]>('/discover/model/categories', {
+      params: params as any,
+    });
   };
 
   getModelDetail = async (params: {
@@ -311,23 +378,24 @@ class DiscoverService {
     locale?: string;
   }): Promise<DiscoverModelDetail | undefined> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getModelDetail.query({
-      ...params,
-      locale,
+    return restClient.get<DiscoverModelDetail>('/discover/model/detail', {
+      params: { ...params, locale } as any,
     });
   };
 
   getModelIdentifiers = async (): Promise<IdentifiersResponse> => {
-    return lambdaClient.market.getModelIdentifiers.query();
+    return restClient.get<IdentifiersResponse>('/discover/model/identifiers');
   };
 
   getModelList = async (params: ModelQueryParams = {}): Promise<ModelListResponse> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getModelList.query({
-      ...params,
-      locale,
-      page: params.page ? Number(params.page) : 1,
-      pageSize: params.pageSize ? Number(params.pageSize) : 20,
+    return restClient.get<ModelListResponse>('/discover/model/list', {
+      params: {
+        ...params,
+        locale,
+        page: params.page ? Number(params.page) : 1,
+        pageSize: params.pageSize ? Number(params.pageSize) : 20,
+      } as any,
     });
   };
 
@@ -335,9 +403,8 @@ class DiscoverService {
 
   getPluginCategories = async (params: CategoryListQuery = {}): Promise<CategoryItem[]> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getPluginCategories.query({
-      ...params,
-      locale,
+    return restClient.get<CategoryItem[]>('/discover/plugin/categories', {
+      params: { ...params, locale } as any,
     });
   };
 
@@ -347,23 +414,24 @@ class DiscoverService {
     withManifest?: boolean;
   }): Promise<DiscoverPluginDetail | undefined> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getPluginDetail.query({
-      ...params,
-      locale,
+    return restClient.get<DiscoverPluginDetail>('/discover/plugin/detail', {
+      params: { ...params, locale } as any,
     });
   };
 
   getPluginIdentifiers = async (): Promise<IdentifiersResponse> => {
-    return lambdaClient.market.getPluginIdentifiers.query();
+    return restClient.get<IdentifiersResponse>('/discover/plugin/identifiers');
   };
 
   getPluginList = async (params: PluginQueryParams = {}): Promise<PluginListResponse> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getPluginList.query({
-      ...params,
-      locale,
-      page: params.page ? Number(params.page) : 1,
-      pageSize: params.pageSize ? Number(params.pageSize) : 20,
+    return restClient.get<PluginListResponse>('/discover/plugin/list', {
+      params: {
+        ...params,
+        locale,
+        page: params.page ? Number(params.page) : 1,
+        pageSize: params.pageSize ? Number(params.pageSize) : 20,
+      } as any,
     });
   };
 
@@ -375,23 +443,24 @@ class DiscoverService {
     withReadme?: boolean;
   }): Promise<DiscoverProviderDetail | undefined> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getProviderDetail.query({
-      ...params,
-      locale,
+    return restClient.get<DiscoverProviderDetail>('/discover/provider/detail', {
+      params: { ...params, locale } as any,
     });
   };
 
   getProviderIdentifiers = async (): Promise<IdentifiersResponse> => {
-    return lambdaClient.market.getProviderIdentifiers.query();
+    return restClient.get<IdentifiersResponse>('/discover/provider/identifiers');
   };
 
   getProviderList = async (params: ProviderQueryParams = {}): Promise<ProviderListResponse> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getProviderList.query({
-      ...params,
-      locale,
-      page: params.page ? Number(params.page) : 1,
-      pageSize: params.pageSize ? Number(params.pageSize) : 20,
+    return restClient.get<ProviderListResponse>('/discover/provider/list', {
+      params: {
+        ...params,
+        locale,
+        page: params.page ? Number(params.page) : 1,
+        pageSize: params.pageSize ? Number(params.pageSize) : 20,
+      } as any,
     });
   };
 
@@ -402,9 +471,8 @@ class DiscoverService {
     username: string;
   }): Promise<DiscoverUserProfile | undefined> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getUserInfo.query({
-      locale,
-      username: params.username,
+    return restClient.get<DiscoverUserProfile>('/discover/user/info', {
+      params: { locale, username: params.username } as any,
     });
   };
 
@@ -470,9 +538,8 @@ class DiscoverService {
 
     // 5. Get access token (server will automatically set HTTP-Only cookie)
     try {
-      const result = await lambdaClient.market.registerM2MToken.query({
-        clientId,
-        clientSecret,
+      const result = await restClient.post<{ success: boolean }>('/discover/register-m2m-token', {
+        body: { clientId, clientSecret },
       });
 
       // Check server response result
@@ -536,9 +603,8 @@ class DiscoverService {
 
   getSkillCategories = async (params: CategoryListQuery = {}): Promise<SkillCategoryItem[]> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.skill.getSkillCategories.query({
-      ...params,
-      locale,
+    return restClient.get<SkillCategoryItem[]>('/discover/skill/categories', {
+      params: { ...params, locale } as any,
     });
   };
 
@@ -548,20 +614,28 @@ class DiscoverService {
     version?: string;
   }): Promise<DiscoverSkillDetail> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.skill.getSkillDetail.query({
-      ...params,
-      locale,
+    return restClient.get('/discover/skill/detail', {
+      params: { ...params, locale } as any,
     });
   };
 
   getSkillList = async (params: SkillQueryParams = {}): Promise<SkillListResponse> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.skill.getSkillList.query({
-      ...params,
-      locale,
-      page: params.page ? Number(params.page) : 1,
-      pageSize: params.pageSize ? Number(params.pageSize) : 20,
-    });
+    const page = params.page ? Number(params.page) : 1;
+    const pageSize = params.pageSize ? Number(params.pageSize) : 20;
+    const response = await restClient.get<RawListResponse<SkillListResponse['items'][number]>>(
+      '/discover/skill/list',
+      {
+        params: {
+          ...params,
+          locale,
+          page,
+          pageSize,
+        } as any,
+      },
+    );
+
+    return normalizeListResponse(response, { page, pageSize }) as SkillListResponse;
   };
 
   reportSkillEvent = async (eventData: { event: string; identifier: string; source?: string }) => {
@@ -582,9 +656,8 @@ class DiscoverService {
 
   getGroupAgentCategories = async (params: CategoryListQuery = {}): Promise<CategoryItem[]> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getGroupAgentCategories.query({
-      ...params,
-      locale,
+    return restClient.get<CategoryItem[]>('/discover/group-agent/categories', {
+      params: { ...params, locale } as any,
     });
   };
 
@@ -594,28 +667,25 @@ class DiscoverService {
     version?: string;
   }): Promise<any> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.getGroupAgentDetail.query({
-      identifier: params.identifier,
-      locale,
-      version: params.version,
+    return restClient.get('/discover/group-agent/detail', {
+      params: { identifier: params.identifier, locale, version: params.version } as any,
     });
   };
 
   getGroupAgentIdentifiers = async (): Promise<IdentifiersResponse> => {
-    return lambdaClient.market.getGroupAgentIdentifiers.query();
+    return restClient.get<IdentifiersResponse>('/discover/group-agent/identifiers');
   };
 
   getGroupAgentList = async (params: GroupAgentQueryParams = {}): Promise<any> => {
     const locale = globalHelpers.getCurrentLanguage();
-    return lambdaClient.market.agentGroup.getAgentGroupList.query(
-      {
+    return restClient.get('/discover/group-agent/list', {
+      params: {
         ...params,
         locale,
         page: params.page ? Number(params.page) : 1,
         pageSize: params.pageSize ? Number(params.pageSize) : 20,
-      },
-      { context: { showNotification: false } },
-    );
+      } as any,
+    });
   };
 
   reportGroupAgentEvent = async (params: {
@@ -623,11 +693,11 @@ class DiscoverService {
     identifier: string;
     source?: string;
   }): Promise<void> => {
-    await lambdaClient.market.reportGroupAgentEvent.mutate(params);
+    await restClient.post('/discover/report/group-agent-event', { body: params });
   };
 
   reportGroupAgentInstall = async (identifier: string): Promise<void> => {
-    await lambdaClient.market.reportGroupAgentInstall.mutate({ identifier });
+    await restClient.post('/discover/report/group-agent-install', { body: { identifier } });
   };
 }
 

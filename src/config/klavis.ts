@@ -15,6 +15,7 @@ import { z } from 'zod';
  */
 export const getKlavisConfig = () => {
   return createEnv({
+    clientPrefix: 'NEXT_PUBLIC_',
     client: {},
     runtimeEnv: {
       // Server-side API key (never exposed to client)

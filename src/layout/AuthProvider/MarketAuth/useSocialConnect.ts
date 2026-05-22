@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { toolsClient } from '@/libs/trpc/client';
-import { marketAuthService } from '@/services/marketAuth.resolved';
+import { marketAuthService } from '@/services/marketAuth';
 
 const POLL_INTERVAL_MS = 1000;
 const POLL_TIMEOUT_MS = 15_000;

@@ -97,7 +97,7 @@ describe('AiChatService REST', () => {
     const result = await aiChatService.sendMessageInServer(
       {
         agentId: 'agent-1',
-        newAssistantMessage: {},
+        newAssistantMessage: { provider: 'openai' },
         newUserMessage: { content: 'Hello' },
       },
       new AbortController(),

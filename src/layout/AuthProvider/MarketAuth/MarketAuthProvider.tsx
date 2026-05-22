@@ -6,7 +6,7 @@ import { createContext, use, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mutate as globalMutate } from 'swr';
 
-import { marketAuthService } from '@/services/marketAuth.resolved';
+import { marketAuthService } from '@/services/marketAuth';
 import { useServerConfigStore } from '@/store/serverConfig';
 import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useUserStore } from '@/store/user';

@@ -14,6 +14,18 @@ import {
 } from '@/types/user';
 import { type UserSettings } from '@/types/user/settings';
 
+interface WebOnboardingToolActionResult {
+  content?: string;
+  error?: {
+    message?: string;
+    type?: string;
+  };
+  ignoredFields?: string[];
+  savedFields?: string[];
+  success: boolean;
+  unchangedFields?: string[];
+}
+
 export class UserService {
   getUserRegistrationDuration = async (): Promise<{
     createdAt: string;
@@ -49,13 +61,15 @@ export class UserService {
     return lambdaClient.user.getOnboardingAgentContext.query();
   };
 
-  saveUserQuestion = async (params: SaveUserQuestionInput) => {
+  saveUserQuestion = async (
+    params: SaveUserQuestionInput,
+  ): Promise<WebOnboardingToolActionResult> => {
     return lambdaClient.user.saveUserQuestion.mutate(
       params as Parameters<typeof lambdaClient.user.saveUserQuestion.mutate>[0],
     );
   };
 
-  finishOnboarding = async () => {
+  finishOnboarding = async (): Promise<WebOnboardingToolActionResult> => {
     return lambdaClient.user.finishOnboarding.mutate({});
   };
 

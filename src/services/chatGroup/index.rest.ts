@@ -32,6 +32,11 @@ export interface SupervisorConfig {
   title?: string;
 }
 
+export interface BatchCreateAgentsResult {
+  agentIds?: string[];
+  agents: Array<{ id: string; title?: string | null }>;
+}
+
 class ChatGroupService {
   getGroupByForkedFromIdentifier = async (forkedFromIdentifier: string): Promise<string | null> => {
     return restClient.get('/agent-groups/by-forked', { params: { forkedFromIdentifier } });
@@ -88,8 +93,13 @@ class ChatGroupService {
     return restClient.post(`/agent-groups/${groupId}/agents`, { body: { agentIds } });
   };
 
-  batchCreateAgentsInGroup = (groupId: string, agents: GroupMemberConfig[]) => {
-    return restClient.post(`/agent-groups/${groupId}/agents/batch`, { body: { agents } });
+  batchCreateAgentsInGroup = (
+    groupId: string,
+    agents: GroupMemberConfig[],
+  ): Promise<BatchCreateAgentsResult> => {
+    return restClient.post<BatchCreateAgentsResult>(`/agent-groups/${groupId}/agents/batch`, {
+      body: { agents },
+    });
   };
 
   removeAgentsFromGroup = (groupId: string, agentIds: string[]) => {

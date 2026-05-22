@@ -4,15 +4,16 @@ import { type CallReportRequest } from '@lobehub/market-types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DiscoverService } from '@/server/services/discover';
+import { afterResponse } from '@/server/utils/afterResponse';
 
 import {
   scheduleToolCallReport,
   type ScheduleToolCallReportParams,
 } from './scheduleToolCallReport';
 
-// Mock Next.js after() function
-vi.mock('next/server', () => ({
-  after: vi.fn((callback) => callback()),
+// Mock afterResponse() function
+vi.mock('@/server/utils/afterResponse', () => ({
+  afterResponse: vi.fn((callback) => callback()),
 }));
 
 // Mock DiscoverService
@@ -478,12 +479,10 @@ describe('scheduleToolCallReport', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should use Next.js after() to schedule reporting', async () => {
-      const { after } = await import('next/server');
-
+    it('should use afterResponse() to schedule reporting', async () => {
       scheduleToolCallReport(baseParams);
 
-      expect(after).toHaveBeenCalledWith(expect.any(Function));
+      expect(afterResponse).toHaveBeenCalledWith(expect.any(Function));
     });
 
     it('should create DiscoverService with marketAccessToken', async () => {

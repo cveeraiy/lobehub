@@ -95,7 +95,7 @@ export class MessageService {
     toolCallId: string,
     value: string | Record<string, unknown>,
     ctx?: MessageQueryContext,
-  ) => {
+  ): Promise<{ messages?: UIChatMessage[]; success: boolean }> => {
     return lambdaClient.message.updateToolArguments.mutate({ ...ctx, toolCallId, value });
   };
 

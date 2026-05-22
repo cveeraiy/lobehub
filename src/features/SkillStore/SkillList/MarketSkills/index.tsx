@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { VirtuosoGrid } from 'react-virtuoso';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { discoverService } from '@/services/discover.resolved';
+import { discoverService } from '@/services/discover';
 import { globalHelpers } from '@/store/global/helpers';
 import { useToolStore } from '@/store/tool';
 import { type DiscoverSkillItem, SkillSorts } from '@/types/discover';

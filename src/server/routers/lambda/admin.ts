@@ -124,9 +124,7 @@ export const adminRouter = router({
     .mutation(async ({ ctx, input }) => {
       const userModel = new UserModel(ctx.serverDB, input.userId);
 
-      for (const [key, value] of Object.entries(input.settings)) {
-        await userModel.updateSetting(key, value);
-      }
+      await userModel.updateSetting(input.settings);
 
       return { success: true };
     }),
@@ -143,7 +141,7 @@ export const adminRouter = router({
     )
     .mutation(async ({ ctx, input }) => {
       const userModel = new UserModel(ctx.serverDB, input.userId);
-      await userModel.updateSetting('settingsPermissions', input.permissions);
+      await userModel.updateSetting({ settingsPermissions: input.permissions });
 
       return { success: true };
     }),

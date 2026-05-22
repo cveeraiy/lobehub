@@ -11,7 +11,7 @@ import AgentItem from '@/features/SkillStore/SkillDetail/AgentItem';
 import { agentListStyles as styles } from '@/features/SkillStore/SkillDetail/style';
 import VirtuosoLoading from '@/features/SkillStore/SkillList/VirtuosoLoading';
 import { useClientDataSWR } from '@/libs/swr';
-import { discoverService } from '@/services/discover.resolved';
+import { discoverService } from '@/services/discover';
 import { type DiscoverAssistantItem } from '@/types/discover';
 
 import { useDetailContext } from './DetailProvider';

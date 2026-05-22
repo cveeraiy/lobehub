@@ -1,7 +1,7 @@
 import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
-import { discoverService } from '@/services/discover.resolved';
+import { discoverService } from '@/services/discover';
 import { type DiscoverStore } from '@/store/discover';
 import { globalHelpers } from '@/store/global/helpers';
 import { type StoreSetter } from '@/store/types';

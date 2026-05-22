@@ -8,9 +8,9 @@ import { useBuildListItems } from './useBuildListItems';
 const enabledList: EnabledProviderWithModels[] = [
   {
     children: [
-      { abilities: {}, displayName: 'Claude Sonnet', id: 'claude-sonnet', type: 'chat' },
-      { abilities: {}, displayName: 'Claude Sonnet Duplicate', id: 'claude-sonnet', type: 'chat' },
-      { abilities: {}, displayName: 'Nova Pro', id: 'nova-pro', type: 'chat' },
+      { abilities: {}, displayName: 'Claude Sonnet', id: 'claude-sonnet' },
+      { abilities: {}, displayName: 'Claude Sonnet Duplicate', id: 'claude-sonnet' },
+      { abilities: {}, displayName: 'Nova Pro', id: 'nova-pro' },
     ],
     id: 'bedrock',
     name: 'AWS Bedrock',

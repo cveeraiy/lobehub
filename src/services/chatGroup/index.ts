@@ -32,6 +32,11 @@ export interface SupervisorConfig {
   title?: string;
 }
 
+export interface BatchCreateAgentsResult {
+  agentIds?: string[];
+  agents: Array<{ id: string; title?: string | null }>;
+}
+
 class ChatGroupService {
   /**
    * Get a group by forkedFromIdentifier stored in config
@@ -111,7 +116,10 @@ class ChatGroupService {
    * Batch create virtual agents and add them to an existing group.
    * This is more efficient than calling createAgentOnly multiple times.
    */
-  batchCreateAgentsInGroup = (groupId: string, agents: GroupMemberConfig[]) => {
+  batchCreateAgentsInGroup = (
+    groupId: string,
+    agents: GroupMemberConfig[],
+  ): Promise<BatchCreateAgentsResult> => {
     return lambdaClient.group.batchCreateAgentsInGroup.mutate({
       agents,
       groupId,

@@ -190,11 +190,14 @@ export class MessageService {
     toolCallId: string,
     value: string | Record<string, unknown>,
     ctx?: MessageQueryContext,
-  ) => {
-    return restClient.put('/messages/tool-arguments', {
-      body: { tool_call_id: toolCallId, value },
-      params: queryParams(ctx),
-    });
+  ): Promise<{ messages?: UIChatMessage[]; success: boolean }> => {
+    return restClient.put<{ messages?: UIChatMessage[]; success: boolean }>(
+      '/messages/tool-arguments',
+      {
+        body: { tool_call_id: toolCallId, value },
+        params: queryParams(ctx),
+      },
+    );
   };
 
   updateMessage = async (

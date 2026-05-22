@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { marketAuthService } from '@/services/marketAuth.resolved';
+import { marketAuthService } from '@/services/marketAuth';
 
 import { type MarketUserProfile } from './types';
 

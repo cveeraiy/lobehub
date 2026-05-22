@@ -1,4 +1,9 @@
-import { type SearchQuery } from '@lobechat/types';
+import {
+  type SearchQuery,
+  type SearchServiceImpl,
+  type UniformSearchResponse,
+} from '@lobechat/types';
+import { type CrawlUniformResult } from '@lobechat/web-crawler';
 
 import { restClient } from '@/libs/rest';
 
@@ -12,18 +17,21 @@ class SearchService {
     });
   }
 
-  crawlPage(url: string) {
+  crawlPage(url: string): Promise<{ results: CrawlUniformResult[] }> {
     return this.crawlPages({ urls: [url] });
   }
 
-  crawlPages(params: { impls?: string[]; urls: string[] }) {
-    return restClient.post('/web-search/crawl', {
+  crawlPages(params: Parameters<SearchServiceImpl['crawlPages']>[0]) {
+    return restClient.post<{ results: CrawlUniformResult[] }>('/web-search/crawl', {
       body: params,
     });
   }
 
-  async webSearch(params: SearchQuery, options?: { signal?: AbortSignal }) {
-    return restClient.post('/web-search', {
+  async webSearch(
+    params: SearchQuery,
+    options?: { signal?: AbortSignal },
+  ): Promise<UniformSearchResponse> {
+    return restClient.post<UniformSearchResponse>('/web-search', {
       body: {
         query: params.query,
         search_categories: params.searchCategories,

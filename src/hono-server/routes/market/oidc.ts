@@ -71,7 +71,7 @@ oidc.all('/market/oidc/*', async (c) => {
       try {
         const { token } = (await c.req.json()) as { token?: string };
         if (!token) {
-          const trustedClientToken = await getTrustedClientTokenForSession();
+          const trustedClientToken = await getTrustedClientTokenForSession(c.req.raw);
           if (!trustedClientToken)
             return jsonError(c, 'missing_token', 'Token is required for userinfo proxy.', 400);
           const res = await fetch(`${MARKET_BASE_URL}/lobehub-oidc/userinfo`, {

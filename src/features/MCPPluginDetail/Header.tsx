@@ -34,7 +34,7 @@ import Scores from '@/features/MCP/Scores';
 import { getLanguageColor, getRecommendedDeployment } from '@/features/MCP/utils';
 import { useCategory } from '@/hooks/useMCPCategory';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { socialService } from '@/services/social.resolved';
+import { socialService } from '@/services/social';
 
 import InstallationIcon from '../../components/MCPDepsIcon';
 import PublishedTime from '../../components/PublishedTime';

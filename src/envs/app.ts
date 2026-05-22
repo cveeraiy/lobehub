@@ -75,6 +75,7 @@ export const getAppConfig = () => {
 
       AGENT_GATEWAY_SERVICE_TOKEN: z.string().optional(),
       AGENT_GATEWAY_URL: z.string().url().optional(),
+      VERCEL_EDGE_CONFIG: z.string().optional(),
       /**
        * Enable Queue-based Agent Runtime
        * When true, use QStash for async agent execution (production)
@@ -117,6 +118,7 @@ export const getAppConfig = () => {
 
       AGENT_GATEWAY_SERVICE_TOKEN: process.env.AGENT_GATEWAY_SERVICE_TOKEN,
       AGENT_GATEWAY_URL: process.env.AGENT_GATEWAY_URL,
+      VERCEL_EDGE_CONFIG: process.env.VERCEL_EDGE_CONFIG,
       enableQueueAgentRuntime: process.env.AGENT_RUNTIME_MODE === 'queue',
       TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED === '1',
     },

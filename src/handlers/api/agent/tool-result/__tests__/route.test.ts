@@ -1,5 +1,3 @@
-// @vitest-environment node
-import { Request } from 'undici';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST } from '../route';

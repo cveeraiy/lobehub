@@ -7,7 +7,7 @@ import { Package, Wrench } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { marketAuthService } from '@/services/marketAuth.resolved';
+import { marketAuthService } from '@/services/marketAuth';
 
 import { type ClaimableResource, type ClaimableResources } from './useSocialConnect';
 

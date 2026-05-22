@@ -1,18 +1,18 @@
 import { restClient } from '@/libs/rest';
-import { type CreateKnowledgeBaseParams } from '@/types/knowledgeBase';
+import { type CreateKnowledgeBaseParams, type KnowledgeBaseItem } from '@/types/knowledgeBase';
 
 class KnowledgeBaseService {
-  createKnowledgeBase = async (params: CreateKnowledgeBaseParams) => {
+  createKnowledgeBase = async (params: CreateKnowledgeBaseParams): Promise<string> => {
     const result = await restClient.post<{ id: string }>('/knowledge-bases', { body: params });
     return result.id;
   };
 
-  getKnowledgeBaseList = async () => {
-    return restClient.get('/knowledge-bases');
+  getKnowledgeBaseList = async (): Promise<KnowledgeBaseItem[]> => {
+    return restClient.get<KnowledgeBaseItem[]>('/knowledge-bases');
   };
 
-  getKnowledgeBaseById = async (id: string) => {
-    return restClient.get(`/knowledge-bases/${id}`);
+  getKnowledgeBaseById = async (id: string): Promise<KnowledgeBaseItem | undefined> => {
+    return restClient.get<KnowledgeBaseItem | undefined>(`/knowledge-bases/${id}`);
   };
 
   updateKnowledgeBaseList = async (id: string, value: any) => {

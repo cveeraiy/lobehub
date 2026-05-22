@@ -21,6 +21,7 @@ describe('AgentSignalService', () => {
   it('emits client source events through REST', async () => {
     const payload = {
       payload: { operationId: 'op-1' },
+      sourceId: 'op-1',
       sourceType: 'client.runtime.start' as const,
     };
 
@@ -34,12 +35,14 @@ describe('AgentSignalService', () => {
 
     await agentSignalService.emitClientGatewaySourceEvent({
       payload: { operationId: 'op-1' },
+      sourceId: 'op-1',
       sourceType: 'client.runtime.start',
     });
 
     expect(restClient.post).toHaveBeenCalledWith('/agent-signal/emit', {
       body: {
         payload: { operationId: 'op-1' },
+        sourceId: 'op-1',
         sourceType: 'client.runtime.start',
         timestamp: 1234,
       },

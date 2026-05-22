@@ -27,6 +27,18 @@ import {
 } from '@/types/user';
 import { type UserSettings } from '@/types/user/settings';
 
+interface WebOnboardingToolActionResult {
+  content?: string;
+  error?: {
+    message?: string;
+    type?: string;
+  };
+  ignoredFields?: string[];
+  savedFields?: string[];
+  success: boolean;
+  unchangedFields?: string[];
+}
+
 const BASE = '/user';
 
 const toRestSettingsBody = (value: PartialDeep<UserSettings>) => ({
@@ -81,12 +93,16 @@ export class UserService {
     return restClient.get(`${BASE}/onboarding/agent-context`);
   };
 
-  saveUserQuestion = async (params: SaveUserQuestionInput) => {
-    return restClient.post(`${BASE}/onboarding/save-question`, { body: params });
+  saveUserQuestion = async (
+    params: SaveUserQuestionInput,
+  ): Promise<WebOnboardingToolActionResult> => {
+    return restClient.post<WebOnboardingToolActionResult>(`${BASE}/onboarding/save-question`, {
+      body: params,
+    });
   };
 
-  finishOnboarding = async () => {
-    return restClient.post(`${BASE}/onboarding/finish`);
+  finishOnboarding = async (): Promise<WebOnboardingToolActionResult> => {
+    return restClient.post<WebOnboardingToolActionResult>(`${BASE}/onboarding/finish`);
   };
 
   readOnboardingDocument = async (type: 'soul' | 'persona') => {

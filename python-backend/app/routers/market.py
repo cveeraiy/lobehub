@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import os
 from datetime import UTC, datetime
 from typing import Any, Optional
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
 from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +24,9 @@ from app.models.user import UserSettings
 from app.services.key_vault.service import KeyVaultService
 
 router = APIRouter(prefix="/api/market", tags=["Market"])
+
+MARKET_BASE_URL = os.getenv("MARKET_BASE_URL", "https://market.lobehub.com")
+MARKET_TIMEOUT = 30.0
 
 
 class InstallAgentBody(BaseModel):
@@ -95,6 +101,22 @@ class SubmitFeedbackBody(BaseModel):
     title: str
 
 
+class OidcUserInfoBody(BaseModel):
+    token: str | None = None
+
+
+class UpdateMarketUserProfileBody(BaseModel):
+    avatarUrl: str | None = None
+    displayName: str | None = None
+    meta: dict[str, Any] | None = None
+    userName: str | None = None
+
+
+class ClaimResourcesBody(BaseModel):
+    pluginIds: list[str] | None = None
+    skillIds: list[str] | None = None
+
+
 def _market_identifier() -> str:
     return create_nanoid(8)
 
@@ -109,6 +131,70 @@ def _ownership_result(identifier: str, original_key: str) -> dict[str, Any]:
 
 def _now_iso() -> str:
     return datetime.now(UTC).replace(tzinfo=None).isoformat()
+
+
+async def _raise_market_error(resp: httpx.Response, default_message: str) -> None:
+    if resp.status_code < 400:
+        return
+    try:
+        data = resp.json()
+        detail = data.get("error") or data.get("message") or data.get("detail") or default_message
+    except ValueError:
+        detail = resp.text or default_message
+    raise HTTPException(status_code=resp.status_code, detail=detail)
+
+
+def _token_response(data: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "accessToken": data.get("accessToken") or data.get("access_token"),
+        "expiresIn": data.get("expiresIn") or data.get("expires_in"),
+        "idToken": data.get("idToken") or data.get("id_token"),
+        "refreshToken": data.get("refreshToken") or data.get("refresh_token"),
+        "scope": data.get("scope") or "",
+        "tokenType": data.get("tokenType") or data.get("token_type") or "Bearer",
+    }
+
+
+async def _market_access_headers(
+    request: Request,
+    session: AsyncSession,
+    user_id: str,
+) -> dict[str, str]:
+    headers: dict[str, str] = {}
+
+    settings_row = (
+        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+    ).scalar_one_or_none()
+    market_state = dict(settings_row.market or {}) if settings_row and settings_row.market else {}
+    market_token = market_state.get("accessToken") or request.cookies.get("mp_token")
+    if market_token:
+        headers["Authorization"] = f"Bearer {market_token}"
+    else:
+        authorization = request.headers.get("authorization")
+        if authorization:
+            headers["Authorization"] = authorization
+
+    cookie = request.headers.get("cookie")
+    if cookie:
+        headers["Cookie"] = cookie
+
+    return headers
+
+
+def _market_profile(user: dict[str, Any]) -> dict[str, Any]:
+    meta = user.get("meta") if isinstance(user.get("meta"), dict) else {}
+    return {
+        "avatarUrl": user.get("avatarUrl"),
+        "bannerUrl": meta.get("bannerUrl"),
+        "createdAt": user.get("createdAt"),
+        "description": meta.get("description"),
+        "displayName": user.get("displayName"),
+        "id": user.get("id"),
+        "namespace": user.get("namespace"),
+        "socialLinks": meta.get("socialLinks"),
+        "type": user.get("type"),
+        "userName": user.get("userName"),
+    }
 
 
 async def _get_or_create_user_settings(session: AsyncSession, user_id: str) -> UserSettings:
@@ -194,6 +280,164 @@ def _file_hash(content: str) -> str:
     except Exception:
         raw = content.encode()
     return hashlib.sha256(raw).hexdigest()
+
+
+@router.post("/oidc/userinfo")
+async def get_market_oidc_userinfo(body: OidcUserInfoBody):
+    token = body.token
+    if not token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token is required for userinfo")
+
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.get(
+            f"{MARKET_BASE_URL}/lobehub-oidc/userinfo",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+    await _raise_market_error(resp, "Failed to get user info")
+    return resp.json()
+
+
+@router.post("/oidc/token")
+async def refresh_market_oidc_token(request: Request):
+    form = await request.form()
+    grant_type = str(form.get("grant_type") or "authorization_code")
+    if grant_type != "refresh_token":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unsupported grant_type: {grant_type}")
+
+    refresh_token = form.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="refresh_token is required")
+
+    data = {
+        "client_id": str(form.get("client_id") or ""),
+        "grant_type": "refresh_token",
+        "refresh_token": str(refresh_token),
+    }
+
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.post(
+            f"{MARKET_BASE_URL}/oauth/token",
+            data=data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+    await _raise_market_error(resp, "Failed to refresh market token")
+    return _token_response(resp.json())
+
+
+@router.get("/user/{username}")
+async def get_market_user_by_username(
+    username: str,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    headers = await _market_access_headers(request, session, user_id)
+    encoded_username = quote(username, safe="")
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.get(f"{MARKET_BASE_URL}/api/v1/user/{encoded_username}", headers=headers)
+    await _raise_market_error(resp, f"User not found: {username}")
+
+    data = resp.json()
+    user = data.get("user") if isinstance(data, dict) else None
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found: {username}")
+    return _market_profile(user)
+
+
+@router.put("/user/me")
+async def update_market_user_profile(
+    body: UpdateMarketUserProfileBody,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    headers = await _market_access_headers(request, session, user_id)
+    headers["Content-Type"] = "application/json"
+    payload = body.model_dump(exclude_none=True)
+    payload["meta"] = payload.get("meta") or {}
+
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.put(f"{MARKET_BASE_URL}/api/v1/user/me", json=payload, headers=headers)
+    try:
+        await _raise_market_error(resp, "Failed to update user profile")
+    except HTTPException as exc:
+        detail = str(exc.detail)
+        if "already taken" in detail.lower():
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username is already taken") from exc
+        raise
+    return resp.json()
+
+
+@router.get("/social-profile/claimable-resources")
+async def scan_market_claimable_resources(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    headers = await _market_access_headers(request, session, user_id)
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        resp = await client.get(f"{MARKET_BASE_URL}/api/v1/user/claims/scan", headers=headers)
+    await _raise_market_error(resp, "Failed to scan claimable resources")
+
+    response_data = resp.json()
+    data = response_data.get("data", response_data) if isinstance(response_data, dict) else {}
+    return {
+        "plugins": data.get("plugins", []) if isinstance(data, dict) else [],
+        "skills": data.get("skills", []) if isinstance(data, dict) else [],
+    }
+
+
+@router.post("/social-profile/claim-resources")
+async def claim_market_resources(
+    body: ClaimResourcesBody,
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    headers = await _market_access_headers(request, session, user_id)
+    headers["Content-Type"] = "application/json"
+    claimed: list[dict[str, Any]] = []
+    errors: list[str] = []
+
+    async with httpx.AsyncClient(timeout=MARKET_TIMEOUT) as client:
+        for skill_id in body.skillIds or []:
+            resp = await client.post(
+                f"{MARKET_BASE_URL}/api/v1/user/claims",
+                json={"assetId": int(skill_id), "assetType": "skill"},
+                headers=headers,
+            )
+            if resp.status_code < 400:
+                claimed.append({"assetId": int(skill_id), "assetType": "skill"})
+            else:
+                try:
+                    error = resp.json()
+                    errors.append(error.get("error") or f"Failed to claim skill {skill_id}")
+                except ValueError:
+                    errors.append(f"Failed to claim skill {skill_id}")
+
+        for plugin_id in body.pluginIds or []:
+            resp = await client.post(
+                f"{MARKET_BASE_URL}/api/v1/user/claims",
+                json={"assetId": int(plugin_id), "assetType": "plugin"},
+                headers=headers,
+            )
+            if resp.status_code < 400:
+                claimed.append({"assetId": int(plugin_id), "assetType": "plugin"})
+            else:
+                try:
+                    error = resp.json()
+                    errors.append(error.get("error") or f"Failed to claim plugin {plugin_id}")
+                except ValueError:
+                    errors.append(f"Failed to claim plugin {plugin_id}")
+
+    if not claimed and errors:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=errors[0])
+
+    return {
+        "claimed": claimed,
+        "errors": errors or None,
+        "success": bool(claimed),
+    }
 
 
 @router.get("/agents")

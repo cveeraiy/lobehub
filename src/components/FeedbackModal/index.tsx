@@ -8,7 +8,7 @@ import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import TextArea from '@/components/TextArea';
-import { marketApiService } from '@/services/marketApi.resolved';
+import { marketApiService } from '@/services/marketApi';
 import { useFileStore } from '@/store/file';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { useUserStore } from '@/store/user/store';

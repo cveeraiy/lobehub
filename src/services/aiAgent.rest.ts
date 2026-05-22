@@ -4,13 +4,14 @@
  * Drop-in replacement for `src/services/aiAgent.ts` (TRPC version).
  * Calls the Python backend's `/api/ai-agent/*` REST endpoints directly.
  */
-import type { ExecAgentResult } from '@lobechat/types';
+import type { ExecAgentResult, ExecSubAgentTaskResult, TaskStatusResult } from '@lobechat/types';
 
 import { restClient } from '@/libs/rest';
 
 import type {
   CreateClientGroupAgentTaskThreadParams,
   CreateClientTaskThreadParams,
+  CreateClientTaskThreadResult,
   ExecAgentTaskParams,
   ExecGroupAgentParams,
   ExecGroupAgentResult,
@@ -70,7 +71,7 @@ const normalizeExecAgentResult = (result: Record<string, any>): ExecAgentResult 
     timestamp: result.timestamp,
     topicId: result.topicId ?? result.topic_id,
     userMessageId: result.userMessageId ?? result.user_message_id,
-  }) as ExecAgentResult;
+  }) as unknown as ExecAgentResult;
 
 const execGroupBody = (params: ExecGroupAgentParams) => ({
   agent_id: params.agentId,
@@ -157,34 +158,49 @@ class AiAgentService {
     });
   }
 
-  async execSubAgentTask(params: ExecSubAgentTaskParams) {
-    return restClient.post('/ai-agent/exec-sub-agent', { body: subAgentBody(params) });
+  async execSubAgentTask(params: ExecSubAgentTaskParams): Promise<ExecSubAgentTaskResult> {
+    return restClient.post<ExecSubAgentTaskResult>('/ai-agent/exec-sub-agent', {
+      body: subAgentBody(params),
+    });
   }
 
-  async getSubAgentTaskStatus(params: GetSubAgentTaskStatusParams) {
-    return restClient.get('/ai-agent/sub-agent-task-status', {
+  async getSubAgentTaskStatus(params: GetSubAgentTaskStatusParams): Promise<TaskStatusResult> {
+    return restClient.get<TaskStatusResult>('/ai-agent/sub-agent-task-status', {
       params: { threadId: params.threadId },
     });
   }
 
-  async interruptTask(params: InterruptTaskParams) {
-    return restClient.post('/ai-agent/interrupt', {
+  async interruptTask(
+    params: InterruptTaskParams,
+  ): Promise<{ operationId?: string; success: boolean }> {
+    return restClient.post<{ operationId?: string; success: boolean }>('/ai-agent/interrupt', {
       body: { operation_id: params.operationId, thread_id: params.threadId },
     });
   }
 
-  async createClientTaskThread(params: CreateClientTaskThreadParams) {
-    return restClient.post('/ai-agent/create-client-task-thread', { body: clientTaskBody(params) });
-  }
-
-  async createClientGroupAgentTaskThread(params: CreateClientGroupAgentTaskThreadParams) {
-    return restClient.post('/ai-agent/create-client-group-agent-task-thread', {
-      body: clientGroupTaskBody(params),
+  async createClientTaskThread(
+    params: CreateClientTaskThreadParams,
+  ): Promise<CreateClientTaskThreadResult> {
+    return restClient.post<CreateClientTaskThreadResult>('/ai-agent/create-client-task-thread', {
+      body: clientTaskBody(params),
     });
   }
 
-  async updateClientTaskThreadStatus(params: UpdateClientTaskThreadStatusParams) {
-    return restClient.post('/ai-agent/update-client-task-thread-status', {
+  async createClientGroupAgentTaskThread(
+    params: CreateClientGroupAgentTaskThreadParams,
+  ): Promise<CreateClientTaskThreadResult> {
+    return restClient.post<CreateClientTaskThreadResult>(
+      '/ai-agent/create-client-group-agent-task-thread',
+      {
+        body: clientGroupTaskBody(params),
+      },
+    );
+  }
+
+  async updateClientTaskThreadStatus(
+    params: UpdateClientTaskThreadStatusParams,
+  ): Promise<{ success: boolean }> {
+    return restClient.post<{ success: boolean }>('/ai-agent/update-client-task-thread-status', {
       body: updateThreadStatusBody(params),
     });
   }

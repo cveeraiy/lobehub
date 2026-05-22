@@ -127,13 +127,15 @@ export class FileService {
   resolveKnowledgeItemIds = async (
     params: QueryFileListParams,
   ): Promise<{ ids: string[]; total: number }> => {
-    return restClient.get('/files/knowledge-item-ids', {
+    return restClient.get<{ ids: string[]; total: number }>('/files/knowledge-item-ids', {
       params: toRestQueryParams(params) as any,
     });
   };
 
   deleteKnowledgeItemsByQuery = async (params: QueryFileListParams): Promise<{ count: number }> => {
-    return restClient.post('/files/knowledge-items/delete', { body: toRestQueryParams(params) });
+    return restClient.post<{ count: number }>('/files/knowledge-items/delete', {
+      body: toRestQueryParams(params),
+    });
   };
 
   getKnowledgeItem = async (id: string): Promise<FileListItem | null> => {
@@ -163,7 +165,7 @@ export class FileService {
         url: doc.source || '',
       } as FileListItem;
     } else {
-      const item = await restClient.get(`/files/${id}/item`);
+      const item = await restClient.get<any>(`/files/${id}/item`);
       return toFileListItem(item);
     }
   };
@@ -171,7 +173,9 @@ export class FileService {
   getFolderBreadcrumb = async (
     slug: string,
   ): Promise<Array<{ id: string; name: string; slug: string }>> => {
-    return restClient.get(`/documents/breadcrumb/${slug}`);
+    return restClient.get<Array<{ id: string; name: string; slug: string }>>(
+      `/documents/breadcrumb/${slug}`,
+    );
   };
 
   checkFileHash = async (hash: string): Promise<CheckFileHashResult> => {
@@ -189,16 +193,20 @@ export class FileService {
       name?: string;
       parentId?: string | null;
     },
-  ) => {
-    return restClient.put(`/files/${id}`, { body: data });
+  ): Promise<void> => {
+    await restClient.put(`/files/${id}`, { body: data });
   };
 
   getRecentFiles = async (limit?: number) => {
-    return restClient.get('/files/recent', { params: limit ? { limit } : undefined });
+    return restClient.get<FileListItem[]>('/files/recent', {
+      params: limit ? { limit } : undefined,
+    });
   };
 
   getRecentPages = async (limit?: number) => {
-    return restClient.get('/files/recent-pages', { params: limit ? { limit } : undefined });
+    return restClient.get<FileListItem[]>('/files/recent-pages', {
+      params: limit ? { limit } : undefined,
+    });
   };
 }
 

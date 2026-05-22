@@ -260,7 +260,7 @@ webapi.post(
       const userId = c.get('userId');
       const jwtPayload = c.get('jwtPayload') || { userId };
 
-      const createCaller = createCallerFactory(lambdaRouter);
+      const createCaller = (createCallerFactory as any)(lambdaRouter);
       const caller = createCaller({ jwtPayload, userId });
 
       const result = await caller.comfyui.createImage({ model, options, params });

@@ -14,7 +14,7 @@ import {
 } from '@lobechat/types';
 
 import { agentService } from '@/services/agent';
-import { discoverService } from '@/services/discover.resolved';
+import { discoverService } from '@/services/discover';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
 import { dbMessageSelectors } from '@/store/chat/slices/message/selectors';

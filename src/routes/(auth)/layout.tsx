@@ -28,9 +28,9 @@ const AuthLayout = ({ children }: PropsWithChildren) => {
     <NuqsAdapter>
       <BusinessAuthProvider>
         <AuthServerConfigProvider
-          featureFlags={serverConfig?.featureFlags}
+          featureFlags={serverConfig?.featureFlags as any}
           isMobile={serverConfig?.isMobile}
-          serverConfig={serverConfig?.config}
+          serverConfig={serverConfig?.config as any}
         >
           <AuthContainer>{children || <Outlet />}</AuthContainer>
         </AuthServerConfigProvider>

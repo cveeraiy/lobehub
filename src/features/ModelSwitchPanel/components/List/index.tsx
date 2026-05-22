@@ -63,7 +63,7 @@ export const List: FC<ListProps> = ({
     [enabledList.length],
   );
 
-  const activeKey = menuKey(provider, model);
+  const activeKey = menuKey(provider ?? '', model ?? '');
 
   // Set initial scroll position to keep active model centered
   const listRef = useRef<HTMLDivElement | null>(null);

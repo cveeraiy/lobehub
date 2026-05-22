@@ -5,10 +5,12 @@ import {
   type RawAgentTemplate,
 } from '@lobechat/builtin-tool-agent-marketplace';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 export const fetchOnboardingAgentTemplates: AgentTemplateFetcher = async () => {
-  const data = await lambdaClient.market.agent.getOnboardingFull.query();
+  const data = await restClient.get<Record<string, RawAgentTemplate[]>>(
+    '/market/agent/onboarding-full',
+  );
   if (!data || typeof data !== 'object') return [];
 
   const templates: AgentTemplate[] = [];
