@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models._helpers import create_nanoid
+from app.services.file_service import S3Client
 from app.services.rag_parsing import lexical_search_chunks
 
 router = APIRouter(prefix="/api/rag-eval", tags=["RAG Evaluation"])
@@ -42,6 +43,89 @@ def _score_answer(answer: str, ideal: str | None) -> tuple[float, bool, str]:
     overlap = len(answer_terms & ideal_terms)
     score = overlap / len(ideal_terms)
     return score, score >= 0.6, f"Matched {overlap}/{len(ideal_terms)} ideal terms."
+
+
+def _parse_import_records_content(content: str) -> list[dict[str, Any]]:
+    stripped = content.strip()
+    if not stripped:
+        return []
+
+    if stripped.startswith("["):
+        parsed = json.loads(stripped)
+        if not isinstance(parsed, list):
+            raise ValueError("Dataset import JSON must be an array")
+        return [item for item in parsed if isinstance(item, dict)]
+
+    records: list[dict[str, Any]] = []
+    for line in stripped.splitlines():
+        value = line.strip()
+        if not value:
+            continue
+        parsed = json.loads(value)
+        if not isinstance(parsed, dict):
+            raise ValueError("Dataset import JSONL rows must be objects")
+        records.append(parsed)
+    return records
+
+
+def _coerce_reference_file_names(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, str)]
+    return []
+
+
+async def _resolve_reference_file_ids(
+    reference_files: Any,
+    *,
+    user_id: str,
+    session: AsyncSession,
+) -> list[str] | None:
+    names = _coerce_reference_file_names(reference_files)
+    if not names:
+        return None
+
+    rows = (
+        await session.execute(
+            text("SELECT id FROM files WHERE user_id = :uid AND name = ANY(:names)"),
+            {"names": names, "uid": user_id},
+        )
+    ).fetchall()
+    return [row[0] for row in rows]
+
+
+async def _insert_dataset_import_records(
+    dataset_id: str,
+    records: list[dict[str, Any]],
+    *,
+    user_id: str,
+    session: AsyncSession,
+) -> int:
+    count = 0
+    for rec in records:
+        rec_id = create_nanoid(32)
+        reference_files = await _resolve_reference_file_ids(
+            rec.get("referenceFiles") or rec.get("reference_files"),
+            user_id=user_id,
+            session=session,
+        )
+        await session.execute(
+            text(
+                "INSERT INTO rag_eval_dataset_records (id, dataset_id, question, ideal, reference_files, user_id) "
+                "VALUES (:id, :ds_id, :question, :ideal, :ref_files, :uid)"
+            ),
+            {
+                "id": rec_id,
+                "ds_id": dataset_id,
+                "question": rec.get("question", ""),
+                "ideal": rec.get("ideal"),
+                "ref_files": reference_files,
+                "uid": user_id,
+            },
+        )
+        count += 1
+    return count
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -235,25 +319,22 @@ async def import_dataset_records_nested(
 ):
     """POST /rag-eval/datasets/{datasetId}/import — alias used by frontend."""
     effective_ds_id = body.dataset_id or dataset_id
-    records = body.records or []
-    count = 0
-    for rec in records:
-        rec_id = create_nanoid(32)
-        await session.execute(
-            text(
-                "INSERT INTO rag_eval_dataset_records (id, dataset_id, question, ideal, reference_files, user_id) "
-                "VALUES (:id, :ds_id, :question, :ideal, :ref_files, :uid)"
-            ),
-            {
-                "id": rec_id,
-                "ds_id": effective_ds_id,
-                "question": rec.get("question", ""),
-                "ideal": rec.get("ideal"),
-                "ref_files": rec.get("referenceFiles"),
-                "uid": user_id,
-            },
-        )
-        count += 1
+    records = body.records
+    if records is None and body.pathname:
+        try:
+            content = await S3Client.from_settings().get_content(body.pathname)
+            records = _parse_import_records_content(content)
+        except Exception as exc:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"Failed to import dataset records from {body.pathname}",
+            ) from exc
+    count = await _insert_dataset_import_records(
+        effective_ds_id,
+        records or [],
+        user_id=user_id,
+        session=session,
+    )
     return {"imported": count}
 
 
@@ -362,24 +443,24 @@ async def import_dataset_records(
     session: AsyncSession = Depends(get_db),
 ):
     """Batch import dataset records."""
-    count = 0
-    for rec in body.records:
-        rec_id = create_nanoid(32)
-        await session.execute(
-            text(
-                "INSERT INTO rag_eval_dataset_records (id, dataset_id, question, ideal, reference_files, user_id) "
-                "VALUES (:id, :ds_id, :question, :ideal, :ref_files, :uid)"
-            ),
-            {
-                "id": rec_id,
-                "ds_id": body.dataset_id,
-                "question": rec.get("question", ""),
-                "ideal": rec.get("ideal"),
-                "ref_files": rec.get("referenceFiles"),
-                "uid": user_id,
-            },
-        )
-        count += 1
+    if not body.dataset_id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "dataset_id is required")
+    records = body.records
+    if records is None and body.pathname:
+        try:
+            content = await S3Client.from_settings().get_content(body.pathname)
+            records = _parse_import_records_content(content)
+        except Exception as exc:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                f"Failed to import dataset records from {body.pathname}",
+            ) from exc
+    count = await _insert_dataset_import_records(
+        body.dataset_id,
+        records or [],
+        user_id=user_id,
+        session=session,
+    )
     return {"imported": count}
 
 

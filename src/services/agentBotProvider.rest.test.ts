@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { agentBotProviderService } from './agentBotProvider.rest';
+import { agentBotProviderService } from './agentBotProvider';
 
 const mockRestDelete = vi.hoisted(() => vi.fn());
 const mockRestGet = vi.hoisted(() => vi.fn());
@@ -301,6 +301,42 @@ describe('AgentBotProviderService REST', () => {
       basicId: '@line-basic',
       displayName: 'Line Bot',
       userId: 'U123',
+    });
+  });
+
+  it('fetches WeChat QR codes through REST', async () => {
+    mockRestPost.mockResolvedValueOnce({
+      qrcode: 'qr-1',
+      qrcode_img_content: 'image-data',
+    });
+
+    const result = await agentBotProviderService.wechatGetQrCode();
+
+    expect(mockRestPost).toHaveBeenCalledWith('/agent-bot-providers/wechat/qrcode', {});
+    expect(result).toEqual({
+      qrcode: 'qr-1',
+      qrcode_img_content: 'image-data',
+    });
+  });
+
+  it('polls WeChat QR status through REST', async () => {
+    mockRestPost.mockResolvedValueOnce({
+      bot_token: 'token',
+      ilink_bot_id: 'bot-1',
+      ilink_user_id: 'user-1',
+      status: 'confirmed',
+    });
+
+    const result = await agentBotProviderService.wechatPollQrStatus('qr-1');
+
+    expect(mockRestPost).toHaveBeenCalledWith('/agent-bot-providers/wechat/qrcode/status', {
+      body: { qrcode: 'qr-1' },
+    });
+    expect(result).toEqual({
+      bot_token: 'token',
+      ilink_bot_id: 'bot-1',
+      ilink_user_id: 'user-1',
+      status: 'confirmed',
     });
   });
 });

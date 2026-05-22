@@ -2,7 +2,7 @@ import { type SWRResponse } from 'swr';
 
 import { type AgentCronJob } from '@/database/schemas/agentCronJob';
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { agentCronJobService } from '@/services/agentCronJob.resolved';
+import { agentCronJobService } from '@/services/agentCronJob';
 import { topicService } from '@/services/topic';
 import { type StoreSetter } from '@/store/types';
 

@@ -6,7 +6,7 @@ import asyncio
 import fnmatch
 import logging
 import time
-from typing import Any, Awaitable, Callable, Optional
+from collections.abc import Awaitable, Callable
 
 from app.services.agent_signal.types import Signal, SignalAction, SignalPolicy
 
@@ -76,7 +76,7 @@ class SignalOrchestrator:
                 type=policy.action_type,
                 agent_id=signal.agent_id or policy.agent_id,
                 task_id=policy.action_params.get("task_id"),
-                params={**policy.action_params, "signal": signal.payload},
+                params={**policy.action_params, "signal": signal.payload, "userId": signal.user_id},
             )
             matched_actions.append(action)
 
@@ -150,4 +150,47 @@ def get_orchestrator() -> SignalOrchestrator:
     global _orchestrator
     if _orchestrator is None:
         _orchestrator = SignalOrchestrator()
+        _register_default_handlers(_orchestrator)
     return _orchestrator
+
+
+def _register_default_handlers(orchestrator: SignalOrchestrator) -> None:
+    for action_type in ("skillMaintainer", "skill_maintainer", "skill_management", "skillManagement"):
+        orchestrator.register_handler(action_type, _handle_skill_maintainer_action)
+
+
+async def _handle_skill_maintainer_action(action: SignalAction) -> None:
+    from app.db import get_db_context
+    from app.services.skill_maintainer import SkillMaintainerService
+
+    user_id = str(action.params.get("userId") or "")
+    if not user_id:
+        logger.warning("Skill maintainer action missing userId")
+        return
+
+    operations = action.params.get("operations")
+    if not isinstance(operations, list):
+        operations = [action.params]
+
+    async with get_db_context() as session:
+        service = SkillMaintainerService(session, user_id)
+        for operation in operations:
+            if not isinstance(operation, dict):
+                continue
+            op = str(operation.get("operation") or operation.get("op") or operation.get("action") or "write")
+            skill_ref = str(operation.get("skillRef") or operation.get("skill_ref") or "")
+            path = str(operation.get("path") or "")
+            content = operation.get("content")
+            if not skill_ref or not path:
+                logger.warning("Skill maintainer action skipped incomplete operation")
+                continue
+            if op == "read":
+                await service.read_skill_file(skill_ref=skill_ref, path=path)
+            elif op == "update":
+                await service.update_skill(skill_ref=skill_ref, path=path, content=str(content or ""))
+            elif op in {"write", "create"}:
+                await service.write_skill_file(skill_ref=skill_ref, path=path, content=str(content or ""))
+            elif op in {"remove", "delete"}:
+                await service.remove_skill_file(skill_ref=skill_ref, path=path)
+            else:
+                raise ValueError(f"Unsupported skill maintainer operation: {op}")

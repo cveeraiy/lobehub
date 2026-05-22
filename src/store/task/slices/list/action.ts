@@ -1,5 +1,5 @@
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { taskService } from '@/services/task.resolved';
+import { taskService } from '@/services/task';
 import type { StoreSetter } from '@/store/types';
 
 import type { TaskStore } from '../../store';

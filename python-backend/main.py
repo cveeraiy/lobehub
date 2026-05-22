@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import importlib
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -95,16 +95,19 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.recent",
     "app.routers.admin",
     "app.routers.enterprise_ai_policies",
+    "app.routers.business",
     "app.routers.openapi_permissions",
     "app.routers.openapi_roles",
     "app.routers.openapi_message_translations",
     "app.routers.openapi_responses",
+    "app.routers.oauth_device_flow",
     # User
     "app.routers.user",
     "app.routers.user_memory",
     "app.routers.api_keys",
     "app.routers.usage",
     "app.routers.notifications",
+    "app.routers.account_deletion",
     # Agents
     "app.routers.agents",
     "app.routers.agent_groups",
@@ -114,6 +117,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.agent_documents_rest",
     "app.routers.agent_cron_jobs",
     "app.routers.agent_signal",
+    "app.routers.agent_notify",
     "app.routers.agent_eval",
     "app.routers.agent_eval_external",
     "app.routers.chat_groups",
@@ -129,6 +133,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.agent_stream",
     "app.routers.ai_agent",
     "app.routers.generation",
+    "app.routers.generation_workers",
     "app.routers.generation_topics",
     "app.routers.generation_batches",
     "app.routers.generations",
@@ -138,6 +143,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.ai_chat",
     "app.routers.bot_message",
     "app.routers.bot_webhooks",
+    "app.routers.device",
     # Files & knowledge
     "app.routers.files",
     "app.routers.upload",
@@ -150,6 +156,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.tools",
     "app.routers.plugins",
     "app.routers.skills",
+    "app.routers.skill_maintainer",
     "app.routers.mcp",
     "app.routers.klavis",
     # AI infra

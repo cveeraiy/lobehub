@@ -1,24 +1,18 @@
-"""Video Generation router — create video generation batches.
-
-Mirrors TS: src/server/routers/lambda/video/index.ts
-Simplified: no chargeBeforeGenerate/chargeAfterGenerate, no webhook token,
-no background polling. The Python backend handles DB record creation;
-actual generation is delegated to the model runtime via a background task.
-"""
+"""Video Generation router — create video generation batches."""
 
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.generation import GenerationBatch, Generation
+from app.models.generation import Generation, GenerationBatch
 from app.models.misc import AsyncTask
 
 logger = logging.getLogger(__name__)
@@ -27,7 +21,7 @@ router = APIRouter(prefix="/api/video", tags=["Video Generation"])
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -125,6 +119,7 @@ async def create_video(
     )
     session.add(task)
     await session.flush()
+    batch.async_task_id = task.id
 
     # 3. Create single generation
     gen = Generation(
@@ -136,6 +131,7 @@ async def create_video(
         provider=body.provider,
         prompt=body.params.prompt,
         seed=body.params.seed,
+        params=params_dict,
         status="pending",
         created_at=now,
         updated_at=now,

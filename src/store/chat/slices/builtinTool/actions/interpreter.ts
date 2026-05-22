@@ -10,7 +10,7 @@ import pMap from 'p-map';
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWR } from '@/libs/swr';
-import { fileService } from '@/services/file/resolved';
+import { fileService } from '@/services/file';
 import { pythonService } from '@/services/python';
 import { dbMessageSelectors } from '@/store/chat/selectors';
 import { type ChatStore } from '@/store/chat/store';

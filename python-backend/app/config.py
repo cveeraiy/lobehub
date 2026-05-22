@@ -11,7 +11,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Optional
 
-from pydantic import Field, model_validator
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -155,6 +155,8 @@ class Settings(BaseSettings):
     # ── Tool rate limiting ──────────────────────────────────────────
     # Max external API calls per minute per user (0 = no limit)
     tool_rate_limit_per_minute: int = 60
+    # Optional self-hosted device gateway base URL used by tool/device proxy APIs.
+    device_gateway_url: Optional[str] = None
 
     # ── Agent Runtime ───────────────────────────────────────────
     agent_max_steps: int = 25

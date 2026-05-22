@@ -3,7 +3,7 @@ import { BaseExecutor } from '@lobechat/types';
 import debug from 'debug';
 
 import { mutate } from '@/libs/swr';
-import { agentCronJobService } from '@/services/agentCronJob.resolved';
+import { agentCronJobService } from '@/services/agentCronJob';
 
 import { CronIdentifier } from '../manifest';
 import {

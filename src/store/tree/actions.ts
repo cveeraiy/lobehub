@@ -1,4 +1,4 @@
-import { fileService } from '@/services/file/resolved';
+import { fileService } from '@/services/file';
 import { resourceService } from '@/services/resource';
 import type { StoreSetter } from '@/store/types';
 import { OptimisticEngine } from '@/store/utils/optimisticEngine';

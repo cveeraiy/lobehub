@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type FolderTreeItem } from '@/features/ResourceManager/components/FolderTree';
 import FolderTree from '@/features/ResourceManager/components/FolderTree';
-import { fileService } from '@/services/file/resolved';
+import { fileService } from '@/services/file';
 import { useFileStore } from '@/store/file';
 import { useTreeStore } from '@/store/tree';
 

@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { FILE_UPLOAD_BLACKLIST, MAX_UPLOAD_FILE_COUNT } from '@/const/file';
 import { mutate } from '@/libs/swr';
-import { lambdaClient } from '@/libs/trpc/client';
 import { fileService } from '@/services/file';
 import { ragService } from '@/services/rag';
 import { type FileListItem } from '@/types/files';
@@ -55,18 +54,6 @@ vi.mock('@/libs/swr', async () => {
     mutate: vi.fn(),
   };
 });
-
-// Mock lambdaClient
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    file: {
-      getFileItemById: { query: vi.fn() },
-      getFiles: { query: vi.fn() },
-      getKnowledgeItems: { query: vi.fn() },
-      removeFileAsyncTask: { mutate: vi.fn() },
-    },
-  },
-}));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -665,14 +652,13 @@ describe('FileManagerActions', () => {
       });
 
       expect(toggleSpy).not.toHaveBeenCalled();
-      expect(lambdaClient.file.removeFileAsyncTask.mutate).not.toHaveBeenCalled();
     });
 
     it('should remove old task and create new embedding task', async () => {
       const { result } = renderHook(() => useStore());
 
       const toggleSpy = vi.spyOn(result.current, 'toggleEmbeddingIds');
-      vi.mocked(lambdaClient.file.removeFileAsyncTask.mutate).mockResolvedValue(undefined as any);
+      const removeTaskSpy = vi.spyOn(fileService, 'removeFileAsyncTask').mockResolvedValue();
       const createTaskSpy = vi
         .spyOn(ragService, 'createEmbeddingChunksTask')
         .mockResolvedValue(undefined as any);
@@ -683,10 +669,7 @@ describe('FileManagerActions', () => {
       });
 
       expect(toggleSpy).toHaveBeenCalledWith(['file-1']);
-      expect(lambdaClient.file.removeFileAsyncTask.mutate).toHaveBeenCalledWith({
-        id: 'file-1',
-        type: 'embedding',
-      });
+      expect(removeTaskSpy).toHaveBeenCalledWith('file-1', 'embedding');
       expect(createTaskSpy).toHaveBeenCalledWith('file-1');
       expect(refreshSpy).toHaveBeenCalledTimes(2);
       expect(toggleSpy).toHaveBeenCalledWith(['file-1'], false);
@@ -923,10 +906,11 @@ describe('FileManagerActions', () => {
   describe('useFetchFileItem', () => {
     it('should not fetch when id is undefined', () => {
       const { result } = renderHook(() => useStore());
+      const getKnowledgeItemSpy = vi.spyOn(fileService, 'getKnowledgeItem');
 
       renderHook(() => result.current.useFetchKnowledgeItem(undefined));
 
-      expect(lambdaClient.file.getFileItemById.query).not.toHaveBeenCalled();
+      expect(getKnowledgeItemSpy).not.toHaveBeenCalled();
     });
 
     it('should fetch file item when id is provided', async () => {
@@ -947,7 +931,7 @@ describe('FileManagerActions', () => {
         url: 'http://example.com/test.txt',
       };
 
-      vi.mocked(lambdaClient.file.getFileItemById.query).mockResolvedValue(mockFile);
+      vi.spyOn(fileService, 'getKnowledgeItem').mockResolvedValue(mockFile);
 
       const { result: swrResult } = renderHook(
         () => result.current.useFetchKnowledgeItem('file-1'),
@@ -995,9 +979,10 @@ describe('FileManagerActions', () => {
         },
       ];
 
-      vi.mocked(lambdaClient.file.getKnowledgeItems.query).mockResolvedValue({
+      vi.spyOn(fileService, 'getKnowledgeItems').mockResolvedValue({
         hasMore: false,
         items: mockFiles,
+        total: mockFiles.length,
       });
 
       const params = { category: 'all' as any };
@@ -1031,9 +1016,10 @@ describe('FileManagerActions', () => {
         },
       ];
 
-      vi.mocked(lambdaClient.file.getKnowledgeItems.query).mockResolvedValue({
+      vi.spyOn(fileService, 'getKnowledgeItems').mockResolvedValue({
         hasMore: false,
         items: mockFiles,
+        total: mockFiles.length,
       });
 
       const params = { category: 'all' as any };

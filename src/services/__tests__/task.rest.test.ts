@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { restClient } from '@/libs/rest';
-import { taskService } from '@/services/task.rest';
+import { taskService } from '@/services/task';
 
 vi.mock('@/libs/rest', () => ({
   restClient: {

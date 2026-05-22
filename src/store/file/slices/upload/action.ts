@@ -3,8 +3,8 @@ import { t } from 'i18next';
 import { sha256 } from 'js-sha256';
 
 import { message, notification } from '@/components/AntdStaticMethods';
-import { fileService } from '@/services/file/resolved';
-import { uploadService } from '@/services/upload.resolved';
+import { fileService } from '@/services/file';
+import { uploadService } from '@/services/upload';
 import { type StoreSetter } from '@/store/types';
 import { type FileMetadata, type UploadFileItem } from '@/types/files';
 import { getImageDimensions } from '@/utils/client/imageDimensions';

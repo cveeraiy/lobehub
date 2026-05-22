@@ -9,7 +9,7 @@ import { MessageApiName, MessageToolIdentifier } from '@lobechat/builtin-tool-me
 import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
-import { agentBotProviderService } from '@/services/agentBotProvider.resolved';
+import { agentBotProviderService } from '@/services/agentBotProvider';
 import { botMessageService } from '@/services/botMessage';
 
 class MessageExecutor extends BaseExecutor<typeof MessageApiName> {

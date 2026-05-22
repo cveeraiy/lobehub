@@ -1,34 +1,42 @@
 import { restClient } from '@/libs/rest';
 
+interface AuthStatus {
+  avatarUrl?: string;
+  expiresAt?: number | string;
+  isAuthenticated: boolean;
+  username?: string;
+}
+
+interface DeviceCodeResponse {
+  deviceCode: string;
+  expiresIn: number;
+  interval: number;
+  userCode: string;
+  verificationUri: string;
+}
+
 class OAuthDeviceFlowService {
   getAuthStatus = async (providerId: string) => {
-    return restClient.get<{
-      avatarUrl?: string;
-      expiresAt?: string;
-      isAuthenticated: boolean;
-      username?: string;
-    }>('/ai-infra/oauth-device-flow/status', { params: { provider_id: providerId } });
+    return restClient.get<AuthStatus>('/oauth-device-flow/auth-status', {
+      params: { provider_id: providerId },
+    });
   };
 
   initiateDeviceCode = async (providerId: string) => {
-    return restClient.post<{
-      deviceCode: string;
-      expiresIn: number;
-      interval: number;
-      userCode: string;
-      verificationUri: string;
-    }>('/ai-infra/oauth-device-flow/device-code', { body: { provider_id: providerId } });
+    return restClient.post<DeviceCodeResponse>('/oauth-device-flow/initiate-device-code', {
+      body: { providerId },
+    });
   };
 
   pollAuthStatus = async (params: { deviceCode: string; providerId: string }) => {
-    return restClient.post<{ status: string }>('/ai-infra/oauth-device-flow/poll', {
-      body: { device_code: params.deviceCode, provider_id: params.providerId },
+    return restClient.post<{ status: string }>('/oauth-device-flow/poll-auth-status', {
+      body: { deviceCode: params.deviceCode, providerId: params.providerId },
     });
   };
 
   revokeAuth = async (providerId: string) => {
-    return restClient.post('/ai-infra/oauth-device-flow/revoke', {
-      body: { provider_id: providerId },
+    return restClient.post('/oauth-device-flow/revoke-auth', {
+      body: { providerId },
     });
   };
 }

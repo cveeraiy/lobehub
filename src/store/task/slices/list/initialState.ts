@@ -1,6 +1,6 @@
-import type { taskService } from '@/services/task.resolved';
+import type { taskService } from '@/services/task';
 
-// Derive types from TRPC inference via service
+// Derive types from the canonical task service
 export type TaskListItem = Awaited<ReturnType<typeof taskService.list>>['data'][number];
 export type TaskGroupItem = Awaited<ReturnType<typeof taskService.groupList>>['data'][number];
 

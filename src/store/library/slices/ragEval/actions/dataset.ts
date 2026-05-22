@@ -9,7 +9,7 @@ import { type SWRResponse } from 'swr';
 
 import { notification } from '@/components/AntdStaticMethods';
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { ragEvalService } from '@/services/ragEval.resolved';
+import { ragEvalService } from '@/services/ragEval';
 import { type KnowledgeBaseStore } from '@/store/library/store';
 import { type StoreSetter } from '@/store/types';
 

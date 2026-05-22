@@ -20,7 +20,7 @@ import NavHeader from '@/features/NavHeader';
 import WideScreenContainer from '@/features/WideScreenContainer';
 import { useQueryRoute } from '@/hooks/useQueryRoute';
 import { mutate } from '@/libs/swr';
-import { agentCronJobService } from '@/services/agentCronJob.resolved';
+import { agentCronJobService } from '@/services/agentCronJob';
 import { topicService } from '@/services/topic';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';

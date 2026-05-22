@@ -1,10 +1,4 @@
-"""Image Generation router — create image generation batches.
-
-Mirrors TS: src/server/routers/lambda/image/index.ts
-Simplified: no chargeBeforeGenerate, no async task trigger, no S3 URL normalization.
-The Python backend handles DB record creation; actual generation is delegated
-to the model runtime (litellm or provider SDK) via a background task.
-"""
+"""Image Generation router — create image generation batches."""
 
 from __future__ import annotations
 
@@ -13,14 +7,13 @@ import random
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
-from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.generation import GenerationBatch, Generation
+from app.models.generation import Generation, GenerationBatch
 from app.models.misc import AsyncTask
 
 logger = logging.getLogger(__name__)
@@ -100,7 +93,7 @@ async def create_image(
 ):
     """Create image generation batch with generations and async tasks.
 
-    Creates the DB records (batch + N generations + N async tasks) atomically.
+    Creates the DB records (batch + generations + async task) atomically.
     The actual image generation is handled by a background worker that polls
     for pending async tasks.
     """
@@ -122,24 +115,23 @@ async def create_image(
     session.add(batch)
     await session.flush()  # get batch.id
 
-    # 2. Create generations + async tasks
+    task = AsyncTask(
+        user_id=user_id,
+        status="pending",
+        type="image_generation",
+        created_at=now,
+        updated_at=now,
+    )
+    session.add(task)
+    await session.flush()
+    batch.async_task_id = task.id
+
+    # 2. Create generations linked to the batch task.
     use_seeds = body.params.seed is not None
     seeds = _generate_seeds(body.image_num) if use_seeds else [None] * body.image_num
 
     created_generations = []
     for i in range(body.image_num):
-        # Create async task
-        task = AsyncTask(
-            user_id=user_id,
-            status="pending",
-            type="image_generation",
-            created_at=now,
-            updated_at=now,
-        )
-        session.add(task)
-        await session.flush()
-
-        # Create generation linked to task
         gen = Generation(
             user_id=user_id,
             batch_id=batch.id,
@@ -149,6 +141,7 @@ async def create_image(
             provider=body.provider,
             prompt=body.params.prompt,
             seed=seeds[i],
+            params=params_dict,
             status="pending",
             created_at=now,
             updated_at=now,

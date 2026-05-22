@@ -13,6 +13,13 @@ interface CredMutationParams {
   values?: Record<string, string>;
 }
 
+interface InjectCredParams {
+  keys: string[];
+  sandbox?: boolean;
+  topicId?: string;
+  userId?: string;
+}
+
 const toSnakeBody = (params: CredMutationParams) => ({
   description: params.description,
   file_hash_id: params.fileHashId,
@@ -41,8 +48,24 @@ class CredsService {
     await restClient.delete(`/market/creds/${id}`);
   };
 
+  deleteByKey = async (key: string): Promise<void> => {
+    await restClient.delete(`/market/creds/by-key/${encodeURIComponent(key)}`);
+  };
+
   get = async (id: number, params?: { decrypt?: boolean }) => {
     return restClient.get(`/market/creds/${id}`, { params });
+  };
+
+  getByKey = async (key: string, params?: { decrypt?: boolean }) => {
+    return restClient.get(`/market/creds/by-key/${encodeURIComponent(key)}`, { params });
+  };
+
+  getSkillCredStatus = async (skillIdentifier: string) => {
+    return restClient.get('/market/creds/skill-status', { params: { keys: skillIdentifier } });
+  };
+
+  inject = async (params: InjectCredParams) => {
+    return restClient.post('/market/creds/inject', { body: params });
   };
 
   list = async (): Promise<{ data: UserCredSummary[] }> => {

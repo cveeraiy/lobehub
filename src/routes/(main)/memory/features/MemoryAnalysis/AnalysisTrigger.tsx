@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 
 import { DESKTOP_HEADER_ICON_SIZE } from '@/const/layoutTokens';
 import { useMemoryAnalysisAsyncTask } from '@/routes/(main)/memory/features/MemoryAnalysis/useTask';
-import { memoryExtractionService } from '@/services/userMemory/resolved';
+import { memoryExtractionService } from '@/services/userMemory';
 
 import DateRangeModal from './DateRangeModal';
 

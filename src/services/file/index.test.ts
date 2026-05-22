@@ -1,16 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 import { fileService } from './index';
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    file: {
-      deleteKnowledgeItemsByQuery: { mutate: vi.fn() },
-      getKnowledgeItems: { query: vi.fn() },
-      resolveKnowledgeItemIds: { query: vi.fn() },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
@@ -18,40 +15,88 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('FileService TRPC', () => {
-  it('omits undefined knowledge item query params while preserving null filters', async () => {
-    vi.mocked(lambdaClient.file.getKnowledgeItems.query).mockResolvedValueOnce({
-      hasMore: false,
-      items: [],
-      total: 0,
-    } as any);
+describe('FileService REST', () => {
+  it('maps knowledge item query params and response shape', async () => {
+    vi.mocked(restClient.get).mockResolvedValueOnce({
+      has_more: false,
+      items: [
+        {
+          created_at: '2026-01-01T00:00:00.000Z',
+          file_type: 'text/plain',
+          id: 'file-1',
+          name: 'File 1',
+          parent_id: null,
+          size: 12,
+          source_type: 'file',
+          updated_at: '2026-01-02T00:00:00.000Z',
+          url: '/file.txt',
+        },
+      ],
+      total: 1,
+    });
 
-    await fileService.getKnowledgeItems({
-      category: 'all',
-      knowledgeBaseId: 'undefined',
+    const result = await fileService.getKnowledgeItems({
+      knowledgeBaseId: 'kb-1',
       limit: 50,
       offset: 0,
-      parentId: null,
       sortType: 'desc',
     });
 
-    expect(lambdaClient.file.getKnowledgeItems.query).toHaveBeenCalledWith({
-      category: 'all',
-      limit: 50,
-      offset: 0,
-      parentId: null,
-      sortType: 'desc',
+    expect(restClient.get).toHaveBeenCalledWith('/files/knowledge-items', {
+      params: {
+        knowledge_base_id: 'kb-1',
+        limit: 50,
+        offset: 0,
+        sort_type: 'desc',
+      },
+    });
+    expect(result).toMatchObject({
+      hasMore: false,
+      items: [
+        {
+          fileType: 'text/plain',
+          id: 'file-1',
+          name: 'File 1',
+          parentId: null,
+          sourceType: 'file',
+          url: '/file.txt',
+        },
+      ],
+      total: 1,
     });
   });
 
-  it('compacts selection and delete query params for TRPC calls', async () => {
-    vi.mocked(lambdaClient.file.resolveKnowledgeItemIds.query).mockResolvedValueOnce({
-      ids: [],
+  it('omits null and frontend-only knowledge item query params', async () => {
+    vi.mocked(restClient.get).mockResolvedValueOnce({
+      has_more: false,
+      items: [],
       total: 0,
-    } as any);
-    vi.mocked(lambdaClient.file.deleteKnowledgeItemsByQuery.mutate).mockResolvedValueOnce({
-      count: 0,
-    } as any);
+    });
+
+    await fileService.getKnowledgeItems({
+      category: 'all',
+      limit: 50,
+      offset: 0,
+      parentId: null,
+      showFilesInKnowledgeBase: false,
+      sortType: 'desc',
+      sorter: 'createdAt',
+    });
+
+    expect(restClient.get).toHaveBeenCalledWith('/files/knowledge-items', {
+      params: {
+        category: 'all',
+        limit: 50,
+        offset: 0,
+        sort_type: 'desc',
+        sorter: 'createdAt',
+      },
+    });
+  });
+
+  it('maps selection and delete query params to REST endpoints', async () => {
+    vi.mocked(restClient.get).mockResolvedValueOnce({ ids: [], total: 0 });
+    vi.mocked(restClient.post).mockResolvedValueOnce({ count: 0 });
 
     const params = {
       category: 'all',
@@ -63,15 +108,19 @@ describe('FileService TRPC', () => {
     await fileService.resolveKnowledgeItemIds(params);
     await fileService.deleteKnowledgeItemsByQuery(params);
 
-    expect(lambdaClient.file.resolveKnowledgeItemIds.query).toHaveBeenCalledWith({
-      category: 'all',
-      limit: 50,
-      offset: 0,
+    expect(restClient.get).toHaveBeenCalledWith('/files/knowledge-item-ids', {
+      params: {
+        category: 'all',
+        limit: 50,
+        offset: 0,
+      },
     });
-    expect(lambdaClient.file.deleteKnowledgeItemsByQuery.mutate).toHaveBeenCalledWith({
-      category: 'all',
-      limit: 50,
-      offset: 0,
+    expect(restClient.post).toHaveBeenCalledWith('/files/knowledge-items/delete', {
+      body: {
+        category: 'all',
+        limit: 50,
+        offset: 0,
+      },
     });
   });
 });

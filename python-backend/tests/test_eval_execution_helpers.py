@@ -1,4 +1,4 @@
-from app.routers.rag_eval import _score_answer
+from app.routers.rag_eval import _parse_import_records_content, _score_answer
 from app.services.agent_eval.service import _score_expected_output
 
 
@@ -24,3 +24,21 @@ def test_rag_eval_scores_answer_against_ideal_terms():
     assert score == 1
     assert passed is True
     assert "2/2" in reasoning
+
+
+def test_rag_eval_import_parser_accepts_jsonl_records():
+    records = _parse_import_records_content(
+        '{"question":"Q1","ideal":"A1","referenceFiles":"doc.md"}\n'
+        '{"question":"Q2","referenceFiles":["a.md","b.md"]}\n'
+    )
+
+    assert records == [
+        {"question": "Q1", "ideal": "A1", "referenceFiles": "doc.md"},
+        {"question": "Q2", "referenceFiles": ["a.md", "b.md"]},
+    ]
+
+
+def test_rag_eval_import_parser_accepts_json_array_records():
+    records = _parse_import_records_content('[{"question":"Q1","ideal":"A1"}]')
+
+    assert records == [{"question": "Q1", "ideal": "A1"}]

@@ -45,7 +45,7 @@ import debug from 'debug';
 import { isCanUseFC } from '@/helpers/isCanUseFC';
 import { VARIABLE_GENERATORS } from '@/helpers/parserPlaceholder';
 import { agentService } from '@/services/agent';
-import { agentCronJobService } from '@/services/agentCronJob.resolved';
+import { agentCronJobService } from '@/services/agentCronJob';
 import { marketApiService } from '@/services/marketApi.resolved';
 import { notebookService } from '@/services/notebook';
 import { getAgentStoreState } from '@/store/agent';
@@ -382,7 +382,7 @@ export const contextEngineering = async ({
           description: cred.description as string | undefined,
           key: cred.key as string,
           name: cred.name as string,
-          type: cred.type as string,
+          type: cred.type as CredSummary['type'],
         }),
       );
       log('Creds context resolved: count=%d', credsList?.length ?? 0);

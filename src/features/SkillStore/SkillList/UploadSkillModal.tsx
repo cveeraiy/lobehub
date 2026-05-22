@@ -8,8 +8,8 @@ import { ArrowLeftRight, InboxIcon, Sparkles, Upload as UploadIcon } from 'lucid
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { fileService } from '@/services/file/resolved';
-import { uploadService } from '@/services/upload.resolved';
+import { fileService } from '@/services/file';
+import { uploadService } from '@/services/upload';
 import { useToolStore } from '@/store/tool';
 
 interface UploadSkillModalProps {

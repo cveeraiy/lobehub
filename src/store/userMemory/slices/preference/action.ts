@@ -4,7 +4,7 @@ import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
 import { type DisplayPreferenceMemory } from '@/database/repositories/userMemory';
-import { memoryCRUDService, userMemoryService } from '@/services/userMemory/resolved';
+import { memoryCRUDService, userMemoryService } from '@/services/userMemory';
 import { type StoreSetter } from '@/store/types';
 import { LayersEnum } from '@/types/userMemory';
 import { setNamespace } from '@/utils/storeDebug';

@@ -5,7 +5,7 @@ import { Trash } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { agentCronJobService } from '@/services/agentCronJob.resolved';
+import { agentCronJobService } from '@/services/agentCronJob';
 import { topicService } from '@/services/topic';
 import { useAgentStore } from '@/store/agent';
 

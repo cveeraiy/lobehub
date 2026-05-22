@@ -6,7 +6,7 @@ import { QrCode, RefreshCw } from 'lucide-react';
 import { memo, useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { agentBotProviderService } from '@/services/agentBotProvider.resolved';
+import { agentBotProviderService } from '@/services/agentBotProvider';
 
 const QR_POLL_INTERVAL_MS = 2000;
 

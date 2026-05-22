@@ -25,6 +25,58 @@ def _chunk_text(text: str) -> list[str]:
     return [text[index : index + MAX_WECHAT_TEXT_LENGTH] for index in range(0, len(text), MAX_WECHAT_TEXT_LENGTH)]
 
 
+async def fetch_qr_code(
+    *,
+    api_base: str = WECHAT_API_BASE,
+    client: httpx.AsyncClient | None = None,
+) -> dict[str, Any]:
+    close_client = client is None
+    http_client = client or httpx.AsyncClient(timeout=15)
+    try:
+        response = await http_client.get(
+            f"{api_base.rstrip('/')}/ilink/bot/get_bot_qrcode",
+            params={"bot_type": 3},
+        )
+        if not response.is_success:
+            raise WechatApiError(f"iLink get_bot_qrcode failed: {response.status_code} {response.text}")
+        payload = response.json() if response.content else {}
+        if not isinstance(payload, dict):
+            raise WechatApiError("iLink get_bot_qrcode returned an invalid response")
+        return payload
+    except httpx.HTTPError as exc:
+        raise WechatApiError("Failed to fetch WeChat QR code") from exc
+    finally:
+        if close_client:
+            await http_client.aclose()
+
+
+async def poll_qr_status(
+    qrcode: str,
+    *,
+    api_base: str = WECHAT_API_BASE,
+    client: httpx.AsyncClient | None = None,
+) -> dict[str, Any]:
+    close_client = client is None
+    http_client = client or httpx.AsyncClient(timeout=15)
+    try:
+        response = await http_client.get(
+            f"{api_base.rstrip('/')}/ilink/bot/get_qrcode_status",
+            headers={"iLink-App-ClientVersion": "1"},
+            params={"qrcode": qrcode},
+        )
+        if not response.is_success:
+            raise WechatApiError(f"iLink get_qrcode_status failed: {response.status_code} {response.text}")
+        payload = response.json() if response.content else {}
+        if not isinstance(payload, dict):
+            raise WechatApiError("iLink get_qrcode_status returned an invalid response")
+        return payload
+    except httpx.HTTPError as exc:
+        raise WechatApiError("Failed to poll WeChat QR status") from exc
+    finally:
+        if close_client:
+            await http_client.aclose()
+
+
 class WechatClient:
     def __init__(self, bot_token: str, *, api_base: str = WECHAT_API_BASE) -> None:
         self.bot_token = bot_token

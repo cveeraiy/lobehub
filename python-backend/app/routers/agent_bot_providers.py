@@ -25,6 +25,11 @@ from app.services.bot.runtime_status import (
     update_bot_runtime_status,
 )
 from app.services.key_vault.service import KeyVaultService
+from app.services.bot.platforms.wechat.client import (
+    WechatApiError,
+    fetch_qr_code,
+    poll_qr_status,
+)
 
 router = APIRouter(prefix="/api/agent-bot-providers", tags=["Agent Bot Providers"])
 
@@ -145,6 +150,10 @@ class UpdateBotProviderBody(BaseModel):
 
 class LineFetchBotInfoBody(BaseModel):
     channel_access_token: str
+
+
+class WechatQrStatusBody(BaseModel):
+    qrcode: str
 
 
 # ── Endpoints ────────────────────────────────────────────────────────
@@ -440,3 +449,24 @@ async def line_fetch_bot_info(
         "display_name": info.get("displayName"),
         "user_id": info["userId"],
     }
+
+
+@router.post("/wechat/qrcode")
+async def wechat_get_qrcode(
+    user_id: str = Depends(get_current_user_id),
+):
+    try:
+        return await fetch_qr_code()
+    except WechatApiError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+
+@router.post("/wechat/qrcode/status")
+async def wechat_poll_qrcode_status(
+    body: WechatQrStatusBody,
+    user_id: str = Depends(get_current_user_id),
+):
+    try:
+        return await poll_qr_status(body.qrcode)
+    except WechatApiError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc

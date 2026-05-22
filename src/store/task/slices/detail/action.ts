@@ -4,7 +4,7 @@ import { t } from 'i18next';
 
 import { message } from '@/components/AntdStaticMethods';
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { taskService } from '@/services/task.resolved';
+import { taskService } from '@/services/task';
 import type { StoreSetter } from '@/store/types';
 
 import type { TaskStore } from '../../store';
