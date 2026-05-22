@@ -295,7 +295,7 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
       } catch (error) {
         console.error('[ProfileSetupModal] Update failed:', error);
         if (error instanceof Error && error.message !== 'Validation failed') {
-          // Check for username taken error (tRPC CONFLICT code)
+          // Check for username taken conflict errors.
           const errorMessage = error.message || '';
           if (
             errorMessage.toLowerCase().includes('already taken') ||

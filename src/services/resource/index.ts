@@ -8,7 +8,7 @@ import {
 
 import { type CreateDocumentParams } from '../document';
 import { documentService } from '../document';
-import { fileService } from '../file/resolved';
+import { fileService } from '../file';
 
 /**
  * Map FileListItem to ResourceItem

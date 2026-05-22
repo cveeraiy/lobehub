@@ -35,7 +35,7 @@ interface MarketAuthProviderProps {
 }
 
 /**
- * Fetch user info (via tRPC OIDC endpoint)
+ * Fetch user info via the REST OIDC endpoint.
  * @param accessToken - Optional access token; if not provided, the backend will attempt to use trustedClientToken
  */
 const fetchUserInfo = async (accessToken?: string): Promise<MarketUserInfo | null> => {
@@ -685,7 +685,7 @@ export const MarketAuthProvider = ({ children }: MarketAuthProviderProps) => {
   }, [status, session?.expiresAt, enableMarketTrustedClient, refreshToken]);
 
   /**
-   * Listen for market-unauthorized events from tRPC error handler
+   * Listen for market-unauthorized events from REST error handlers.
    * Automatically attempt to recover from 401 errors
    */
   useEffect(() => {

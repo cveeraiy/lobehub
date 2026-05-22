@@ -18,7 +18,7 @@ vi.mock('../document', () => ({
   },
 }));
 
-vi.mock('../file/resolved', () => ({
+vi.mock('../file', () => ({
   fileService: {
     getKnowledgeItem: mockGetKnowledgeItem,
     getKnowledgeItems: mockGetKnowledgeItems,

@@ -21,7 +21,6 @@ import type {
   UIChatMessage,
 } from '@lobechat/types';
 import { nanoid } from '@lobechat/utils';
-import { TRPCClientError } from '@trpc/client';
 import { t } from 'i18next';
 
 import { markUserValidAction } from '@/business/client/markUserValidAction';
@@ -621,9 +620,8 @@ export class ConversationLifecycleActionImpl {
         message: e instanceof Error ? e.message : 'Unknown error',
       });
 
-      if (e instanceof TRPCClientError) {
+      if (e instanceof Error) {
         const isAbort = e.message.includes('aborted') || e.name === 'AbortError';
-        // Check if error is due to cancellation
         if (!isAbort) {
           this.#get().updateOperationMetadata(operationId, { inputSendErrorMsg: e.message });
           const op = this.#get().operations[operationId];

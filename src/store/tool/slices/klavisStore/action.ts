@@ -107,7 +107,7 @@ export class KlavisStoreActionImpl {
     );
 
     try {
-      // Call tRPC server interface to create single server instance
+      // Call REST server interface to create a single server instance.
       const response = (await klavisService.createServerInstance({
         identifier,
         serverName,

@@ -100,7 +100,7 @@ export const useMarketPublish = ({ action, onSuccess }: UseMarketPublishOptions)
       return { success: false };
     }
 
-    // Check authentication state - tRPC handles trustedClient automatically
+    // Check authentication state before publishing.
     if (!isAuthenticated) {
       return { success: false };
     }
@@ -118,7 +118,7 @@ export const useMarketPublish = ({ action, onSuccess }: UseMarketPublishOptions)
       setIsPublishing(true);
       message.loading({ content: loadingMessage, key: messageKey });
 
-      // Use tRPC publishOrCreate - backend handles ownership check automatically
+      // Use REST publishOrCreate - backend handles ownership check automatically.
       const result = await marketApiService.publishOrCreateAgent({
         avatar: meta?.avatar,
         changelog,

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient, toolsClient } from '@/libs/trpc/client';
+import { klavisService } from '@/services/klavis';
 
 import { useToolStore } from '../../store';
 import { KlavisServerStatus } from './types';
@@ -12,21 +12,17 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    klavis: {
-      createServerInstance: { mutate: vi.fn() },
-      deleteServerInstance: { mutate: vi.fn() },
-      getKlavisPlugins: { query: vi.fn() },
-      getServerInstance: { query: vi.fn() },
-      updateKlavisPlugin: { mutate: vi.fn() },
-    },
-  },
-  toolsClient: {
-    klavis: {
-      callTool: { mutate: vi.fn() },
-      listTools: { query: vi.fn() },
-    },
+vi.mock('@/services/klavis', () => ({
+  klavisService: {
+    callTool: vi.fn(),
+    createServerInstance: vi.fn(),
+    deleteServerInstance: vi.fn(),
+    getKlavisPlugins: vi.fn(),
+    getServerInstance: vi.fn(),
+    getTools: vi.fn(),
+    listTools: vi.fn(),
+    removeKlavisPlugin: vi.fn(),
+    updateKlavisPlugin: vi.fn(),
   },
 }));
 
@@ -48,7 +44,7 @@ describe('klavisStore actions', () => {
         success: true,
         state: { content: [], isError: false },
       };
-      vi.mocked(toolsClient.klavis.callTool.mutate).mockResolvedValue(mockResponse as any);
+      vi.mocked(klavisService.callTool).mockResolvedValue(mockResponse as any);
 
       let callResult;
       await act(async () => {
@@ -60,7 +56,7 @@ describe('klavisStore actions', () => {
       });
 
       expect(callResult).toEqual({ data: mockResponse, success: true });
-      expect(toolsClient.klavis.callTool.mutate).toHaveBeenCalledWith({
+      expect(klavisService.callTool).toHaveBeenCalledWith({
         serverUrl: 'https://klavis.ai/gmail',
         toolName: 'sendEmail',
         toolArgs: { to: 'test@example.com' },
@@ -78,9 +74,7 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.klavis.callTool.mutate).mockRejectedValue(
-        new Error('Tool call failed'),
-      );
+      vi.mocked(klavisService.callTool).mockRejectedValue(new Error('Tool call failed'));
 
       let callResult;
       await act(async () => {
@@ -115,7 +109,7 @@ describe('klavisStore actions', () => {
         serverName: 'Gmail',
         serverUrl: 'https://klavis.ai/gmail',
       };
-      vi.mocked(lambdaClient.klavis.createServerInstance.mutate).mockResolvedValue(mockResponse);
+      vi.mocked(klavisService.createServerInstance).mockResolvedValue(mockResponse);
 
       let server;
       await act(async () => {
@@ -157,7 +151,7 @@ describe('klavisStore actions', () => {
         serverName: 'GitHub',
         serverUrl: 'https://klavis.ai/github',
       };
-      vi.mocked(lambdaClient.klavis.createServerInstance.mutate).mockResolvedValue(mockResponse);
+      vi.mocked(klavisService.createServerInstance).mockResolvedValue(mockResponse);
 
       let server;
       await act(async () => {
@@ -203,7 +197,7 @@ describe('klavisStore actions', () => {
         serverName: 'Gmail',
         serverUrl: 'https://klavis.ai/gmail',
       };
-      vi.mocked(lambdaClient.klavis.createServerInstance.mutate).mockResolvedValue(mockResponse);
+      vi.mocked(klavisService.createServerInstance).mockResolvedValue(mockResponse);
 
       await act(async () => {
         await result.current.createKlavisServer({
@@ -228,9 +222,7 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.createServerInstance.mutate).mockRejectedValue(
-        new Error('Creation failed'),
-      );
+      vi.mocked(klavisService.createServerInstance).mockRejectedValue(new Error('Creation failed'));
 
       let server;
       await act(async () => {
@@ -272,16 +264,16 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.getServerInstance.query).mockResolvedValue({
+      vi.mocked(klavisService.getServerInstance).mockResolvedValue({
         isAuthenticated: true,
         authNeeded: false,
       } as any);
 
-      vi.mocked(toolsClient.klavis.listTools.query).mockResolvedValue({
+      vi.mocked(klavisService.listTools).mockResolvedValue({
         tools: [{ name: 'sendEmail', description: 'Send email', inputSchema: { type: 'object' } }],
       });
 
-      vi.mocked(lambdaClient.klavis.updateKlavisPlugin.mutate).mockResolvedValue({} as any);
+      vi.mocked(klavisService.updateKlavisPlugin).mockResolvedValue({} as any);
 
       await act(async () => {
         await result.current.refreshKlavisServerTools('gmail');
@@ -313,23 +305,23 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.getServerInstance.query).mockResolvedValue({
+      vi.mocked(klavisService.getServerInstance).mockResolvedValue({
         isAuthenticated: false,
         authNeeded: true,
       } as any);
 
-      vi.mocked(lambdaClient.klavis.deleteServerInstance.mutate).mockResolvedValue({} as any);
+      vi.mocked(klavisService.deleteServerInstance).mockResolvedValue({} as any);
 
       await act(async () => {
         await result.current.refreshKlavisServerTools('gmail');
       });
 
       expect(result.current.servers).toHaveLength(0);
-      expect(lambdaClient.klavis.deleteServerInstance.mutate).toHaveBeenCalled();
+      expect(klavisService.deleteServerInstance).toHaveBeenCalled();
     });
 
     it('should do nothing when server not found', async () => {
-      vi.mocked(lambdaClient.klavis.getServerInstance.query).mockClear();
+      vi.mocked(klavisService.getServerInstance).mockClear();
 
       const { result } = renderHook(() => useToolStore());
 
@@ -345,7 +337,7 @@ describe('klavisStore actions', () => {
         await result.current.refreshKlavisServerTools('non-existent');
       });
 
-      expect(lambdaClient.klavis.getServerInstance.query).not.toHaveBeenCalled();
+      expect(klavisService.getServerInstance).not.toHaveBeenCalled();
     });
 
     it('should handle refresh error', async () => {
@@ -369,12 +361,12 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.getServerInstance.query).mockResolvedValue({
+      vi.mocked(klavisService.getServerInstance).mockResolvedValue({
         isAuthenticated: true,
         authNeeded: false,
       } as any);
 
-      vi.mocked(toolsClient.klavis.listTools.query).mockRejectedValue(new Error('Refresh failed'));
+      vi.mocked(klavisService.listTools).mockRejectedValue(new Error('Refresh failed'));
 
       await act(async () => {
         await result.current.refreshKlavisServerTools('gmail');
@@ -407,21 +399,21 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.deleteServerInstance.mutate).mockResolvedValue({} as any);
+      vi.mocked(klavisService.deleteServerInstance).mockResolvedValue({} as any);
 
       await act(async () => {
         await result.current.removeKlavisServer('gmail');
       });
 
       expect(result.current.servers).toHaveLength(0);
-      expect(lambdaClient.klavis.deleteServerInstance.mutate).toHaveBeenCalledWith({
+      expect(klavisService.deleteServerInstance).toHaveBeenCalledWith({
         identifier: 'gmail',
         instanceId: 'inst-1',
       });
     });
 
     it('should handle remove when server not found', async () => {
-      vi.mocked(lambdaClient.klavis.deleteServerInstance.mutate).mockClear();
+      vi.mocked(klavisService.deleteServerInstance).mockClear();
 
       const { result } = renderHook(() => useToolStore());
 
@@ -437,7 +429,7 @@ describe('klavisStore actions', () => {
         await result.current.removeKlavisServer('non-existent');
       });
 
-      expect(lambdaClient.klavis.deleteServerInstance.mutate).not.toHaveBeenCalled();
+      expect(klavisService.deleteServerInstance).not.toHaveBeenCalled();
     });
 
     it('should handle API error gracefully', async () => {
@@ -461,9 +453,7 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.deleteServerInstance.mutate).mockRejectedValue(
-        new Error('Delete failed'),
-      );
+      vi.mocked(klavisService.deleteServerInstance).mockRejectedValue(new Error('Delete failed'));
 
       await act(async () => {
         await result.current.removeKlavisServer('gmail');
@@ -495,22 +485,22 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.getServerInstance.query).mockResolvedValue({
+      vi.mocked(klavisService.getServerInstance).mockResolvedValue({
         isAuthenticated: true,
         authNeeded: false,
       } as any);
 
-      vi.mocked(toolsClient.klavis.listTools.query).mockResolvedValue({
+      vi.mocked(klavisService.listTools).mockResolvedValue({
         tools: [],
       });
 
-      vi.mocked(lambdaClient.klavis.updateKlavisPlugin.mutate).mockResolvedValue({} as any);
+      vi.mocked(klavisService.updateKlavisPlugin).mockResolvedValue({} as any);
 
       await act(async () => {
         await result.current.completeKlavisServerAuth('gmail');
       });
 
-      expect(lambdaClient.klavis.getServerInstance.query).toHaveBeenCalled();
+      expect(klavisService.getServerInstance).toHaveBeenCalled();
     });
   });
 
@@ -525,7 +515,7 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.getKlavisPlugins.query).mockResolvedValue([]);
+      vi.mocked(klavisService.getKlavisPlugins).mockResolvedValue([]);
 
       renderHook(() => useToolStore.getState().useFetchUserKlavisServers(true));
 
@@ -544,11 +534,11 @@ describe('klavisStore actions', () => {
         });
       });
 
-      vi.mocked(lambdaClient.klavis.getKlavisPlugins.query).mockClear();
+      vi.mocked(klavisService.getKlavisPlugins).mockClear();
 
       renderHook(() => useToolStore.getState().useFetchUserKlavisServers(false));
 
-      expect(lambdaClient.klavis.getKlavisPlugins.query).not.toHaveBeenCalled();
+      expect(klavisService.getKlavisPlugins).not.toHaveBeenCalled();
       expect(useToolStore.getState().isServersInit).toBe(false);
     });
   });

@@ -3,25 +3,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useSocialConnect } from './useSocialConnect';
 
-const connectGetStatusQueryMock = vi.hoisted(() => vi.fn());
-const connectGetAuthorizeUrlQueryMock = vi.hoisted(() => vi.fn());
-const connectRevokeMutateMock = vi.hoisted(() => vi.fn());
-const scanClaimableResourcesQueryMock = vi.hoisted(() => vi.fn());
+const getStatusMock = vi.hoisted(() => vi.fn());
+const getAuthorizeUrlMock = vi.hoisted(() => vi.fn());
+const revokeMock = vi.hoisted(() => vi.fn());
+const scanClaimableResourcesMock = vi.hoisted(() => vi.fn());
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    market: {
-      socialProfile: {
-        scanClaimableResources: { query: scanClaimableResourcesQueryMock },
-      },
-    },
+vi.mock('@/services/marketAuth', () => ({
+  marketAuthService: {
+    scanClaimableResources: scanClaimableResourcesMock,
   },
-  toolsClient: {
-    market: {
-      connectGetAuthorizeUrl: { query: connectGetAuthorizeUrlQueryMock },
-      connectGetStatus: { query: connectGetStatusQueryMock },
-      connectRevoke: { mutate: connectRevokeMutateMock },
-    },
+}));
+
+vi.mock('@/services/marketConnect', () => ({
+  marketConnectService: {
+    getAuthorizeUrl: getAuthorizeUrlMock,
+    getStatus: getStatusMock,
+    revoke: revokeMock,
   },
 }));
 
@@ -29,7 +26,7 @@ describe('useSocialConnect', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    scanClaimableResourcesQueryMock.mockResolvedValue({ plugins: [], skills: [] });
+    scanClaimableResourcesMock.mockResolvedValue({ plugins: [], skills: [] });
   });
 
   afterEach(() => {
@@ -40,7 +37,7 @@ describe('useSocialConnect', () => {
   it('should keep polling after callback notification until the profile becomes available', async () => {
     const onConnectSuccess = vi.fn();
 
-    connectGetStatusQueryMock.mockResolvedValueOnce({ connected: false }).mockResolvedValueOnce({
+    getStatusMock.mockResolvedValueOnce({ connected: false }).mockResolvedValueOnce({
       connected: true,
       connection: { providerUsername: 'octocat' },
     });
@@ -69,7 +66,7 @@ describe('useSocialConnect', () => {
       await Promise.resolve();
     });
 
-    expect(connectGetStatusQueryMock).toHaveBeenCalledTimes(1);
+    expect(getStatusMock).toHaveBeenCalledTimes(1);
     expect(result.current.isConnecting).toBe(true);
 
     await act(async () => {
@@ -82,8 +79,8 @@ describe('useSocialConnect', () => {
       provider: 'github',
       username: 'octocat',
     });
-    expect(connectGetStatusQueryMock).toHaveBeenCalledTimes(2);
-    expect(scanClaimableResourcesQueryMock).toHaveBeenCalledTimes(1);
+    expect(getStatusMock).toHaveBeenCalledTimes(2);
+    expect(scanClaimableResourcesMock).toHaveBeenCalledTimes(1);
     expect(result.current.isConnected).toBe(true);
     expect(result.current.isConnecting).toBe(false);
   });
@@ -114,6 +111,6 @@ describe('useSocialConnect', () => {
     });
 
     expect(result.current.error).toBe('Access denied');
-    expect(connectGetStatusQueryMock).not.toHaveBeenCalled();
+    expect(getStatusMock).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,6 @@
 import { CURRENT_VERSION } from '@lobechat/const';
 import { type ToolManifest } from '@lobechat/types';
 import { type PluginItem, type PluginListResponse } from '@lobehub/market-sdk';
-import { type TRPCClientError } from '@trpc/client';
 import debug from 'debug';
 import { uniqBy } from 'es-toolkit/compat';
 import { produce } from 'immer';
@@ -626,7 +625,7 @@ export class PluginMCPStoreActionImpl {
         return;
       }
 
-      const error = e as TRPCClientError<any>;
+      const error = e as Error & { data?: { errorData?: MCPErrorData } };
 
       console.error('MCP plugin installation failed:', error);
 

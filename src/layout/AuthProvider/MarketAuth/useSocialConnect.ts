@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { toolsClient } from '@/libs/trpc/client';
 import { marketAuthService } from '@/services/marketAuth';
+import { marketConnectService } from '@/services/marketConnect';
 
 const POLL_INTERVAL_MS = 1000;
 const POLL_TIMEOUT_MS = 15_000;
@@ -92,7 +92,7 @@ export const useSocialConnect = ({
   // Fetch current profile status using existing connect API
   const fetchProfile = useCallback(async () => {
     try {
-      const result = await toolsClient.market.connectGetStatus.query({ provider });
+      const result = await marketConnectService.getStatus({ provider });
       if (result.connected && result.connection) {
         const profile: SocialProfile = {
           id: provider,
@@ -256,7 +256,7 @@ export const useSocialConnect = ({
 
     try {
       const redirectUri = `${window.location.origin}/oauth/callback/social?provider=${encodeURIComponent(provider)}`;
-      const result = await toolsClient.market.connectGetAuthorizeUrl.query({
+      const result = await marketConnectService.getAuthorizeUrl({
         provider,
         redirectUri,
       });
@@ -282,7 +282,7 @@ export const useSocialConnect = ({
     setError(null);
 
     try {
-      await toolsClient.market.connectRevoke.mutate({ provider });
+      await marketConnectService.revoke({ provider });
       setProfile(null);
       onDisconnectSuccess?.();
     } catch (err) {

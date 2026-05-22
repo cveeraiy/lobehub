@@ -2,7 +2,7 @@ import type * as LobechatConstModule from '@lobechat/const';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { toolsClient } from '@/libs/trpc/client';
+import { marketConnectService } from '@/services/marketConnect';
 
 import { useToolStore } from '../../store';
 import { LobehubSkillStatus } from './types';
@@ -25,27 +25,15 @@ vi.mock('@lobechat/const', async (importOriginal) => {
   };
 });
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    klavis: {
-      createServerInstance: { mutate: vi.fn() },
-      deleteServerInstance: { mutate: vi.fn() },
-      getKlavisPlugins: { query: vi.fn() },
-      getServerInstance: { query: vi.fn() },
-      removeKlavisPlugin: { mutate: vi.fn() },
-      updateKlavisPlugin: { mutate: vi.fn() },
-    },
-  },
-  toolsClient: {
-    market: {
-      connectCallTool: { mutate: vi.fn() },
-      connectGetAuthorizeUrl: { query: vi.fn() },
-      connectGetStatus: { query: vi.fn() },
-      connectListConnections: { query: vi.fn() },
-      connectListTools: { query: vi.fn() },
-      connectRefresh: { mutate: vi.fn() },
-      connectRevoke: { mutate: vi.fn() },
-    },
+vi.mock('@/services/marketConnect', () => ({
+  marketConnectService: {
+    callTool: vi.fn(),
+    getAuthorizeUrl: vi.fn(),
+    getStatus: vi.fn(),
+    listConnections: vi.fn(),
+    listTools: vi.fn(),
+    refresh: vi.fn(),
+    revoke: vi.fn(),
   },
 }));
 
@@ -65,7 +53,7 @@ describe('lobehubSkillStore actions', () => {
       const mockResponse = {
         data: { result: 'success' },
       };
-      vi.mocked(toolsClient.market.connectCallTool.mutate).mockResolvedValue(mockResponse as any);
+      vi.mocked(marketConnectService.callTool).mockResolvedValue(mockResponse as any);
 
       let callResult;
       await act(async () => {
@@ -77,7 +65,7 @@ describe('lobehubSkillStore actions', () => {
       });
 
       expect(callResult).toEqual({ data: mockResponse.data, success: true });
-      expect(toolsClient.market.connectCallTool.mutate).toHaveBeenCalledWith({
+      expect(marketConnectService.callTool).toHaveBeenCalledWith({
         provider: 'linear',
         toolName: 'createIssue',
         args: { title: 'Test Issue' },
@@ -100,7 +88,7 @@ describe('lobehubSkillStore actions', () => {
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
-      vi.mocked(toolsClient.market.connectCallTool.mutate).mockReturnValue(promise as any);
+      vi.mocked(marketConnectService.callTool).mockReturnValue(promise as any);
 
       const callPromise = act(async () => {
         return result.current.callLobehubSkillTool({
@@ -133,9 +121,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectCallTool.mutate).mockRejectedValue(
-        new Error('NOT_CONNECTED'),
-      );
+      vi.mocked(marketConnectService.callTool).mockRejectedValue(new Error('NOT_CONNECTED'));
 
       let callResult;
       await act(async () => {
@@ -164,9 +150,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectCallTool.mutate).mockRejectedValue(
-        new Error('TOKEN_EXPIRED'),
-      );
+      vi.mocked(marketConnectService.callTool).mockRejectedValue(new Error('TOKEN_EXPIRED'));
 
       let callResult;
       await act(async () => {
@@ -194,9 +178,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectCallTool.mutate).mockRejectedValue(
-        new Error('Network error'),
-      );
+      vi.mocked(marketConnectService.callTool).mockRejectedValue(new Error('Network error'));
 
       let callResult;
       await act(async () => {
@@ -234,8 +216,8 @@ describe('lobehubSkillStore actions', () => {
           tokenExpiresAt: '2024-12-31T00:00:00Z',
         },
       };
-      vi.mocked(toolsClient.market.connectGetStatus.query).mockResolvedValue(mockResponse as any);
-      vi.mocked(toolsClient.market.connectListTools.query).mockResolvedValue({
+      vi.mocked(marketConnectService.getStatus).mockResolvedValue(mockResponse as any);
+      vi.mocked(marketConnectService.listTools).mockResolvedValue({
         provider: 'linear',
         tools: [],
       });
@@ -272,7 +254,7 @@ describe('lobehubSkillStore actions', () => {
         connected: false,
         icon: 'linear-icon',
       };
-      vi.mocked(toolsClient.market.connectGetStatus.query).mockResolvedValue(mockResponse as any);
+      vi.mocked(marketConnectService.getStatus).mockResolvedValue(mockResponse as any);
 
       let server;
       await act(async () => {
@@ -284,7 +266,7 @@ describe('lobehubSkillStore actions', () => {
         isConnected: false,
         status: LobehubSkillStatus.NOT_CONNECTED,
       });
-      expect(toolsClient.market.connectListTools.query).not.toHaveBeenCalled();
+      expect(marketConnectService.listTools).not.toHaveBeenCalled();
     });
 
     it('should update existing server instead of adding new one', async () => {
@@ -314,8 +296,8 @@ describe('lobehubSkillStore actions', () => {
           tokenExpiresAt: '2024-12-31T00:00:00Z',
         },
       };
-      vi.mocked(toolsClient.market.connectGetStatus.query).mockResolvedValue(mockResponse as any);
-      vi.mocked(toolsClient.market.connectListTools.query).mockResolvedValue({
+      vi.mocked(marketConnectService.getStatus).mockResolvedValue(mockResponse as any);
+      vi.mocked(marketConnectService.listTools).mockResolvedValue({
         provider: 'linear',
         tools: [],
       });
@@ -344,7 +326,7 @@ describe('lobehubSkillStore actions', () => {
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
-      vi.mocked(toolsClient.market.connectGetStatus.query).mockReturnValue(promise as any);
+      vi.mocked(marketConnectService.getStatus).mockReturnValue(promise as any);
 
       const checkPromise = act(async () => {
         return result.current.checkLobehubSkillStatus('linear');
@@ -374,9 +356,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectGetStatus.query).mockRejectedValue(
-        new Error('Network error'),
-      );
+      vi.mocked(marketConnectService.getStatus).mockRejectedValue(new Error('Network error'));
 
       let server;
       await act(async () => {
@@ -397,9 +377,7 @@ describe('lobehubSkillStore actions', () => {
         code: 'abc123',
         expiresIn: 600,
       };
-      vi.mocked(toolsClient.market.connectGetAuthorizeUrl.query).mockResolvedValue(
-        mockResponse as any,
-      );
+      vi.mocked(marketConnectService.getAuthorizeUrl).mockResolvedValue(mockResponse as any);
 
       let authInfo;
       await act(async () => {
@@ -411,7 +389,7 @@ describe('lobehubSkillStore actions', () => {
         code: 'abc123',
         expiresIn: 600,
       });
-      expect(toolsClient.market.connectGetAuthorizeUrl.query).toHaveBeenCalledWith({
+      expect(marketConnectService.getAuthorizeUrl).toHaveBeenCalledWith({
         provider: 'linear',
         redirectUri: undefined,
         scopes: undefined,
@@ -426,9 +404,7 @@ describe('lobehubSkillStore actions', () => {
         code: 'xyz789',
         expiresIn: 300,
       };
-      vi.mocked(toolsClient.market.connectGetAuthorizeUrl.query).mockResolvedValue(
-        mockResponse as any,
-      );
+      vi.mocked(marketConnectService.getAuthorizeUrl).mockResolvedValue(mockResponse as any);
 
       await act(async () => {
         await result.current.getLobehubSkillAuthorizeUrl('linear', {
@@ -437,7 +413,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      expect(toolsClient.market.connectGetAuthorizeUrl.query).toHaveBeenCalledWith({
+      expect(marketConnectService.getAuthorizeUrl).toHaveBeenCalledWith({
         provider: 'linear',
         scopes: ['read', 'write'],
         redirectUri: 'https://example.com/callback',
@@ -525,7 +501,7 @@ describe('lobehubSkillStore actions', () => {
           tokenExpiresAt: '2024-12-31T00:00:00Z',
         },
       };
-      vi.mocked(toolsClient.market.connectRefresh.mutate).mockResolvedValue(mockResponse as any);
+      vi.mocked(marketConnectService.refresh).mockResolvedValue(mockResponse as any);
 
       let refreshed;
       await act(async () => {
@@ -558,7 +534,7 @@ describe('lobehubSkillStore actions', () => {
       const mockResponse = {
         refreshed: false,
       };
-      vi.mocked(toolsClient.market.connectRefresh.mutate).mockResolvedValue(mockResponse as any);
+      vi.mocked(marketConnectService.refresh).mockResolvedValue(mockResponse as any);
 
       let refreshed;
       await act(async () => {
@@ -579,9 +555,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectRefresh.mutate).mockRejectedValue(
-        new Error('Refresh failed'),
-      );
+      vi.mocked(marketConnectService.refresh).mockRejectedValue(new Error('Refresh failed'));
 
       let refreshed;
       await act(async () => {
@@ -617,7 +591,7 @@ describe('lobehubSkillStore actions', () => {
           { name: 'listIssues', description: 'List issues', inputSchema: { type: 'object' } },
         ],
       };
-      vi.mocked(toolsClient.market.connectListTools.query).mockResolvedValue(mockTools as any);
+      vi.mocked(marketConnectService.listTools).mockResolvedValue(mockTools as any);
 
       await act(async () => {
         await result.current.refreshLobehubSkillTools('linear');
@@ -629,7 +603,7 @@ describe('lobehubSkillStore actions', () => {
     });
 
     it('should do nothing when server not found', async () => {
-      vi.mocked(toolsClient.market.connectListTools.query).mockClear();
+      vi.mocked(marketConnectService.listTools).mockClear();
 
       const { result } = renderHook(() => useToolStore());
 
@@ -667,9 +641,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectListTools.query).mockRejectedValue(
-        new Error('Network error'),
-      );
+      vi.mocked(marketConnectService.listTools).mockRejectedValue(new Error('Network error'));
 
       await act(async () => {
         await result.current.refreshLobehubSkillTools('linear');
@@ -705,7 +677,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectRevoke.mutate).mockResolvedValue({} as any);
+      vi.mocked(marketConnectService.revoke).mockResolvedValue({} as any);
 
       await act(async () => {
         await result.current.revokeLobehubSkill('linear');
@@ -713,7 +685,7 @@ describe('lobehubSkillStore actions', () => {
 
       expect(result.current.lobehubSkillServers).toHaveLength(1);
       expect(result.current.lobehubSkillServers[0].identifier).toBe('github');
-      expect(toolsClient.market.connectRevoke.mutate).toHaveBeenCalledWith({
+      expect(marketConnectService.revoke).toHaveBeenCalledWith({
         provider: 'linear',
       });
     });
@@ -740,7 +712,7 @@ describe('lobehubSkillStore actions', () => {
       const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
-      vi.mocked(toolsClient.market.connectRevoke.mutate).mockReturnValue(promise as any);
+      vi.mocked(marketConnectService.revoke).mockReturnValue(promise as any);
 
       const revokePromise = act(async () => {
         return result.current.revokeLobehubSkill('linear');
@@ -777,9 +749,7 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectRevoke.mutate).mockRejectedValue(
-        new Error('Revoke failed'),
-      );
+      vi.mocked(marketConnectService.revoke).mockRejectedValue(new Error('Revoke failed'));
 
       await act(async () => {
         await result.current.revokeLobehubSkill('linear');
@@ -801,11 +771,11 @@ describe('lobehubSkillStore actions', () => {
         });
       });
 
-      vi.mocked(toolsClient.market.connectListConnections.query).mockClear();
+      vi.mocked(marketConnectService.listConnections).mockClear();
 
       renderHook(() => useToolStore.getState().useFetchLobehubSkillConnections(false));
 
-      expect(toolsClient.market.connectListConnections.query).not.toHaveBeenCalled();
+      expect(marketConnectService.listConnections).not.toHaveBeenCalled();
     });
 
     it('should fetch connections when enabled', async () => {
@@ -828,10 +798,8 @@ describe('lobehubSkillStore actions', () => {
           },
         ],
       };
-      vi.mocked(toolsClient.market.connectListConnections.query).mockResolvedValue(
-        mockConnections as any,
-      );
-      vi.mocked(toolsClient.market.connectListTools.query).mockResolvedValue({
+      vi.mocked(marketConnectService.listConnections).mockResolvedValue(mockConnections as any);
+      vi.mocked(marketConnectService.listTools).mockResolvedValue({
         provider: 'linear',
         tools: [],
       });
@@ -839,7 +807,7 @@ describe('lobehubSkillStore actions', () => {
       renderHook(() => useToolStore.getState().useFetchLobehubSkillConnections(true));
 
       await waitFor(() => {
-        expect(toolsClient.market.connectListConnections.query).toHaveBeenCalled();
+        expect(marketConnectService.listConnections).toHaveBeenCalled();
       });
     });
   });

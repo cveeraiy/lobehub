@@ -17,7 +17,7 @@ import type {
  * Adds cloud-specific capabilities: code execution and file export.
  *
  * Dependency Injection:
- * - Client: Inject codeInterpreterService (uses tRPC client)
+ * - Client: Inject cloud sandbox service
  * - Server: Inject ServerSandboxService (uses MarketSDK directly)
  */
 export class CloudSandboxExecutionRuntime extends ComputerRuntime {

@@ -5,7 +5,7 @@ import { marketAuthService } from '@/services/marketAuth';
 import { type MarketUserProfile } from './types';
 
 /**
- * Fetcher function for user profile using tRPC
+ * Fetcher function for user profile using REST.
  */
 const fetchUserProfile = async (username: string): Promise<MarketUserProfile | null> => {
   const result = await marketAuthService.getUserByUsername(username);

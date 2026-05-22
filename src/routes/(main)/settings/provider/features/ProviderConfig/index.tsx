@@ -254,7 +254,7 @@ const ProviderConfig = memo<ProviderConfigProps>(
     // OAuth auth change handler
     const handleOAuthChange = useCallback(async () => {
       // Only refresh provider data, don't update with form values
-      // OAuth tokens are saved directly to DB by the tRPC endpoint
+      // OAuth tokens are saved directly to DB by the backend endpoint.
       await useAiInfraStore.getState().refreshAiProviderDetail();
       await useAiInfraStore.getState().refreshAiProviderRuntimeState();
     }, []);

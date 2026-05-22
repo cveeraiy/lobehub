@@ -669,7 +669,7 @@ export const contextEngineering = async ({
   );
 
   // Build onboarding context if this is the web-onboarding agent.
-  // Single combined trpc call — server runs state/soul/persona DB queries in parallel.
+  // Single REST call: the backend runs state/soul/persona DB queries in parallel.
   let onboardingContext: OnboardingContext | undefined;
   const isOnboardingAgent = tools?.includes(WebOnboardingIdentifier);
   if (isOnboardingAgent) {

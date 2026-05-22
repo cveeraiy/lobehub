@@ -1,6 +1,5 @@
 import type * as LobechatConstModule from '@lobechat/const';
 import { act, renderHook } from '@testing-library/react';
-import { TRPCClientError } from '@trpc/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { agentService } from '@/services/agent';
@@ -42,37 +41,6 @@ vi.mock('../heterogeneousAgentExecutor', () => ({
 
 vi.mock('@/services/electron/localFileService', () => ({
   localFileService: mockLocalFileService,
-}));
-
-// Mock lambdaClient to prevent network requests
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    klavis: {
-      createServerInstance: {
-        mutate: vi.fn(),
-      },
-      deleteServerInstance: {
-        mutate: vi.fn(),
-      },
-      getKlavisPlugins: {
-        query: vi.fn(),
-      },
-      getServerInstance: {
-        query: vi.fn(),
-      },
-      removeKlavisPlugin: {
-        mutate: vi.fn(),
-      },
-      updateKlavisPlugin: {
-        mutate: vi.fn(),
-      },
-    },
-    session: {
-      updateSession: {
-        mutate: vi.fn().mockResolvedValue(undefined),
-      },
-    },
-  },
 }));
 
 beforeEach(() => {
@@ -291,7 +259,7 @@ describe('ConversationLifecycle actions', () => {
         const setJSONState = vi.fn();
 
         vi.spyOn(aiChatService, 'sendMessageInServer').mockRejectedValue(
-          new TRPCClientError('restore failed'),
+          new Error('restore failed'),
         );
 
         act(() => {

@@ -13,37 +13,6 @@ import { MCPInstallStep } from '@/types/plugins';
 
 import { useToolStore } from '../../store';
 
-vi.mock('@/libs/trpc/client', () => ({
-  asyncClient: {},
-  lambdaClient: {
-    market: {
-      getMcpCategories: { query: vi.fn() },
-      getMcpDetail: { query: vi.fn() },
-      getMcpList: { query: vi.fn() },
-      getMcpManifest: { query: vi.fn() },
-      registerClientInMarketplace: {
-        mutate: vi.fn().mockResolvedValue({
-          clientId: 'test-client-id',
-          clientSecret: 'test-client-secret',
-        }),
-      },
-      registerM2MToken: { query: vi.fn().mockResolvedValue({ success: true }) },
-      reportCall: { mutate: vi.fn().mockResolvedValue(undefined) },
-      reportMcpEvent: { mutate: vi.fn().mockResolvedValue(undefined) },
-      reportMcpInstallResult: { mutate: vi.fn().mockResolvedValue(undefined) },
-    },
-  },
-  toolsClient: {
-    market: {
-      callCloudMcpEndpoint: { mutate: vi.fn() },
-    },
-    mcp: {
-      callTool: { mutate: vi.fn() },
-      getStreamableMcpServerManifest: { query: vi.fn() },
-    },
-  },
-}));
-
 // Keep zustand mock as it's needed globally
 vi.mock('zustand/traditional');
 
@@ -644,7 +613,7 @@ describe('mcpStore actions', () => {
       });
     });
 
-    it('should not append connectionType in desktop environment', async () => {
+    it('should append the default HTTP connectionType in desktop environment', async () => {
       const {
         useToolStore: desktopStore,
         discoverService: desktopDiscoverService,
@@ -668,7 +637,11 @@ describe('mcpStore actions', () => {
           .mockResolvedValue(mockData);
 
         const { result } = renderHook(() =>
-          desktopStore.getState().useFetchMCPPluginList({ page: 1, pageSize: 20 }),
+          desktopStore.getState().useFetchMCPPluginList({
+            page: 1,
+            pageSize: 20,
+            q: 'desktop-plugin',
+          }),
         );
 
         await waitFor(() => {
@@ -677,8 +650,8 @@ describe('mcpStore actions', () => {
 
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         const [firstCallArgs] = fetchSpy.mock.calls[0];
-        expect(firstCallArgs).toMatchObject({ page: 1, pageSize: 20 });
-        expect(firstCallArgs.connectionType).toBeUndefined();
+        expect(firstCallArgs).toMatchObject({ page: 1, pageSize: 20, q: 'desktop-plugin' });
+        expect(firstCallArgs.connectionType).toBe('http');
       } finally {
         cleanup();
       }

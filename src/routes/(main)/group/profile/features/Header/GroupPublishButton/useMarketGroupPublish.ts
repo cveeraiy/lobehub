@@ -130,7 +130,7 @@ export const useMarketGroupPublish = ({ action, onSuccess }: UseMarketGroupPubli
         url: `https://api.lobehub.com/a2a/agents/${agent.id}`,
       }));
 
-      // Use tRPC publishOrCreate
+      // Use REST publishOrCreate
       const result = await marketApiService.publishOrCreateAgentGroup({
         // Only include avatar if it's not null/undefined
         ...(currentGroupMeta.avatar ? { avatar: currentGroupMeta.avatar } : {}),

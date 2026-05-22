@@ -91,7 +91,7 @@ export interface ICredsService {
  *
  * Key differences from frontend executor:
  * - No browser APIs (window.open for OAuth)
- * - Direct service calls instead of tRPC client
+ * - Direct service calls
  * - For OAuth: returns authorization URL instead of opening popup
  */
 export class CredsExecutionRuntime {

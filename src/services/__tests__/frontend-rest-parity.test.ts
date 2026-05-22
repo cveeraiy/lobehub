@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { restClient } from '@/libs/rest';
 
-import { businessService } from '../business.rest';
+import { businessService } from '../business';
 import { cloudSandboxService } from '../cloudSandbox';
 import { credsService } from '../creds';
-import { deviceService } from '../device.rest';
-import { generationWorkerService } from '../generationWorker.rest';
+import { deviceService } from '../device';
+import { generationWorkerService } from '../generationWorker';
 import { klavisService } from '../klavis';
 import { marketConnectService } from '../marketConnect';
 import { oauthDeviceFlowService } from '../oauthDeviceFlow';

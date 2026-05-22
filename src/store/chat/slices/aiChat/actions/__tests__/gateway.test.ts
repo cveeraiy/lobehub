@@ -497,7 +497,7 @@ describe('GatewayActionImpl', () => {
       // Handler was registered against the local operation id...
       expect(onOperationCancel).toHaveBeenCalledWith('gw-op-local', expect.any(Function));
 
-      // ...and, when invoked, fires tRPC interruptTask with the *server-side* operation id
+      // ...and, when invoked, interrupts the *server-side* operation id
       const [, handler] = onOperationCancel.mock.calls[0];
       await handler();
       expect(interruptTaskSpy).toHaveBeenCalledWith({ operationId: 'server-op-xyz' });

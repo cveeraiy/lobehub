@@ -3,7 +3,7 @@ import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
 import { documentService } from '@/services/document';
-import { fileService } from '@/services/file/resolved';
+import { fileService } from '@/services/file';
 import { knowledgeBaseService } from '@/services/knowledgeBase';
 import { ragService } from '@/services/rag';
 import { agentSelectors } from '@/store/agent/selectors';

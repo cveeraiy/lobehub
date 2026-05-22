@@ -110,7 +110,7 @@ See `references/platform-parity.md` for the detailed review checklist.
 Prefer focused tests over broad suites:
 
 ```bash
-bunx vitest run --silent='passed-only' src/services/agentBotProvider.rest.test.ts
+bunx vitest run --silent='passed-only' src/services/agentBotProvider.test.ts
 cd python-backend && .venv/bin/pytest tests/ < targeted-test > .py
 ```
 

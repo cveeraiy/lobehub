@@ -6,26 +6,18 @@ import React, { useState } from 'react';
 import { SWRConfig } from 'swr';
 
 import { swrCacheProvider } from '@/libs/swr/localStorageProvider';
-import { lambdaQuery, lambdaQueryClient } from '@/libs/trpc/client';
 
 import SWRMutateInitializer from './SWRMutateInitializer';
 
 const QueryProvider = ({ children }: PropsWithChildren) => {
   const [queryClient] = useState(() => new QueryClient());
-  // Cast required because pnpm installs separate QueryClient type instances for trpc and app
-  const providerQueryClient = queryClient as unknown as React.ComponentProps<
-    typeof lambdaQuery.Provider
-  >['queryClient'];
-
   // Use useState to ensure the provider is only created once
   const [provider] = useState(swrCacheProvider);
 
   return (
     <SWRConfig value={{ provider }}>
       <SWRMutateInitializer>
-        <lambdaQuery.Provider client={lambdaQueryClient} queryClient={providerQueryClient}>
-          <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-        </lambdaQuery.Provider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
       </SWRMutateInitializer>
     </SWRConfig>
   );
