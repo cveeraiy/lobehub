@@ -8,8 +8,8 @@ import type { PartialDeep } from 'type-fest';
 
 import { MESSAGE_CANCEL_FLAT } from '@/const/message';
 import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
-import type { CreateAgentParams, CreateAgentResult } from '@/services/agent.resolved';
-import { agentService } from '@/services/agent.resolved';
+import type { CreateAgentParams, CreateAgentResult } from '@/services/agent';
+import { agentService } from '@/services/agent';
 import {
   agentDocumentService,
   agentDocumentSWRKeys,

@@ -1,19 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
-import { type UpdateTopicValue } from '@/server/routers/lambda/generationTopic';
+import { restClient } from '@/libs/rest';
+import type { UpdateTopicValue } from '@/server/routers/lambda/generationTopic';
 
 import { ServerService } from '../generationTopic';
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    generationTopic: {
-      getAllGenerationTopics: { query: vi.fn() },
-      createTopic: { mutate: vi.fn() },
-      updateTopic: { mutate: vi.fn() },
-      updateTopicCover: { mutate: vi.fn() },
-      deleteTopic: { mutate: vi.fn() },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    delete: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
   },
 }));
 
@@ -25,17 +22,17 @@ describe('GenerationTopic ServerService', () => {
     service = new ServerService();
   });
 
-  it('getAllGenerationTopics should call lambdaClient', async () => {
+  it('getAllGenerationTopics should call REST', async () => {
     await service.getAllGenerationTopics();
-    expect(lambdaClient.generationTopic.getAllGenerationTopics.query).toBeCalled();
+    expect(restClient.get).toBeCalledWith('/generation-topics', { params: undefined });
   });
 
-  it('createTopic should call lambdaClient with undefined', async () => {
+  it('createTopic should call REST with undefined', async () => {
     await service.createTopic();
-    expect(lambdaClient.generationTopic.createTopic.mutate).toBeCalledWith(undefined);
+    expect(restClient.post).toBeCalledWith('/generation-topics', { body: undefined });
   });
 
-  it('updateTopic should call lambdaClient with correct params', async () => {
+  it('updateTopic should call REST with correct params', async () => {
     const id = 'test-topic-id';
     const data: UpdateTopicValue = {
       title: 'Updated Topic',
@@ -44,29 +41,25 @@ describe('GenerationTopic ServerService', () => {
 
     await service.updateTopic(id, data);
 
-    expect(lambdaClient.generationTopic.updateTopic.mutate).toBeCalledWith({
-      id,
-      value: data,
-    });
+    expect(restClient.put).toBeCalledWith(`/generation-topics/${id}`, { body: data });
   });
 
-  it('updateTopicCover should call lambdaClient with correct params', async () => {
+  it('updateTopicCover should call REST with correct params', async () => {
     const id = 'test-topic-id';
     const coverUrl = 'https://example.com/cover.jpg';
 
     await service.updateTopicCover(id, coverUrl);
 
-    expect(lambdaClient.generationTopic.updateTopicCover.mutate).toBeCalledWith({
-      id,
-      coverUrl,
+    expect(restClient.put).toBeCalledWith(`/generation-topics/${id}/cover`, {
+      body: { coverUrl },
     });
   });
 
-  it('deleteTopic should call lambdaClient with correct params', async () => {
+  it('deleteTopic should call REST with correct params', async () => {
     const id = 'test-topic-id';
 
     await service.deleteTopic(id);
 
-    expect(lambdaClient.generationTopic.deleteTopic.mutate).toBeCalledWith({ id });
+    expect(restClient.delete).toBeCalledWith(`/generation-topics/${id}`);
   });
 });

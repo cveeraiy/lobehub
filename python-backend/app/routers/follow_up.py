@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import and_, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,8 +31,34 @@ Only return valid JSON. No extra text."""
 
 
 class ExtractFollowUpBody(BaseModel):
-    topic_id: str
-    message_limit: int = 6
+    topic_id: str = Field(..., alias="topicId")
+    message_limit: int = Field(default=6, alias="messageLimit")
+    hint: Optional[dict[str, Any]] = None
+
+    model_config = {"populate_by_name": True}
+
+
+def _empty_result(message_id: str = "") -> dict[str, Any]:
+    return {"chips": [], "messageId": message_id}
+
+
+def _normalize_actions(actions: Any) -> list[dict[str, str]]:
+    if not isinstance(actions, list):
+        return []
+
+    chips: list[dict[str, str]] = []
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+        label = str(action.get("label") or "").strip()
+        message = str(action.get("message") or action.get("prompt") or label).strip()
+        if not label or not message:
+            continue
+        chips.append({"label": label[:40], "message": message[:200]})
+        if len(chips) >= 4:
+            break
+
+    return chips
 
 
 @router.post("/extract")
@@ -51,7 +77,12 @@ async def extract_follow_up_actions(
     messages = (await session.execute(stmt)).scalars().all()
 
     if not messages:
-        return {"actions": []}
+        return _empty_result()
+
+    assistant_message_id = next(
+        (m.id for m in messages if m.role == "assistant" and m.content),
+        "",
+    )
 
     # Build conversation for LLM
     conversation: list[dict[str, Any]] = [{"role": "system", "content": FOLLOW_UP_SYSTEM_PROMPT}]
@@ -61,7 +92,7 @@ async def extract_follow_up_actions(
             conversation.append({"role": m.role, "content": m.content[:500]})
 
     if len(conversation) <= 1:
-        return {"actions": []}
+        return _empty_result(assistant_message_id)
 
     conversation.append({"role": "user", "content": "Based on the conversation above, suggest follow-up actions."})
 
@@ -79,6 +110,6 @@ async def extract_follow_up_actions(
         actions = json.loads(content)
         if not isinstance(actions, list):
             actions = []
-        return {"actions": actions[:4]}
+        return {"chips": _normalize_actions(actions), "messageId": assistant_message_id}
     except Exception:
-        return {"actions": []}
+        return _empty_result(assistant_message_id)

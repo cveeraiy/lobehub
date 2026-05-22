@@ -3,7 +3,7 @@ import { createStaticStyles } from 'antd-style';
 import { Bot, Monitor, Settings } from 'lucide-react';
 import { memo, useCallback, useEffect, useState } from 'react';
 
-import { adminService } from '@/services/admin.resolved';
+import { adminService } from '@/services/admin';
 
 interface UserSettingsDrawerProps {
   onClose: () => void;

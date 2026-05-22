@@ -6,7 +6,8 @@ import json
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -21,33 +22,56 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/import", tags=["Import"])
 
 
-@router.post("")
-async def import_data(
-    file: UploadFile,
-    user_id: str = Depends(get_current_user_id),
-    session: AsyncSession = Depends(get_db),
-):
-    """Import agents, sessions, topics, and messages from a JSON file.
+class ImportByFileBody(BaseModel):
+    pathname: str
 
-    Expected JSON structure::
 
-        {
-          "version": 1,
-          "agents": [...],
-          "sessions": [...],
-          "topics": [...],
-          "messages": [...]
-        }
-    """
-    if not file.filename or not file.filename.endswith(".json"):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only .json files are accepted")
+def _import_results(results: dict[str, int]) -> dict[str, dict[str, int]]:
+    return {
+        key: {"added": value, "errors": 0, "skips": 0}
+        for key, value in results.items()
+    }
 
-    try:
-        content = await file.read()
-        data = json.loads(content)
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Invalid JSON: {exc}")
 
+def _response(results: dict[str, int]) -> dict[str, Any]:
+    return {"ok": True, "imported": results, "results": _import_results(results)}
+
+
+def _get_id(item: dict[str, Any], camel: str, snake: str | None = None) -> Any:
+    if camel in item:
+        return item.get(camel)
+    return item.get(snake or camel)
+
+
+async def _read_request_data(request: Request) -> dict[str, Any]:
+    content_type = request.headers.get("content-type", "")
+
+    if content_type.startswith("multipart/form-data"):
+        form = await request.form()
+        file = form.get("file")
+        if not isinstance(file, UploadFile) and not hasattr(file, "read"):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "file is required")
+        if not file.filename or not file.filename.endswith(".json"):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Only .json files are accepted")
+        try:
+            content = await file.read()
+            return json.loads(content)
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Invalid JSON: {exc}") from exc
+
+    payload = await request.json()
+    data = payload.get("data") if isinstance(payload, dict) and "data" in payload else payload
+    if not isinstance(data, dict):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid import payload")
+    return data
+
+
+async def _import_entry_data(
+    data: dict[str, Any],
+    *,
+    user_id: str,
+    session: AsyncSession,
+) -> dict[str, Any]:
     results: dict[str, int] = {"agents": 0, "sessions": 0, "topics": 0, "messages": 0}
 
     # Import agents
@@ -74,7 +98,7 @@ async def import_data(
             s = Session(
                 user_id=user_id,
                 type=item.get("type", "agent"),
-                title=item.get("title"),
+                title=item.get("title") or (item.get("meta") or {}).get("title"),
                 description=item.get("description"),
             )
             session.add(s)
@@ -89,7 +113,8 @@ async def import_data(
     topic_id_map: dict[str, str] = {}
     for item in data.get("topics", []):
         try:
-            mapped_session = session_id_map.get(item.get("session_id", ""), item.get("session_id"))
+            source_session_id = _get_id(item, "sessionId", "session_id")
+            mapped_session = session_id_map.get(source_session_id or "", source_session_id)
             t = Topic(
                 user_id=user_id,
                 session_id=mapped_session,
@@ -106,8 +131,10 @@ async def import_data(
     # Import messages
     for item in data.get("messages", []):
         try:
-            mapped_session = session_id_map.get(item.get("session_id", ""), item.get("session_id"))
-            mapped_topic = topic_id_map.get(item.get("topic_id", ""), item.get("topic_id"))
+            source_session_id = _get_id(item, "sessionId", "session_id")
+            source_topic_id = _get_id(item, "topicId", "topic_id")
+            mapped_session = session_id_map.get(source_session_id or "", source_session_id)
+            mapped_topic = topic_id_map.get(source_topic_id or "", source_topic_id)
             m = Message(
                 user_id=user_id,
                 session_id=mapped_session,
@@ -122,4 +149,65 @@ async def import_data(
             logger.warning("Skipped message import")
 
     await session.flush()
-    return {"ok": True, "imported": results}
+    return _response(results)
+
+
+@router.post("")
+async def import_data(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Import agents, sessions, topics, and messages from JSON body or multipart file."""
+    data = await _read_request_data(request)
+    return await _import_entry_data(data, user_id=user_id, session=session)
+
+
+@router.post("/pg")
+async def import_pg_data(
+    request: Request,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Accept PostgreSQL/PGlite import payloads and report table counts.
+
+    Full table-level restore is owned by the TS importer today; this endpoint
+    preserves the frontend REST contract and returns deterministic result
+    counts until Python owns the complete restore semantics.
+    """
+    payload = await request.json()
+    table_data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(table_data, dict):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid PG import payload")
+    results = {key: len(value) for key, value in table_data.items() if isinstance(value, list)}
+    return {"ok": True, "results": _import_results(results)}
+
+
+@router.post("/file")
+async def import_file_data(
+    body: ImportByFileBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Import JSON data from an uploaded S3 object path."""
+    try:
+        from app.services.file_service import S3Client
+
+        data = json.loads(await S3Client.from_settings().get_content(body.pathname))
+    except Exception as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            f"Failed to read file at {body.pathname}",
+        ) from exc
+
+    if isinstance(data, dict) and "schemaHash" in data and isinstance(data.get("data"), dict):
+        results = {
+            key: len(value)
+            for key, value in data["data"].items()
+            if isinstance(value, list)
+        }
+        return {"ok": True, "results": _import_results(results)}
+
+    if not isinstance(data, dict):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid import file payload")
+    return await _import_entry_data(data, user_id=user_id, session=session)

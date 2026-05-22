@@ -24,3 +24,15 @@ async def test_search(client: httpx.AsyncClient) -> None:
     })
     # 200 if provider configured, 400/500/503 if not
     assert r.status_code in (200, 400, 422, 500, 503)
+
+
+@pytest.mark.asyncio
+async def test_crawl_pages(client: httpx.AsyncClient) -> None:
+    r = await client.post("/api/web-search/crawl", json={"urls": ["not-a-url"]})
+    assert r.status_code == 200
+    data = r.json()
+    assert "results" in data
+    assert len(data["results"]) == 1
+    result = data["results"][0]
+    assert result["originalUrl"] == "not-a-url"
+    assert "data" in result

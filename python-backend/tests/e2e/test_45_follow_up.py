@@ -40,7 +40,7 @@ async def test_setup_messages(client):
     global _MESSAGE_ID
     assert _TOPIC_ID
     r1 = await client.post("/api/messages", json={
-        "topicId": _TOPIC_ID,
+        "topic_id": _TOPIC_ID,
         "role": "user",
         "content": "How do I implement authentication in a Python web app?",
     })
@@ -48,7 +48,7 @@ async def test_setup_messages(client):
     _MESSAGE_ID = r1.json()["id"]
 
     r2 = await client.post("/api/messages", json={
-        "topicId": _TOPIC_ID,
+        "topic_id": _TOPIC_ID,
         "role": "assistant",
         "content": "You can use OAuth2 with FastAPI. First install python-jose and passlib. Then create a JWT token endpoint with password hashing.",
     })
@@ -68,28 +68,29 @@ async def test_extract_follow_up(client):
     assert _TOPIC_ID
     r = await client.post(
         f"{FOLLOW_UP_PREFIX}/extract",
-        json={"topic_id": _TOPIC_ID, "message_limit": 6},
+        json={"topicId": _TOPIC_ID},
         timeout=30.0,
     )
     assert r.status_code == 200
     data = r.json()
-    assert "actions" in data
-    actions = data["actions"]
-    assert isinstance(actions, list)
+    assert data["messageId"]
+    assert "chips" in data
+    chips = data["chips"]
+    assert isinstance(chips, list)
     # If LLM was reachable, validate action structure
-    for action in actions:
-        assert "label" in action
-        assert "prompt" in action
+    for chip in chips:
+        assert "label" in chip
+        assert "message" in chip
 
 
 async def test_extract_follow_up_empty_topic(client):
     """POST /api/follow-up/extract with nonexistent topic returns empty actions."""
     r = await client.post(
         f"{FOLLOW_UP_PREFIX}/extract",
-        json={"topic_id": "nonexistent-topic-id"},
+        json={"topicId": "nonexistent-topic-id"},
     )
     assert r.status_code == 200
-    assert r.json()["actions"] == []
+    assert r.json() == {"chips": [], "messageId": ""}
 
 
 # ── Cleanup ────────────────────────────────────────────────────────

@@ -42,7 +42,7 @@ from app.tools.registry import register
     },
 )
 async def agent_create(arguments: dict[str, Any]) -> str:
-    """Stub — requires runtime session context."""
+    """Context-required fallback; real implementation uses tool_execution._handle_agent_tool."""
     return json.dumps({
         "note": "agent_create requires runtime session context",
         "slug": arguments.get("slug"),
@@ -69,7 +69,7 @@ async def agent_create(arguments: dict[str, Any]) -> str:
     },
 )
 async def agent_update(arguments: dict[str, Any]) -> str:
-    """Stub — requires runtime session context."""
+    """Context-required fallback; real implementation uses tool_execution._handle_agent_tool."""
     return json.dumps({
         "note": "agent_update requires runtime session context",
         "agent_id": arguments.get("agent_id"),
@@ -91,7 +91,7 @@ async def agent_update(arguments: dict[str, Any]) -> str:
     },
 )
 async def agent_delete(arguments: dict[str, Any]) -> str:
-    """Stub — requires runtime session context."""
+    """Context-required fallback; real implementation uses tool_execution._handle_agent_tool."""
     return json.dumps({
         "note": "agent_delete requires runtime session context",
         "agent_id": arguments.get("agent_id"),
@@ -107,7 +107,7 @@ async def agent_delete(arguments: dict[str, Any]) -> str:
     },
 )
 async def agent_list(arguments: dict[str, Any]) -> str:
-    """Stub — requires runtime session context."""
+    """Context-required fallback; real implementation uses tool_execution._handle_agent_tool."""
     return json.dumps({"note": "agent_list requires runtime session context"})
 
 
@@ -126,7 +126,7 @@ async def agent_list(arguments: dict[str, Any]) -> str:
     },
 )
 async def agent_get(arguments: dict[str, Any]) -> str:
-    """Stub — requires runtime session context."""
+    """Context-required fallback; real implementation uses tool_execution._handle_agent_tool."""
     return json.dumps({
         "note": "agent_get requires runtime session context",
         "agent_id": arguments.get("agent_id"),

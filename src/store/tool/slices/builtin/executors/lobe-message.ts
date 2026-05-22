@@ -2,7 +2,7 @@
  * Lobe Message Executor
  *
  * Frontend executor for the Message builtin tool.
- * Delegates all operations to the server via TRPC since they require
+ * Delegates all operations to the server since they require
  * database access (bot credentials, platform adapters).
  */
 import { MessageApiName, MessageToolIdentifier } from '@lobechat/builtin-tool-message';
@@ -10,7 +10,7 @@ import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
 import { agentBotProviderService } from '@/services/agentBotProvider.resolved';
-import { botMessageService } from '@/services/botMessage.resolved';
+import { botMessageService } from '@/services/botMessage';
 
 class MessageExecutor extends BaseExecutor<typeof MessageApiName> {
   readonly identifier = MessageToolIdentifier;

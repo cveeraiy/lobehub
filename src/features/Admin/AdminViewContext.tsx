@@ -12,7 +12,7 @@ import {
 } from 'react';
 
 import { DEFAULT_PREFERENCE } from '@/const/user';
-import { adminService } from '@/services/admin.resolved';
+import { adminService } from '@/services/admin';
 import { type UserStore, useUserStore } from '@/store/user';
 import { type LobeUser } from '@/types/user';
 

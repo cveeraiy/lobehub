@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { restClient } from '@/libs/rest/client';
 import type { GlobalRuntimeConfig } from '@/types/serverConfig';
 
-import { globalService } from '../global.rest';
+import { globalService } from '../global';
 
 const mockRestGet = vi.hoisted(() => vi.fn());
 

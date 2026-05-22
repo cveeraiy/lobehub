@@ -100,6 +100,7 @@ def _github_to_raw_manifest(git_url: str) -> str | None:
 async def _import_skill_from_url(session: Any, user_id: str, url: str) -> str:
     """Fetch a skill manifest from a URL and create an AgentSkill record."""
     from sqlalchemy import and_, select
+
     from app.models.skill import AgentSkill
 
     try:
@@ -155,6 +156,7 @@ async def _import_skill_from_url(session: Any, user_id: str, url: str) -> str:
 async def _local_skill_search(session: Any, user_id: str, keyword: str, limit: int) -> str:
     """Fallback: search user's installed skills locally."""
     from sqlalchemy import and_, desc, select
+
     from app.models.skill import AgentSkill
 
     escaped = escape_like(keyword)
@@ -200,7 +202,7 @@ async def _skill_store_context_dispatch(
     return await skill_store_with_context(api_name, arguments, session, user_id)
 
 
-# ── Registered tools (stubs) ────────────────────────────────────────
+# ── Registered tools (context-backed) ───────────────────────────────
 
 
 @register(
@@ -216,7 +218,7 @@ async def _skill_store_context_dispatch(
         "required": ["keyword"],
     },
 )
-async def _search_skill_stub(arguments: dict[str, Any]) -> str:
+async def _search_skill_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skill_store requires DB context"})
 
 
@@ -231,7 +233,7 @@ async def _search_skill_stub(arguments: dict[str, Any]) -> str:
         "required": ["url"],
     },
 )
-async def _import_url_stub(arguments: dict[str, Any]) -> str:
+async def _import_url_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skill_store requires DB context"})
 
 
@@ -246,7 +248,7 @@ async def _import_url_stub(arguments: dict[str, Any]) -> str:
         "required": ["git_url"],
     },
 )
-async def _import_github_stub(arguments: dict[str, Any]) -> str:
+async def _import_github_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skill_store requires DB context"})
 
 
@@ -261,7 +263,7 @@ async def _import_github_stub(arguments: dict[str, Any]) -> str:
         "required": ["identifier"],
     },
 )
-async def _import_market_stub(arguments: dict[str, Any]) -> str:
+async def _import_market_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skill_store requires DB context"})
 
 

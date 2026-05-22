@@ -22,8 +22,8 @@ import { ArrowLeft, Pencil, Plus, ShieldCheck, SlidersHorizontal, Trash2 } from 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { adminService } from '@/services/admin.rest';
-import { aiProviderService } from '@/services/aiProvider/index.rest';
+import { adminService } from '@/services/admin';
+import { aiProviderService } from '@/services/aiProvider';
 import {
   type EnterpriseAiPolicy,
   type EnterpriseAiPolicyInput,

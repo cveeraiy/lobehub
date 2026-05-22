@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Remove Frontend TRPC'
+  short_description: 'Retire frontend TRPC fallback code after REST parity is proven.'
+  default_prompt: 'Use $remove-trpc-frontend to remove TRPC frontend code for one REST-backed feature with careful parity checks and targeted tests.'

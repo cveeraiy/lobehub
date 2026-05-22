@@ -1,7 +1,7 @@
 import debug from 'debug';
 
-import { lambdaClient } from '@/libs/trpc/client';
-import { type CreateVideoServicePayload } from '@/server/routers/lambda/video';
+import { restClient } from '@/libs/rest';
+import type { CreateVideoServicePayload } from '@/server/routers/lambda/video';
 
 const log = debug('ethos-video:service');
 
@@ -10,7 +10,17 @@ export class AiVideoService {
     log('Creating video with payload: %O', payload);
 
     try {
-      const result = await lambdaClient.video.createVideo.mutate(payload);
+      const result = await restClient.post<{
+        data: { batch: any; generations: any[] };
+        success: boolean;
+      }>('/video/create', {
+        body: {
+          generationTopicId: payload.generationTopicId,
+          model: payload.model,
+          params: payload.params,
+          provider: payload.provider,
+        },
+      });
       log('Video creation service call completed: %O', {
         batchId: result.data?.batch?.id,
         generationCount: result.data?.generations?.length,

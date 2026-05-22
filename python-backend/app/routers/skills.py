@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import re
+import zipfile
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Optional
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import and_, delete, desc, or_, select, update
@@ -12,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
+from app.models.file import File
 from app.models.skill import AgentSkill, AgentSkillShare
 from app.skills.builtin import BUILTIN_SKILLS, get_builtin_skill
 
@@ -22,6 +28,111 @@ router = APIRouter(prefix="/api/skills", tags=["Skills"])
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _slugify_skill_identifier(value: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", value.strip().lower()).strip("-")
+    return slug[:120] or "imported-skill"
+
+
+def _manifest_from_text(text: str, *, source: dict[str, Any], fallback_name: str) -> dict[str, Any]:
+    try:
+        data = json.loads(text)
+        if isinstance(data, dict):
+            return data
+    except json.JSONDecodeError:
+        pass
+
+    name = fallback_name.rsplit(".", 1)[0] or "Imported Skill"
+    return {
+        "name": name,
+        "description": f"Imported from {source.get('type', 'source')}",
+        "prompt": text,
+        "source": source,
+    }
+
+
+async def _save_imported_skill(
+    session: AsyncSession,
+    user_id: str,
+    manifest: dict[str, Any],
+    *,
+    source: dict[str, Any],
+) -> AgentSkill:
+    name = str(manifest.get("name") or manifest.get("displayName") or source.get("name") or "Imported Skill")
+    description = str(manifest.get("description") or "")
+    identifier = _slugify_skill_identifier(str(manifest.get("identifier") or name))
+    existing = (
+        await session.execute(
+            select(AgentSkill).where(and_(AgentSkill.identifier == identifier, AgentSkill.user_id == user_id))
+        )
+    ).scalar_one_or_none()
+    if existing:
+        existing.display_name = name
+        existing.description = description
+        existing.manifest = {**manifest, "source": source}
+        existing.updated_at = _now()
+        session.add(existing)
+        await session.flush()
+        return existing
+
+    skill = AgentSkill(
+        identifier=identifier,
+        user_id=user_id,
+        display_name=name,
+        description=description,
+        manifest={**manifest, "source": source},
+        visibility="private",
+    )
+    session.add(skill)
+    await session.flush()
+    return skill
+
+
+async def _fetch_text_url(url: str) -> str:
+    async with httpx.AsyncClient(follow_redirects=True, timeout=30) as client:
+        response = await client.get(url)
+    if not response.is_success:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Failed to fetch skill: HTTP {response.status_code}")
+    return response.text
+
+
+def _github_raw_url(git_url: str, branch: str | None) -> str:
+    cleaned = git_url.rstrip("/")
+    if "raw.githubusercontent.com" in cleaned:
+        return cleaned
+    if "github.com" in cleaned:
+        marker = "/blob/"
+        if marker in cleaned:
+            return cleaned.replace("github.com", "raw.githubusercontent.com").replace(marker, "/")
+        parts = cleaned.split("github.com/", 1)[-1].split("/")
+        if len(parts) >= 2:
+            owner, repo = parts[0], parts[1].replace(".git", "")
+            ref = branch or "main"
+            suffix = "/".join(parts[2:]) if len(parts) > 2 else "SKILL.md"
+            return f"https://raw.githubusercontent.com/{owner}/{repo}/{ref}/{suffix}"
+    return git_url
+
+
+async def _load_zip_skill_manifest(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Zip file not found")
+    with zipfile.ZipFile(path) as archive:
+        names = archive.namelist()
+        manifest_name = next(
+            (name for name in names if name.endswith("skill.json") or name.endswith("manifest.json")),
+            None,
+        )
+        if manifest_name:
+            return json.loads(archive.read(manifest_name).decode("utf-8"))
+        skill_md = next((name for name in names if name.endswith("SKILL.md") or name.endswith("README.md")), None)
+        if skill_md:
+            return _manifest_from_text(
+                archive.read(skill_md).decode("utf-8"),
+                source={"type": "zip", "path": str(path)},
+                fallback_name=Path(skill_md).name,
+            )
+    raise HTTPException(status.HTTP_400_BAD_REQUEST, "Zip does not contain skill.json, manifest.json, or SKILL.md")
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -367,17 +478,10 @@ async def import_skill_from_url(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Import a skill from a URL (placeholder — needs skill importer service)."""
-    skill = AgentSkill(
-        identifier=f"url-import-{body.url.split('/')[-1][:20]}",
-        user_id=user_id,
-        display_name=f"Imported from URL",
-        description=f"Imported from {body.url}",
-        manifest={"source": "url", "url": body.url},
-        visibility="private",
-    )
-    session.add(skill)
-    await session.flush()
+    """Import a skill manifest or markdown prompt from a URL."""
+    text = await _fetch_text_url(body.url)
+    manifest = _manifest_from_text(text, source={"type": "url", "url": body.url}, fallback_name=body.url.split("/")[-1])
+    skill = await _save_imported_skill(session, user_id, manifest, source={"type": "url", "url": body.url})
     return {"id": skill.id, "identifier": skill.identifier}
 
 
@@ -387,18 +491,20 @@ async def import_skill_from_github(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Import a skill from GitHub (placeholder — needs skill importer service)."""
-    repo_name = body.git_url.rstrip("/").split("/")[-1]
-    skill = AgentSkill(
-        identifier=f"github-{repo_name}",
-        user_id=user_id,
-        display_name=repo_name,
-        description=f"Imported from GitHub: {body.git_url}",
-        manifest={"source": "github", "gitUrl": body.git_url, "branch": body.branch},
-        visibility="private",
+    """Import a skill from a GitHub raw/blob/repository URL."""
+    raw_url = _github_raw_url(body.git_url, body.branch)
+    text = await _fetch_text_url(raw_url)
+    manifest = _manifest_from_text(
+        text,
+        source={"type": "github", "gitUrl": body.git_url, "rawUrl": raw_url, "branch": body.branch},
+        fallback_name=raw_url.split("/")[-1],
     )
-    session.add(skill)
-    await session.flush()
+    skill = await _save_imported_skill(
+        session,
+        user_id,
+        manifest,
+        source={"type": "github", "gitUrl": body.git_url, "rawUrl": raw_url, "branch": body.branch},
+    )
     return {"id": skill.id, "identifier": skill.identifier}
 
 
@@ -408,17 +514,23 @@ async def import_skill_from_market(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Import a skill from the market (placeholder — needs market service)."""
-    skill = AgentSkill(
-        identifier=body.identifier,
-        user_id=user_id,
-        display_name=body.identifier,
-        description=f"Imported from market: {body.identifier}",
-        manifest={"source": "market", "identifier": body.identifier},
-        visibility="private",
+    """Import a builtin/market skill by identifier."""
+    builtin = get_builtin_skill(body.identifier)
+    if not builtin:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Market skill not found")
+    manifest = {
+        "identifier": builtin["identifier"],
+        "name": builtin["name"],
+        "description": builtin["description"],
+        "prompt": builtin.get("prompt"),
+        "tools": builtin.get("tools", []),
+    }
+    skill = await _save_imported_skill(
+        session,
+        user_id,
+        manifest,
+        source={"type": "market", "identifier": body.identifier},
     )
-    session.add(skill)
-    await session.flush()
     return {"id": skill.id, "identifier": skill.identifier}
 
 
@@ -428,17 +540,22 @@ async def import_skill_from_zip(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Import a skill from a zip file (placeholder — needs skill importer service)."""
-    skill = AgentSkill(
-        identifier=f"zip-import-{body.zip_file_id[:8]}",
-        user_id=user_id,
-        display_name=f"Imported from zip",
-        description="Imported from zip file",
-        manifest={"source": "zip", "zipFileId": body.zip_file_id},
-        visibility="private",
+    """Import a skill from a local zip path or uploaded file record."""
+    path = Path(body.zip_file_id)
+    if not path.exists():
+        file = (
+            await session.execute(select(File).where(and_(File.id == body.zip_file_id, File.user_id == user_id)))
+        ).scalar_one_or_none()
+        if not file:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Zip file not found")
+        path = Path(file.url)
+    manifest = await _load_zip_skill_manifest(path)
+    skill = await _save_imported_skill(
+        session,
+        user_id,
+        manifest,
+        source={"type": "zip", "zipFileId": body.zip_file_id},
     )
-    session.add(skill)
-    await session.flush()
     return {"id": skill.id, "identifier": skill.identifier}
 
 

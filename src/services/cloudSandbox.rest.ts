@@ -1,16 +1,19 @@
 import { restClient } from '@/libs/rest';
 
 interface CallToolResult {
-  content: string;
-  error?: { code: string; message: string };
+  error?: { message: string; name?: string };
+  result: unknown;
+  sessionExpiredAndRecreated?: boolean;
   success: boolean;
-  type: string;
 }
 
 interface ExportAndUploadFileResult {
+  fileId?: string;
   filename: string;
+  mimeType?: string;
+  size?: number;
   success: boolean;
-  url: string;
+  url?: string;
 }
 
 class CloudSandboxService {

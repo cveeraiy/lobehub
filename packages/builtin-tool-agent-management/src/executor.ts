@@ -13,7 +13,7 @@ import {
   type ConversationContext,
 } from '@lobechat/types';
 
-import { agentService } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent';
 import { discoverService } from '@/services/discover.resolved';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';

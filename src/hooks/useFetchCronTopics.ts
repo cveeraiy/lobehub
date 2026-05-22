@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 import { useAgentStore } from '@/store/agent';
 
 /**

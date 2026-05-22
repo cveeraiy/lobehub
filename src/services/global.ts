@@ -1,9 +1,9 @@
-import { type PartialDeep } from 'type-fest';
+import type { PartialDeep } from 'type-fest';
 
 import { BusinessGlobalService } from '@/business/client/services/BusinessGlobalService';
-import { lambdaClient } from '@/libs/trpc/client';
-import { type LobeAgentConfig } from '@/types/agent';
-import { type GlobalRuntimeConfig } from '@/types/serverConfig';
+import { restClient } from '@/libs/rest/client';
+import type { LobeAgentConfig } from '@/types/agent';
+import type { GlobalRuntimeConfig } from '@/types/serverConfig';
 
 interface VersionResponseData {
   version: string;
@@ -49,11 +49,11 @@ class GlobalService extends BusinessGlobalService {
   };
 
   getGlobalConfig = async (): Promise<GlobalRuntimeConfig> => {
-    return lambdaClient.config.getGlobalConfig.query();
+    return restClient.get<GlobalRuntimeConfig>('/config/global');
   };
 
   getDefaultAgentConfig = async (): Promise<PartialDeep<LobeAgentConfig>> => {
-    return lambdaClient.config.getDefaultAgentConfig.query();
+    return restClient.get<PartialDeep<LobeAgentConfig>>('/config/default-agent');
   };
 }
 

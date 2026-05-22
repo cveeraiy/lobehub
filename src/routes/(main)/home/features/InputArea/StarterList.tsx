@@ -7,7 +7,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useStableNavigate } from '@/hooks/useStableNavigate';
-import { agentService } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 

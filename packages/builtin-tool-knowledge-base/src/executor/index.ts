@@ -5,7 +5,7 @@ import { BaseExecutor } from '@lobechat/types';
 import { documentService } from '@/services/document/resolved';
 import { fileService } from '@/services/file/resolved';
 import { knowledgeBaseService } from '@/services/knowledgeBase.resolved';
-import { ragService } from '@/services/rag.resolved';
+import { ragService } from '@/services/rag';
 import { agentSelectors } from '@/store/agent/selectors';
 import { getAgentStoreState } from '@/store/agent/store';
 

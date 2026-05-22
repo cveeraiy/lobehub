@@ -71,7 +71,7 @@ async def knowledge_base_search_with_context(
     },
 )
 async def knowledge_base_search(arguments: dict[str, Any]) -> str:
-    """Stub — real implementation via context handler."""
+    """Context-required fallback; real implementation uses knowledge_base_search_with_context."""
     return json.dumps({"error": "knowledge_base_search requires DB context"})
 
 

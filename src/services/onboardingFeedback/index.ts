@@ -1,4 +1,4 @@
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 
 const COMMENT_MAX_LENGTH = 500;
 const FEEDBACK_EVENT_NAME = 'onboarding_feedback_submitted';

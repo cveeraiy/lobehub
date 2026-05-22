@@ -1,7 +1,7 @@
 import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { agentService } from './agent.rest';
+import { agentService } from './agent';
 
 const mockRestDelete = vi.hoisted(() => vi.fn());
 const mockRestGet = vi.hoisted(() => vi.fn());

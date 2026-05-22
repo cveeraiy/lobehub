@@ -10,7 +10,7 @@ import SkeletonList from '@/features/NavPanel/components/SkeletonList';
 import SideBarDrawer from '@/features/NavPanel/SideBarDrawer';
 import dynamic from '@/libs/next/dynamic';
 import { mutate } from '@/libs/swr';
-import { notificationService } from '@/services/notification.resolved';
+import { notificationService } from '@/services/notification';
 
 import { FETCH_KEY, UNREAD_COUNT_KEY } from './constants';
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Literal
 
-BotRuntimeStatus = Literal["connected", "connecting", "disconnected", "failed", "starting"]
+BotRuntimeStatus = Literal["connected", "disconnected", "dormant", "failed", "queued", "starting"]
 
 _runtime_statuses: dict[tuple[str, str], dict[str, object]] = {}
 

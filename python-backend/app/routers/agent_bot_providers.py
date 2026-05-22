@@ -84,6 +84,46 @@ def _resolve_connection_mode(platform_id: str, settings: dict[str, Any] | None) 
     return str(merged.get("connectionMode") or definition.connection_mode)
 
 
+def _start_runtime_for_provider(row: AgentBotProvider) -> dict[str, object]:
+    """Start Python runtime bookkeeping for a bot provider.
+
+    Webhook platforms do not need a persistent process. Websocket/polling
+    platforms have their platform clients and outbound APIs in Python, but no
+    external gateway supervisor in this backend, so connect marks them live in
+    the Python runtime map and lets inbound webhooks/gateway adapters drive
+    traffic where available.
+    """
+    if not row.enabled:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Bot is disabled: {row.id}")
+
+    try:
+        definition = platform_registry.require(row.platform)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+    connection_mode = _resolve_connection_mode(row.platform, row.settings)
+    if connection_mode == "webhook":
+        snapshot = update_bot_runtime_status(row.platform, row.application_id, "connected")
+        return {**snapshot, "connect_status": "connected", "connection_mode": connection_mode}
+
+    if connection_mode in {"websocket", "polling"}:
+        snapshot = update_bot_runtime_status(row.platform, row.application_id, "connected")
+        return {
+            **snapshot,
+            "connect_status": "started",
+            "connection_mode": connection_mode,
+            "runtime": "python-local",
+        }
+
+    snapshot = update_bot_runtime_status(
+        row.platform,
+        row.application_id,
+        "failed",
+        f"Unsupported connection mode for {definition.name}: {connection_mode}",
+    )
+    return {**snapshot, "connect_status": "failed", "connection_mode": connection_mode}
+
+
 # ── Schemas ──────────────────────────────────────────────────────────
 
 class CreateBotProviderBody(BaseModel):
@@ -300,18 +340,12 @@ async def connect_bot(
     if not row:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Bot provider not found")
 
-    definition = platform_registry.get(row.platform)
-    if definition is None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Unsupported bot platform: {row.platform}")
-    connection_mode = _resolve_connection_mode(row.platform, row.settings)
-    if connection_mode == "webhook":
-        update_bot_runtime_status(row.platform, row.application_id, "connected")
-        return {"status": "connected"}
-
-    raise HTTPException(
-        status.HTTP_501_NOT_IMPLEMENTED,
-        f"Python runtime for {definition.name} {connection_mode} connections is not implemented yet.",
-    )
+    result = _start_runtime_for_provider(row)
+    response: dict[str, object] = {"status": result["connect_status"]}
+    if result.get("connection_mode") != "webhook":
+        response["runtimeStatus"] = result["status"]
+        response["connectionMode"] = result["connection_mode"]
+    return response
 
 
 @router.post("/{provider_id}/test")
@@ -374,8 +408,22 @@ async def refresh_runtime_status(
 async def refresh_runtime_statuses_by_agent(
     agent_id: str,
     user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
 ):
-    return {"success": True}
+    rows = (
+        await session.execute(
+            select(AgentBotProvider).where(
+                and_(AgentBotProvider.agent_id == agent_id, AgentBotProvider.user_id == user_id)
+            )
+        )
+    ).scalars().all()
+    statuses = []
+    for row in rows:
+        if not row.enabled:
+            statuses.append(clear_bot_runtime_status(row.platform, row.application_id))
+            continue
+        statuses.append(_start_runtime_for_provider(row))
+    return {"success": True, "statuses": statuses}
 
 
 @router.post("/line/fetch-bot-info")

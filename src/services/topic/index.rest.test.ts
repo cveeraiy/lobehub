@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { topicService } from './index.rest';
+import { topicService } from './index';
 
 const mockRestDelete = vi.hoisted(() => vi.fn());
 const mockRestGet = vi.hoisted(() => vi.fn());

@@ -25,6 +25,7 @@ class CreateApiKeyBody(BaseModel):
 
 
 class UpdateApiKeyBody(BaseModel):
+    enabled: Optional[bool] = None
     name: Optional[str] = None
     expires_at: Optional[datetime] = None
 
@@ -92,6 +93,10 @@ async def update_api_key(
     session: AsyncSession = Depends(get_db),
 ):
     values = body.model_dump(exclude_unset=True)
+    # The current Python-owned schema does not include api_keys.enabled yet.
+    # Accept the REST field for frontend compatibility and ignore it until the
+    # database column is available.
+    values.pop("enabled", None)
     if not values:
         return {"ok": True}
     values["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)

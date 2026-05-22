@@ -13,7 +13,7 @@ import { FILE_UPLOAD_BLACKLIST, MAX_UPLOAD_FILE_COUNT } from '@/const/file';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { documentService } from '@/services/document/resolved';
 import { fileService } from '@/services/file/resolved';
-import { ragService } from '@/services/rag.resolved';
+import { ragService } from '@/services/rag';
 import { type UploadFileListDispatch } from '@/store/file/reducers/uploadFileList';
 import { uploadFileListReducer } from '@/store/file/reducers/uploadFileList';
 import { type StoreSetter } from '@/store/types';

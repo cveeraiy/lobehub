@@ -30,6 +30,7 @@ async def activator_with_context(
     new APIs are available.
     """
     from sqlalchemy import and_, select
+
     from app.models.skill import AgentSkill
     from app.skills.builtin import get_builtin_skill
 
@@ -149,7 +150,7 @@ async def _activator_context_dispatch(
     )
 
 
-# ── Registered tools (stubs) ────────────────────────────────────────
+# ── Registered tools (context-backed) ───────────────────────────────
 
 
 @register(
@@ -168,7 +169,7 @@ async def _activator_context_dispatch(
         "required": ["identifiers"],
     },
 )
-async def _activate_tools_stub(arguments: dict[str, Any]) -> str:
+async def _activate_tools_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "activator requires DB context"})
 
 
@@ -183,7 +184,7 @@ async def _activate_tools_stub(arguments: dict[str, Any]) -> str:
         "required": ["name"],
     },
 )
-async def _activate_skill_stub(arguments: dict[str, Any]) -> str:
+async def _activate_skill_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "activator requires DB context"})
 
 

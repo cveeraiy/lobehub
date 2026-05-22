@@ -27,7 +27,10 @@ async def agent_documents_with_context(
     **kwargs: Any,
 ) -> str:
     """Agent documents tool — manage agent-scoped documents."""
-    from sqlalchemy import select, update as sa_update, delete as sa_del
+    from sqlalchemy import delete as sa_del
+    from sqlalchemy import select
+    from sqlalchemy import update as sa_update
+
     from app.models.agent_ops import AgentDocument
     from app.models.file import Document
     from app.models.topic_ext import TopicDocument
@@ -230,7 +233,7 @@ async def agent_documents_with_context(
         "required": ["api_name", "arguments"],
     },
 )
-async def agent_documents_tool_stub(args: dict[str, Any]) -> str:
+async def agent_documents_tool_context_required(args: dict[str, Any]) -> str:
     return json.dumps({"error": "Agent Documents tool requires server context (session + user_id)."})
 
 

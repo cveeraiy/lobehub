@@ -9,7 +9,7 @@ import { message } from '@/components/AntdStaticMethods';
 import { DEFAULT_AGENT_LOBE_SESSION, INBOX_SESSION_ID } from '@/const/session';
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { chatGroupService } from '@/services/chatGroup/resolved';
-import { sessionService } from '@/services/session/resolved';
+import { sessionService } from '@/services/session';
 import { getChatGroupStoreState } from '@/store/agentGroup';
 import { type SessionStore } from '@/store/session';
 import { type StoreSetter } from '@/store/types';

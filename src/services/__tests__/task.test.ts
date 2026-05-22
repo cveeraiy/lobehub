@@ -1,15 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { restClient } from '@/libs/rest';
 import { lambdaClient } from '@/libs/trpc/client';
 import { taskService } from '@/services/task';
 
 // Mock lambdaClient
 vi.mock('@/libs/trpc/client', () => ({
   lambdaClient: {
-    brief: {
-      markRead: { mutate: vi.fn() },
-      resolve: { mutate: vi.fn() },
-    },
     task: {
       addComment: { mutate: vi.fn() },
       addDependency: { mutate: vi.fn() },
@@ -41,6 +38,14 @@ vi.mock('@/libs/trpc/client', () => ({
       updateReview: { mutate: vi.fn() },
       updateStatus: { mutate: vi.fn() },
     },
+  },
+}));
+
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    delete: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
@@ -157,17 +162,18 @@ describe('TaskService', () => {
   });
 
   describe('brief operations', () => {
-    it('resolveBrief should call brief.resolve.mutate', async () => {
+    it('resolveBrief should call the REST brief service', async () => {
       await taskService.resolveBrief('brief_1', { action: 'approve' });
-      expect(lambdaClient.brief.resolve.mutate).toHaveBeenCalledWith({
-        action: 'approve',
-        id: 'brief_1',
+      expect(restClient.post).toHaveBeenCalledWith('/briefs/brief_1/resolve', {
+        body: {
+          action: 'approve',
+        },
       });
     });
 
-    it('markBriefRead should call brief.markRead.mutate', async () => {
+    it('markBriefRead should call the REST brief service', async () => {
       await taskService.markBriefRead('brief_1');
-      expect(lambdaClient.brief.markRead.mutate).toHaveBeenCalledWith({ id: 'brief_1' });
+      expect(restClient.post).toHaveBeenCalledWith('/briefs/brief_1/read');
     });
   });
 });

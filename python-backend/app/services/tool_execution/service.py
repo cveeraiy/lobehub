@@ -35,6 +35,14 @@ async def execute_tool_call(
 
     Tries builtin tools first, then falls back to MCP.
     """
+    if get_context_handler(tool_name):
+        return json.dumps(
+            {
+                "error": f"Tool '{tool_name}' requires runtime context. "
+                "Call execute_tool_call_with_context with a DB session and user_id.",
+            }
+        )
+
     handler = get_handler(tool_name)
     if handler:
         try:
@@ -163,7 +171,10 @@ async def _handle_agent_tool(
     user_id: str,
 ) -> str:
     """Handle agent_create/update/delete/list/get with DB context."""
-    from sqlalchemy import delete as sa_delete, select, update as sa_update
+    from sqlalchemy import delete as sa_delete
+    from sqlalchemy import select
+    from sqlalchemy import update as sa_update
+
     from app.models.agent import Agent
 
     if tool_name == "agent_list":

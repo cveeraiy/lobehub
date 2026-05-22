@@ -42,6 +42,7 @@ async def brief_with_context(
 ) -> str:
     """Brief tool — create briefs and checkpoints."""
     from sqlalchemy import update as sa_update
+
     from app.models.task import Brief, Task
 
     task_id = kwargs.get("task_id")
@@ -136,7 +137,7 @@ async def brief_with_context(
         "required": ["api_name", "arguments"],
     },
 )
-async def brief_tool_stub(args: dict[str, Any]) -> str:
+async def brief_tool_context_required(args: dict[str, Any]) -> str:
     return json.dumps({"error": "Brief tool requires server context (session + user_id)."})
 
 

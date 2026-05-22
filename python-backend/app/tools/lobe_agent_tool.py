@@ -133,7 +133,7 @@ async def lobe_agent_with_context(
         "required": ["api_name", "arguments"],
     },
 )
-async def lobe_agent_tool_stub(args: dict[str, Any]) -> str:
+async def lobe_agent_tool_context_required(args: dict[str, Any]) -> str:
     return json.dumps({"error": "LobeAgent tool requires server context (session + user_id)."})
 
 

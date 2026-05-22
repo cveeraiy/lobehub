@@ -15,7 +15,7 @@ import ModeSwitch from '@/features/Onboarding/components/ModeSwitch';
 import { useClientDataSWR, useOnlyFetchOnceSWR } from '@/libs/swr';
 import OnboardingContainer from '@/routes/onboarding/_layout';
 import { fetchOnboardingAgentTemplates } from '@/services/agentMarketplace.resolved';
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 import { userService } from '@/services/user/resolved';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors';

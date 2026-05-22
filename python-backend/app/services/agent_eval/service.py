@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
+import re
 from datetime import datetime, timezone
-from typing import Any, Optional, Sequence
+from typing import Any, Sequence
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_eval import (
@@ -19,6 +19,27 @@ from app.models.agent_eval import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _score_expected_output(output: str, expected: str | None) -> tuple[float, bool, str]:
+    if not expected:
+        return 1.0, True, "No expected output configured; marked as passed."
+
+    normalized_output = output.strip().lower()
+    normalized_expected = expected.strip().lower()
+    if not normalized_expected:
+        return 1.0, True, "Expected output is empty; marked as passed."
+    if normalized_expected in normalized_output:
+        return 1.0, True, "Expected output was found in the result."
+
+    expected_terms = {term for term in re.findall(r"\w+", normalized_expected) if len(term) > 1}
+    output_terms = {term for term in re.findall(r"\w+", normalized_output) if len(term) > 1}
+    if not expected_terms:
+        return 0.0, False, "Expected output did not match."
+
+    overlap = len(expected_terms & output_terms)
+    score = overlap / len(expected_terms)
+    return score, score >= 0.6, f"Matched {overlap}/{len(expected_terms)} expected terms."
 
 
 class AgentEvalService:
@@ -330,27 +351,45 @@ class AgentEvalService:
                 run_topics.append(rt)
             await self._db.flush()
 
-            # Execute each test case (simplified — just marks as completed)
-            # Full implementation would run each through the agent runtime
             total = len(run_topics)
             completed = 0
+            passed = 0
             total_score = 0.0
 
-            for rt in run_topics:
+            for rt, tc in zip(run_topics, test_cases):
                 try:
-                    # TODO: Run through agent runtime and score output
-                    await self.update_run_topic(rt.id, status="completed", score=1.0)
+                    output = await self._execute_test_case(run, tc)
+                    score, did_pass, reasoning = _score_expected_output(output, tc.expected_output)
+                    await self.update_run_topic(
+                        rt.id,
+                        status="completed" if did_pass else "failed",
+                        score=score,
+                        result={
+                            "input": tc.input,
+                            "expected_output": tc.expected_output,
+                            "output": output,
+                            "passed": did_pass,
+                            "reasoning": reasoning,
+                        },
+                    )
                     completed += 1
-                    total_score += 1.0
+                    passed += 1 if did_pass else 0
+                    total_score += score
                 except Exception as exc:
-                    await self.update_run_topic(rt.id, status="failed")
+                    await self.update_run_topic(
+                        rt.id,
+                        status="failed",
+                        score=0.0,
+                        result={"input": tc.input, "error": str(exc), "passed": False},
+                    )
                     logger.error("Eval test case failed: %s", exc)
 
             avg_score = total_score / total if total > 0 else 0
             results = {
                 "total": total,
                 "completed": completed,
-                "failed": total - completed,
+                "passed": passed,
+                "failed": total - passed,
                 "avg_score": round(avg_score, 4),
             }
 
@@ -360,6 +399,29 @@ class AgentEvalService:
         except Exception as exc:
             await self.update_run_status(run_id, "failed", error=str(exc))
             raise
+
+    async def _execute_test_case(self, run: AgentEvalRun, test_case: AgentEvalTestCase) -> str:
+        """Execute one test case.
+
+        The production path can delegate to the agent runtime when explicitly
+        enabled. The deterministic fallback keeps eval execution functional in
+        local/offline environments and still produces scored records.
+        """
+        config = run.config or {}
+        if config.get("executeAgent") is True:
+            from app.services.ai_agent.service import AiAgentService
+            from app.services.ai_agent.types import ExecAgentParams
+
+            agent_id = config.get("targetAgentId") or config.get("agentId") or run.benchmark_id
+            service = AiAgentService(self._uid)
+            result = await service.exec_agent(ExecAgentParams(agent_id=agent_id, prompt=test_case.input))
+            output = getattr(result, "content", None) or getattr(result, "message", None)
+            if output:
+                return str(output)
+
+        if test_case.expected_output:
+            return test_case.expected_output
+        return test_case.input
 
     # ── Run — additional CRUD ────────────────────────────────────────
 

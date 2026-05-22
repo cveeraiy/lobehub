@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 
 import { message } from '@/components/AntdStaticMethods';
-import { agentService } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent';
 import { chatGroupService } from '@/services/chatGroup/resolved';
-import { homeService } from '@/services/home/resolved';
-import { sessionService } from '@/services/session/resolved';
+import { homeService } from '@/services/home';
+import { sessionService } from '@/services/session';
 import { getAgentStoreState } from '@/store/agent';
 import { type HomeStore } from '@/store/home/store';
 import { type StoreSetter } from '@/store/types';

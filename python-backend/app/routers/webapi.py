@@ -5,14 +5,14 @@ from __future__ import annotations
 import ipaddress
 import json
 import logging
+import random
 import socket
 from html import escape
 from typing import Any, AsyncIterator
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request
-from fastapi import UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,11 +20,37 @@ from app.config import settings
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.services import ai_infra_service as ai_svc
-from app.services import llm_service
-from app.services import provider_runtime
+from app.services import llm_service, provider_runtime
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webapi", tags=["WebAPI"])
+
+COMFYUI_DEFAULT_NEGATIVE_PROMPT = (
+    "worst quality, normal quality, low quality, low res, blurry, distortion, "
+    "text, watermark, logo, bad anatomy, bad proportions, deformed"
+)
+
+COMFYUI_MODEL_ID_CANDIDATES: dict[str, list[str]] = {
+    "flux-dev": ["flux1-dev.safetensors"],
+    "flux-krea-dev": ["flux1-krea-dev.safetensors"],
+    "flux-kontext-dev": ["flux1-kontext-dev.safetensors"],
+    "flux-schnell": ["flux1-schnell.safetensors"],
+    "stable-diffusion-15": [
+        "v1-5-pruned-emaonly.safetensors",
+        "v1-5-pruned.safetensors",
+        "v1-5-pruned-emaonly.ckpt",
+    ],
+    "stable-diffusion-35": [
+        "sd3.5_large.safetensors",
+        "sd3.5_large_fp8_scaled.safetensors",
+        "sd3.5_medium.safetensors",
+    ],
+    "stable-diffusion-35-inclclip": ["sd3.5_medium_incl_clips_t5xxlfp8scaled.safetensors"],
+    "stable-diffusion-custom": ["custom_sd_lobe.safetensors"],
+    "stable-diffusion-custom-refiner": ["custom_sd_lobe.safetensors"],
+    "stable-diffusion-refiner": ["sd_xl_refiner_1.0.safetensors"],
+    "stable-diffusion-xl": ["sd_xl_base_1.0.safetensors"],
+}
 
 
 def _jsonable(value: Any) -> Any:
@@ -126,6 +152,187 @@ def _error_message(exc: Exception) -> str:
 
     message = getattr(exc, "message", None) or str(exc)
     return str(message) if message else exc.__class__.__name__
+
+
+def _int_body(body: dict[str, Any], *keys: str, default: int) -> int:
+    for key in keys:
+        value = body.get(key)
+        if value is None:
+            continue
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            break
+    return default
+
+
+def _float_body(body: dict[str, Any], *keys: str, default: float) -> float:
+    for key in keys:
+        value = body.get(key)
+        if value is None:
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            break
+    return default
+
+
+def _clean_comfyui_model_id(model: str | None) -> str:
+    if not model:
+        return "stable-diffusion-xl"
+    return model.removeprefix("comfyui/").strip()
+
+
+async def _available_comfyui_checkpoints(runtime: provider_runtime.ProviderRuntimeConfig) -> list[str]:
+    async with httpx.AsyncClient(timeout=30) as client:
+        res = await client.get(
+            f"{runtime.api_base.rstrip('/')}/object_info/CheckpointLoaderSimple",
+            headers=runtime.extra_kwargs.get("auth_headers") or {},
+        )
+    res.raise_for_status()
+    data = res.json()
+    names = (
+        data.get("CheckpointLoaderSimple", {})
+        .get("input", {})
+        .get("required", {})
+        .get("ckpt_name", [[]])[0]
+    )
+    return [str(name) for name in names] if isinstance(names, list) else []
+
+
+async def _resolve_comfyui_checkpoint(
+    runtime: provider_runtime.ProviderRuntimeConfig,
+    model: str | None,
+) -> str:
+    clean_model = _clean_comfyui_model_id(model)
+    if clean_model.endswith((".safetensors", ".ckpt", ".pt", ".pth", ".bin")):
+        return clean_model
+
+    candidates = COMFYUI_MODEL_ID_CANDIDATES.get(clean_model, [clean_model])
+    try:
+        available = await _available_comfyui_checkpoints(runtime)
+    except Exception:
+        available = []
+    if not available:
+        return candidates[0]
+    for candidate in candidates:
+        if candidate in available:
+            return candidate
+    raise HTTPException(
+        status.HTTP_400_BAD_REQUEST,
+        {
+            "error": "ComfyUI model not available",
+            "model": clean_model,
+            "expected": candidates,
+            "available": available[:50],
+        },
+    )
+
+
+def _build_comfyui_checkpoint_workflow(body: dict[str, Any], checkpoint_name: str) -> dict[str, Any]:
+    prompt = str(body.get("prompt") or body.get("positive") or "")
+    if not prompt:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "prompt is required")
+
+    image_urls = body.get("imageUrls") or body.get("image_urls") or []
+    if not isinstance(image_urls, list):
+        image_urls = []
+    image_url = body.get("imageUrl") or body.get("image_url") or (image_urls[0] if image_urls else None)
+    is_i2i = bool(image_url)
+
+    width = _int_body(body, "width", default=1024)
+    height = _int_body(body, "height", default=1024)
+    steps = _int_body(body, "steps", default=20)
+    cfg = _float_body(body, "cfg", "guidance", "guidanceScale", "guidance_scale", default=7.0)
+    seed = _int_body(body, "seed", default=random.randint(0, 2**31 - 1))
+    sampler_name = str(body.get("samplerName") or body.get("sampler_name") or "euler")
+    scheduler = str(body.get("scheduler") or "normal")
+    denoise = _float_body(body, "strength", "denoise", default=0.75 if is_i2i else 1.0)
+    negative_prompt = str(body.get("negativePrompt") or body.get("negative_prompt") or COMFYUI_DEFAULT_NEGATIVE_PROMPT)
+
+    workflow: dict[str, Any] = {
+        "1": {
+            "_meta": {"title": "Load Checkpoint"},
+            "class_type": "CheckpointLoaderSimple",
+            "inputs": {"ckpt_name": checkpoint_name},
+        },
+        "2": {
+            "_meta": {"title": "Positive Prompt"},
+            "class_type": "CLIPTextEncode",
+            "inputs": {"clip": ["1", 1], "text": prompt},
+        },
+        "3": {
+            "_meta": {"title": "Negative Prompt"},
+            "class_type": "CLIPTextEncode",
+            "inputs": {"clip": ["1", 1], "text": negative_prompt},
+        },
+        "5": {
+            "_meta": {"title": "KSampler"},
+            "class_type": "KSampler",
+            "inputs": {
+                "cfg": cfg,
+                "denoise": denoise,
+                "latent_image": ["9", 0] if is_i2i else ["4", 0],
+                "model": ["1", 0],
+                "negative": ["3", 0],
+                "positive": ["2", 0],
+                "sampler_name": sampler_name,
+                "scheduler": scheduler,
+                "seed": seed,
+                "steps": steps,
+            },
+        },
+        "6": {
+            "_meta": {"title": "VAE Decode"},
+            "class_type": "VAEDecode",
+            "inputs": {"samples": ["5", 0], "vae": ["1", 2]},
+        },
+        "7": {
+            "_meta": {"title": "Save Image"},
+            "class_type": "SaveImage",
+            "inputs": {"filename_prefix": "Ethos/Python_ComfyUI", "images": ["6", 0]},
+        },
+    }
+    if is_i2i:
+        workflow["8"] = {
+            "_meta": {"title": "Load Input Image"},
+            "class_type": "LoadImage",
+            "inputs": {"image": str(image_url)},
+        }
+        workflow["9"] = {
+            "_meta": {"title": "VAE Encode Input"},
+            "class_type": "VAEEncode",
+            "inputs": {"pixels": ["8", 0], "vae": ["1", 2]},
+        }
+    else:
+        workflow["4"] = {
+            "_meta": {"title": "Empty Latent"},
+            "class_type": "EmptyLatentImage",
+            "inputs": {"batch_size": 1, "height": height, "width": width},
+        }
+    return workflow
+
+
+async def _resolve_comfyui_workflow(
+    body: dict[str, Any],
+    runtime: provider_runtime.ProviderRuntimeConfig,
+) -> dict[str, Any]:
+    workflow = body.get("workflow")
+    if workflow is None and isinstance(body.get("prompt"), dict):
+        workflow = body["prompt"]
+    if workflow is not None:
+        if isinstance(workflow, str):
+            try:
+                workflow = json.loads(workflow)
+            except json.JSONDecodeError as exc:
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, "workflow must be valid JSON") from exc
+        if not isinstance(workflow, dict):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "workflow must be a ComfyUI prompt object")
+        return workflow
+
+    checkpoint_name = await _resolve_comfyui_checkpoint(runtime, body.get("model"))
+    return _build_comfyui_checkpoint_workflow(body, checkpoint_name)
 
 
 def _classify_provider_error(provider: str, exc: Exception) -> tuple[str, int]:
@@ -541,17 +748,7 @@ async def create_image_comfyui(
 ):
     body = await request.json()
     runtime = await provider_runtime.resolve_provider_config(session, user_id, "comfyui")
-    workflow = body.get("workflow") or body.get("prompt")
-    if not workflow:
-        return JSONResponse(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            content={
-                "error": (
-                    "ComfyUI workflow construction is not implemented in Python; "
-                    "send a ComfyUI workflow in workflow or prompt."
-                ),
-            },
-        )
+    workflow = await _resolve_comfyui_workflow(body, runtime)
     client_id = body.get("clientId") or body.get("client_id") or f"python-{user_id}"
     async with httpx.AsyncClient(timeout=120) as client:
         res = await client.post(

@@ -3,7 +3,7 @@ import { type SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
 import { type RecentItem } from '@/server/routers/lambda/recent';
-import { recentService } from '@/services/recent/resolved';
+import { recentService } from '@/services/recent';
 import { type HomeStore } from '@/store/home/store';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';

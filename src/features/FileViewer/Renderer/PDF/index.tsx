@@ -9,8 +9,7 @@ import { Fragment, memo, useCallback, useState } from 'react';
 
 import NeuralNetworkLoading from '@/components/NeuralNetworkLoading';
 import { Document, Page, pdfjs } from '@/libs/pdfjs';
-import { ragService } from '@/services/rag.resolved';
-import type { ChunkPage } from '@/services/rag.rest';
+import { type ChunkPage, ragService } from '@/services/rag';
 
 import HighlightLayer from './HighlightLayer';
 import { styles } from './style';

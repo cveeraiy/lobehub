@@ -49,6 +49,20 @@ async def test_list_api_keys(client: httpx.AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_update_api_key_enabled(client: httpx.AsyncClient, state: SharedState) -> None:
+    if not state.api_key_id:
+        pytest.skip("No API key")
+    r = await client.put(f"/api/api-keys/{state.api_key_id}", json={"enabled": False})
+    assert r.status_code == 200
+
+    listed = await client.get("/api/api-keys")
+    assert listed.status_code == 200
+    item = next((k for k in listed.json() if k["id"] == state.api_key_id), None)
+    assert item is not None
+    assert "enabled" in item
+
+
+@pytest.mark.asyncio
 async def test_delete_api_key(client: httpx.AsyncClient, state: SharedState) -> None:
     if not state.api_key_id:
         pytest.skip("No API key created")

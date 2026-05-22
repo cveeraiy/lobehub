@@ -1,15 +1,17 @@
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 class GenerationService {
   async getGenerationStatus(generationId: string, asyncTaskId: string) {
-    return lambdaClient.generation.getGenerationStatus.query({ asyncTaskId, generationId });
+    return restClient.get(`/generations/${generationId}/status`, {
+      params: { asyncTaskId },
+    });
   }
 
   /**
    * Delete a single generation
    */
   async deleteGeneration(generationId: string) {
-    return lambdaClient.generation.deleteGeneration.mutate({ generationId });
+    return restClient.delete(`/generations/${generationId}`);
   }
 }
 

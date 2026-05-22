@@ -133,6 +133,11 @@ class Settings(BaseSettings):
     code_interpreter_docker_image: str = "python:3.12-slim"
     # Max memory for sandbox container
     code_interpreter_memory_limit: str = "256m"
+    # Docker network mode for self-hosted sandbox containers. Use "none" for
+    # strict isolation, or "bridge" when sandbox commands need outbound access.
+    cloud_sandbox_docker_network: str = "none"
+    # Root directory for self-hosted Cloud Sandbox workspaces
+    cloud_sandbox_root: Optional[str] = None
 
     # ── URL safety (SSRF protection) ──────────────────────────────
     # Comma-separated allowed URL schemes for tool fetches
@@ -171,6 +176,16 @@ class Settings(BaseSettings):
     # ── Feature flags ────────────────────────────────────────────
     # Comma-separated: "+flag_name" to enable, "-flag_name" to disable
     feature_flags: str = ""
+
+    # ── Temporal workflows ───────────────────────────────────────
+    # Durable self-hosted replacement for QStash workflow transport.
+    temporal_enabled: bool = False
+    temporal_address: str = "localhost:7233"
+    temporal_namespace: str = "default"
+    temporal_task_queue: str = "ethos-workflows"
+    temporal_workflow_timeout_seconds: int = 3600
+    temporal_activity_timeout_seconds: int = 900
+    temporal_fallback_to_inline: bool = True
 
 
 @lru_cache(maxsize=1)

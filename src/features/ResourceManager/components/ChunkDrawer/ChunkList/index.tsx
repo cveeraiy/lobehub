@@ -3,8 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { memo } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
-import { ragService } from '@/services/rag.resolved';
-import type { ChunkPage } from '@/services/rag.rest';
+import { type ChunkPage, ragService } from '@/services/rag';
 
 import SkeletonLoading from '../Loading';
 import ChunkItem from './ChunkItem';

@@ -95,6 +95,10 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.recent",
     "app.routers.admin",
     "app.routers.enterprise_ai_policies",
+    "app.routers.openapi_permissions",
+    "app.routers.openapi_roles",
+    "app.routers.openapi_message_translations",
+    "app.routers.openapi_responses",
     # User
     "app.routers.user",
     "app.routers.user_memory",
@@ -166,6 +170,7 @@ _ROUTER_MODULES: list[str] = [
     # Tasks & briefs
     "app.routers.tasks",
     "app.routers.briefs",
+    "app.routers.workflows",
 ]
 
 for _mod_path in _ROUTER_MODULES:

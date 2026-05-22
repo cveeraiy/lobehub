@@ -9,7 +9,7 @@ import useSWRInfinite from 'swr/infinite';
 import { VList, type VListHandle } from 'virtua';
 
 import SkeletonList from '@/features/NavPanel/components/SkeletonList';
-import { notificationService } from '@/services/notification.resolved';
+import { notificationService } from '@/services/notification';
 
 import { FETCH_KEY } from './constants';
 import NotificationItem from './NotificationItem';

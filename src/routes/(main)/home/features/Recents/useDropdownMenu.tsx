@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { type RecentItem } from '@/server/routers/lambda/recent';
 import { documentService } from '@/services/document/resolved';
 import { taskService } from '@/services/task.resolved';
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 import { useHomeStore } from '@/store/home';
 
 export const useRecentItemDropdownMenu = (

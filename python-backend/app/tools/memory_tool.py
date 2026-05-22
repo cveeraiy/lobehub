@@ -24,7 +24,7 @@ async def memory_search_with_context(
     user_id: str,
 ) -> str:
     """Vector-based memory search with layer/category filters."""
-    from app.services import memory_service, llm_service
+    from app.services import llm_service, memory_service
 
     query = arguments.get("query", "")
     if not query:
@@ -80,7 +80,7 @@ async def memory_store_with_context(
     user_id: str,
 ) -> str:
     """Store a memory with auto-embedding, supporting all 5 layers."""
-    from app.services import memory_service, llm_service
+    from app.services import llm_service, memory_service
 
     summary = arguments.get("summary", "")
     if not summary:
@@ -126,7 +126,7 @@ async def memory_store_with_context(
         return json.dumps({"error": f"Memory store failed: {exc}"})
 
 
-# ── Registered tools (stubs + context handlers) ─────────────────────
+# ── Registered tools (context-backed) ────────────────────────────────
 
 
 @register(
@@ -159,7 +159,7 @@ async def memory_store_with_context(
     },
 )
 async def memory_search(arguments: dict[str, Any]) -> str:
-    """Stub — real implementation via context handler."""
+    """Context-required fallback; real implementation uses memory_search_with_context."""
     return json.dumps({"error": "memory_search requires DB context"})
 
 
@@ -191,7 +191,7 @@ async def memory_search(arguments: dict[str, Any]) -> str:
     },
 )
 async def memory_store(arguments: dict[str, Any]) -> str:
-    """Stub — real implementation via context handler."""
+    """Context-required fallback; real implementation uses memory_store_with_context."""
     return json.dumps({"error": "memory_store requires DB context"})
 
 

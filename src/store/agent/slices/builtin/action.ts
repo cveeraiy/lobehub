@@ -3,7 +3,7 @@ import { type SWRResponse } from 'swr';
 import { type PartialDeep } from 'type-fest';
 
 import { useOnlyFetchOnceSWR } from '@/libs/swr';
-import { agentService } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent';
 import { type StoreSetter } from '@/store/types';
 
 import { type AgentStore } from '../../store';

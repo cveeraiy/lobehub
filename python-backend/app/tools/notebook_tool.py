@@ -28,7 +28,10 @@ async def notebook_with_context(
     **kwargs: Any,
 ) -> str:
     """Notebook tool — CRUD for notes stored as documents."""
-    from sqlalchemy import select, update as sa_update, delete as sa_del
+    from sqlalchemy import delete as sa_del
+    from sqlalchemy import select
+    from sqlalchemy import update as sa_update
+
     from app.models.file import Document
 
     if api_name == "createNote":
@@ -167,7 +170,7 @@ async def notebook_with_context(
         "required": ["api_name", "arguments"],
     },
 )
-async def notebook_tool_stub(args: dict[str, Any]) -> str:
+async def notebook_tool_context_required(args: dict[str, Any]) -> str:
     return json.dumps({"error": "Notebook tool requires server context (session + user_id)."})
 
 

@@ -10,6 +10,7 @@ FastAPI backend for Ethos — chat, agents, knowledge bases, memory, tools, and 
 - PostgreSQL 15+ with pgvector extension
 - (Optional) Keycloak for OIDC auth
 - (Optional) S3-compatible storage (MinIO / AWS S3)
+- (Optional) Temporal for durable workflow execution
 
 ### 1. Install dependencies
 
@@ -41,6 +42,8 @@ Key environment variables:
 | `S3_ENDPOINT`          | No       | S3 endpoint URL (e.g. `http://localhost:9000`)  |
 | `S3_BUCKET`            | No       | S3 bucket name (default: `lobehub`)             |
 | `OPENAI_API_KEY`       | No       | Default OpenAI API key                          |
+| `TEMPORAL_ENABLED`     | No       | Enqueue workflow routes into Temporal           |
+| `TEMPORAL_ADDRESS`     | No       | Temporal frontend address (default: localhost)  |
 | `DEBUG`                | No       | Enable debug mode + API docs (default: `false`) |
 
 ### 3. Set up the database
@@ -59,6 +62,16 @@ uvicorn main:app --reload --port 8000
 # Production
 uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
+
+### 4a. Start the Temporal worker
+
+When `TEMPORAL_ENABLED=true`, workflow HTTP endpoints enqueue durable Temporal workflows. Run at least one worker process for the configured task queue:
+
+```bash
+python -m app.workers.temporal_worker
+```
+
+The Docker Compose dev stack includes Temporal on `localhost:7233` and Temporal UI on <http://localhost:8233>.
 
 ### 5. Verify
 

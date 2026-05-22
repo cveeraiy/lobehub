@@ -1,12 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { adminService } from './admin.rest';
+import { adminService } from './admin';
 
 const mockRestGet = vi.hoisted(() => vi.fn());
 
 vi.mock('@/libs/rest', () => ({
   restClient: {
     get: mockRestGet,
+    put: vi.fn(),
   },
 }));
 

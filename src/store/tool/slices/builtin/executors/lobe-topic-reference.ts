@@ -1,7 +1,7 @@
 import { TopicReferenceExecutor } from '@lobechat/builtin-tool-topic-reference/executor';
 import type { BuiltinToolResult } from '@lobechat/types';
 
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 
 interface GetTopicContextParams {
   topicId: string;

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { exportService } from '@/services/export/resolved';
+import { exportService } from '@/services/export';
 
 interface PdfGenerationParams {
   content: string;

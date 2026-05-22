@@ -5,7 +5,7 @@ import { type SWRResponse } from 'swr';
 import { SESSION_CHAT_TOPIC_URL } from '@/const/url';
 import { CURRENT_VERSION } from '@/const/version';
 import { useOnlyFetchOnceSWR } from '@/libs/swr';
-import { globalService } from '@/services/global.resolved';
+import { globalService } from '@/services/global';
 import { type SystemStatus } from '@/store/global/initialState';
 import { type StoreSetter } from '@/store/types';
 import { type LocaleMode } from '@/types/locale';

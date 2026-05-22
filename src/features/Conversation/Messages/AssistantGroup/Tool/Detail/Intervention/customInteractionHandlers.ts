@@ -5,7 +5,7 @@ import {
 import { UserInteractionIdentifier } from '@lobechat/builtin-tool-user-interaction';
 import type { OnboardingAgentMarketplacePickSnapshot } from '@lobechat/types';
 
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 
 import { installMarketplaceAgents } from './installMarketplaceAgents';
 

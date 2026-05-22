@@ -34,7 +34,9 @@ async def gtd_with_context(
     **kwargs: Any,
 ) -> str:
     """GTD tool — manage plans as documents."""
-    from sqlalchemy import select, update as sa_update
+    from sqlalchemy import select
+    from sqlalchemy import update as sa_update
+
     from app.models.file import Document
     from app.models.topic_ext import TopicDocument
 
@@ -209,7 +211,7 @@ async def gtd_with_context(
         "required": ["api_name", "arguments"],
     },
 )
-async def gtd_tool_stub(args: dict[str, Any]) -> str:
+async def gtd_tool_context_required(args: dict[str, Any]) -> str:
     return json.dumps({"error": "GTD tool requires server context (session + user_id)."})
 
 

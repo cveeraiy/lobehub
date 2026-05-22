@@ -18,8 +18,9 @@ async def topic_reference_with_context(
 ) -> str:
     """Fetch topic summary or recent messages from the database."""
     from sqlalchemy import and_, desc, select
-    from app.models.topic import Topic
+
     from app.models.message import Message
+    from app.models.topic import Topic
 
     topic_id = arguments.get("topic_id", "")
     if not topic_id:
@@ -80,8 +81,8 @@ async def topic_reference_with_context(
         "required": ["topic_id"],
     },
 )
-async def _topic_reference_stub(arguments: dict[str, Any]) -> str:
-    """Stub — real implementation routed via context handler."""
+async def _topic_reference_context_required(arguments: dict[str, Any]) -> str:
+    """Context-required fallback; real implementation uses topic_reference_with_context."""
     return json.dumps({"error": "topic_reference requires DB context"})
 
 

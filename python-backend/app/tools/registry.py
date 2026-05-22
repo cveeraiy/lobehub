@@ -13,14 +13,14 @@ Context-aware tools
 Some tools (memory, topic_reference, skills, etc.) need a DB session and
 user_id at runtime.  These register a ``context_handler`` via
 ``register_context_handler(name, handler)``.  The dispatcher in
-``tool_execution.py`` checks for context handlers first, falling back to
-the plain handler (which returns a stub error).
+``tool_execution.py`` checks for context handlers first. Plain invocations
+return a context-required error before any fallback handler is used.
 """
 
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, Callable, Coroutine, Optional, Protocol, runtime_checkable
+from typing import Any, Callable, Coroutine, Protocol, runtime_checkable
 
 ToolHandler = Callable[[dict[str, Any]], Coroutine[Any, Any, str]]
 

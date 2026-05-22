@@ -6,7 +6,7 @@ import {
   type UpdateAiModelParams,
 } from 'model-bank';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 export interface GetAiProviderModelListParams {
   enabled?: boolean;
@@ -16,50 +16,56 @@ export interface GetAiProviderModelListParams {
 
 export class AiModelService {
   createAiModel = async (params: CreateAiModelParams) => {
-    return lambdaClient.aiModel.createAiModel.mutate(params);
+    return restClient.post('/ai-infra/models', { body: params });
   };
 
   getAiProviderModelList = async (
     id: string,
     params?: GetAiProviderModelListParams,
   ): Promise<AiProviderModelListItem[]> => {
-    return lambdaClient.aiModel.getAiProviderModelList.query({ id, ...params });
+    return restClient.get<AiProviderModelListItem[]>(`/ai-infra/providers/${id}/models`, {
+      params: params as any,
+    });
   };
 
   getAiModelById = async (id: string) => {
-    return lambdaClient.aiModel.getAiModelById.query({ id });
+    return restClient.get(`/ai-infra/models/${id}`);
   };
 
   toggleModelEnabled = async (params: ToggleAiModelEnableParams) => {
-    return lambdaClient.aiModel.toggleModelEnabled.mutate(params);
+    return restClient.put('/ai-infra/models/toggle', { body: params });
   };
 
   updateAiModel = async (id: string, providerId: string, value: UpdateAiModelParams) => {
-    return lambdaClient.aiModel.updateAiModel.mutate({ id, providerId, value });
+    return restClient.put(`/ai-infra/models/${id}/provider/${providerId}`, { body: value });
   };
 
   batchUpdateAiModels = async (id: string, models: AiProviderModelListItem[]) => {
-    return lambdaClient.aiModel.batchUpdateAiModels.mutate({ id, models });
+    return restClient.put(`/ai-infra/providers/${id}/models/batch`, { body: { models } });
   };
 
   batchToggleAiModels = async (id: string, models: string[], enabled: boolean) => {
-    return lambdaClient.aiModel.batchToggleAiModels.mutate({ enabled, id, models });
+    return restClient.put(`/ai-infra/providers/${id}/models/batch-toggle`, {
+      body: { enabled, models },
+    });
   };
 
   clearModelsByProvider = async (providerId: string) => {
-    return lambdaClient.aiModel.clearModelsByProvider.mutate({ providerId });
+    return restClient.delete(`/ai-infra/providers/${providerId}/models`);
   };
 
   clearRemoteModels = async (providerId: string) => {
-    return lambdaClient.aiModel.clearRemoteModels.mutate({ providerId });
+    return restClient.delete(`/ai-infra/providers/${providerId}/models/remote`);
   };
 
   updateAiModelOrder = async (providerId: string, items: AiModelSortMap[]) => {
-    return lambdaClient.aiModel.updateAiModelOrder.mutate({ providerId, sortMap: items });
+    return restClient.put(`/ai-infra/providers/${providerId}/models/order`, {
+      body: { sortMap: items },
+    });
   };
 
   deleteAiModel = async (params: { id: string; providerId: string }) => {
-    return lambdaClient.aiModel.removeAiModel.mutate(params);
+    return restClient.delete(`/ai-infra/models/${params.id}/provider/${params.providerId}`);
   };
 }
 

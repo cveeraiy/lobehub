@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { mutate } from '@/libs/swr';
-import { agentService } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent';
 
 const FETCH_AGENT_CONFIG_KEY = 'FETCH_AGENT_CONFIG';
 

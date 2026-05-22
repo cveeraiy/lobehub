@@ -10,6 +10,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      temporal:
+        condition: service_started
       rustfs:
         condition: service_healthy
       rustfs-init:
@@ -31,6 +33,10 @@ services:
       - 'REDIS_URL=redis://redis:6379'
       - 'REDIS_PREFIX=lobechat'
       - 'REDIS_TLS=0'
+      - 'TEMPORAL_ENABLED=true'
+      - 'TEMPORAL_ADDRESS=temporal:7233'
+      - 'TEMPORAL_NAMESPACE=default'
+      - 'TEMPORAL_TASK_QUEUE=ethos-workflows'
     env_file:
       - .env
     restart: always
@@ -75,6 +81,38 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: always
+    networks:
+      - lobe-network
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    container_name: lobe-temporal
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PWD=${POSTGRES_PASSWORD}
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    ports:
+      - '7233:7233'
+    restart: always
+    networks:
+      - lobe-network
+
+  temporal-ui:
+    image: temporalio/ui:latest
+    container_name: lobe-temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    ports:
+      - '8233:8080'
     restart: always
     networks:
       - lobe-network

@@ -37,7 +37,10 @@ async def task_with_context(
     **kwargs: Any,
 ) -> str:
     """Task tool — CRUD tasks from within agent execution."""
-    from sqlalchemy import select, update as sa_update, delete as sa_del
+    from sqlalchemy import delete as sa_del
+    from sqlalchemy import select
+    from sqlalchemy import update as sa_update
+
     from app.models.task import Task
 
     agent_id = kwargs.get("agent_id")
@@ -260,7 +263,7 @@ async def task_with_context(
         "required": ["api_name", "arguments"],
     },
 )
-async def task_tool_stub(args: dict[str, Any]) -> str:
+async def task_tool_context_required(args: dict[str, Any]) -> str:
     return json.dumps({"error": "Task tool requires server context (session + user_id)."})
 
 

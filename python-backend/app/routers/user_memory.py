@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field as PField
-from sqlalchemy import Column, and_, asc, delete, desc, func, literal_column, or_, select, update
+from pydantic import BaseModel
+from pydantic import Field as PField
+from sqlalchemy import and_, asc, delete, desc, func, literal_column, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -25,6 +25,7 @@ from app.models.memory import (
     UserMemoryIdentity,
     UserMemoryPreference,
 )
+from app.models.message import Message
 from app.models.persona import UserPersonaDocument
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,48 @@ router = APIRouter(prefix="/api/user-memory", tags=["User Memory"])
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _summarize_memory_text(messages: list[Message]) -> tuple[str, str]:
+    lines = [
+        f"{message.role}: {(message.content or '').strip()}"
+        for message in messages
+        if (message.content or "").strip()
+    ]
+    details = "\n".join(lines)
+    if not details:
+        return "No memory content found", ""
+    first_user = next((m.content for m in messages if m.role == "user" and m.content), None)
+    title = (first_user or details.splitlines()[0])[:120]
+    summary = details[:1000]
+    return title, summary
+
+
+async def _extract_memory_from_messages(
+    session: AsyncSession,
+    user_id: str,
+    messages: list[Message],
+    *,
+    source: dict[str, Any],
+) -> UserMemory | None:
+    title, summary = _summarize_memory_text(messages)
+    if not summary:
+        return None
+    memory = UserMemory(
+        user_id=user_id,
+        title=title,
+        summary=summary,
+        details="\n".join(m.content or "" for m in messages if m.content),
+        memory_category="chat",
+        memory_layer="context",
+        memory_type="conversation_summary",
+        tags=["extracted"],
+        metadata_=source,
+        status="active",
+    )
+    session.add(memory)
+    await session.flush()
+    return memory
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -1724,7 +1767,7 @@ async def get_memory_detail(
     return result
 
 
-# ── Extraction endpoints (placeholders) ──────────────────────────────
+# ── Extraction endpoints ─────────────────────────────────────────────
 
 
 class ExtractionFromChatTopicsBody(BaseModel):
@@ -1739,17 +1782,35 @@ async def extraction_from_chat_topics(
     session: AsyncSession = Depends(get_db),
 ):
     from app.models.misc import AsyncTask
+    from_date = _parse_date(body.fromDate)
+    to_date = _parse_date(body.toDate)
     task = AsyncTask(
         user_id=user_id,
         type="memory_extraction",
-        status="pending",
+        status="processing",
     )
     session.add(task)
     await session.flush()
+
+    stmt = select(Message).where(and_(Message.user_id == user_id, Message.content.isnot(None)))
+    if from_date:
+        stmt = stmt.where(Message.created_at >= from_date)
+    if to_date:
+        stmt = stmt.where(Message.created_at <= to_date)
+    stmt = stmt.order_by(desc(Message.created_at)).limit(100)
+    messages = list(reversed((await session.execute(stmt)).scalars().all()))
+    memory = await _extract_memory_from_messages(
+        session,
+        user_id,
+        messages,
+        source={"source": "chat_topics", "fromDate": body.fromDate, "toDate": body.toDate},
+    )
+    task.status = "success"
+    task.error = None
     return {
         "id": task.id,
-        "status": "pending",
-        "metadata": {},
+        "status": task.status,
+        "metadata": {"memoryId": memory.id if memory else None, "messageCount": len(messages)},
         "deduped": False,
     }
 
@@ -2034,13 +2095,35 @@ async def request_memory_from_chat_topic(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Request memory extraction from a chat topic (placeholder — needs LLM service)."""
+    """Extract a base memory from a chat topic."""
     from app.models.misc import AsyncTask
     task = AsyncTask(
         user_id=user_id,
         type="memory_extraction",
-        status="pending",
+        status="processing",
     )
     session.add(task)
     await session.flush()
-    return {"task_id": task.id, "status": "pending"}
+
+    messages = (
+        await session.execute(
+            select(Message)
+            .where(and_(Message.topic_id == body.topic_id, Message.user_id == user_id, Message.content.isnot(None)))
+            .order_by(Message.created_at)
+            .limit(100)
+        )
+    ).scalars().all()
+    memory = await _extract_memory_from_messages(
+        session,
+        user_id,
+        list(messages),
+        source={"source": "topic", "topicId": body.topic_id},
+    )
+    task.status = "success"
+    task.error = None
+    return {
+        "task_id": task.id,
+        "status": task.status,
+        "memory_id": memory.id if memory else None,
+        "message_count": len(messages),
+    }

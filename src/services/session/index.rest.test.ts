@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LobeSessionType } from '@/types/session';
 
-import { sessionService } from './index.rest';
+import { sessionService } from './index';
 
 const mockRestDelete = vi.hoisted(() => vi.fn());
 const mockRestGet = vi.hoisted(() => vi.fn());

@@ -22,6 +22,7 @@ async def skills_with_context(
 ) -> str:
     """Skills tool — list, get, read resource, run command, exec script."""
     from sqlalchemy import and_, desc, select
+
     from app.models.skill import AgentSkill
     from app.skills.builtin import BUILTIN_SKILLS, get_builtin_skill
 
@@ -211,7 +212,7 @@ async def _skills_context_dispatch(
     return await skills_with_context(api_name, arguments, session, user_id)
 
 
-# ── Registered tools (stubs) ────────────────────────────────────────
+# ── Registered tools (context-backed) ───────────────────────────────
 
 
 @register(
@@ -219,7 +220,7 @@ async def _skills_context_dispatch(
     description="List all installed skills (user and builtin).",
     parameters={"type": "object", "properties": {}},
 )
-async def _skills_find_all_stub(arguments: dict[str, Any]) -> str:
+async def _skills_find_all_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skills requires DB context"})
 
 
@@ -234,7 +235,7 @@ async def _skills_find_all_stub(arguments: dict[str, Any]) -> str:
         "required": ["name"],
     },
 )
-async def _skills_find_by_name_stub(arguments: dict[str, Any]) -> str:
+async def _skills_find_by_name_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skills requires DB context"})
 
 
@@ -250,7 +251,7 @@ async def _skills_find_by_name_stub(arguments: dict[str, Any]) -> str:
         "required": ["skill_id", "path"],
     },
 )
-async def _skills_read_resource_stub(arguments: dict[str, Any]) -> str:
+async def _skills_read_resource_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skills requires DB context"})
 
 
@@ -265,7 +266,7 @@ async def _skills_read_resource_stub(arguments: dict[str, Any]) -> str:
         "required": ["command"],
     },
 )
-async def _skills_run_command_stub(arguments: dict[str, Any]) -> str:
+async def _skills_run_command_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skills requires DB context"})
 
 
@@ -286,7 +287,7 @@ async def _skills_run_command_stub(arguments: dict[str, Any]) -> str:
         "required": ["script"],
     },
 )
-async def _skills_exec_script_stub(arguments: dict[str, Any]) -> str:
+async def _skills_exec_script_context_required(arguments: dict[str, Any]) -> str:
     return json.dumps({"error": "skills requires DB context"})
 
 

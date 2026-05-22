@@ -38,6 +38,9 @@ dependencies = [
     # SSE
     "sse-starlette>=3.0.0",
 
+    # Durable workflows
+    "temporalio>=1.8.0",
+
     # Utils
     "anyio>=4.0.0",
     "nanoid>=2.0.0",

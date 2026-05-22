@@ -25,7 +25,7 @@ import { TRPCClientError } from '@trpc/client';
 import { t } from 'i18next';
 
 import { markUserValidAction } from '@/business/client/markUserValidAction';
-import { agentService } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent';
 import { aiChatService } from '@/services/aiChat.resolved';
 import { chatService } from '@/services/chat';
 import { resolveEnabledChatModelConfig } from '@/services/chat/mecha/modelFallback';

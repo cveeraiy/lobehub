@@ -8,24 +8,40 @@ startEvaluationTask, checkEvaluationStatus.
 
 from __future__ import annotations
 
+import json
+import re
+import time
 from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field as PField
-from sqlalchemy import and_, delete, select, text, update
+from pydantic import BaseModel
+from pydantic import Field as PField
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models._helpers import create_nanoid
-from app.models.misc import AsyncTask
+from app.services.rag_parsing import lexical_search_chunks
 
 router = APIRouter(prefix="/api/rag-eval", tags=["RAG Evaluation"])
 
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _score_answer(answer: str, ideal: str | None) -> tuple[float, bool, str]:
+    if not ideal:
+        return 1.0, True, "No ideal answer configured."
+    answer_terms = {term for term in re.findall(r"\w+", answer.lower()) if len(term) > 1}
+    ideal_terms = {term for term in re.findall(r"\w+", ideal.lower()) if len(term) > 1}
+    if not ideal_terms:
+        return 1.0, True, "Ideal answer is empty."
+    overlap = len(answer_terms & ideal_terms)
+    score = overlap / len(ideal_terms)
+    return score, score >= 0.6, f"Matched {overlap}/{len(ideal_terms)} ideal terms."
 
 
 # ── Schemas ──────────────────────────────────────────────────────────
@@ -98,7 +114,13 @@ async def create_dataset(
             "INSERT INTO rag_eval_datasets (id, name, description, knowledge_base_id, user_id) "
             "VALUES (:id, :name, :description, :kb_id, :uid)"
         ),
-        {"id": ds_id, "name": body.name, "description": body.description, "kb_id": body.knowledge_base_id, "uid": user_id},
+        {
+            "id": ds_id,
+            "name": body.name,
+            "description": body.description,
+            "kb_id": body.knowledge_base_id,
+            "uid": user_id,
+        },
     )
     return ds_id
 
@@ -128,6 +150,17 @@ async def remove_dataset(
     session: AsyncSession = Depends(get_db),
 ):
     """Delete a dataset and its child records."""
+    evaluation_ids = (
+        await session.execute(
+            text("SELECT id FROM rag_eval_evaluations WHERE dataset_id = :id AND user_id = :uid"),
+            {"id": dataset_id, "uid": user_id},
+        )
+    ).scalars().all()
+    if evaluation_ids:
+        await session.execute(
+            text("DELETE FROM rag_eval_evaluation_records WHERE evaluation_id = ANY(:ids) AND user_id = :uid"),
+            {"ids": evaluation_ids, "uid": user_id},
+        )
     # Cascade: remove child records first
     await session.execute(
         text("DELETE FROM rag_eval_dataset_records WHERE dataset_id = :id AND user_id = :uid"),
@@ -237,7 +270,8 @@ async def create_dataset_record(
     rec_id = create_nanoid(32)
     await session.execute(
         text(
-            "INSERT INTO rag_eval_dataset_records (id, dataset_id, question, ideal, reference_files, metadata, user_id) "
+            "INSERT INTO rag_eval_dataset_records "
+            "(id, dataset_id, question, ideal, reference_files, metadata, user_id) "
             "VALUES (:id, :ds_id, :question, :ideal, :ref_files, cast(:meta as json), :uid)"
         ),
         {
@@ -278,6 +312,10 @@ async def remove_dataset_record(
     session: AsyncSession = Depends(get_db),
 ):
     """Delete a dataset record."""
+    await session.execute(
+        text("DELETE FROM rag_eval_evaluation_records WHERE dataset_record_id = :id AND user_id = :uid"),
+        {"id": record_id, "uid": user_id},
+    )
     await session.execute(
         text("DELETE FROM rag_eval_dataset_records WHERE id = :id AND user_id = :uid"),
         {"id": record_id, "uid": user_id},
@@ -399,6 +437,10 @@ async def remove_evaluation(
 ):
     """Delete an evaluation."""
     await session.execute(
+        text("DELETE FROM rag_eval_evaluation_records WHERE evaluation_id = :id AND user_id = :uid"),
+        {"id": evaluation_id, "uid": user_id},
+    )
+    await session.execute(
         text("DELETE FROM rag_eval_evaluations WHERE id = :id AND user_id = :uid"),
         {"id": evaluation_id, "uid": user_id},
     )
@@ -414,9 +456,12 @@ async def start_evaluation_task(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    """Start a RAG evaluation task (placeholder — needs evaluation service)."""
+    """Run a RAG evaluation task."""
     row = await session.execute(
-        text("SELECT id, dataset_id FROM rag_eval_evaluations WHERE id = :id AND user_id = :uid"),
+        text(
+            "SELECT id, dataset_id, knowledge_base_id, language_model, embedding_model "
+            "FROM rag_eval_evaluations WHERE id = :id AND user_id = :uid"
+        ),
         {"id": evaluation_id, "uid": user_id},
     )
     eval_row = row.fetchone()
@@ -427,7 +472,90 @@ async def start_evaluation_task(
         text("UPDATE rag_eval_evaluations SET status = 'processing' WHERE id = :id"),
         {"id": evaluation_id},
     )
-    return {"success": True, "evaluation_id": evaluation_id}
+
+    records_result = await session.execute(
+        text(
+            "SELECT id, question, ideal, reference_files FROM rag_eval_dataset_records "
+            "WHERE dataset_id = :dataset_id AND user_id = :uid ORDER BY created_at"
+        ),
+        {"dataset_id": eval_row.dataset_id, "uid": user_id},
+    )
+    records = records_result.fetchall()
+    await session.execute(
+        text("DELETE FROM rag_eval_evaluation_records WHERE evaluation_id = :id AND user_id = :uid"),
+        {"id": evaluation_id, "uid": user_id},
+    )
+
+    passed = 0
+    total_score = 0.0
+    output_records: list[dict[str, Any]] = []
+    for record in records:
+        started = time.monotonic()
+        chunks = await lexical_search_chunks(
+            session,
+            user_id,
+            record.question or "",
+            limit=5,
+            file_ids=record.reference_files,
+            kb_ids=[eval_row.knowledge_base_id] if eval_row.knowledge_base_id else None,
+        )
+        contexts = [chunk.get("text", "") for chunk in chunks]
+        answer = "\n\n".join(contexts[:3])
+        score, did_pass, reasoning = _score_answer(answer, record.ideal)
+        passed += 1 if did_pass else 0
+        total_score += score
+        eval_record_id = create_nanoid(32)
+        error = None if did_pass else {"reason": reasoning, "score": score}
+        await session.execute(
+            text(
+                "INSERT INTO rag_eval_evaluation_records "
+                "(id, question, answer, context, ideal, status, error, language_model, embedding_model, "
+                "duration, dataset_record_id, evaluation_id, user_id) "
+                "VALUES (:id, :question, :answer, :context, :ideal, :status, cast(:error as json), "
+                ":language_model, :embedding_model, :duration, :dataset_record_id, :evaluation_id, :uid)"
+            ),
+            {
+                "id": eval_record_id,
+                "question": record.question or "",
+                "answer": answer,
+                "context": contexts,
+                "ideal": record.ideal,
+                "status": "success" if did_pass else "failed",
+                "error": json.dumps(error) if error else None,
+                "language_model": eval_row.language_model,
+                "embedding_model": eval_row.embedding_model,
+                "duration": int((time.monotonic() - started) * 1000),
+                "dataset_record_id": record.id,
+                "evaluation_id": evaluation_id,
+                "uid": user_id,
+            },
+        )
+        output_records.append(
+            {
+                "id": eval_record_id,
+                "datasetRecordId": record.id,
+                "score": score,
+                "passed": did_pass,
+                "reasoning": reasoning,
+            }
+        )
+
+    total = len(records)
+    summary = {
+        "total": total,
+        "passed": passed,
+        "failed": total - passed,
+        "avgScore": round(total_score / total, 4) if total else 0,
+        "records": output_records,
+    }
+    await session.execute(
+        text(
+            "UPDATE rag_eval_evaluations SET status = 'success', eval_records_url = :summary "
+            "WHERE id = :id AND user_id = :uid"
+        ),
+        {"id": evaluation_id, "uid": user_id, "summary": json.dumps(summary)},
+    )
+    return {"success": True, "evaluation_id": evaluation_id, "summary": summary}
 
 
 @router.get("/evaluations/{evaluation_id}/status")

@@ -8,7 +8,7 @@ import { AgentManagerRuntime } from '@lobechat/agent-manager-runtime';
 import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
-import { agentService } from '@/services/agent.resolved';
+import { agentService } from '@/services/agent';
 import { discoverService } from '@/services/discover.resolved';
 
 import type {

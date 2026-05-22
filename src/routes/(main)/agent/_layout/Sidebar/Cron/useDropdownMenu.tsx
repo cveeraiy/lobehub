@@ -6,7 +6,7 @@ import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { agentCronJobService } from '@/services/agentCronJob.resolved';
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 import { useAgentStore } from '@/store/agent';
 
 export const useCronJobDropdownMenu = (

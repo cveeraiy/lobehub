@@ -3,7 +3,7 @@ import { copyToClipboard } from '@lobehub/ui';
 import isEqual from 'fast-deep-equal';
 
 import { messageService } from '@/services/message/resolved';
-import { topicService } from '@/services/topic/resolved';
+import { topicService } from '@/services/topic';
 import { type ChatStore } from '@/store/chat/store';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';

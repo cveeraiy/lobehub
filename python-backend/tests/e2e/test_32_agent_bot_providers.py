@@ -136,16 +136,30 @@ async def test_test_connection(client: httpx.AsyncClient, state: SharedState) ->
     assert r.json()["detail"]["valid"] is False
 
 
-# ── 32.9  Connect persistent bot (unsupported until gateway port) ───
+# ── 32.9  Connect persistent bot runtime ────────────────────────────
 
 @pytest.mark.asyncio
-async def test_connect_persistent_bot_is_explicitly_unsupported(
+async def test_connect_persistent_bot_updates_runtime_status(
     client: httpx.AsyncClient,
     state: SharedState,
 ) -> None:
     assert state.provider_id
+    enable = await client.patch(f"/api/agent-bot-providers/{state.provider_id}", json={"enabled": True})
+    assert enable.status_code == 200
+
     r = await client.post(f"/api/agent-bot-providers/{state.provider_id}/connect")
-    assert r.status_code == 501
+    assert r.status_code == 200
+    data = r.json()
+    assert data["status"] == "started"
+    assert data["runtimeStatus"] == "connected"
+    assert data["connectionMode"] == "websocket"
+
+    status_response = await client.get(
+        "/api/agent-bot-providers/runtime-status/get",
+        params={"application_id": "discord-app-test-123", "platform": "discord"},
+    )
+    assert status_response.status_code == 200
+    assert status_response.json()["status"] == "connected"
 
 
 # ── 32.10  Connect webhook bot and read runtime status ───────────────

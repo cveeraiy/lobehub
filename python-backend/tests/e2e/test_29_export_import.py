@@ -105,6 +105,45 @@ async def test_import_data(client: httpx.AsyncClient, state: SharedState) -> Non
     data = r.json()
     assert data.get("ok") is True
     assert data["imported"]["agents"] >= 1
+    assert data["results"]["agents"]["added"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_import_json_body(client: httpx.AsyncClient) -> None:
+    payload = {
+        "data": {
+            "agents": [
+                {"slug": f"import-json-{id(object())}", "title": "Imported JSON Agent"},
+            ],
+            "messages": [],
+            "sessions": [],
+            "topics": [],
+        },
+    }
+
+    r = await client.post("/api/import", json=payload)
+    assert r.status_code == 200
+    data = r.json()
+    assert data.get("ok") is True
+    assert data["results"]["agents"]["added"] >= 1
+
+
+@pytest.mark.asyncio
+async def test_import_pg_counts(client: httpx.AsyncClient) -> None:
+    payload = {
+        "data": {
+            "messages": [{"id": "message-1"}, {"id": "message-2"}],
+            "sessions": [{"id": "session-1"}],
+        },
+        "schemaHash": "test",
+    }
+
+    r = await client.post("/api/import/pg", json=payload)
+    assert r.status_code == 200
+    data = r.json()
+    assert data.get("ok") is True
+    assert data["results"]["messages"]["added"] == 2
+    assert data["results"]["sessions"]["added"] == 1
 
 
 # ── 29.6  Import invalid file ───────────────────────────────────────
