@@ -607,14 +607,14 @@ Each builtin tool is a self-contained package:
 | `builtin-tool-gtd`            | Getting Things Done task management |
 | ...                           |                                     |
 
-### Platform Adapters
+### Python Backend Platform Adapters
 
-| Package               | Platform    |
-| --------------------- | ----------- |
-| `chat-adapter-feishu` | Feishu/Lark |
-| `chat-adapter-qq`     | QQ          |
-| `chat-adapter-wechat` | WeChat      |
-| `chat-adapter-line`   | LINE        |
+| Python service path                                | Platform    |
+| -------------------------------------------------- | ----------- |
+| `python-backend/app/services/bot/platforms/feishu` | Feishu/Lark |
+| `python-backend/app/services/bot/platforms/qq`     | QQ          |
+| `python-backend/app/services/bot/platforms/wechat` | WeChat      |
+| `python-backend/app/services/bot/platforms/line`   | LINE        |
 
 ### Infrastructure Packages
 
@@ -627,7 +627,6 @@ Each builtin tool is a self-contained package:
 | `@lobechat/file-loaders`         | Document parsing (PDF, DOCX, etc.)           |
 | `@lobechat/web-crawler`          | Web content extraction                       |
 | `@lobechat/python-interpreter`   | Python code execution (Pyodide)              |
-| `@lobechat/openapi`              | OpenAPI/Swagger tooling                      |
 | `@lobechat/eval-rubric`          | Agent evaluation rubrics                     |
 | `@lobechat/heterogeneous-agents` | External agent adapters (Claude Code, Codex) |
 

@@ -53,26 +53,19 @@ Some platforms have official adapters published under `@chat-adapter/*`:
 
 Check npm with `npm view @chat-adapter/<platform>` to see if one exists.
 
-### Option B: Develop a custom adapter in `packages/`
+### Option B: Develop a Python backend platform adapter
 
-If no npm adapter exists, you need to create one as a workspace package. Reference the existing implementations:
+If no npm adapter exists, add the platform under `python-backend/app/services/bot/platforms/`.
+Feishu/Lark, LINE, QQ, and WeChat have been migrated to the Python backend and should be used as the reference implementations.
 
-- `packages/chat-adapter-feishu` — Feishu/Lark adapter (`@lobechat/chat-adapter-feishu`)
-- `packages/chat-adapter-qq` — QQ adapter (`@lobechat/chat-adapter-qq`)
-
-Each adapter package follows this structure:
+Each Python platform follows this structure:
 
 ```
-packages/chat-adapter-<platform>/
-├── package.json        # name: @lobechat/chat-adapter-<platform>
-├── tsconfig.json
-├── tsup.config.ts
-└── src/
-    ├── index.ts            # Public exports: createXxxAdapter, XxxApiClient, etc.
-    ├── adapter.ts          # Adapter class implementing chat SDK's Adapter interface
-    ├── api.ts              # Platform API client (webhook verification, message parsing)
-    ├── crypto.ts           # Request signature verification
-    ├── format-converter.ts # Message format conversion (platform format ↔ chat SDK AST)
+python-backend/app/services/bot/platforms/<platform>/
+├── __init__.py
+├── client.py      # Platform API client
+├── definition.py  # Platform metadata and schema
+└── ...
     └── types.ts            # Platform-specific type definitions
 ```
 

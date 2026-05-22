@@ -1,4 +1,3 @@
-import lobeOpenApi from '@lobechat/openapi';
 import debug from 'debug';
 import { and, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -95,9 +94,6 @@ api.post('/api/auth/resolve-username', async (c) => {
     return c.json({ error: 'Internal server error', exists: false }, 500);
   }
 });
-
-// ============ OpenAI-compatible v1 API ============ //
-api.all('/api/v1/*', (c) => lobeOpenApi.fetch(c.req.raw));
 
 // ============ File Proxy ============ //
 const FILE_PROXY_KEY_PREFIX = 'file-proxy:';

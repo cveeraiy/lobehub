@@ -50,27 +50,19 @@ src/server/services/bot/platforms/
 
 可以通过 `npm view @chat-adapter/<platform>` 检查是否存在。
 
-### 方案 B：在 `packages/` 中开发自定义 Adapter
+### 方案 B：开发 Python 后端平台适配器
 
-如果没有现成的 npm Adapter，你需要在工作区中创建一个 Adapter 包。可参考现有实现：
+如果没有现成的 npm Adapter，请在 `python-backend/app/services/bot/platforms/` 下添加平台。
+飞书 / Lark、LINE、QQ 和 WeChat 已迁移到 Python 后端，应作为参考实现。
 
-- `packages/chat-adapter-feishu` — 飞书 / Lark Adapter（`@lobechat/chat-adapter-feishu`）
-- `packages/chat-adapter-qq` — QQ Adapter（`@lobechat/chat-adapter-qq`）
-
-每个 Adapter 包遵循以下结构：
+每个 Python 平台遵循以下结构：
 
 ```
-packages/chat-adapter-<platform>/
-├── package.json        # name: @lobechat/chat-adapter-<platform>
-├── tsconfig.json
-├── tsup.config.ts
-└── src/
-    ├── index.ts            # 公共导出：createXxxAdapter、XxxApiClient 等
-    ├── adapter.ts          # 实现 chat SDK 的 Adapter 接口的适配器类
-    ├── api.ts              # 平台 API 客户端（Webhook 验证、消息解析）
-    ├── crypto.ts           # 请求签名验证
-    ├── format-converter.ts # 消息格式转换（平台格式 ↔ Chat SDK AST）
-    └── types.ts            # 平台特定的类型定义
+python-backend/app/services/bot/platforms/<platform>/
+├── __init__.py
+├── client.py      # 平台 API 客户端
+├── definition.py  # 平台元数据和 schema
+└── ...
 ```
 
 开发自定义 Adapter 的要点：

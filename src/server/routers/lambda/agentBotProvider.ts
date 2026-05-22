@@ -1,5 +1,3 @@
-import { LineApiClient } from '@lobechat/chat-adapter-line';
-import { fetchQrCode, pollQrStatus } from '@lobechat/chat-adapter-wechat';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
@@ -217,39 +215,29 @@ export const agentBotProviderRouter = router({
    */
   lineFetchBotInfo: authedProcedure
     .input(z.object({ channelAccessToken: z.string().min(1) }))
-    .mutation(async ({ input }) => {
-      const api = new LineApiClient({ accessToken: input.channelAccessToken });
-      try {
-        const info = await api.getBotInfo();
-        if (!info.userId) {
-          throw new TRPCError({
-            code: 'BAD_GATEWAY',
-            message: 'LINE /v2/bot/info returned no userId',
-          });
-        }
-        return {
-          basicId: info.basicId,
-          displayName: info.displayName,
-          userId: info.userId,
-        };
-      } catch (error) {
-        if (error instanceof TRPCError) throw error;
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: error instanceof Error ? error.message : 'Failed to fetch bot info from LINE',
-        });
-      }
+    .mutation(async () => {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message:
+          'LINE bot provider operations have moved to the Python backend and are no longer available through the TypeScript router.',
+      });
     }),
 
   wechatGetQrCode: authedProcedure.mutation(async () => {
-    return fetchQrCode();
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message:
+        'WeChat bot provider operations have moved to the Python backend and are no longer available through the TypeScript router.',
+    });
   }),
 
-  wechatPollQrStatus: authedProcedure
-    .input(z.object({ qrcode: z.string() }))
-    .query(async ({ input }) => {
-      return pollQrStatus(input.qrcode);
-    }),
+  wechatPollQrStatus: authedProcedure.input(z.object({ qrcode: z.string() })).query(async () => {
+    throw new TRPCError({
+      code: 'BAD_REQUEST',
+      message:
+        'WeChat bot provider operations have moved to the Python backend and are no longer available through the TypeScript router.',
+    });
+  }),
 
   update: agentBotProviderProcedure
     .input(
