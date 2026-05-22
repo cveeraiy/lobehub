@@ -5,8 +5,9 @@ Mirrors TS ``agentRuntime/hooks/types.ts``.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Literal, Optional, Sequence
+from typing import Any, Literal
 
 # ---------------------------------------------------------------------------
 # Hook type enum (string literal union in TS)
@@ -84,9 +85,9 @@ class AgentHookWebhook:
     """Webhook delivery configuration for production mode."""
 
     url: str
-    delivery: Literal["fetch", "qstash"] = "fetch"
-    body: Optional[dict[str, Any]] = None
-    event_fields: Optional[list[str]] = None
+    delivery: Literal["fetch", "qstash", "temporal"] = "fetch"
+    body: dict[str, Any] | None = None
+    event_fields: list[str] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -100,7 +101,7 @@ class AgentHook:
     id: str
     type: AgentHookType
     handler: Callable[[AgentHookEvent], Awaitable[None]]
-    webhook: Optional[AgentHookWebhook] = None
+    webhook: AgentHookWebhook | None = None
 
 
 # ---------------------------------------------------------------------------

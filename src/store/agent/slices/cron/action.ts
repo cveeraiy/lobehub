@@ -76,7 +76,8 @@ export class CronSliceActionImpl {
   ): SWRResponse<CronTopicGroupWithJobInfo[]> => {
     return useClientDataSWR<CronTopicGroupWithJobInfo[]>(
       enabled && agentId ? [FETCH_CRON_TOPICS_WITH_JOB_INFO_KEY, agentId] : null,
-      async ([, id]: [string, string]) => {
+      (async (key: [string, string]) => {
+        const id = key[1];
         const [cronJobsResult, cronTopicsGroups] = await Promise.all([
           agentCronJobService.getByAgentId(id),
           topicService.getCronTopicsGroupedByCronJob(id),
@@ -103,7 +104,7 @@ export class CronSliceActionImpl {
           }));
 
         return [...groupsWithJobs, ...orphanGroups];
-      },
+      }) as any,
       {
         fallbackData: [],
         revalidateOnFocus: false,

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
-from typing import Any, Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -112,7 +113,7 @@ class AgentEvalService:
         for k, v in kwargs.items():
             if hasattr(ds, k):
                 setattr(ds, k, v)
-        ds.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        ds.updated_at = datetime.now(UTC).replace(tzinfo=None)  # type: ignore[assignment]
         await self._db.flush()
         return ds
 
@@ -139,7 +140,7 @@ class AgentEvalService:
         for k, v in kwargs.items():
             if hasattr(bench, k):
                 setattr(bench, k, v)
-        bench.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        bench.updated_at = datetime.now(UTC).replace(tzinfo=None)  # type: ignore[assignment]
         await self._db.flush()
         return bench
 
@@ -180,7 +181,7 @@ class AgentEvalService:
         for k, v in kwargs.items():
             if hasattr(tc, k):
                 setattr(tc, k, v)
-        tc.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        tc.updated_at = datetime.now(UTC).replace(tzinfo=None)  # type: ignore[assignment]
         await self._db.flush()
         return tc
 
@@ -262,16 +263,16 @@ class AgentEvalService:
     ) -> None:
         fields: dict[str, Any] = {
             "status": status,
-            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None),
+            "updated_at": datetime.now(UTC).replace(tzinfo=None),
         }
         if error is not None:
             fields["error"] = error
         if results is not None:
             fields["results"] = results
         if status == "running":
-            fields["started_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
+            fields["started_at"] = datetime.now(UTC).replace(tzinfo=None)
         if status in ("completed", "failed"):
-            fields["completed_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
+            fields["completed_at"] = datetime.now(UTC).replace(tzinfo=None)
 
         await self._db.execute(
             update(AgentEvalRun)
@@ -299,7 +300,7 @@ class AgentEvalService:
     ) -> None:
         fields: dict[str, Any] = {
             "status": status,
-            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None),
+            "updated_at": datetime.now(UTC).replace(tzinfo=None),
         }
         if score is not None:
             fields["score"] = score
@@ -400,6 +401,67 @@ class AgentEvalService:
             await self.update_run_status(run_id, "failed", error=str(exc))
             raise
 
+    async def list_run_test_case_ids(self, run_id: str) -> list[str]:
+        run = await self.get_run(run_id)
+        if not run or not run.dataset_id:
+            return []
+        cases = await self.list_test_cases(run.dataset_id, limit=200)
+        return [case.id for case in cases]
+
+    async def execute_test_case(self, run_id: str, test_case_id: str) -> dict[str, Any]:
+        run = await self.get_run(run_id)
+        if not run:
+            raise ValueError(f"Eval run not found: {run_id}")
+        test_case = await self.get_test_case(test_case_id)
+        if not test_case:
+            raise ValueError(f"Eval test case not found: {test_case_id}")
+
+        existing = (
+            await self._db.execute(
+                select(AgentEvalRunTopic).where(
+                    AgentEvalRunTopic.run_id == run_id,
+                    AgentEvalRunTopic.test_case_id == test_case_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing is None:
+            existing = AgentEvalRunTopic(run_id=run_id, test_case_id=test_case_id, status="pending")
+            self._db.add(existing)
+            await self._db.flush()
+
+        await self.update_run_status(run_id, "running")
+        try:
+            output = await self._execute_test_case(run, test_case)
+            score, did_pass, reasoning = _score_expected_output(output, test_case.expected_output)
+            await self.update_run_topic(
+                existing.id,
+                status="completed" if did_pass else "failed",
+                score=score,
+                result={
+                    "expected_output": test_case.expected_output,
+                    "input": test_case.input,
+                    "output": output,
+                    "passed": did_pass,
+                    "reasoning": reasoning,
+                },
+            )
+            return {
+                "passed": did_pass,
+                "runId": run_id,
+                "score": score,
+                "status": "completed" if did_pass else "failed",
+                "success": True,
+                "testCaseId": test_case_id,
+            }
+        except Exception as exc:
+            await self.update_run_topic(
+                existing.id,
+                status="failed",
+                score=0.0,
+                result={"error": str(exc), "input": test_case.input, "passed": False},
+            )
+            raise
+
     async def _execute_test_case(self, run: AgentEvalRun, test_case: AgentEvalTestCase) -> str:
         """Execute one test case.
 
@@ -475,7 +537,7 @@ class AgentEvalService:
         for k, v in kwargs.items():
             if hasattr(run, k):
                 setattr(run, k, v)
-        run.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)  # type: ignore[assignment]
+        run.updated_at = datetime.now(UTC).replace(tzinfo=None)  # type: ignore[assignment]
         await self._db.flush()
         return run
 
@@ -483,7 +545,7 @@ class AgentEvalService:
         await self._db.execute(
             update(AgentEvalRun)
             .where(AgentEvalRun.id == run_id, AgentEvalRun.user_id == self._uid)
-            .values(metrics=metrics, updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+            .values(metrics=metrics, updated_at=datetime.now(UTC).replace(tzinfo=None))
         )
 
     async def retry_failed_cases(self, run_id: str) -> int:
@@ -494,7 +556,7 @@ class AgentEvalService:
                 AgentEvalRunTopic.run_id == run_id,
                 AgentEvalRunTopic.status == "failed",
             )
-            .values(status="pending", updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+            .values(status="pending", updated_at=datetime.now(UTC).replace(tzinfo=None))
         )
         return result.rowcount
 
@@ -505,7 +567,7 @@ class AgentEvalService:
                 AgentEvalRunTopic.run_id == run_id,
                 AgentEvalRunTopic.test_case_id == test_case_id,
             )
-            .values(status="pending", updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+            .values(status="pending", updated_at=datetime.now(UTC).replace(tzinfo=None))
         )
 
     async def resume_case(
@@ -517,7 +579,7 @@ class AgentEvalService:
                 AgentEvalRunTopic.run_id == run_id,
                 AgentEvalRunTopic.test_case_id == test_case_id,
             )
-            .values(status="pending", updated_at=datetime.now(timezone.utc).replace(tzinfo=None))
+            .values(status="pending", updated_at=datetime.now(UTC).replace(tzinfo=None))
         )
         return {"success": True, "runId": run_id, "testCaseId": test_case_id}
 
@@ -582,7 +644,7 @@ class AgentEvalService:
     async def update_run_topic_by_run_and_topic(
         self, run_id: str, topic_id: str, **kwargs: Any
     ) -> None:
-        kwargs["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
+        kwargs["updated_at"] = datetime.now(UTC).replace(tzinfo=None)
         await self._db.execute(
             update(AgentEvalRunTopic)
             .where(

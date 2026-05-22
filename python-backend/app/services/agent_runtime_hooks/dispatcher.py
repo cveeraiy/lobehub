@@ -3,14 +3,14 @@
 Mirrors TS ``agentRuntime/hooks/HookDispatcher.ts``.
 
 Local mode: hooks stored in memory, handler functions called directly.
-Production mode: webhook configs delivered via HTTP POST.
+Production mode: webhook configs delivered via HTTP POST or Temporal.
 """
 
 from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 import httpx
@@ -46,7 +46,7 @@ async def _fetch_deliver(url: str, payload: dict[str, Any]) -> None:
 
 
 async def _deliver_webhook(webhook: AgentHookWebhook, payload: dict[str, Any]) -> None:
-    """Deliver a webhook via HTTP POST (fetch or qstash)."""
+    """Deliver a webhook via HTTP POST or Temporal durable delivery."""
     url = webhook.url
 
     # Resolve relative URLs
@@ -54,17 +54,28 @@ async def _deliver_webhook(webhook: AgentHookWebhook, payload: dict[str, Any]) -
         base = os.environ.get("INTERNAL_APP_URL") or os.environ.get("APP_URL", "")
         url = urljoin(base, url) if base else url
 
-    if webhook.delivery == "qstash":
-        # QStash not available in Python — fall back to fetch
-        logger.debug("QStash delivery not available in Python, falling back to fetch")
-        await _fetch_deliver(url, payload)
+    if webhook.delivery in {"qstash", "temporal"}:
+        try:
+            from app.services.workflows.temporal_backend import (
+                TemporalUnavailableError,
+                start_temporal_webhook_delivery,
+            )
+
+            await start_temporal_webhook_delivery(url, payload, hook_id=str(payload.get("hookId") or ""))
+            logger.debug("Webhook delivery enqueued via Temporal: %s", url)
+        except TemporalUnavailableError:
+            logger.debug("Temporal delivery unavailable for hook webhook, falling back to fetch")
+            await _fetch_deliver(url, payload)
+        except Exception as exc:
+            logger.debug("Temporal webhook enqueue failed, falling back to fetch: %s", exc)
+            await _fetch_deliver(url, payload)
     else:
         await _fetch_deliver(url, payload)
 
 
 def _build_webhook_payload(
     event: dict[str, Any],
-    event_fields: Optional[list[str]] = None,
+    event_fields: list[str] | None = None,
 ) -> dict[str, Any]:
     """Build webhook payload, optionally filtering to specified fields."""
     if event_fields:
@@ -137,7 +148,7 @@ class HookDispatcher:
         operation_id: str,
         hook_type: AgentHookType,
         event: AgentHookEvent,
-        serialized_hooks: Optional[list[dict[str, Any]]] = None,
+        serialized_hooks: list[dict[str, Any]] | None = None,
     ) -> None:
         """Dispatch hooks for a given event type.
 
@@ -194,7 +205,7 @@ class HookDispatcher:
         self,
         operation_id: str,
         event: ToolCallHookEvent,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Dispatch beforeToolCall hooks with mock support.
 
         Returns ``{"content": "...", "is_mocked": True}`` if any handler

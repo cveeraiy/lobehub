@@ -39,6 +39,7 @@ dependencies = [
     "sse-starlette>=3.0.0",
 
     # Durable workflows
+    "croniter>=6.0.0",
     "temporalio>=1.8.0",
 
     # Utils

@@ -36,6 +36,11 @@ interface RawTopicRankItem {
   title?: string | null;
 }
 
+interface TopicShareInfo {
+  id: string;
+  visibility?: 'link' | 'private';
+}
+
 const toTimestamp = (value?: string | null) => (value ? new Date(value).getTime() : 0);
 
 const toTopic = (topic: RawTopic): ChatTopic => ({
@@ -198,8 +203,8 @@ export class TopicService {
     return restClient.put(`/topics/${id}`, { body: { metadata } });
   };
 
-  getShareInfo = (topicId: string) => {
-    return restClient.get(`/topics/${topicId}/share`);
+  getShareInfo = (topicId: string): Promise<TopicShareInfo | null> => {
+    return restClient.get<TopicShareInfo | null>(`/topics/${topicId}/share`);
   };
 
   enableSharing = (topicId: string, visibility?: 'private' | 'link') => {

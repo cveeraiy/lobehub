@@ -10,7 +10,9 @@ from uuid import uuid4
 from app.config import settings
 from app.services.workflows.temporal_definitions import (
     EthosWorkflow,
+    deliver_webhook_activity,
     execute_ethos_workflow_activity,
+    plan_ethos_workflow_activity,
     temporal_definitions_available,
 )
 
@@ -41,6 +43,8 @@ def workflow_id_for(name: str, payload: dict[str, Any]) -> str:
         or payload.get("task_id")
         or payload.get("topicId")
         or payload.get("topic_id")
+        or payload.get("deliveryId")
+        or payload.get("delivery_id")
         or uuid4().hex
     )
     safe_name = re.sub(r"[^a-zA-Z0-9_-]+", "-", name).strip("-")
@@ -65,6 +69,7 @@ async def start_temporal_workflow(name: str, payload: dict[str, Any]) -> dict[st
             "activityTimeoutSeconds": settings.temporal_activity_timeout_seconds,
             "name": name,
             "payload": payload,
+            "workflowTimeoutSeconds": settings.temporal_workflow_timeout_seconds,
         },
         id=workflow_id,
         id_reuse_policy=WorkflowIDReusePolicy.ALLOW_DUPLICATE,
@@ -81,6 +86,20 @@ async def start_temporal_workflow(name: str, payload: dict[str, Any]) -> dict[st
     }
 
 
+async def start_temporal_webhook_delivery(
+    url: str,
+    payload: dict[str, Any],
+    *,
+    hook_id: str | None = None,
+) -> dict[str, Any]:
+    delivery_payload = {"payload": payload, "url": url}
+    identity = hook_id or payload.get("hookId") or uuid4().hex
+    return await start_temporal_workflow(
+        "agent-runtime-hook/webhook-delivery",
+        {"deliveryId": identity, **delivery_payload},
+    )
+
+
 async def run_worker() -> None:
     if not temporal_available():
         raise TemporalUnavailableError("temporalio is not installed")
@@ -89,6 +108,6 @@ async def run_worker() -> None:
         client,
         task_queue=settings.temporal_task_queue,
         workflows=[EthosWorkflow],
-        activities=[execute_ethos_workflow_activity],
+        activities=[execute_ethos_workflow_activity, plan_ethos_workflow_activity, deliver_webhook_activity],
     )
     await worker.run()
