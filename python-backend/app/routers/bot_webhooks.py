@@ -31,6 +31,19 @@ from app.services.bot.runtime_status import update_bot_runtime_status
 router = APIRouter(prefix="/api/agent/webhooks", tags=["Bot Webhooks"])
 
 
+@router.post("/bot-callback")
+async def handle_bot_callback():
+    """Retired TS queue callback transport.
+
+    Python bot webhooks enqueue work directly through the bot bridge, so the
+    old TS callback endpoint is intentionally not active.
+    """
+    raise HTTPException(
+        status.HTTP_410_GONE,
+        "Bot callback transport is retired; use platform webhook endpoints instead",
+    )
+
+
 def _decrypt_lark_event(encrypted: str, encrypt_key: str) -> dict[str, Any]:
     digest = hashes.Hash(hashes.SHA256())
     digest.update(encrypt_key.encode())

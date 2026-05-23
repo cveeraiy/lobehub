@@ -3,31 +3,114 @@ import { AgentBuilderManifest } from '@lobechat/builtin-tool-agent-builder';
 import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import { AgentManagementManifest } from '@lobechat/builtin-tool-agent-management';
 import { AgentMarketplaceManifest } from '@lobechat/builtin-tool-agent-marketplace';
-import { BriefManifest } from '@lobechat/builtin-tool-brief';
 import { CalculatorManifest } from '@lobechat/builtin-tool-calculator';
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
 import { CredsManifest } from '@lobechat/builtin-tool-creds';
-import { CronManifest } from '@lobechat/builtin-tool-cron';
 import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
 import { GroupManagementManifest } from '@lobechat/builtin-tool-group-management';
 import { GTDManifest } from '@lobechat/builtin-tool-gtd';
 import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
-import { LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { MessageManifest } from '@lobechat/builtin-tool-message';
 import { PageAgentManifest } from '@lobechat/builtin-tool-page-agent';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
-import { SkillMaintainerManifest } from '@lobechat/builtin-tool-skill-maintainer';
 import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
 import { SkillsManifest } from '@lobechat/builtin-tool-skills';
-import { TaskManifest } from '@lobechat/builtin-tool-task';
-import { TopicReferenceManifest } from '@lobechat/builtin-tool-topic-reference';
 import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { WebOnboardingManifest } from '@lobechat/builtin-tool-web-onboarding';
 import { isDesktop, RECOMMENDED_SKILLS, RecommendedSkillType } from '@lobechat/const';
 import { type LobeBuiltinTool } from '@lobechat/types';
+
+import { BriefManifest } from './brief';
+import { CronManifest } from './cron';
+import { LobeAgentManifest } from './lobeAgent';
+import { TaskManifest } from './task';
+import { TopicReferenceManifest } from './topicReference';
+
+export { BriefApiName, BriefIdentifier, BriefManifest } from './brief';
+export {
+  type CreateCronJobParams,
+  type CreateCronJobState,
+  CronApiName,
+  type CronApiNameType,
+  CronExecutionRuntime,
+  CronIdentifier,
+  type CronJobSummary,
+  type CronJobSummaryForContext,
+  CronManifest,
+  type CronStats,
+  systemPrompt as cronSystemPrompt,
+  type DeleteCronJobParams,
+  type DeleteCronJobState,
+  generateCronJobsList,
+  type GetCronJobParams,
+  type GetCronJobState,
+  type GetStatsParams,
+  type GetStatsState,
+  type ICronService,
+  type ListCronJobsParams,
+  type ListCronJobsState,
+  type ResetExecutionsParams,
+  type ResetExecutionsState,
+  type ToggleCronJobParams,
+  type ToggleCronJobState,
+  type UpdateCronJobParams,
+  type UpdateCronJobState,
+} from './cron';
+export {
+  type AnalyzeVisualMediaContentOptions,
+  type AnalyzeVisualMediaNormalizedInput,
+  type AnalyzeVisualMediaParams,
+  buildAnalyzeVisualMediaContent,
+  createUrlVisualFileItems,
+  createVisualFileItems,
+  filterAllowedVisualMediaUrls,
+  formatVisualMediaUrlValidationError,
+  getUnexpectedAnalyzeVisualMediaArgumentKeys,
+  getVisualUrlName,
+  hasUserVisualFiles,
+  hasVisualFiles,
+  inferVisualTypeFromUrl,
+  isAllowedVisualMediaUrl,
+  LobeAgentApiName,
+  type LobeAgentApiNameType,
+  LobeAgentIdentifier,
+  LobeAgentManifest,
+  systemPrompt as lobeAgentSystemPrompt,
+  MAX_VISUAL_MEDIA_URL_LENGTH,
+  MAX_VISUAL_MEDIA_URLS,
+  normalizeAnalyzeVisualMediaInput,
+  normalizeStringArray,
+  selectVisualFileItems,
+  validateVisualMediaUrls,
+  type VisualFileItem,
+  type VisualMediaUrlValidationResult,
+  type VisualSourceMessage,
+} from './lobeAgent';
+export {
+  DEFAULT_LIST_TASK_LIMIT,
+  type ListTasksParams,
+  normalizeListTasksParams,
+  normalizeOptionalFilterValues,
+  TASK_STATUSES,
+  TaskApiName,
+  type TaskApiNameType,
+  TaskIdentifier,
+  type TaskListDisplayFilters,
+  type TaskListQuery,
+  TaskManifest,
+  systemPrompt as taskSystemPrompt,
+  UNFINISHED_TASK_STATUSES,
+} from './task';
+export {
+  TopicReferenceApiName,
+  type TopicReferenceApiNameType,
+  TopicReferenceExecutor,
+  TopicReferenceIdentifier,
+  TopicReferenceManifest,
+} from './topicReference';
 
 /**
  * Default tool IDs that will always be added to the tools list.
@@ -112,13 +195,6 @@ export const builtinTools: LobeBuiltinTool[] = [
     hidden: true,
     identifier: SkillStoreManifest.identifier,
     manifest: SkillStoreManifest,
-    type: 'builtin',
-  },
-  {
-    discoverable: false,
-    hidden: true,
-    identifier: SkillMaintainerManifest.identifier,
-    manifest: SkillMaintainerManifest,
     type: 'builtin',
   },
   {

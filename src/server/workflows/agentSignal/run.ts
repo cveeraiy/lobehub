@@ -392,14 +392,13 @@ export const runAgentSignalWorkflow = async (
   const sourceType = payload?.sourceEvent?.sourceType ?? 'unknown';
   const startedAt = Date.now();
   // NOTICE:
-  // Upstash Workflow Hono handlers do not flow through our regular backend auth middleware, so
+  // Workflow callbacks do not flow through our regular backend auth middleware, so
   // the usual request-level trace-context extraction does not happen automatically here.
   // We must extract `traceparent` / `tracestate` from the workflow request headers manually before
   // opening the top-level workflow span, otherwise each workflow run starts a fresh trace.
   // Source/context:
   // - `src/handlers/middleware/auth/index.ts` performs extract/inject for normal backend APIs
-  // - `src/server/workflows-hono/agent-signal/index.ts` wires `serve(...)` directly to
-  //   `runAgentSignalWorkflow(...)`
+  // - Python workflow transports must pass headers into `runAgentSignalWorkflow(...)`
   // Removal condition:
   // - Safe to remove only if the workflow entry stack gains a shared request middleware that
   //   guarantees OTEL context extraction before invoking workflow handlers.

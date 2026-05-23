@@ -121,31 +121,6 @@ export default defineConfig({
     ...sharedRendererPlugins({ platform }),
 
     isDev && {
-      name: 'lobe-inject-server-config',
-      transformIndexHtml: {
-        order: 'pre' as const,
-        async handler(html: string) {
-          const honoPort = process.env.PORT || 3010;
-          try {
-            const res = await fetch(`http://localhost:${honoPort}/api/__server_config__`, {
-              signal: AbortSignal.timeout(5_000),
-            });
-            if (res.ok) {
-              const json = await res.text();
-              return html.replace(
-                /window\.__SERVER_CONFIG__\s*=\s*undefined;\s*\/\*\s*SERVER_CONFIG\s*\*\//,
-                `window.__SERVER_CONFIG__ = ${json};`,
-              );
-            }
-          } catch {
-            // Hono not ready yet — leave placeholder, SPA will work without it
-          }
-          return html;
-        },
-      },
-    },
-
-    isDev && {
       name: 'lobe-dev-proxy-print',
       configureServer(server: ViteDevServer) {
         const ONLINE_HOST = 'https://app.lobehub.com';
@@ -299,7 +274,7 @@ export default defineConfig({
               cacheName: 'api-cache',
               expiration: { maxAgeSeconds: 60 * 5, maxEntries: 50 },
             },
-            urlPattern: /\/(api|trpc)\/.*/i,
+            urlPattern: /\/(api|webapi)\/.*/i,
           },
         ],
       },
@@ -311,14 +286,9 @@ export default defineConfig({
     host: true,
     port: 9876,
     proxy: {
-      // /api → PORT (Python backend at 8000, or Hono at 3010)
-      '/api': `http://localhost:${process.env.PORT || 3010}`,
-      // /trpc and /oidc stay on TS/Hono. /webapi follows PORT so AI provider
-      // runtime calls can be served by the Python backend during REST migration.
-      '/oidc': `http://localhost:${process.env.HONO_PORT || 3010}`,
-      '/trpc': `http://localhost:${process.env.HONO_PORT || 3010}`,
-      '/webapi/user/avatar': `http://localhost:${process.env.HONO_PORT || 3010}`,
-      '/webapi': `http://localhost:${process.env.PORT || 3010}`,
+      '/api': `http://localhost:${process.env.PORT || 8000}`,
+      '/oidc/clear-session': `http://localhost:${process.env.PORT || 8000}`,
+      '/webapi': `http://localhost:${process.env.PORT || 8000}`,
     },
     warmup: {
       clientFiles: [

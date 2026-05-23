@@ -11,7 +11,6 @@
     "@lobechat/builtin-tool-group-management": "workspace:*",
     "@lobechat/builtin-tool-gtd": "workspace:*",
     "@lobechat/builtin-tool-notebook": "workspace:*",
-    "@lobechat/builtin-tool-task": "workspace:*",
     "@lobechat/builtin-tool-user-interaction": "workspace:*",
     "@lobechat/business-const": "workspace:*",
     "@lobechat/const": "workspace:*"

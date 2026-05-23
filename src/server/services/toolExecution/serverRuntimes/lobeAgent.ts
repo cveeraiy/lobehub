@@ -1,4 +1,4 @@
-import type { VisualFileItem, VisualSourceMessage } from '@lobechat/builtin-tool-lobe-agent';
+import type { VisualFileItem, VisualSourceMessage } from '@lobechat/builtin-tools';
 import {
   buildAnalyzeVisualMediaContent,
   createUrlVisualFileItems,
@@ -9,7 +9,7 @@ import {
   normalizeAnalyzeVisualMediaInput,
   selectVisualFileItems,
   validateVisualMediaUrls,
-} from '@lobechat/builtin-tool-lobe-agent';
+} from '@lobechat/builtin-tools';
 import type { LobeChatDatabase } from '@lobechat/database';
 import type { ChatStreamPayload } from '@lobechat/model-runtime';
 import { consumeStreamUntilDone } from '@lobechat/model-runtime';

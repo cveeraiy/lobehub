@@ -16,9 +16,9 @@ import json
 import logging
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -61,6 +61,11 @@ class ToolResultBody(BaseModel):
     approved: bool = True
     reason: Optional[str] = None
     stream: bool = False
+
+
+class GatewayCallbackBody(BaseModel):
+    event: Optional[str] = None
+    data: Optional[dict[str, Any]] = None
 
 
 # ── SSE helper ───────────────────────────────────────────────────────
@@ -190,6 +195,43 @@ async def run_operation(
         "usage": result.get("usage"),
         "messages": result.get("messages", []),
     }
+
+
+@router.post("/python-stream")
+async def python_stream(
+    body: dict[str, Any] = Body(...),
+    user_id: str = Depends(get_current_user_id),
+):
+    """Compatibility alias for the former TS agent stream bridge."""
+    from app.routers.ai_agent import ExecAgentBody, exec_agent_stream
+
+    exec_body = body if isinstance(body, ExecAgentBody) else ExecAgentBody.model_validate(body)
+    return await exec_agent_stream(exec_body, user_id)
+
+
+@router.get("/gateway")
+async def get_gateway_status():
+    """Device gateway mode was tied to the removed TS supervisor."""
+    raise HTTPException(
+        status.HTTP_410_GONE,
+        "Agent gateway mode is retired in the Python-only backend runtime",
+    )
+
+
+@router.post("/gateway/start")
+async def start_gateway():
+    raise HTTPException(
+        status.HTTP_410_GONE,
+        "Agent gateway mode is retired in the Python-only backend runtime",
+    )
+
+
+@router.post("/gateway/callback")
+async def gateway_callback(body: GatewayCallbackBody):
+    raise HTTPException(
+        status.HTTP_410_GONE,
+        "Agent gateway mode is retired in the Python-only backend runtime",
+    )
 
 
 @router.get("/stream")

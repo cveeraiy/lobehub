@@ -163,6 +163,7 @@ _ROUTER_MODULES: list[str] = [
     # AI infra
     "app.routers.ai_infra",
     "app.routers.webapi",
+    "app.routers.webhooks",
     "app.routers.cloud_sandbox",
     # Search / market / share
     "app.routers.search",

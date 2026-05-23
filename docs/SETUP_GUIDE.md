@@ -1,25 +1,17 @@
 # Ethos — Setup Guide
 
-Ethos runs on a **Hono** server with a **Vite** SPA frontend. This guide covers both local development and production deployment.
+Ethos runs as a **Vite** SPA frontend served by nginx with a **Python FastAPI** backend. This guide covers both local development and production deployment.
 
 ## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    Hono Server                       │
-│  (:3010 dev / :3210 prod)                           │
+│                    nginx Frontend                    │
+│  (:3210 prod)                                       │
 │                                                      │
 │  ┌──────────────┐  ┌────────────┐  ┌─────────────┐  │
-│  │  TRPC (4x)   │  │  Auth      │  │  WebAPI     │  │
-│  │  /trpc/*     │  │  /api/auth │  │  /webapi/*  │  │
-│  └──────────────┘  └────────────┘  └─────────────┘  │
-│  ┌──────────────┐  ┌────────────┐  ┌─────────────┐  │
-│  │  Agent       │  │  OIDC      │  │  Webhooks   │  │
-│  │  /api/agent  │  │  /oidc/*   │  │  /api/wh/*  │  │
-│  └──────────────┘  └────────────┘  └─────────────┘  │
-│  ┌──────────────┐  ┌────────────┐  ┌─────────────┐  │
-│  │  Workflows   │  │  Market    │  │  SPA (*)    │  │
-│  │  /api/wf/*   │  │  /market/* │  │  catch-all  │  │
+│  │  Static SPA  │  │  Assets    │  │  Fallback   │  │
+│  │  dist/web    │  │  /_spa/*   │  │  index.html │  │
 │  └──────────────┘  └────────────┘  └─────────────┘  │
 └─────────────────────────────────────────────────────┘
          ▲                              ▲
@@ -27,8 +19,13 @@ Ethos runs on a **Hono** server with a **Vite** SPA frontend. This guide covers 
          │                              │
 ┌────────┴──────────────────────────────┴──────────┐
 │              Vite SPA (React)                     │
-│  Desktop: dist/desktop    Mobile: dist/mobile     │
+│  Web: dist/web            Mobile: dist/mobile     │
 │  Dev server: localhost:9876                       │
+└──────────────────────────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────────────────────┐
+│        Python FastAPI backend (/api, /webapi)     │
 └──────────────────────────────────────────────────┘
 ```
 
@@ -95,18 +92,15 @@ bun run dev
 This starts both:
 
 - **Vite SPA dev server** on `http://localhost:9876` (HMR enabled)
-- **Hono API server** on `http://localhost:3010` (proxies SPA from Vite)
+- **Python FastAPI backend** separately on its configured port, usually `http://localhost:8000`
 
-Open **<http://localhost:3010>** to use the app.
+Open **<http://localhost:9876>** to use the app.
 
-**Individual servers (advanced):**
+**Frontend server:**
 
 ```bash
-# Terminal 1: SPA dev server only
+# SPA dev server only; /api and /webapi proxy to Python
 bun run dev:spa
-
-# Terminal 2: Hono server only (requires dev:spa to be running)
-bun run dev:hono
 ```
 
 **Debug Proxy (develop against production backend):**
@@ -142,19 +136,17 @@ bun run type-check
 # 1. Install dependencies
 pnpm install
 
-# 2. Build SPA + Hono server
+# 2. Build SPA assets
 bun run build
 
 # This produces:
-#   dist/desktop/       — Desktop SPA bundle
+#   dist/web/           — Web SPA bundle
 #   dist/mobile/        — Mobile SPA bundle
-#   dist/hono-server/   — server.mjs (Hono server bundle)
 
-# 3. Start the server
-NODE_ENV=production node --env-file=.env dist/hono-server/server.mjs
+# 3. Serve dist/web and dist/mobile with nginx
 ```
 
-The server listens on `PORT` (default `3210`).
+nginx proxies `/api/*`, `/webapi/*`, and `/oidc/clear-session` to the Python backend.
 
 ### Option B: Docker
 
@@ -223,19 +215,17 @@ bun run dev:docker:down
 
 ## Available Scripts
 
-| Script                     | Description                                       |
-| -------------------------- | ------------------------------------------------- |
-| `bun run dev`              | Full-stack dev (Hono + Vite SPA concurrently)     |
-| `bun run dev:spa`          | Vite SPA dev server only (port 9876)              |
-| `bun run dev:hono`         | Build & run Hono server in dev mode (port 3010)   |
-| `bun run build`            | Production build (SPA + Hono)                     |
-| `bun run build:hono`       | Build Hono server bundle only                     |
-| `bun run build:spa`        | Build desktop SPA only                            |
-| `bun run build:spa:mobile` | Build mobile SPA only                             |
-| `bun run build:docker`     | Full Docker build (SPA + mobile + Hono + sitemap) |
-| `bun run db:migrate`       | Run database migrations                           |
-| `bun run db:generate`      | Generate new migration files                      |
-| `bun run db:studio`        | Open Drizzle Studio GUI                           |
+| Script                     | Description                                    |
+| -------------------------- | ---------------------------------------------- |
+| `bun run dev`              | Vite SPA dev server                            |
+| `bun run dev:spa`          | Vite SPA dev server only (port 9876)           |
+| `bun run build`            | Production SPA build                           |
+| `bun run build:spa`        | Build desktop SPA only                         |
+| `bun run build:spa:mobile` | Build mobile SPA only                          |
+| `bun run build:docker`     | Docker frontend build (SPA + mobile + sitemap) |
+| `bun run db:migrate`       | Run database migrations                        |
+| `bun run db:generate`      | Generate new migration files                   |
+| `bun run db:studio`        | Open Drizzle Studio GUI                        |
 
 ---
 
@@ -244,13 +234,6 @@ bun run dev:docker:down
 ```
 lobehub/
 ├── src/
-│   ├── hono-server/           # Hono server entry + routes
-│   │   ├── index.ts           # Main app, middleware, startup
-│   │   ├── spa.ts             # SPA template handler
-│   │   ├── auth.ts            # better-auth mount
-│   │   ├── trpc.ts            # TRPC endpoint handlers
-│   │   ├── middleware/auth.ts  # Auth middleware
-│   │   └── routes/            # Route modules (agent, webapi, oidc, etc.)
 │   ├── spa/                   # SPA entry points + React Router config
 │   ├── routes/                # SPA page segments
 │   ├── features/              # Business logic components
@@ -264,10 +247,8 @@ lobehub/
 │   └── utils/                 # Server/client utilities
 ├── dist/                      # Build output
 │   ├── desktop/               # Vite SPA build (desktop)
-│   ├── mobile/                # Vite SPA build (mobile)
-│   └── hono-server/           # Bundled server (server.mjs)
+│   └── mobile/                # Vite SPA build (mobile)
 ├── vite.config.ts             # SPA Vite config
-├── vite.config.hono.ts        # Hono server Vite/Rolldown config
 ├── Dockerfile                 # Multi-stage production image
 └── package.json
 ```
@@ -334,11 +315,10 @@ lobehub/
 
 ## Server Architecture Notes
 
-- **Hono** handles all HTTP: API routes, TRPC, auth, OIDC, webhooks, and SPA serving
-- **Vite** builds the SPA (desktop + mobile); in dev mode, Hono proxies the Vite dev server
-- **TRPC** provides type-safe client-server communication via 4 routers (lambda, async, mobile, tools)
-- **better-auth** handles authentication (sessions, OAuth, magic links)
-- **OIDC Provider** enables CLI and third-party auth via OpenID Connect
+- **nginx** serves static SPA assets and proxies backend paths to Python
+- **Vite** builds the SPA (desktop + mobile)
+- **REST** is the frontend/backend contract for migrated domains
+- **Keycloak** is the only auth provider
 - **Graceful shutdown** waits for in-flight `afterResponse` tasks before exiting
 - **Global error handler** catches unhandled exceptions and returns structured JSON errors
 - **API 404s** return JSON (not SPA HTML) for mistyped `/api/*`, `/trpc/*`, `/webapi/*`, `/oidc/*`, `/market/*` paths

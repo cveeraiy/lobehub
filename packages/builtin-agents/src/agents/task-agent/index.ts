@@ -1,4 +1,4 @@
-import { TaskIdentifier } from '@lobechat/builtin-tool-task';
+import { TaskIdentifier } from '@lobechat/builtin-tools';
 import { DEFAULT_PROVIDER } from '@lobechat/business-const';
 import { DEFAULT_MODEL } from '@lobechat/const';
 

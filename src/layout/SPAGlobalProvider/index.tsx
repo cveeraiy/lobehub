@@ -3,7 +3,8 @@
 import { TooltipGroup } from '@lobehub/ui';
 import { StyleProvider } from 'antd-style';
 import { domMax, LazyMotion } from 'motion/react';
-import { lazy, memo, type PropsWithChildren, Suspense, useLayoutEffect } from 'react';
+import type { PropsWithChildren } from 'react';
+import { lazy, memo, Suspense, useEffect, useLayoutEffect, useState } from 'react';
 
 import { LobeAnalyticsProviderWrapper } from '@/components/Analytics/LobeAnalyticsProviderWrapper';
 import { DragUploadProvider } from '@/components/DragUploadZone/DragUploadProvider';
@@ -31,15 +32,40 @@ const ContextMenuHost = lazy(() =>
 );
 
 const SPAGlobalProvider = memo<PropsWithChildren>(({ children }) => {
+  const [serverConfig, setServerConfig] = useState<SPAServerConfig | undefined>(
+    () => window.__SERVER_CONFIG__,
+  );
+
   useLayoutEffect(() => {
     document.getElementById('loading-screen')?.remove();
   }, []);
 
-  const serverConfig: SPAServerConfig | undefined = window.__SERVER_CONFIG__;
+  useEffect(() => {
+    if (serverConfig) return;
+
+    const controller = new AbortController();
+
+    fetch('/api/__server_config__', {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+
+        const config = (await res.json()) as SPAServerConfig;
+        window.__SERVER_CONFIG__ = config;
+        setServerConfig(config);
+      })
+      .catch(() => {
+        // The SPA can still boot with default config while the API is unavailable.
+      });
+
+    return () => controller.abort();
+  }, [serverConfig]);
 
   const locale = document.documentElement.lang || 'en-US';
   const isMobile =
-    (serverConfig?.isMobile ?? typeof __MOBILE__ !== 'undefined') ? __MOBILE__ : false;
+    serverConfig?.isMobile ?? (typeof __MOBILE__ !== 'undefined' ? __MOBILE__ : false);
 
   return (
     <Locale defaultLang={locale}>

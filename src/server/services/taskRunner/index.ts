@@ -1,5 +1,5 @@
 import { TaskIdentifier as TaskSkillIdentifier } from '@lobechat/builtin-skills';
-import { BriefIdentifier } from '@lobechat/builtin-tool-brief';
+import { BriefIdentifier } from '@lobechat/builtin-tools';
 import type { ExecAgentResult } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import debug from 'debug';

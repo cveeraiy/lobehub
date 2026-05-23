@@ -32,12 +32,12 @@ Ethos is an open-source AI agent framework that combines a conversational UI, mu
 │  └──────────┘  └──────────┘  └──────────┘  └─────┬──────┘  │
 │                                                   │         │
 └───────────────────────────────────────────────────┼─────────┘
-                                                    │ TRPC / REST
+                                                    │ REST
 ┌───────────────────────────────────────────────────┼─────────┐
-│                     Hono Server (Node.js)         │         │
+│                Python FastAPI Backend             │         │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────┴──────┐  │
-│  │  Auth    │  │  TRPC    │  │  REST     │  │  SPA       │  │
-│  │  Routes  │  │  Routers │  │  Handlers │  │  Serving   │  │
+│  │  Auth    │  │  REST    │  │ Webhooks  │  │ Workflows  │  │
+│  │ Keycloak │  │ Routers  │  │           │  │            │  │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────────────┘  │
 │       │              │              │                        │
 │  ┌────┴──────────────┴──────────────┴────┐                  │
@@ -68,13 +68,13 @@ Ethos is an open-source AI agent framework that combines a conversational UI, mu
 | **SPA bundler**        | Vite (with Rolldown)                                                |
 | **Client routing**     | react-router-dom                                                    |
 | **State management**   | Zustand (slice pattern)                                             |
-| **Data fetching**      | SWR (client), TRPC (type-safe RPC)                                  |
+| **Data fetching**      | SWR (client), REST services                                         |
 | **UI components**      | @lobehub/ui, Ant Design                                             |
 | **Styling**            | antd-style (CSS-in-JS), prefer `createStaticStyles` with `cssVar.*` |
 | **i18n**               | react-i18next                                                       |
-| **Server framework**   | Hono (Node.js)                                                      |
-| **API layer**          | TRPC (4 routers) + REST handlers                                    |
-| **Auth**               | better-auth                                                         |
+| **Server framework**   | Python FastAPI                                                      |
+| **API layer**          | REST routers                                                        |
+| **Auth**               | Keycloak                                                            |
 | **Database**           | PostgreSQL via Drizzle ORM                                          |
 | **Caching**            | Redis (ioredis)                                                     |
 | **File storage**       | S3-compatible object storage                                        |
@@ -114,7 +114,6 @@ lobehub/
 │   ├── services/                  #   Client-side service layer
 │   ├── hooks/                     #   Shared React hooks
 │   ├── components/                #   Shared UI components
-│   ├── hono-server/               #   Hono server entry & route mounting
 │   ├── handlers/                  #   API route handlers
 │   ├── server/                    #   Server services, routers, modules
 │   ├── libs/                      #   Infrastructure wrappers (trpc, swr, auth, redis)
@@ -217,7 +216,7 @@ Zustand stores follow a **slice pattern** — each store is split into action sl
 Services provide the data-fetching layer between stores and the backend. Each service maps to a backend domain:
 
 ```
-Store ──→ Service ──→ TRPC Client ──→ Hono Server ──→ TRPC Router ──→ Server Service
+Store ──→ Service ──→ REST Client ──→ Python FastAPI ──→ Backend Service
 ```
 
 Services handle auth headers (`_auth.ts`), URL construction (`_url.ts`), and request headers (`_header.ts`).
@@ -226,26 +225,14 @@ Services handle auth headers (`_auth.ts`), URL construction (`_url.ts`), and req
 
 ## Backend Architecture
 
-### Hono Server (`src/hono-server/`)
+### Python Backend
 
-The server is a Hono application bundled by Vite into a single `server.mjs` file.
-
-**Route mounting** (`src/hono-server/index.ts`):
-
-| Route              | Handler               | Description                            |
-| ------------------ | --------------------- | -------------------------------------- |
-| `/api/auth/*`      | `auth.ts`             | better-auth authentication             |
-| `/trpc/lambda/*`   | `trpc.ts`             | Main TRPC router (57+ procedures)      |
-| `/trpc/async/*`    | `trpc.ts`             | Async/long-running TRPC procedures     |
-| `/trpc/mobile/*`   | `trpc.ts`             | Mobile-optimized TRPC procedures       |
-| `/trpc/tools/*`    | `trpc.ts`             | Tool execution TRPC procedures         |
-| `/api/agent/*`     | `routes/agent.ts`     | Agent streaming, gateway, tool results |
-| `/api/workflows/*` | `routes/workflows.ts` | Agent eval workflows                   |
-| `/api/webhooks/*`  | `routes/webhooks.ts`  | External webhooks                      |
-| `/webapi/*`        | `routes/webapi.ts`    | Web API (revalidation, etc.)           |
-| `/market/*`        | `routes/market.ts`    | Marketplace API                        |
-| `/oidc/*`          | `routes/oidc.ts`      | OpenID Connect                         |
-| `/*`               | `spa.ts`              | SPA catch-all (serves HTML template)   |
+The SPA talks to the Python FastAPI backend through same-origin REST paths.
+In production nginx serves static SPA assets and reverse-proxies `/api/*`,
+`/webapi/*`, and `/oidc/clear-session` to Python.
+\| `/market/*` | `routes/market.ts` | Marketplace API |
+\| `/oidc/*` | `routes/oidc.ts` | OpenID Connect |
+\| `/*` | `spa.ts` | SPA catch-all (serves HTML template) |
 
 ### TRPC Routers (`src/server/routers/`)
 
@@ -358,16 +345,13 @@ Zustand Store (action)
 Client Service (src/services/*.ts)
     │
     ▼
-TRPC Client (type-safe RPC call)
+REST Client
     │
     ▼ HTTP
-Hono Server
+Python FastAPI
     │
     ▼
-TRPC Router (src/server/routers/)
-    │
-    ▼
-Server Service (src/server/services/)
+Backend Service
     │
     ▼
 Database Model (packages/database/src/models/)
@@ -382,10 +366,10 @@ PostgreSQL
 Browser Request (GET /any-path)
     │
     ▼
-Hono Server (catch-all)
+nginx SPA fallback
     │
     ▼
-spa.ts → serveSPA()
+index.html
     ├── Detect mobile via User-Agent
     ├── Detect locale via Accept-Language
     ├── Inject __SERVER_CONFIG__ (feature flags, analytics, global config)
@@ -408,7 +392,7 @@ Chat Store → createAgentExecutors
 Client Service → POST /api/agent/stream (or /api/agent/run)
     │
     ▼
-Hono Handler → Agent Route
+Python Agent Route
     │
     ▼
 AgentRuntime Module (multi-provider)
@@ -427,13 +411,12 @@ SSE Stream → Client (real-time message rendering)
 
 ### Build Targets
 
-| Command                    | Output                        | Description             |
-| -------------------------- | ----------------------------- | ----------------------- |
-| `bun run build:spa`        | `dist/web/`                   | Vite SPA build (web)    |
-| `bun run build:spa:mobile` | `dist/mobile/`                | Vite SPA build (mobile) |
-| `bun run build:hono`       | `dist/hono-server/server.mjs` | Hono server bundle      |
-| `bun run build`            | Both above                    | Full production build   |
-| `bun run build:docker`     | All + sitemap                 | Docker-optimized build  |
+| Command                    | Output                 | Description               |
+| -------------------------- | ---------------------- | ------------------------- |
+| `bun run build:spa`        | `dist/web/`            | Vite SPA build (web)      |
+| `bun run build:spa:mobile` | `dist/mobile/`         | Vite SPA build (mobile)   |
+| `bun run build`            | `dist/web/`            | Full production SPA build |
+| `bun run build:docker`     | SPA + mobile + sitemap | Docker-optimized frontend |
 
 ### Vite Configuration
 
@@ -443,25 +426,14 @@ SSE Stream → Client (real-time message rendering)
 - Shared renderer plugins for React, i18n, PWA
 - Code splitting via Rolldown
 
-**Server build** (`vite.config.hono.ts`):
-
-- Entry: `src/hono-server/index.ts`
-- Output: Single `server.mjs` (ESM, `inlineDynamicImports: true`)
-- Target: Node.js 20+
-- Heavy deps externalized (hono, drizzle, postgres, better-auth, sharp, etc.)
-- All other deps bundled (`ssr.noExternal: true`)
-
 ### Development
 
 ```bash
-# Full-stack dev (Hono + Vite concurrently)
+# SPA dev server
 bun run dev
 
 # SPA only (frontend dev against production backend)
 bun run dev:spa
-
-# Server only
-bun run dev:hono
 
 # Dev infrastructure (Postgres, Redis, S3, SearXNG)
 bun run dev:docker
@@ -477,17 +449,14 @@ The production Docker image is built from a multi-stage `Dockerfile`:
 
 ```
 Stage 1: base         → Node.js slim + proxychains + native libs
-Stage 2: builder      → Install deps, build SPA + Hono
-Stage 3: app          → Copy artifacts to busybox
-Stage 4: scratch      → Minimal production image
+Stage 2: builder      → Install deps, build SPA assets
+Stage 3: frontend     → nginx static frontend + Python reverse proxy
 ```
 
 **Artifacts copied:**
 
-- `dist/hono-server/server.mjs` — Server bundle
 - `dist/web/` — Web SPA assets
 - `dist/mobile/` — Mobile SPA assets
-- `packages/database/migrations/` — DB migrations
 - `node_modules/pg`, `node_modules/drizzle-orm` — Runtime DB deps
 
 **Entry point:** `node /app/startServer.js` → runs migrations, then starts `server.mjs`
@@ -627,7 +596,6 @@ Each builtin tool is a self-contained package:
 | `@lobechat/file-loaders`         | Document parsing (PDF, DOCX, etc.)           |
 | `@lobechat/web-crawler`          | Web content extraction                       |
 | `@lobechat/python-interpreter`   | Python code execution (Pyodide)              |
-| `@lobechat/eval-rubric`          | Agent evaluation rubrics                     |
 | `@lobechat/heterogeneous-agents` | External agent adapters (Claude Code, Codex) |
 
 ---
@@ -648,11 +616,11 @@ Client services (`src/services/`) abstract all data fetching. Stores never call 
 
 ### 4. Server Config Injection
 
-Server configuration (feature flags, analytics config, global settings) is injected into the SPA HTML template at serve time via `window.__SERVER_CONFIG__`. This avoids client-side API calls for boot-critical config while keeping the SPA fully static/cacheable.
+Server configuration (feature flags, analytics config, global settings) is loaded from `/api/__server_config__`. `window.__SERVER_CONFIG__` remains optional bootstrap compatibility for static HTML.
 
-### 5. Single-File Server Bundle
+### 5. Static Frontend Runtime
 
-The Hono server is bundled into a single `server.mjs` file using Vite with `inlineDynamicImports: true`. This simplifies deployment (no `node_modules` tree-shaking issues) while keeping heavy native deps external.
+The frontend runtime is nginx serving `dist/web` and `dist/mobile`, with backend paths reverse-proxied to Python.
 
 ### 6. Monorepo Package Isolation
 

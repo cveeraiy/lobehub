@@ -1,4 +1,4 @@
-import { TopicReferenceIdentifier } from '@lobechat/builtin-tool-topic-reference';
+import { TopicReferenceIdentifier } from '@lobechat/builtin-tools';
 import type { LobeChatDatabase } from '@lobechat/database';
 import type { BuiltinServerRuntimeOutput } from '@lobechat/types';
 

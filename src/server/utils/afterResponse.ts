@@ -1,4 +1,4 @@
-import { pendingTasks } from '@/hono-server/afterResponseRegistry';
+const pendingTasks = new Set<Promise<void>>();
 
 /**
  * Framework-agnostic replacement for Next.js `after()`.

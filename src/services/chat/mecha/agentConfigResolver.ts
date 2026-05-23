@@ -1,7 +1,7 @@
 import { type BuiltinAgentSlug } from '@lobechat/builtin-agents';
 import { BUILTIN_AGENT_SLUGS, getAgentRuntimeConfig } from '@lobechat/builtin-agents';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { TaskIdentifier } from '@lobechat/builtin-tool-task';
+import { TaskIdentifier } from '@lobechat/builtin-tools';
 import { type LobeToolManifest } from '@lobechat/context-engine';
 import {
   type ChatCompletionTool,

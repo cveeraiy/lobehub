@@ -4,7 +4,7 @@ import {
   type CronJobSummary,
   type CronStats,
   type ICronService,
-} from '@lobechat/builtin-tool-cron';
+} from '@lobechat/builtin-tools';
 import debug from 'debug';
 
 import { AgentCronJobModel } from '@/database/models/agentCronJob';

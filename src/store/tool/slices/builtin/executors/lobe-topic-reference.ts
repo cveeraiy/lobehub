@@ -1,4 +1,4 @@
-import { TopicReferenceExecutor } from '@lobechat/builtin-tool-topic-reference/executor';
+import { TopicReferenceExecutor } from '@lobechat/builtin-tools';
 import type { BuiltinToolResult } from '@lobechat/types';
 
 import { topicService } from '@/services/topic';

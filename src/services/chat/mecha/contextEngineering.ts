@@ -8,15 +8,15 @@ import {
   generateKlavisServicesList,
   type KlavisServiceSummary,
 } from '@lobechat/builtin-tool-creds';
-import {
-  CronIdentifier,
-  type CronJobSummaryForContext,
-  generateCronJobsList,
-} from '@lobechat/builtin-tool-cron';
 import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
 import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
 import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
+import {
+  CronIdentifier,
+  type CronJobSummaryForContext,
+  generateCronJobsList,
+} from '@lobechat/builtin-tools';
 import { KLAVIS_SERVER_TYPES, LOBEHUB_SKILL_PROVIDERS } from '@lobechat/const';
 import type {
   AgentBuilderContext,
@@ -764,7 +764,7 @@ export const contextEngineering = async ({
       CREDS_LIST: () => (credsList ? generateCredsList(credsList) : ''),
       // NOTICE: required by builtin-tool-creds/src/systemRole.ts (Klavis integrations)
       KLAVIS_SERVICES_LIST: () => klavisServicesList,
-      // NOTICE: required by builtin-tool-cron/src/systemRole.ts
+      // NOTICE: required by packages/builtin-tools/src/cron/systemRole.ts
       CRON_JOBS_LIST: () => (cronJobsList ? generateCronJobsList(cronJobsList, cronJobsTotal) : ''),
       // NOTICE(@nekomeowww): required by builtin-tool-memory/src/systemRole.ts
       memory_effort: () => (userMemoryConfig ? (memoryContext?.effort ?? '') : ''),

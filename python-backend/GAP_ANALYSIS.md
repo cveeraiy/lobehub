@@ -45,7 +45,7 @@ Status tracker for features present in the TypeScript backend but missing from t
 | 27  | Account Deletion                       | `accountDeletion`                      | **TODO**                                                             |
 | 28  | Skill Maintainer                       | `skillMaintainer/`                     | **TODO**                                                             |
 | 29  | Agent Tracing                          | `AgentTracing/`                        | **TODO**                                                             |
-| 30  | Async Workflows (QStash)               | `workflows-hono/`                      | **TODO**                                                             |
+| 30  | Async Workflows (QStash)               | Retired TS workflow transport          | **TODO**                                                             |
 
 ## Current Sprint
 
@@ -388,7 +388,7 @@ TS has 5 admin procedures (`getUserState`, `getUserStats`, `getUserSettings`, `u
 
 | Feature                    | TS Implementation                                | Python Status      | Priority                                       |
 | -------------------------- | ------------------------------------------------ | ------------------ | ---------------------------------------------- |
-| **QStash async workflows** | `workflows-hono/` — durable multi-step workflows | ❌ Not implemented | Medium — use Celery/Dramatiq or simple asyncio |
+| **QStash async workflows** | Retired TS workflow transport                    | ❌ Not implemented | Medium — use Celery/Dramatiq or simple asyncio |
 | **WebSocket gateway**      | `gateway/` — real-time bidirectional streaming   | ❌ SSE only        | Medium — needed for desktop/mobile reconnect   |
 | **Agent tracing**          | `AgentTracing/` — step-level execution snapshots | ❌ Langfuse only   | Low — Langfuse covers most tracing needs       |
 | **Subscription / billing** | `subscription`, `spend`, `topUp` services        | ❌ Not implemented | Low — depends on business requirements         |
@@ -445,8 +445,7 @@ now reverse-proxies **agent execution** to the Python FastAPI backend when
 ### Architecture
 
 ```
-SPA (React) → TRPC → TS Backend (Hono) → HTTP proxy → Python Backend (FastAPI)
-                       ↕ (DB-only ops stay in TS)
+SPA (React) → REST → Python Backend (FastAPI)
 ```
 
 ### Files created/modified

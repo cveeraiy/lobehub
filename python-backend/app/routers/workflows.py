@@ -96,3 +96,12 @@ async def memory_process_topic_workflow(request: Request, session: AsyncSession 
 @router.post("/memory-user-memory/pipelines/persona/update-writing")
 async def persona_update_workflow(request: Request, session: AsyncSession = Depends(get_db)):
     return await _run_workflow("memory-user-memory/pipelines/persona/update-writing", await _json(request), session)
+
+
+@router.post("/agent-signal/run")
+async def agent_signal_run_workflow():
+    """Retired TS/Upstash transport for agent signal jobs."""
+    raise HTTPException(
+        status.HTTP_410_GONE,
+        "Agent signal workflow transport is retired; use /api/agent-signal endpoints",
+    )

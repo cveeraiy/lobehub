@@ -1,12 +1,13 @@
 // @vitest-environment node
-import { EdgeConfig } from '@lobechat/edge-config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { EdgeConfig } from '@/server/modules/EdgeConfig';
 
 import { AssistantStore } from './index';
 
 const baseURL = 'https://registry.npmmirror.com/@lobehub/agents-index/v1/files/public';
 
-vi.mock('@lobechat/edge-config', () => {
+vi.mock('@/server/modules/EdgeConfig', () => {
   const EdgeConfigMock = vi.fn();
   // @ts-expect-error: static mock for isEnabled
   EdgeConfigMock.isEnabled = vi.fn();
@@ -188,7 +189,6 @@ describe('AssistantStore', () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('something else'));
     const store = new AssistantStore();
 
-     
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     await expect(store.getAgentIndex()).rejects.toThrow('something else');

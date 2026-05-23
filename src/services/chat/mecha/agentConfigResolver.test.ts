@@ -3,7 +3,7 @@ import { GroupManagementIdentifier } from '@lobechat/builtin-tool-group-manageme
 import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
 import { NotebookIdentifier } from '@lobechat/builtin-tool-notebook';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { TaskIdentifier } from '@lobechat/builtin-tool-task';
+import { TaskIdentifier } from '@lobechat/builtin-tools';
 import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -1,4 +1,4 @@
-import { BriefIdentifier } from '@lobechat/builtin-tool-brief';
+import { BriefIdentifier } from '@lobechat/builtin-tools';
 import { formatBriefCreated, formatCheckpointCreated } from '@lobechat/prompts';
 import { DEFAULT_BRIEF_ACTIONS } from '@lobechat/types';
 

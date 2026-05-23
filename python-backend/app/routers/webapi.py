@@ -1,10 +1,11 @@
-"""Hono /webapi compatibility routes for AI provider runtime calls."""
+"""/webapi compatibility routes for AI provider runtime calls."""
 
 from __future__ import annotations
 
 import ipaddress
 import json
 import logging
+import mimetypes
 import random
 import socket
 from html import escape
@@ -12,15 +13,19 @@ from typing import Any, AsyncIterator
 from urllib.parse import urlparse
 
 import httpx
+from botocore.exceptions import ClientError
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import JSONResponse, Response, StreamingResponse
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db import get_db
 from app.dependencies import get_current_user_id
+from app.models.user import User
 from app.services import ai_infra_service as ai_svc
 from app.services import llm_service, provider_runtime
+from app.services.file_service import S3Client
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webapi", tags=["WebAPI"])
@@ -51,6 +56,40 @@ COMFYUI_MODEL_ID_CANDIDATES: dict[str, list[str]] = {
     "stable-diffusion-refiner": ["sd_xl_refiner_1.0.safetensors"],
     "stable-diffusion-xl": ["sd_xl_base_1.0.safetensors"],
 }
+
+
+@router.get("/user/avatar/{user_id}/{image}")
+async def get_user_avatar(
+    user_id: str,
+    image: str,
+    session: AsyncSession = Depends(get_db),
+) -> Response:
+    """Serve user avatars uploaded through the Python backend."""
+    if "/" in image or "\\" in image or image in {".", ".."} or ".." in image:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid avatar path")
+
+    avatar_url = f"/webapi/user/avatar/{user_id}/{image}"
+    user = (await session.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    if not user or user.avatar != avatar_url:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Avatar not found")
+
+    key = f"user/avatar/{user_id}/{image}"
+    try:
+        data = await S3Client.from_settings().get_bytes(key)
+    except RuntimeError as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(exc)) from exc
+    except ClientError as exc:
+        code = exc.response.get("Error", {}).get("Code")
+        if code in {"NoSuchKey", "404", "NotFound"}:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Avatar not found") from exc
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Failed to read avatar") from exc
+
+    content_type = mimetypes.guess_type(image)[0] or "application/octet-stream"
+    return Response(
+        content=data,
+        media_type=content_type,
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
 
 
 def _jsonable(value: Any) -> Any:

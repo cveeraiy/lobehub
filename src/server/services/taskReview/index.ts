@@ -1,10 +1,10 @@
 import { DEFAULT_SYSTEM_AGENT_CONFIG } from '@lobechat/const';
-import { evaluate, type EvaluateResult, type RubricResult } from '@lobechat/eval-rubric';
 import type { EvalBenchmarkRubric } from '@lobechat/types';
 import debug from 'debug';
 
 import { UserModel } from '@/database/models/user';
 import type { LobeChatDatabase } from '@/database/type';
+import { evaluate, type EvaluateResult, type RubricResult } from '@/server/modules/EvalRubric';
 import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 
 const log = debug('task-review');
@@ -64,7 +64,7 @@ export class TaskReviewService {
     // 2. Initialize ModelRuntime for LLM-based rubrics
     const modelRuntime = await initModelRuntimeFromDB(this.db, this.userId, provider);
 
-    // 3. Run evaluate() from @lobechat/eval-rubric
+    // 3. Run rubric evaluation
     const result: EvaluateResult = await evaluate(
       {
         actual: content,

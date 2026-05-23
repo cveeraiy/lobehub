@@ -1,7 +1,6 @@
 import type { AgentRuntimeContext, AgentState } from '@lobechat/agent-runtime';
 import { BUILTIN_AGENT_SLUGS, getAgentRuntimeConfig } from '@lobechat/builtin-agents';
 import { builtinSkills } from '@lobechat/builtin-skills';
-import { LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MessageToolIdentifier } from '@lobechat/builtin-tool-message';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
@@ -10,8 +9,12 @@ import {
   generateSystemPrompt,
   RemoteDeviceManifest,
 } from '@lobechat/builtin-tool-remote-device';
-import { TaskIdentifier } from '@lobechat/builtin-tool-task';
-import { builtinTools, manualModeExcludeToolIds } from '@lobechat/builtin-tools';
+import {
+  builtinTools,
+  LobeAgentManifest,
+  manualModeExcludeToolIds,
+  TaskIdentifier,
+} from '@lobechat/builtin-tools';
 import { LOADING_FLAT } from '@lobechat/const';
 import type {
   AgentManagementContext,

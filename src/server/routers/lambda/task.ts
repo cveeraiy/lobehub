@@ -1,4 +1,4 @@
-import { TASK_STATUSES } from '@lobechat/builtin-tool-task';
+import { TASK_STATUSES } from '@lobechat/builtin-tools';
 import type { TaskListItem, TaskParticipant } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
