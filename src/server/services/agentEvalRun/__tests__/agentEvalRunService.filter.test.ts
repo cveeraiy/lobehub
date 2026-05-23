@@ -4,8 +4,8 @@ import { AgentEvalRunTopicModel } from '@/database/models/agentEval';
 
 import { cleanupDB, serverDB, setupMultiCaseRun, userId } from './_setup';
 
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
-  AgentRuntimeService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
 }));

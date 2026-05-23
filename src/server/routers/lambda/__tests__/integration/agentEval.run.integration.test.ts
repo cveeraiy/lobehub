@@ -20,9 +20,9 @@ import {
 } from '@/database/schemas';
 import { AgentEvalRunService } from '@/server/services/agentEvalRun';
 
-// Mock AgentRuntimeService to avoid ApiKeyManager env var access at module level
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
-  AgentRuntimeService: vi.fn().mockImplementation(() => ({
+// Mock PythonAgentProxyService to avoid ApiKeyManager env var access at module level
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
 }));

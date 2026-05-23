@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationModel } from '@/database/models/generation';
 import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { VideoGenerationService } from '@/server/services/generation/video';
 import { processBackgroundVideoPolling } from '@/server/services/generation/videoBackgroundPolling';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { AsyncTaskError, AsyncTaskStatus } from '@/types/asyncTask';
 import { FileSource } from '@/types/files';
 
@@ -20,7 +20,7 @@ vi.mock('debug', () => ({
   default: () => vi.fn(),
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 

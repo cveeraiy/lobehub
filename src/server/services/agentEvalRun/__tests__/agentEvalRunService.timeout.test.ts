@@ -4,16 +4,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentEvalRunModel, AgentEvalRunTopicModel } from '@/database/models/agentEval';
 import { agentEvalRuns, agentEvalRunTopics } from '@/database/schemas';
 import { AgentEvalRunService } from '@/server/services/agentEvalRun';
-import { AgentRuntimeService } from '@/server/services/agentRuntime/AgentRuntimeService';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 
 import { cleanupDB, serverDB, setupMultiCaseRun, userId } from './_setup';
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
-  AgentRuntimeService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
 }));
@@ -281,7 +281,7 @@ describe('AgentEvalRunService', () => {
         .where(eq(agentEvalRunTopics.runId, run.id));
 
       // Clear mock call history
-      vi.mocked(AgentRuntimeService).mockClear();
+      vi.mocked(PythonAgentProxyService).mockClear();
 
       const freshRun = await runModel.findById(run.id);
       const service = new AgentEvalRunService(serverDB, userId);
@@ -290,11 +290,11 @@ describe('AgentEvalRunService', () => {
         config: { timeout: 1_200_000 },
       });
 
-      // Verify AgentRuntimeService was instantiated
-      expect(AgentRuntimeService).toHaveBeenCalledWith(serverDB, userId);
+      // Verify PythonAgentProxyService was instantiated
+      expect(PythonAgentProxyService).toHaveBeenCalledWith(serverDB, userId);
 
       // Verify interruptOperation was called for both operationIds
-      const mockInstance = vi.mocked(AgentRuntimeService).mock.results[0].value;
+      const mockInstance = vi.mocked(PythonAgentProxyService).mock.results[0].value;
       expect(mockInstance.interruptOperation).toHaveBeenCalledTimes(2);
       expect(mockInstance.interruptOperation).toHaveBeenCalledWith('op-aaa');
       expect(mockInstance.interruptOperation).toHaveBeenCalledWith('op-bbb');
@@ -315,7 +315,7 @@ describe('AgentEvalRunService', () => {
         .set({ createdAt: sql`NOW() - interval '25 minutes'`, status: 'running' })
         .where(eq(agentEvalRunTopics.runId, run.id));
 
-      vi.mocked(AgentRuntimeService).mockClear();
+      vi.mocked(PythonAgentProxyService).mockClear();
 
       const freshRun = await runModel.findById(run.id);
       const service = new AgentEvalRunService(serverDB, userId);
@@ -324,8 +324,8 @@ describe('AgentEvalRunService', () => {
         config: { timeout: 1_200_000 },
       });
 
-      // AgentRuntimeService is still instantiated but interruptOperation not called
-      const mockInstance = vi.mocked(AgentRuntimeService).mock.results[0].value;
+      // PythonAgentProxyService is still instantiated but interruptOperation not called
+      const mockInstance = vi.mocked(PythonAgentProxyService).mock.results[0].value;
       expect(mockInstance.interruptOperation).not.toHaveBeenCalled();
     });
 
@@ -350,8 +350,8 @@ describe('AgentEvalRunService', () => {
         .where(eq(agentEvalRunTopics.runId, run.id));
 
       // Make interruptOperation throw
-      vi.mocked(AgentRuntimeService).mockClear();
-      vi.mocked(AgentRuntimeService).mockImplementationOnce(
+      vi.mocked(PythonAgentProxyService).mockClear();
+      vi.mocked(PythonAgentProxyService).mockImplementationOnce(
         () =>
           ({
             interruptOperation: vi.fn().mockRejectedValue(new Error('Redis connection failed')),

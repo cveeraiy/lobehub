@@ -329,11 +329,9 @@ depends on the scenario:
   (`src/store/chat/slices/aiChat/actions/streamingExecutor.ts`)
 - **Server-side loop** (queue/local):
   Group chat supervisor agent, sub-agent tasks,
-  API/Cron triggers. The loop runs on the server,
-  streaming events to the client via SSE, entry point is
-  `AgentRuntimeService.executeStep()`
-  (`src/server/services/agentRuntime/AgentRuntimeService.ts`),
-  tRPC route at `src/server/routers/lambda/aiAgent.ts`
+  API/Cron triggers. The loop runs in the Python backend,
+  streaming events to the client via FastAPI SSE endpoints under
+  `/api/ai-agent/*` and `/api/agent/*`.
 
 ## Model Runtime
 

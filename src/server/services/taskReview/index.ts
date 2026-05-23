@@ -5,7 +5,7 @@ import debug from 'debug';
 import { UserModel } from '@/database/models/user';
 import type { LobeChatDatabase } from '@/database/type';
 import { evaluate, type EvaluateResult, type RubricResult } from '@/server/modules/EvalRubric';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 
 const log = debug('task-review');
 

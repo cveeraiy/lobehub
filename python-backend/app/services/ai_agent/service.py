@@ -1,7 +1,5 @@
 """AiAgentService — unified orchestration layer for agent execution.
 
-Mirrors the TS ``AiAgentService`` in ``src/server/services/aiAgent/index.ts``.
-
 Architecture:
     exec_agent({ agent_id | slug, prompt })
         → resolve agent config from DB

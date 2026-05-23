@@ -13,13 +13,13 @@ import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { NotebookManifest } from '@lobechat/builtin-tool-notebook';
 import { PageAgentManifest } from '@lobechat/builtin-tool-page-agent';
-import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
-import { SkillsManifest } from '@lobechat/builtin-tool-skills';
 import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 
 import { CalculatorManifest } from './calculator';
 import { LobeAgentManifest } from './lobeAgent';
+import { SkillsManifest } from './skills';
+import { SkillStoreManifest } from './skillStore';
 import { TopicReferenceManifest } from './topicReference';
 import { WebOnboardingManifest } from './webOnboarding';
 

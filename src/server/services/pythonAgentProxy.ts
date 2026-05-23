@@ -58,18 +58,34 @@ function keysToCamelCase(obj: unknown): unknown {
 // ── Proxy methods ─────────────────────────────────────────────────────
 
 export interface ExecAgentProxyInput {
+  additionalPluginIds?: string[];
   agentId?: string;
   appContext?: Record<string, unknown>;
   autoStart?: boolean;
+  botContext?: unknown;
+  botPlatformContext?: unknown;
   clientRuntime?: string;
   deviceId?: string;
+  discordContext?: unknown;
   existingMessageIds?: string[];
   fileIds?: string[];
+  files?: unknown[];
+  hooks?: unknown[];
+  initialStepCount?: number;
+  maxSteps?: number;
+  model?: string;
   parentMessageId?: string;
   prompt: string;
+  provider?: string;
+  queueRetries?: number;
+  queueRetryDelay?: number | string;
   resume?: boolean;
   resumeApproval?: Record<string, unknown>;
+  signal?: AbortSignal;
   slug?: string;
+  taskId?: string;
+  title?: string;
+  trigger?: string;
   userInterventionConfig?: Record<string, unknown>;
 }
 

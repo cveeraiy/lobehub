@@ -1,7 +1,4 @@
-"""Structured SSE event types for the Agent Runtime streaming layer.
-
-Mirrors TypeScript: src/server/modules/AgentRuntime/StreamEventManager.ts
-"""
+"""Structured SSE event types for the Python Agent Runtime streaming layer."""
 
 from __future__ import annotations
 

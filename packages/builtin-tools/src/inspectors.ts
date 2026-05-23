@@ -40,11 +40,6 @@ import { MessageInspectors, MessageManifest } from '@lobechat/builtin-tool-messa
 import { NotebookInspectors, NotebookManifest } from '@lobechat/builtin-tool-notebook/client';
 import { PageAgentInspectors, PageAgentManifest } from '@lobechat/builtin-tool-page-agent/client';
 import {
-  SkillStoreInspectors,
-  SkillStoreManifest,
-} from '@lobechat/builtin-tool-skill-store/client';
-import { SkillsInspectors, SkillsManifest } from '@lobechat/builtin-tool-skills/client';
-import {
   WebBrowsingInspectors,
   WebBrowsingManifest,
 } from '@lobechat/builtin-tool-web-browsing/client';
@@ -52,6 +47,8 @@ import { createRunCommandInspector } from '@lobechat/shared-tool-ui/inspectors';
 import { type BuiltinInspector } from '@lobechat/types';
 
 import { CodexInspectors } from './codex';
+import { SkillsInspectors, SkillsManifest } from './skills/client';
+import { SkillStoreInspectors, SkillStoreManifest } from './skillStore/client';
 
 /**
  * Builtin tools inspector registry

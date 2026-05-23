@@ -2,12 +2,12 @@ import { createTelegramAdapter } from '@chat-adapter/telegram';
 import type { Message } from 'chat';
 import debug from 'debug';
 
-import type { AttachmentSource } from '@/server/services/aiAgent/ingestAttachment';
 import {
   BOT_RUNTIME_STATUSES,
   getRuntimeStatusErrorMessage,
   updateBotRuntimeStatus,
 } from '@/server/services/gateway/runtimeStatus';
+import type { AttachmentSource } from '@/types/attachmentSource';
 
 import {
   type BotPlatformRuntimeContext,

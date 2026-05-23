@@ -7,10 +7,10 @@ import { getServerDB } from '@/database/core/db-adaptor';
 import type { DecryptedBotProvider } from '@/database/models/agentBotProvider';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import type { LobeChatDatabase } from '@/database/type';
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
-import { emitAgentSignalSourceEvent } from '@/server/services/agentSignal';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
+import { emitPythonAgentSignalSourceEvent } from '@/server/services/pythonAgentSignalProxy';
+import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 import { AgentBridgeService } from './AgentBridgeService';
 import {
@@ -842,7 +842,7 @@ export class BotMessageRouter {
       }
 
       const merged = BotMessageRouter.mergeSkippedMessages(message, context);
-      void emitAgentSignalSourceEvent(
+      void emitPythonAgentSignalSourceEvent(
         {
           payload: {
             agentId,
@@ -856,11 +856,9 @@ export class BotMessageRouter {
         },
         {
           agentId,
-          db: serverDB,
           userId,
         },
-        { ignoreError: true },
-      );
+      ).catch((error) => log('agent signal emit failed: %O', error));
 
       log(
         'onNewMention: agent=%s, platform=%s, author=%s, thread=%s, merged=%d, mergedAttachments=%d',
@@ -950,7 +948,7 @@ export class BotMessageRouter {
       }
 
       const merged = BotMessageRouter.mergeSkippedMessages(message, context);
-      void emitAgentSignalSourceEvent(
+      void emitPythonAgentSignalSourceEvent(
         {
           payload: {
             agentId,
@@ -964,11 +962,9 @@ export class BotMessageRouter {
         },
         {
           agentId,
-          db: serverDB,
           userId,
         },
-        { ignoreError: true },
-      );
+      ).catch((error) => log('agent signal emit failed: %O', error));
 
       log(
         'onSubscribedMessage: agent=%s, platform=%s, author=%s, thread=%s, merged=%d, mergedAttachments=%d',
@@ -1068,7 +1064,7 @@ export class BotMessageRouter {
         }
 
         const merged = BotMessageRouter.mergeSkippedMessages(message, context);
-        void emitAgentSignalSourceEvent(
+        void emitPythonAgentSignalSourceEvent(
           {
             payload: {
               agentId,
@@ -1082,11 +1078,9 @@ export class BotMessageRouter {
           },
           {
             agentId,
-            db: serverDB,
             userId,
           },
-          { ignoreError: true },
-        );
+        ).catch((error) => log('agent signal emit failed: %O', error));
 
         log(
           'onNewMessage (%s catch-all): agent=%s, author=%s, thread=%s, text=%s, mergedAttachments=%d',
@@ -1183,7 +1177,7 @@ export class BotMessageRouter {
           const operationId = AgentBridgeService.getActiveOperationId(ctx.threadId);
           if (operationId) {
             try {
-              const aiAgentService = new AiAgentService(serverDB, userId);
+              const aiAgentService = new PythonAgentProxyService(userId);
               const result = await aiAgentService.interruptTask({ operationId });
               if (!result.success) {
                 log('command /stop: runtime interrupt rejected for operationId=%s', operationId);

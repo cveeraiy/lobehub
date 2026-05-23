@@ -18,9 +18,7 @@ import { agentEvalRouter } from './agentEval';
 import { agentEvalExternalRouter } from './agentEvalExternal';
 import { agentGroupRouter } from './agentGroup';
 import { agentNotifyRouter } from './agentNotify';
-import { agentSignalRouter } from './agentSignal';
 import { agentSkillsRouter } from './agentSkills';
-import { aiAgentRouter } from './aiAgent';
 import { aiChatRouter } from './aiChat';
 import { aiModelRouter } from './aiModel';
 import { aiProviderRouter } from './aiProvider';
@@ -61,8 +59,6 @@ import { topicRouter } from './topic';
 import { uploadRouter } from './upload';
 import { usageRouter } from './usage';
 import { userRouter } from './user';
-import { userMemoriesRouter } from './userMemories';
-import { userMemoryRouter } from './userMemory';
 import { videoRouter } from './video';
 
 export const lambdaRouter = router({
@@ -76,10 +72,8 @@ export const lambdaRouter = router({
   agentEval: agentEvalRouter,
   agentEvalExternal: agentEvalExternalRouter,
   agentSkills: agentSkillsRouter,
-  agentSignal: agentSignalRouter,
   task: taskRouter,
   brief: briefRouter,
-  aiAgent: aiAgentRouter,
   aiChat: aiChatRouter,
   aiModel: aiModelRouter,
   aiProvider: aiProviderRouter,
@@ -119,8 +113,6 @@ export const lambdaRouter = router({
   upload: uploadRouter,
   usage: usageRouter,
   user: userRouter,
-  userMemories: userMemoriesRouter,
-  userMemory: userMemoryRouter,
   video: videoRouter,
   accountDeletion: accountDeletionRouter,
   referral: referralRouter,

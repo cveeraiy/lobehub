@@ -1,9 +1,6 @@
 """Stream Event Managers — InMemory (default) and abstract interface.
 
-Mirrors TypeScript:
-- src/server/modules/AgentRuntime/types.ts  (IStreamEventManager)
-- src/server/modules/AgentRuntime/InMemoryStreamEventManager.ts
-- src/server/modules/AgentRuntime/StreamEventManager.ts  (Redis, optional)
+Python owns the server-side stream event contract for agent runtime execution.
 """
 
 from __future__ import annotations

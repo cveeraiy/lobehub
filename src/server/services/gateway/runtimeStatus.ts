@@ -1,5 +1,5 @@
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 import { buildRuntimeKey } from '@/server/services/bot/platforms/utils';
+import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 import {
   BOT_RUNTIME_STATUSES,

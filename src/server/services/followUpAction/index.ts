@@ -3,7 +3,7 @@ import type { FollowUpChip, FollowUpExtractInput, FollowUpExtractResult } from '
 import debug from 'debug';
 
 import { type LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 
 import { buildSuggestionPrompt } from './prompts';
 import { RawResponseSchema, SUGGESTION_RESPONSE_JSON_SCHEMA } from './schema';

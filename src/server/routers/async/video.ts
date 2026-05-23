@@ -13,8 +13,8 @@ import { chargeAfterGenerate } from '@/business/server/video-generation/chargeAf
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationModel } from '@/database/models/generation';
 import { asyncAuthedProcedure, asyncRouter as router } from '@/libs/trpc/async';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { VideoGenerationService } from '@/server/services/generation/video';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { FileSource } from '@/types/files';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
 

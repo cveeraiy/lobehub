@@ -47,7 +47,7 @@ vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
   },
 }));
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('@/server/utils/runtimeRedis', () => ({
   getAgentRuntimeRedisClient: mockGetAgentRuntimeRedisClient,
 }));
 
@@ -75,8 +75,8 @@ vi.mock('chat', () => ({
   ConsoleLogger: vi.fn(),
 }));
 
-vi.mock('@/server/services/aiAgent', () => ({
-  AiAgentService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptTask: vi.fn().mockResolvedValue({ success: true }),
   })),
 }));

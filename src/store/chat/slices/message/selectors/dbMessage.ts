@@ -1,5 +1,5 @@
 import { LobeActivatorIdentifier } from '@lobechat/builtin-tool-activator';
-import { SkillsIdentifier } from '@lobechat/builtin-tool-skills';
+import { SkillsIdentifier } from '@lobechat/builtin-tools';
 import {
   type StepActivatedSkill,
   type StepContextTodos,

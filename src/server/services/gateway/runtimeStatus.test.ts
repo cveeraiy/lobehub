@@ -7,7 +7,7 @@ const mockRedis = {
   set: vi.fn(),
 };
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('@/server/utils/runtimeRedis', () => ({
   getAgentRuntimeRedisClient: vi.fn(() => mockRedis),
 }));
 

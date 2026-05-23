@@ -1,6 +1,6 @@
 import debug from 'debug';
 
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
+import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 const log = debug('ethos-server:bot:reaction-state');
 

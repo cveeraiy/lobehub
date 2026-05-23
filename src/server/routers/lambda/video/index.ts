@@ -28,9 +28,9 @@ import { getServerDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { FileService } from '@/server/services/file';
 import { processBackgroundVideoPolling } from '@/server/services/generation/videoBackgroundPolling';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { afterResponse } from '@/server/utils/afterResponse';
 import { AsyncTaskStatus, AsyncTaskType } from '@/types/asyncTask';
 

@@ -41,7 +41,7 @@ vi.mock('@/database/core/db-adaptor', () => ({
 vi.mock('@/database/server', () => ({
   getServerDB: vi.fn().mockResolvedValue(mockServerDB),
 }));
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn().mockResolvedValue({ createVideo: mockCreateVideo }),
 }));
 vi.mock('@/business/server/video-generation/chargeBeforeGenerate', () => ({

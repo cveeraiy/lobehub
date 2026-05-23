@@ -287,6 +287,14 @@ async def persona_update_workflow(payload: dict[str, Any], session: AsyncSession
     return {"success": True, "taskId": task.id}
 
 
+async def agent_signal_run_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    return {
+        "message": "Agent signal workflow transport is retired; use /api/agent-signal endpoints",
+        "retired": True,
+        "success": False,
+    }
+
+
 WORKFLOW_HANDLERS = {
     "agent-eval-run/execute-test-case": run_eval_workflow,
     "agent-eval-run/finalize-run": finalize_eval_workflow,
@@ -298,6 +306,7 @@ WORKFLOW_HANDLERS = {
     "agent-eval-run/run-agent-trajectory": run_eval_workflow,
     "agent-eval-run/run-benchmark": run_eval_workflow,
     "agent-eval-run/run-thread-trajectory": run_eval_workflow,
+    "agent-signal/run": agent_signal_run_workflow,
     "memory-user-memory/call-cron-hourly-analysis": memory_extraction_workflow,
     "memory-user-memory/pipelines/chat-topic/process-topic": memory_process_topic_workflow,
     "memory-user-memory/pipelines/chat-topic/process-topics": memory_extraction_workflow,

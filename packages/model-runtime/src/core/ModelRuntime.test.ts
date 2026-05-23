@@ -11,7 +11,7 @@ import type { CreateVideoPayload } from '../types/video';
 
 /**
  * Mock createTraceOptions for testing purposes.
- * This avoids importing from @/server/modules/ModelRuntime which has database dependencies.
+ * This avoids importing from @/server/services/pythonModelRuntime which has database dependencies.
  */
 const createMockTraceOptions = (callbacks?: Partial<ChatStreamCallbacks>) => ({
   callback: {

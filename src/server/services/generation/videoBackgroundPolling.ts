@@ -5,8 +5,8 @@ import { trackProviderContentPolicyViolation } from '@/business/server/trackProv
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationModel } from '@/database/models/generation';
 import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { VideoGenerationService } from '@/server/services/generation/video';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { AsyncTaskError, AsyncTaskErrorType, AsyncTaskStatus } from '@/types/asyncTask';
 import { FileSource } from '@/types/files';
 import type { VideoGenerationAsset } from '@/types/generation';

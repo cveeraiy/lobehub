@@ -9,33 +9,34 @@
  * because the activated state is persisted in message pluginState and accumulated
  * by selectActivatedToolIdsFromMessages at each agentic loop step.
  */
-import { builtinSkills } from '@lobechat/builtin-skills';
 import {
   ActivatorExecutionRuntime,
   type ActivatorRuntimeService,
   type ToolManifestInfo,
 } from '@lobechat/builtin-tool-activator/executionRuntime';
 import { ActivatorExecutor } from '@lobechat/builtin-tool-activator/executor';
-import { SkillsExecutionRuntime } from '@lobechat/builtin-tool-skills/executionRuntime';
+import { SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
 
-import { filterBuiltinSkills } from '@/helpers/skillFilters';
-import { agentSkillService } from '@/services/skill';
+import { restClient } from '@/libs/rest';
 import { getToolStoreState } from '@/store/tool';
 import { toolSelectors } from '@/store/tool/selectors/tool';
 import { LobehubSkillStatus } from '@/store/tool/slices/lobehubSkillStore';
 
-const skillsRuntime = new SkillsExecutionRuntime({
-  builtinSkills: filterBuiltinSkills(builtinSkills),
-  service: {
-    findAll: () => agentSkillService.list(),
-    findById: (id) => agentSkillService.getById(id),
-    findByName: (name) => agentSkillService.getByName(name),
-    readResource: (id, path) => agentSkillService.readResource(id, path),
-  },
-});
+interface PythonToolRunResponse {
+  result: string;
+}
 
 const service: ActivatorRuntimeService = {
-  activateSkill: (args) => skillsRuntime.activateSkill(args),
+  activateSkill: async (args) => {
+    const response = await restClient.post<PythonToolRunResponse>('/tools/run', {
+      body: {
+        arguments: args,
+        tool_name: `${SkillsIdentifier}__${SkillsApiName.activateSkill}`,
+      },
+    });
+
+    return JSON.parse(response.result);
+  },
   getActivatedToolIds: () => [],
   getToolManifests: async (identifiers: string[]): Promise<ToolManifestInfo[]> => {
     const s = getToolStoreState();

@@ -14,8 +14,6 @@ import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { MessageManifest } from '@lobechat/builtin-tool-message';
 import { PageAgentManifest } from '@lobechat/builtin-tool-page-agent';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
-import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
-import { SkillsManifest } from '@lobechat/builtin-tool-skills';
 import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { isDesktop, RECOMMENDED_SKILLS, RecommendedSkillType } from '@lobechat/const';
@@ -25,6 +23,8 @@ import { BriefManifest } from './brief';
 import { CalculatorManifest } from './calculator';
 import { CronManifest } from './cron';
 import { LobeAgentManifest } from './lobeAgent';
+import { SkillsManifest } from './skills';
+import { SkillStoreManifest } from './skillStore';
 import { TaskManifest } from './task';
 import { TopicReferenceManifest } from './topicReference';
 import { WebOnboardingManifest } from './webOnboarding';
@@ -115,6 +115,35 @@ export {
   type VisualMediaUrlValidationResult,
   type VisualSourceMessage,
 } from './lobeAgent';
+export {
+  type ActivateSkillParams,
+  type ActivateSkillState,
+  type CommandResult,
+  type ExecScriptActivatedSkill,
+  type ExecScriptParams,
+  type ExecScriptState,
+  type ExportFileParams,
+  type ExportFileState,
+  type ReadReferenceParams,
+  type ReadReferenceState,
+  type RunCommandOptions,
+  type RunCommandParams,
+  SkillsApiName,
+  SkillsIdentifier,
+  SkillsManifest,
+} from './skills';
+export {
+  type ImportFromMarketParams,
+  type ImportFromMarketState,
+  type ImportSkillParams,
+  type ImportSkillState,
+  type MarketSkillItem,
+  type SearchSkillParams,
+  type SearchSkillState,
+  SkillStoreApiName,
+  SkillStoreIdentifier,
+  SkillStoreManifest,
+} from './skillStore';
 export {
   DEFAULT_LIST_TASK_LIMIT,
   type ListTasksParams,

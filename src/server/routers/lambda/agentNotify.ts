@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { TopicModel } from '@/database/models/topic';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 
 const log = debug('ethos-server:agent-notify-router');
 
@@ -14,7 +14,7 @@ const agentNotifyProcedure = authedProcedure.use(serverDatabase).use(async (opts
 
   return opts.next({
     ctx: {
-      aiAgentService: new AiAgentService(ctx.serverDB, ctx.userId),
+      aiAgentService: new PythonAgentProxyService(ctx.userId),
       topicModel: new TopicModel(ctx.serverDB, ctx.userId),
     },
   });

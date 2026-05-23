@@ -1,6 +1,6 @@
 """Agent Signal — event-driven agent orchestration pipeline.
 
-Mirrors TS ``src/server/services/agentSignal/`` architecture:
+Python owns the server-side Agent Signal architecture:
 - ``SignalSource``   — emits signals from external events (cron, webhook, etc.)
 - ``SignalPolicy``   — routing rules, dedup, scope
 - ``SignalProcessor``— handles a signal by invoking agent actions

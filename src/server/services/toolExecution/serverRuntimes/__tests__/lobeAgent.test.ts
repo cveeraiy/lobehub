@@ -31,7 +31,7 @@ vi.mock('@/server/services/file', () => ({
   })),
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: (...args: any[]) => mockInitModelRuntimeFromDB(...args),
 }));
 

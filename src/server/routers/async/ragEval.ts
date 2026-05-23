@@ -15,8 +15,8 @@ import {
   EvaluationRecordModel,
 } from '@/database/models/ragEval';
 import { asyncAuthedProcedure, asyncRouter as router } from '@/libs/trpc/async';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { ChunkService } from '@/server/services/chunk';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { AsyncTaskError } from '@/types/asyncTask';
 
 const ragEvalProcedure = asyncAuthedProcedure.use(async (opts) => {

@@ -11,8 +11,8 @@ import { cleanupDB, serverDB, setupEvalChain, userId } from './_setup';
 
 const mockExecAgent = vi.fn();
 
-vi.mock('@/server/services/aiAgent', () => ({
-  AiAgentService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
   })),
 }));
@@ -34,8 +34,8 @@ vi.mock('@/envs/app', () => ({
   appEnv: { APP_URL: 'https://test.example.com' },
 }));
 
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
-  AgentRuntimeService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
 }));

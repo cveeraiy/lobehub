@@ -72,7 +72,7 @@ vi.mock('@/server/modules/KeyVaultsEncrypt', () => ({
   },
 }));
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('@/server/utils/runtimeRedis', () => ({
   getAgentRuntimeRedisClient: vi.fn().mockReturnValue(null),
 }));
 

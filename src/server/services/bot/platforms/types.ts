@@ -1,6 +1,6 @@
 import type { Chat, Message } from 'chat';
 
-import type { AttachmentSource } from '@/server/services/aiAgent/ingestAttachment';
+import type { AttachmentSource } from '@/types/attachmentSource';
 
 // ============================================================================
 // Bot Platform Core Types

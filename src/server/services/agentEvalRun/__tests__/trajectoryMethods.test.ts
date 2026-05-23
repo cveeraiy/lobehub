@@ -14,10 +14,10 @@ import {
 } from '@/database/schemas';
 import { AgentEvalRunService } from '@/server/services/agentEvalRun';
 
-// Mock AiAgentService — created inside executeTrajectory
+// Mock PythonAgentProxyService — created inside executeTrajectory
 const mockExecAgent = vi.fn();
-vi.mock('@/server/services/aiAgent', () => ({
-  AiAgentService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
   })),
 }));
@@ -27,9 +27,9 @@ vi.mock('@/envs/app', () => ({
   appEnv: { APP_URL: 'https://test.example.com' },
 }));
 
-// Mock AgentRuntimeService (required by service constructor path for checkAndHandleRunTimeout)
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
-  AgentRuntimeService: vi.fn().mockImplementation(() => ({
+// Mock PythonAgentProxyService (required by service constructor path for checkAndHandleRunTimeout)
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
 }));

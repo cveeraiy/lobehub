@@ -1,7 +1,4 @@
-"""AI Agent Service — unified orchestration layer for agent execution.
-
-Mirrors the TS ``AiAgentService`` in ``src/server/services/aiAgent/index.ts``.
-"""
+"""AI Agent Service — unified orchestration layer for agent execution."""
 
 from app.services.ai_agent.types import (
     AgentError,

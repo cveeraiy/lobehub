@@ -2,7 +2,6 @@ import debug from 'debug';
 
 import { getServerDB } from '@/database/core/db-adaptor';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import {
   type BotPlatformRuntimeContext,
@@ -11,6 +10,7 @@ import {
   type PlatformDefinition,
   resolveBotProviderConfig,
 } from '@/server/services/bot/platforms';
+import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 const log = debug('ethos-server:bot-gateway');
 

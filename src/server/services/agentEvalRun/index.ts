@@ -25,8 +25,7 @@ import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
 import { evaluate } from '@/server/modules/EvalRubric';
 import { AgentService } from '@/server/services/agent';
-import { AgentRuntimeService } from '@/server/services/agentRuntime/AgentRuntimeService';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 import {
   AgentEvalRunWorkflow,
   type ResumeAgentTrajectoryPayload,
@@ -161,12 +160,12 @@ export class AgentEvalRunService {
     const runningTopics = runTopics.filter((t) => t.status === 'running');
 
     if (runningTopics.length > 0) {
-      const agentRuntimeService = new AgentRuntimeService(this.db, this.userId);
+      const agentRuntimeService = new PythonAgentProxyService(this.userId);
       for (const rt of runningTopics) {
         const opId = (rt.evalResult as EvalRunTopicResult)?.operationId;
         if (opId) {
           try {
-            await agentRuntimeService.interruptOperation(opId);
+            await agentRuntimeService.interruptTask({ operationId: opId });
           } catch {
             // best effort
           }
@@ -531,7 +530,7 @@ export class AgentEvalRunService {
 
     await this.runModel.update(runId, { startedAt: now, status: 'running' });
 
-    const aiAgentService = new AiAgentService(this.db, this.userId);
+    const aiAgentService = new PythonAgentProxyService(this.userId);
     const webhookUrl = '/api/workflows/agent-eval-run/on-trajectory-complete';
     const userId = this.userId;
     const db = this.db;
@@ -543,7 +542,7 @@ export class AgentEvalRunService {
         autoStart: true,
         hooks: [
           {
-            handler: async (event) => {
+            handler: async (event: any) => {
               // Local mode: directly record completion
               const service = new AgentEvalRunService(db, userId);
               await service.recordTrajectoryCompletion({
@@ -672,7 +671,7 @@ export class AgentEvalRunService {
 
     await this.runModel.update(runId, { startedAt: now, status: 'running' });
 
-    const aiAgentService = new AiAgentService(this.db, this.userId);
+    const aiAgentService = new PythonAgentProxyService(this.userId);
     const webhookUrl = '/api/workflows/agent-eval-run/on-thread-complete';
     const userId = this.userId;
     const db = this.db;
@@ -684,7 +683,7 @@ export class AgentEvalRunService {
         autoStart: true,
         hooks: [
           {
-            handler: async (event) => {
+            handler: async (event: any) => {
               // Local mode: directly record thread completion
               const service = new AgentEvalRunService(db, userId);
               await service.recordThreadCompletion({
@@ -953,7 +952,7 @@ export class AgentEvalRunService {
     // Update status from 'pending' to 'running'
     await this.runTopicModel.updateByRunAndTopic(runId, topicId, { status: 'running' });
 
-    const aiAgentService = new AiAgentService(this.db, this.userId);
+    const aiAgentService = new PythonAgentProxyService(this.userId);
     const webhookUrl = '/api/workflows/agent-eval-run/on-trajectory-complete';
     const userId = this.userId;
     const db = this.db;
@@ -965,7 +964,7 @@ export class AgentEvalRunService {
         autoStart: true,
         hooks: [
           {
-            handler: async (event) => {
+            handler: async (event: any) => {
               // Local mode: directly record completion
               const service = new AgentEvalRunService(db, userId);
               await service.recordTrajectoryCompletion({
@@ -1109,7 +1108,7 @@ export class AgentEvalRunService {
   }) {
     const { envPrompt, run, runId, testCaseId, threadId, topicId } = params;
 
-    const aiAgentService = new AiAgentService(this.db, this.userId);
+    const aiAgentService = new PythonAgentProxyService(this.userId);
     const webhookUrl = '/api/workflows/agent-eval-run/on-thread-complete';
     const userId = this.userId;
     const db = this.db;
@@ -1121,7 +1120,7 @@ export class AgentEvalRunService {
         autoStart: true,
         hooks: [
           {
-            handler: async (event) => {
+            handler: async (event: any) => {
               // Local mode: directly record thread completion
               const service = new AgentEvalRunService(db, userId);
               await service.recordThreadCompletion({
@@ -2105,12 +2104,12 @@ export class AgentEvalRunService {
     if (timedOutRows.length === 0) return false;
 
     // Interrupt running agents before writing timeout state (best-effort)
-    const agentRuntimeService = new AgentRuntimeService(this.db, this.userId);
+    const agentRuntimeService = new PythonAgentProxyService(this.userId);
     for (const row of timedOutRows) {
       const opId = (row.evalResult as EvalRunTopicResult)?.operationId;
       if (opId) {
         try {
-          await agentRuntimeService.interruptOperation(opId);
+          await agentRuntimeService.interruptTask({ operationId: opId });
         } catch {
           // best effort — don't block timeout handling
         }

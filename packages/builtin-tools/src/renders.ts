@@ -27,8 +27,6 @@ import {
 import { MemoryManifest, MemoryRenders } from '@lobechat/builtin-tool-memory/client';
 import { MessageManifest, MessageRenders } from '@lobechat/builtin-tool-message/client';
 import { NotebookManifest, NotebookRenders } from '@lobechat/builtin-tool-notebook/client';
-import { SkillStoreManifest, SkillStoreRenders } from '@lobechat/builtin-tool-skill-store/client';
-import { SkillsManifest, SkillsRenders } from '@lobechat/builtin-tool-skills/client';
 import {
   WebBrowsingManifest,
   WebBrowsingRenders,
@@ -37,6 +35,8 @@ import { RunCommandRender } from '@lobechat/shared-tool-ui/renders';
 import { type BuiltinRender } from '@lobechat/types';
 
 import { CodexRenders } from './codex';
+import { SkillsManifest, SkillsRenders } from './skills/client';
+import { SkillStoreManifest, SkillStoreRenders } from './skillStore/client';
 
 export interface BuiltinRenderRegistryEntry {
   apiName: string;

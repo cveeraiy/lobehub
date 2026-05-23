@@ -43,13 +43,13 @@ import {
 } from '@/database/models/userMemory';
 import { userSettings } from '@/database/schemas';
 import { getServerDefaultFilesConfig } from '@/server/globalConfig';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import {
   emitToolOutcomeSafely,
+  redisPolicyStateStore,
   resolveToolOutcomeScope,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
-import { normalizeSearchMemoryParams } from '@/server/services/memory/userMemory/searchParams';
+} from '@/server/services/toolOutcomeProxy';
+import { normalizeSearchMemoryParams } from '@/utils/userMemory/searchParams';
 
 import type { ServerRuntimeRegistration } from './types';
 

@@ -162,6 +162,7 @@ _ROUTER_MODULES: list[str] = [
     "app.routers.klavis",
     # AI infra
     "app.routers.ai_infra",
+    "app.routers.model_runtime",
     "app.routers.webapi",
     "app.routers.webhooks",
     "app.routers.cloud_sandbox",

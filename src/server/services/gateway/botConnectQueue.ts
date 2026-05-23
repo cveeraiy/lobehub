@@ -1,8 +1,8 @@
 import debug from 'debug';
 import type Redis from 'ioredis';
 
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
 import { buildRuntimeKey, parseRuntimeKey } from '@/server/services/bot/platforms';
+import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 const log = debug('ethos-server:bot:connect-queue');
 

@@ -6,9 +6,9 @@ import { TaskModel } from '@/database/models/task';
 import { AgentDocumentsService } from '@/server/services/agentDocuments';
 import {
   emitToolOutcomeSafely,
+  redisPolicyStateStore,
   resolveToolOutcomeScope,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
+} from '@/server/services/toolOutcomeProxy';
 
 import { type ServerRuntimeRegistration } from './types';
 

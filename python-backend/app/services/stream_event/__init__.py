@@ -1,10 +1,4 @@
-"""Structured SSE stream event types and managers.
-
-Mirrors TypeScript:
-- src/server/modules/AgentRuntime/StreamEventManager.ts
-- src/server/modules/AgentRuntime/InMemoryStreamEventManager.ts
-- src/server/modules/AgentRuntime/types.ts (IStreamEventManager)
-"""
+"""Structured SSE stream event types and managers for Python Agent Runtime."""
 
 from app.services.stream_event.types import (
     StreamChunkData,
