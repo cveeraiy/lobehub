@@ -188,7 +188,6 @@
     "@lobechat/builtin-tool-agent-documents": "workspace:*",
     "@lobechat/builtin-tool-agent-management": "workspace:*",
     "@lobechat/builtin-tool-agent-marketplace": "workspace:*",
-    "@lobechat/builtin-tool-calculator": "workspace:*",
     "@lobechat/builtin-tool-claude-code": "workspace:*",
     "@lobechat/builtin-tool-cloud-sandbox": "workspace:*",
     "@lobechat/builtin-tool-creds": "workspace:*",

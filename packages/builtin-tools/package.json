@@ -13,6 +13,7 @@
     "./portals": "./src/portals.ts",
     "./streamings": "./src/streamings.ts",
     "./identifiers": "./src/identifiers.ts",
+    "./calculatorExecutor": "./src/calculator/executor/index.ts",
     "./cronExecutor": "./src/cron/executor/index.ts",
     "./lobeAgentExecutor": "./src/lobeAgent/executor/index.ts",
     "./taskExecutor": "./src/task/executor/index.ts",

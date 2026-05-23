@@ -3,7 +3,6 @@ import { AgentBuilderManifest } from '@lobechat/builtin-tool-agent-builder';
 import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import { AgentManagementManifest } from '@lobechat/builtin-tool-agent-management';
 import { AgentMarketplaceManifest } from '@lobechat/builtin-tool-agent-marketplace';
-import { CalculatorManifest } from '@lobechat/builtin-tool-calculator';
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
 import { CredsManifest } from '@lobechat/builtin-tool-creds';
 import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
@@ -23,6 +22,7 @@ import { isDesktop, RECOMMENDED_SKILLS, RecommendedSkillType } from '@lobechat/c
 import { type LobeBuiltinTool } from '@lobechat/types';
 
 import { BriefManifest } from './brief';
+import { CalculatorManifest } from './calculator';
 import { CronManifest } from './cron';
 import { LobeAgentManifest } from './lobeAgent';
 import { TaskManifest } from './task';
@@ -30,6 +30,32 @@ import { TopicReferenceManifest } from './topicReference';
 import { WebOnboardingManifest } from './webOnboarding';
 
 export { BriefApiName, BriefIdentifier, BriefManifest } from './brief';
+export {
+  type BaseParams,
+  type BaseState,
+  type CalculateParams,
+  type CalculateState,
+  CalculatorApiName,
+  type CalculatorApiNameType,
+  CalculatorIdentifier,
+  CalculatorManifest,
+  type DefintegrateParams,
+  type DefintegrateState,
+  type DifferentiateParams,
+  type DifferentiateState,
+  type EvaluateParams,
+  type EvaluateState,
+  type ExecuteParams,
+  type ExecuteState,
+  type IntegrateParams,
+  type IntegrateState,
+  type LimitParams,
+  type LimitState,
+  type SolveParams,
+  type SolveState,
+  type SortParams,
+  type SortState,
+} from './calculator';
 export {
   type CreateCronJobParams,
   type CreateCronJobState,

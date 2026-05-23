@@ -3,7 +3,6 @@ import { AgentBuilderManifest } from '@lobechat/builtin-tool-agent-builder';
 import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
 import { AgentManagementManifest } from '@lobechat/builtin-tool-agent-management';
 import { AgentMarketplaceManifest } from '@lobechat/builtin-tool-agent-marketplace';
-import { CalculatorManifest } from '@lobechat/builtin-tool-calculator';
 import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
 import { CredsManifest } from '@lobechat/builtin-tool-creds';
 import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
@@ -19,6 +18,7 @@ import { SkillsManifest } from '@lobechat/builtin-tool-skills';
 import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 
+import { CalculatorManifest } from './calculator';
 import { LobeAgentManifest } from './lobeAgent';
 import { TopicReferenceManifest } from './topicReference';
 import { WebOnboardingManifest } from './webOnboarding';

@@ -1,4 +1,4 @@
-import { type BuiltinToolManifest } from '@lobechat/types';
+import type { BuiltinToolManifest } from '@lobechat/types';
 
 import { systemPrompt } from './systemRole';
 import { CalculatorApiName, CalculatorIdentifier } from './types';
