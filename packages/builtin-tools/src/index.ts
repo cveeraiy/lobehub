@@ -19,7 +19,6 @@ import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
 import { SkillsManifest } from '@lobechat/builtin-tool-skills';
 import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { WebOnboardingManifest } from '@lobechat/builtin-tool-web-onboarding';
 import { isDesktop, RECOMMENDED_SKILLS, RecommendedSkillType } from '@lobechat/const';
 import { type LobeBuiltinTool } from '@lobechat/types';
 
@@ -28,6 +27,7 @@ import { CronManifest } from './cron';
 import { LobeAgentManifest } from './lobeAgent';
 import { TaskManifest } from './task';
 import { TopicReferenceManifest } from './topicReference';
+import { WebOnboardingManifest } from './webOnboarding';
 
 export { BriefApiName, BriefIdentifier, BriefManifest } from './brief';
 export {
@@ -111,6 +111,13 @@ export {
   TopicReferenceIdentifier,
   TopicReferenceManifest,
 } from './topicReference';
+export {
+  type UpdateDocumentArgs,
+  WebOnboardingApiName,
+  type WebOnboardingDocumentType,
+  WebOnboardingIdentifier,
+  WebOnboardingManifest,
+} from './webOnboarding';
 
 /**
  * Default tool IDs that will always be added to the tools list.

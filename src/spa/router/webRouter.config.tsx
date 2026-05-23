@@ -484,34 +484,6 @@ const authRoutes: RouteObject[] = [
         ),
         path: '/oauth/callback/success',
       },
-      {
-        element: dynamicElement(
-          () => import('@/routes/(auth)/oauth/consent/[uid]/page'),
-          'Auth > OAuth Consent',
-        ),
-        path: '/oauth/consent/:uid',
-      },
-      {
-        element: dynamicElement(
-          () => import('@/routes/(auth)/oauth/device/page'),
-          'Auth > OAuth Device',
-        ),
-        path: '/oauth/device',
-      },
-      {
-        element: dynamicElement(
-          () => import('@/routes/(auth)/oauth/device/confirm/page'),
-          'Auth > OAuth Device Confirm',
-        ),
-        path: '/oauth/device/confirm',
-      },
-      {
-        element: dynamicElement(
-          () => import('@/routes/(auth)/oauth/device/success/page'),
-          'Auth > OAuth Device Success',
-        ),
-        path: '/oauth/device/success',
-      },
     ],
     element: authLayout,
     errorElement: <ErrorBoundary />,

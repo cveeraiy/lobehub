@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { restClient } from '@/libs/rest';
-import type { UpdateTopicValue } from '@/server/routers/lambda/generationTopic';
+import type { UpdateGenerationTopicValue } from '@/types/mediaGeneration';
 
 import { ServerService } from '../generationTopic';
 
@@ -34,7 +34,7 @@ describe('GenerationTopic ServerService', () => {
 
   it('updateTopic should call REST with correct params', async () => {
     const id = 'test-topic-id';
-    const data: UpdateTopicValue = {
+    const data: UpdateGenerationTopicValue = {
       title: 'Updated Topic',
       coverUrl: 'https://example.com/cover.jpg',
     };

@@ -29,11 +29,12 @@ export class RestClientError extends Error {
   code?: string;
   meta?: Record<string, unknown>;
 
-  constructor(message: string, status: number, code?: string) {
+  constructor(message: string, status: number, code?: string, meta?: Record<string, unknown>) {
     super(message);
     this.name = 'RestClientError';
     this.status = status;
     this.code = code;
+    this.meta = meta;
   }
 }
 
@@ -94,16 +95,32 @@ async function request<T>(method: string, path: string, options: RequestOptions 
 
   // Non-2xx → throw typed error
   if (!res.ok) {
-    let detail: string | undefined;
+    let detail: unknown;
     let code: string | undefined;
+    let meta: Record<string, unknown> | undefined;
     try {
       const errJson = (await res.json()) as RestApiError;
       detail = errJson.detail || errJson.message;
       code = errJson.code;
+      meta = { ...errJson };
     } catch {
       detail = res.statusText;
     }
-    throw new RestClientError(detail || `HTTP ${res.status}`, res.status, code);
+
+    let message =
+      typeof detail === 'string'
+        ? detail
+        : typeof detail === 'object' && detail && 'content' in detail
+          ? String((detail as { content?: unknown }).content || `HTTP ${res.status}`)
+          : `HTTP ${res.status}`;
+
+    if (typeof detail === 'object' && detail && 'error' in detail) {
+      const error = (detail as { error?: { message?: unknown; type?: unknown } }).error;
+      if (typeof error?.message === 'string') message = error.message;
+      if (!code && typeof error?.type === 'string') code = error.type;
+    }
+
+    throw new RestClientError(message, res.status, code, meta);
   }
 
   // 204 No Content

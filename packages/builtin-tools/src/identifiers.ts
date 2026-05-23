@@ -18,10 +18,10 @@ import { SkillStoreManifest } from '@lobechat/builtin-tool-skill-store';
 import { SkillsManifest } from '@lobechat/builtin-tool-skills';
 import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { WebOnboardingManifest } from '@lobechat/builtin-tool-web-onboarding';
 
 import { LobeAgentManifest } from './lobeAgent';
 import { TopicReferenceManifest } from './topicReference';
+import { WebOnboardingManifest } from './webOnboarding';
 
 export const builtinToolIdentifiers: string[] = [
   AgentBuilderManifest.identifier,

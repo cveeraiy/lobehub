@@ -9,8 +9,8 @@ import NavItem from '@/features/NavPanel/components/NavItem';
 import { usePrefetchAgent } from '@/hooks/usePrefetchAgent';
 import { usePrefetchPage } from '@/hooks/usePrefetchPage';
 import { getPlatformIcon } from '@/routes/(main)/agent/channel/const';
-import { type RecentItem } from '@/server/routers/lambda/recent';
 import { useTaskStore } from '@/store/task';
+import type { RecentItem } from '@/types/recent';
 
 import { useRecentItemDropdownMenu } from './useDropdownMenu';
 

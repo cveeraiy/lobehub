@@ -48,7 +48,6 @@ import { marketRouter } from './market';
 import { messageRouter } from './message';
 import { notebookRouter } from './notebook';
 import { notificationRouter } from './notification';
-import { oauthDeviceFlowRouter } from './oauthDeviceFlow';
 import { pluginRouter } from './plugin';
 import { ragEvalRouter } from './ragEval';
 import { recentRouter } from './recent';
@@ -108,7 +107,6 @@ export const lambdaRouter = router({
   message: messageRouter,
   notebook: notebookRouter,
   notification: notificationRouter,
-  oauthDeviceFlow: oauthDeviceFlowRouter,
   plugin: pluginRouter,
   ragEval: ragEvalRouter,
   recent: recentRouter,

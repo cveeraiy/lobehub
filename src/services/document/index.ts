@@ -12,7 +12,7 @@ import type {
   SaveDocumentHistoryOutput,
   UpdateDocumentInput,
   UpdateDocumentOutput,
-} from '@/server/routers/lambda/_schema/documentHistory';
+} from '@/types/documentHistory';
 
 import { abortableRequest } from '../utils/abortableRequest';
 

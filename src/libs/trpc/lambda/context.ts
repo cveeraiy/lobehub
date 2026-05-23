@@ -6,9 +6,7 @@ import debug from 'debug';
 import { auth } from '@/auth';
 import { getServerDB } from '@/database/core/db-adaptor';
 import { ApiKeyModel } from '@/database/models/apiKey';
-import { authEnv, LOBE_CHAT_OIDC_AUTH_HEADER } from '@/envs/auth';
 import { extractTraceContext } from '@/libs/observability/traceparent';
-import { validateOIDCJWT } from '@/libs/oidc-provider/jwt';
 import { isApiKeyExpired, validateApiKeyFormat } from '@/utils/apiKey';
 
 // Create context logger namespace
@@ -66,7 +64,6 @@ export interface AuthContext {
   clientIp?: string | null;
   jwtPayload?: ClientSecretPayload | null;
   marketAccessToken?: string;
-  // Add OIDC authentication information
   oidcAuth?: OIDCAuth | null;
   resHeaders?: Headers;
   traceContext?: OtContext;
@@ -164,46 +161,6 @@ export const createLambdaContext = async (request: Request): Promise<LambdaConte
   }
 
   let userId;
-  let oidcAuth;
-
-  // Prioritize checking for OIDC authentication (both standard Authorization and custom Oidc-Auth headers)
-  if (authEnv.ENABLE_OIDC) {
-    log('OIDC enabled, attempting OIDC authentication');
-    const oidcAuthToken = request.headers.get(LOBE_CHAT_OIDC_AUTH_HEADER);
-    log('Oidc-Auth header: %s', oidcAuthToken ? 'exists' : 'not found');
-
-    try {
-      if (oidcAuthToken) {
-        // Use direct JWT validation instead of database lookup
-        const tokenInfo = await validateOIDCJWT(oidcAuthToken);
-
-        oidcAuth = {
-          payload: tokenInfo.tokenData,
-          ...tokenInfo.tokenData, // Spread payload into oidcAuth
-          sub: tokenInfo.userId, // Use tokenData as payload
-        };
-        userId = tokenInfo.userId;
-        log('OIDC authentication successful, userId: %s', userId);
-
-        // If OIDC authentication is successful, return context immediately
-        log('OIDC authentication successful, creating context and returning');
-        return createContextInner({
-          oidcAuth,
-          ...commonContext,
-          traceContext,
-          userId,
-        });
-      }
-    } catch (error) {
-      // If OIDC authentication fails, log error and continue with other authentication methods
-      if (oidcAuthToken) {
-        log('OIDC authentication failed, error: %O', error);
-        console.error('OIDC authentication failed, trying other methods:', error);
-      }
-    }
-  }
-
-  // If OIDC is not enabled or validation fails, try Better Auth authentication
   log('Attempting Better Auth authentication');
   try {
     const session = await auth.api.getSession({

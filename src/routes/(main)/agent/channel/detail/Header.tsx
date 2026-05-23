@@ -7,7 +7,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import InfoTooltip from '@/components/InfoTooltip';
-import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
+import type { SerializedPlatformDefinition } from '@/types/botPlatform';
 
 import { BOT_RUNTIME_STATUSES, type BotRuntimeStatus } from '../../../../../types/botRuntimeStatus';
 import { getPlatformIcon } from '../const';

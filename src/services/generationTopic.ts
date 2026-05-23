@@ -1,7 +1,7 @@
 import type { GenerationTopicItem } from '@/database/schemas';
 import { restClient } from '@/libs/rest';
-import type { UpdateTopicValue } from '@/server/routers/lambda/generationTopic';
 import type { ImageGenerationTopic } from '@/types/generation';
+import type { UpdateGenerationTopicValue } from '@/types/mediaGeneration';
 
 export class ServerService {
   async getAllGenerationTopics(type?: 'image' | 'video'): Promise<ImageGenerationTopic[]> {
@@ -16,7 +16,10 @@ export class ServerService {
     });
   }
 
-  async updateTopic(id: string, data: UpdateTopicValue): Promise<GenerationTopicItem | undefined> {
+  async updateTopic(
+    id: string,
+    data: UpdateGenerationTopicValue,
+  ): Promise<GenerationTopicItem | undefined> {
     return restClient.put(`/generation-topics/${id}`, { body: data });
   }
 

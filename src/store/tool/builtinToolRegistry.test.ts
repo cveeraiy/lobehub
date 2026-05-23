@@ -8,7 +8,7 @@ import { GroupAgentBuilderInspectors } from '@lobechat/builtin-tool-group-agent-
 import { SkillStoreApiName, SkillStoreIdentifier } from '@lobechat/builtin-tool-skill-store';
 import { SkillStoreInspectors, SkillStoreRenders } from '@lobechat/builtin-tool-skill-store/client';
 import { UserInteractionIdentifier } from '@lobechat/builtin-tool-user-interaction';
-import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
+import { WebOnboardingIdentifier } from '@lobechat/builtin-tools';
 import { builtinToolIdentifiers } from '@lobechat/builtin-tools/identifiers';
 import { describe, expect, it } from 'vitest';
 

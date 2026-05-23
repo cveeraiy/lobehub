@@ -466,9 +466,15 @@ async def patch_onboarding_document(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "type must be 'soul' or 'persona'")
     if not hunks:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "hunks must be a non-empty array")
-    from app.services.onboarding import OnboardingService
+    from app.services.onboarding import MarkdownPatchError, OnboardingService
     svc = OnboardingService(session, user_id)
-    return await svc.patch_onboarding_document(doc_type, hunks)
+    try:
+        return await svc.patch_onboarding_document(doc_type, hunks)
+    except MarkdownPatchError as exc:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            {"content": str(exc), "error": exc.error, "success": False},
+        ) from exc
 
 
 @router.put("/onboarding")

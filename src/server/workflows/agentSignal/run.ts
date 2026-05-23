@@ -397,7 +397,7 @@ export const runAgentSignalWorkflow = async (
   // We must extract `traceparent` / `tracestate` from the workflow request headers manually before
   // opening the top-level workflow span, otherwise each workflow run starts a fresh trace.
   // Source/context:
-  // - `src/handlers/middleware/auth/index.ts` performs extract/inject for normal backend APIs
+  // - normal backend API middleware performs extract/inject for request traces
   // - Python workflow transports must pass headers into `runAgentSignalWorkflow(...)`
   // Removal condition:
   // - Safe to remove only if the workflow entry stack gains a shared request middleware that

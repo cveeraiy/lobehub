@@ -1,8 +1,9 @@
 import {
+  LobeAgentApiName,
+  LobeAgentIdentifier,
   WebOnboardingApiName,
   WebOnboardingIdentifier,
-} from '@lobechat/builtin-tool-web-onboarding';
-import { LobeAgentApiName, LobeAgentIdentifier } from '@lobechat/builtin-tools';
+} from '@lobechat/builtin-tools';
 import { describe, expect, it, vi } from 'vitest';
 
 import { getApiNamesForIdentifier, hasExecutor } from './index';

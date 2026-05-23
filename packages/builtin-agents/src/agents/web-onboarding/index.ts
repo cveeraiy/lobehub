@@ -6,7 +6,7 @@ import type { BuiltinAgentDefinition } from '../../types';
 import { BUILTIN_AGENT_SLUGS } from '../../types';
 import { createSystemRole } from './systemRole';
 
-/** Must match `WebOnboardingIdentifier` in `packages/builtin-tool-web-onboarding/src/types.ts`. */
+/** Must match `WebOnboardingIdentifier` in `packages/builtin-tools/src/webOnboarding/types.ts`. */
 const WebOnboardingIdentifier = 'lobe-web-onboarding';
 
 export const WEB_ONBOARDING: BuiltinAgentDefinition = {

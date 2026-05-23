@@ -1,5 +1,5 @@
-import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
-import { WebOnboardingExecutionRuntime } from '@lobechat/builtin-tool-web-onboarding/executionRuntime';
+import { WebOnboardingIdentifier } from '@lobechat/builtin-tools';
+import { WebOnboardingExecutionRuntime } from '@lobechat/builtin-tools/webOnboardingExecutionRuntime';
 
 import { AgentDocumentsService } from '@/server/services/agentDocuments';
 import { OnboardingService } from '@/server/services/onboarding';

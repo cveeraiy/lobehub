@@ -16,6 +16,9 @@
     "./cronExecutor": "./src/cron/executor/index.ts",
     "./lobeAgentExecutor": "./src/lobeAgent/executor/index.ts",
     "./taskExecutor": "./src/task/executor/index.ts",
+    "./webOnboardingClient": "./src/webOnboarding/client/index.ts",
+    "./webOnboardingExecutionRuntime": "./src/webOnboarding/ExecutionRuntime/index.ts",
+    "./webOnboardingUtils": "./src/webOnboarding/ExecutionRuntime/utils.ts",
     "./dynamicInterventionAudits": "./src/dynamicInterventionAudits.ts"
   },
   "main": "./src/index.ts",
@@ -42,8 +45,8 @@
     "@lobechat/builtin-tool-skills": "workspace:*",
     "@lobechat/builtin-tool-user-interaction": "workspace:*",
     "@lobechat/builtin-tool-web-browsing": "workspace:*",
-    "@lobechat/builtin-tool-web-onboarding": "workspace:*",
-    "@lobechat/const": "workspace:*"
+    "@lobechat/const": "workspace:*",
+    "@lobechat/markdown-patch": "workspace:*"
   },
   "devDependencies": {
     "@lobechat/types": "workspace:*",

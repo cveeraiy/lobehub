@@ -17,10 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { FormInput, FormPassword } from '@/components/FormInput';
 import InfoTooltip from '@/components/InfoTooltip';
-import type {
-  FieldSchema,
-  SerializedPlatformDefinition,
-} from '@/server/services/bot/platforms/types';
+import type { FieldSchema, SerializedPlatformDefinition } from '@/types/botPlatform';
 import { isDev } from '@/utils/env';
 
 import { platformCredentialBodyMap, platformCredentialExtrasMap } from '../platform/registry';

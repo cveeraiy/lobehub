@@ -1,5 +1,5 @@
 import { restClient } from '@/libs/rest';
-import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
+import type { SerializedPlatformDefinition } from '@/types/botPlatform';
 import type { BotRuntimeStatusSnapshot } from '@/types/botRuntimeStatus';
 
 interface AgentBotProviderResponse {

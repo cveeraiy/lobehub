@@ -1,8 +1,8 @@
 import { type MCPToolCallResult } from '@/libs/mcp';
-import { truncateToolResult } from '@/server/utils/truncateToolResult';
 import { useToolStore } from '@/store/tool';
 import { type ChatToolPayload } from '@/types/message';
 import { safeParseJSON } from '@/utils/safeParseJSON';
+import { truncateToolResult } from '@/utils/truncateToolResult';
 
 /**
  * Context for remote tool execution, derived from the invoking message

@@ -1,5 +1,5 @@
 import { restClient } from '@/libs/rest';
-import { type RecentItem } from '@/server/routers/lambda/recent';
+import type { RecentItem } from '@/types/recent';
 
 type RawRecentItem = Omit<RecentItem, 'updatedAt'> & {
   updatedAt?: string | null;

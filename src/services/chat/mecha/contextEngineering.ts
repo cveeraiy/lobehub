@@ -11,7 +11,7 @@ import {
 import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
 import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
+import { WebOnboardingIdentifier } from '@lobechat/builtin-tools';
 import {
   CronIdentifier,
   type CronJobSummaryForContext,

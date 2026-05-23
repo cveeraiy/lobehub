@@ -1,5 +1,5 @@
 import { type NewGeneration, type NewGenerationBatch } from '@/database/schemas';
-import { type CreateImageServicePayload } from '@/server/routers/lambda/image';
+import type { CreateImageServicePayload } from '@/types/mediaGeneration';
 
 interface ChargeParams {
   clientIp?: string | null;

@@ -19,17 +19,9 @@ export class PluginStore {
 
   getPluginList = async (locale?: string): Promise<any[]> => {
     try {
-      let res = await fetch(this.getPluginIndexUrl(locale as Locales), {
-        next: {
-          revalidate: 3600,
-        },
-      });
+      let res = await fetch(this.getPluginIndexUrl(locale as Locales));
       if (!res.ok) {
-        res = await fetch(this.getPluginIndexUrl(DEFAULT_LANG), {
-          next: {
-            revalidate: 3600,
-          },
-        });
+        res = await fetch(this.getPluginIndexUrl(DEFAULT_LANG));
       }
       if (!res.ok) return [];
       const json = await res.json();

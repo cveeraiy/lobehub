@@ -6,10 +6,7 @@ import dayjs from 'dayjs';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type {
-  DocumentHistoryListItem,
-  DocumentHistorySaveSource,
-} from '@/server/routers/lambda/_schema/documentHistory';
+import type { DocumentHistoryListItem, DocumentHistorySaveSource } from '@/types/documentHistory';
 
 import { formatHistoryRowTime } from '../formatHistoryDate';
 

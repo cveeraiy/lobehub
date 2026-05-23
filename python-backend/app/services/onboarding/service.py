@@ -51,6 +51,212 @@ STRUCTURED_FIELD_LABELS = {
     "responseLanguage": "response language",
 }
 
+MarkdownPatchErrorDetail = dict[str, Any]
+
+
+class MarkdownPatchError(ValueError):
+    def __init__(self, error: MarkdownPatchErrorDetail) -> None:
+        self.error = error
+        super().__init__(format_markdown_patch_error(error))
+
+
+def format_markdown_patch_error(error: MarkdownPatchErrorDetail) -> str:
+    idx = error.get("hunkIndex")
+    code = error.get("code")
+    if code == "EMPTY_HUNKS":
+        return "No hunks provided. Include at least one hunk (replace / delete / deleteLines / insertAt / replaceLines)."
+    if code == "EMPTY_SEARCH":
+        return f"Hunk #{idx} has empty search. Provide a non-empty substring to locate."
+    if code == "HUNK_NOT_FOUND":
+        return (
+            f"Hunk #{idx} search not found. Ensure the search string matches the current document "
+            "byte-exact (whitespace, punctuation, casing). Re-read the document if unsure."
+        )
+    if code == "HUNK_AMBIGUOUS":
+        return (
+            f"Hunk #{idx} search matches {error.get('occurrences', 0)} locations. Add surrounding "
+            "context to uniquify, or set replaceAll=true to replace every occurrence."
+        )
+    if code == "INVALID_LINE_RANGE":
+        return f"Hunk #{idx} has endLine < startLine. Use inclusive 1-based line numbers where endLine >= startLine."
+    if code == "LINE_OUT_OF_RANGE":
+        total = error.get("totalLines", 0)
+        return (
+            f"Hunk #{idx} references a line outside [1, {total}] (insertAt may also target line "
+            f"{total + 1} to append). Re-check the injected document's line numbers."
+        )
+    if code == "LINE_OVERLAP":
+        return (
+            f"Hunk #{idx} overlaps another line-based hunk in the same call. Split them across "
+            "multiple updateDocument calls or merge them into one hunk."
+        )
+    return f"Markdown patch failed at hunk #{idx}."
+
+
+def _count_occurrences(source: str, needle: str) -> int:
+    if not needle:
+        return 0
+    count = 0
+    start = 0
+    while True:
+        index = source.find(needle, start)
+        if index == -1:
+            return count
+        count += 1
+        start = index + len(needle)
+
+
+def _patch_mode(hunk: dict[str, Any]) -> str:
+    return hunk.get("mode") or "replace"
+
+
+def _is_line_based_hunk(hunk: dict[str, Any]) -> bool:
+    return _patch_mode(hunk) in {"deleteLines", "insertAt", "replaceLines"}
+
+
+def _split_markdown_lines(source: str) -> list[str]:
+    if source == "":
+        return []
+    return (source[:-1] if source.endswith("\n") else source).split("\n")
+
+
+def _join_markdown_lines(lines: list[str], preserve_trailing_newline: bool) -> str:
+    joined = "\n".join(lines)
+    return f"{joined}\n" if preserve_trailing_newline and lines else joined
+
+
+def _validate_line_hunk(
+    hunk: dict[str, Any],
+    total_lines: int,
+    hunk_index: int,
+) -> MarkdownPatchErrorDetail | None:
+    mode = _patch_mode(hunk)
+    if mode == "insertAt":
+        line = hunk.get("line")
+        if type(line) is not int or line < 1 or line > total_lines + 1:
+            return {
+                "code": "LINE_OUT_OF_RANGE",
+                "hunkIndex": hunk_index,
+                "line": line,
+                "totalLines": total_lines,
+            }
+        return None
+
+    start_line = hunk.get("startLine")
+    end_line = hunk.get("endLine")
+    if type(start_line) is not int or type(end_line) is not int:
+        return {"code": "LINE_OUT_OF_RANGE", "hunkIndex": hunk_index, "totalLines": total_lines}
+    if end_line < start_line:
+        return {"code": "INVALID_LINE_RANGE", "hunkIndex": hunk_index}
+    if start_line < 1 or end_line > total_lines:
+        return {"code": "LINE_OUT_OF_RANGE", "hunkIndex": hunk_index, "totalLines": total_lines}
+    return None
+
+
+def _line_anchor(indexed_hunk: dict[str, Any]) -> int:
+    hunk = indexed_hunk["hunk"]
+    return hunk["line"] if _patch_mode(hunk) == "insertAt" else hunk["startLine"]
+
+
+def _line_range(indexed_hunk: dict[str, Any]) -> tuple[int, int]:
+    hunk = indexed_hunk["hunk"]
+    if _patch_mode(hunk) == "insertAt":
+        line = hunk["line"]
+        return line, line
+    return hunk["startLine"], hunk["endLine"]
+
+
+def _line_ranges_overlap_or_touch(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    left_start, left_end = _line_range(left)
+    right_start, right_end = _line_range(right)
+    return left_start <= right_end and right_start <= left_end
+
+
+def _apply_line_hunk(lines: list[str], hunk: dict[str, Any]) -> list[str]:
+    mode = _patch_mode(hunk)
+    next_lines = lines.copy()
+    if mode == "insertAt":
+        content = hunk.get("content", "")
+        inserted = [""] if content == "" else str(content).split("\n")
+        next_lines[hunk["line"] - 1:hunk["line"] - 1] = inserted
+        return next_lines
+
+    start = hunk["startLine"] - 1
+    end = hunk["endLine"]
+    if mode == "deleteLines":
+        del next_lines[start:end]
+        return next_lines
+
+    content = hunk.get("content", "")
+    replacement = [] if content == "" else str(content).split("\n")
+    next_lines[start:end] = replacement
+    return next_lines
+
+
+def apply_markdown_patch(source: str, hunks: list[dict[str, Any]]) -> dict[str, Any]:
+    if not isinstance(hunks, list) or not hunks:
+        return {"error": {"code": "EMPTY_HUNKS", "hunkIndex": -1}, "ok": False}
+
+    current = source
+    applied = 0
+    line_hunks: list[dict[str, Any]] = []
+
+    for hunk_index, hunk in enumerate(hunks):
+        if _is_line_based_hunk(hunk):
+            line_hunks.append({"hunk": hunk, "index": hunk_index})
+            continue
+
+        search = hunk.get("search", "")
+        if not search:
+            return {"error": {"code": "EMPTY_SEARCH", "hunkIndex": hunk_index}, "ok": False}
+
+        occurrences = _count_occurrences(current, search)
+        if occurrences == 0:
+            return {
+                "error": {"code": "HUNK_NOT_FOUND", "hunkIndex": hunk_index, "search": search},
+                "ok": False,
+            }
+        if occurrences > 1 and not hunk.get("replaceAll", False):
+            return {
+                "error": {
+                    "code": "HUNK_AMBIGUOUS",
+                    "hunkIndex": hunk_index,
+                    "occurrences": occurrences,
+                },
+                "ok": False,
+            }
+
+        replacement = "" if _patch_mode(hunk) == "delete" else hunk.get("replace", "")
+        if hunk.get("replaceAll", False):
+            current = current.replace(search, replacement)
+        else:
+            current = current.replace(search, replacement, 1)
+        applied += occurrences if hunk.get("replaceAll", False) else 1
+
+    if not line_hunks:
+        return {"applied": applied, "content": current, "ok": True}
+
+    sorted_hunks = sorted(line_hunks, key=_line_anchor, reverse=True)
+    preserve_trailing_newline = current.endswith("\n")
+    lines = _split_markdown_lines(current)
+    baseline_total_lines = len(lines)
+
+    for indexed in sorted_hunks:
+        error = _validate_line_hunk(indexed["hunk"], baseline_total_lines, indexed["index"])
+        if error:
+            return {"error": error, "ok": False}
+
+    for i, left in enumerate(sorted_hunks[:-1]):
+        for right in sorted_hunks[i + 1:]:
+            if _line_ranges_overlap_or_touch(left, right):
+                return {"error": {"code": "LINE_OVERLAP", "hunkIndex": left["index"]}, "ok": False}
+
+    for indexed in sorted_hunks:
+        lines = _apply_line_hunk(lines, indexed["hunk"])
+        applied += 1
+
+    return {"applied": applied, "content": _join_markdown_lines(lines, preserve_trailing_newline), "ok": True}
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
@@ -621,59 +827,13 @@ class OnboardingService:
             persona = await self._get_latest_persona()
             current = persona.persona if persona else ""
 
-        # Apply hunks
-        applied = 0
-        result_content = current
-        for hunk in hunks:
-            mode = hunk.get("mode", "replace")
-            if mode == "replace" or mode is None:
-                search = hunk.get("search", "")
-                replace = hunk.get("replace", "")
-                replace_all = hunk.get("replaceAll", False)
-                if search and search in result_content:
-                    if replace_all:
-                        result_content = result_content.replace(search, replace)
-                    else:
-                        result_content = result_content.replace(search, replace, 1)
-                    applied += 1
-            elif mode == "delete":
-                search = hunk.get("search", "")
-                replace_all = hunk.get("replaceAll", False)
-                if search and search in result_content:
-                    if replace_all:
-                        result_content = result_content.replace(search, "")
-                    else:
-                        result_content = result_content.replace(search, "", 1)
-                    applied += 1
-            elif mode == "deleteLines":
-                lines = result_content.split("\n")
-                start = hunk.get("startLine", 0)
-                end = hunk.get("endLine", 0)
-                if 0 <= start <= end <= len(lines):
-                    lines = lines[:start] + lines[end:]
-                    result_content = "\n".join(lines)
-                    applied += 1
-            elif mode == "insertAt":
-                lines = result_content.split("\n")
-                line = hunk.get("line", 0)
-                content_to_insert = hunk.get("content", "")
-                if 0 <= line <= len(lines):
-                    lines.insert(line, content_to_insert)
-                    result_content = "\n".join(lines)
-                    applied += 1
-            elif mode == "replaceLines":
-                lines = result_content.split("\n")
-                start = hunk.get("startLine", 0)
-                end = hunk.get("endLine", 0)
-                content_to_insert = hunk.get("content", "")
-                if 0 <= start <= end <= len(lines):
-                    lines = lines[:start] + [content_to_insert] + lines[end:]
-                    result_content = "\n".join(lines)
-                    applied += 1
+        result = apply_markdown_patch(current, hunks)
+        if not result["ok"]:
+            raise MarkdownPatchError(result["error"])
 
         # Write back
-        doc_result = await self.update_onboarding_document(doc_type, result_content)
-        return {"applied": applied, "id": doc_result["id"], "type": doc_type}
+        doc_result = await self.update_onboarding_document(doc_type, result["content"])
+        return {"applied": result["applied"], "id": doc_result["id"], "type": doc_type}
 
     async def finish_onboarding(self) -> dict:
         """Mark onboarding as complete."""

@@ -1,7 +1,7 @@
 import {
   EMPTY_DOCUMENT_MESSAGES,
   formatWebOnboardingStateMessage,
-} from '@lobechat/builtin-tool-web-onboarding/utils';
+} from '@lobechat/builtin-tools/webOnboardingUtils';
 import { applyMarkdownPatch, formatMarkdownPatchError } from '@lobechat/markdown-patch';
 import {
   type UserInitializationState,

@@ -1,7 +1,7 @@
 import debug from 'debug';
 
 import { restClient } from '@/libs/rest';
-import type { CreateImageServicePayload } from '@/server/routers/lambda/image';
+import type { CreateImageServicePayload } from '@/types/mediaGeneration';
 
 // Create debug logger
 const log = debug('ethos-image:service');

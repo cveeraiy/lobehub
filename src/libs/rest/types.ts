@@ -15,6 +15,6 @@ export interface RestApiResponse<T = unknown> {
  */
 export interface RestApiError {
   code?: string;
-  detail?: string;
+  detail?: unknown;
   message?: string;
 }

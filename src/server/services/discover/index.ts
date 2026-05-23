@@ -34,8 +34,6 @@ import {
 import {
   AssistantCategory,
   AssistantSorts,
-  CacheRevalidate,
-  CacheTag,
   McpCategory,
   McpSorts,
   ModelSorts,
@@ -773,17 +771,10 @@ export class DiscoverService {
     log('getMcpCategories: params=%O', params);
     const { locale } = params;
     const normalizedLocale = normalizeLocale(locale);
-    const result = await this.market.plugins.getCategories(
-      {
-        ...params,
-        locale: normalizedLocale,
-      },
-      {
-        next: {
-          revalidate: 3600,
-        },
-      },
-    );
+    const result = await this.market.plugins.getCategories({
+      ...params,
+      locale: normalizedLocale,
+    });
     log('getMcpCategories: returning %d categories', result.length);
     return result;
   };
@@ -796,14 +787,7 @@ export class DiscoverService {
     log('getMcpDetail: params=%O', params);
     const { locale } = params;
     const normalizedLocale = normalizeLocale(locale);
-    const mcp = await this.market.plugins.getPluginDetail(
-      { ...params, locale: normalizedLocale },
-      {
-        next: {
-          revalidate: 3600,
-        },
-      },
-    );
+    const mcp = await this.market.plugins.getPluginDetail({ ...params, locale: normalizedLocale });
 
     // Fetch related MCPs
     const list = await this.getMcpList({
@@ -829,20 +813,12 @@ export class DiscoverService {
       category as McpCategory,
     );
 
-    const result = await this.market.plugins.getPluginList(
-      {
-        ...params,
-        category: shouldOmitCategory ? undefined : category,
-        locale: normalizedLocale,
-        sort: shouldOmitCategory ? McpSorts.Recommended : sort,
-      },
-      {
-        next: {
-          revalidate: CacheRevalidate.List,
-          tags: [CacheTag.Discover, CacheTag.MCP],
-        },
-      },
-    );
+    const result = await this.market.plugins.getPluginList({
+      ...params,
+      category: shouldOmitCategory ? undefined : category,
+      locale: normalizedLocale,
+      sort: shouldOmitCategory ? McpSorts.Recommended : sort,
+    });
     log('getMcpList: returning %d items on page %d', result.items.length, result.currentPage);
     return result;
   };
@@ -851,18 +827,10 @@ export class DiscoverService {
     log('getMcpManifest: params=%O', params);
     const { locale } = params;
     const normalizedLocale = normalizeLocale(locale);
-    const result = await this.market.plugins.getPluginManifest(
-      {
-        ...params,
-        locale: normalizedLocale,
-      },
-      {
-        next: {
-          revalidate: CacheRevalidate.List,
-          tags: [CacheTag.Discover, CacheTag.MCP],
-        },
-      },
-    );
+    const result = await this.market.plugins.getPluginManifest({
+      ...params,
+      locale: normalizedLocale,
+    });
     log('getMcpManifest: returning manifest for %s', params.identifier);
     return result;
   };
@@ -1330,11 +1298,7 @@ export class DiscoverService {
           normalizedLocale === 'zh-CN' ? `${identifier}.zh-CN.mdx` : `${identifier}.mdx`,
         );
         log('getProviderDetail: readme URL=%s', readmeUrl);
-        const res = await fetch(readmeUrl, {
-          next: {
-            tags: [CacheTag.Discover, CacheTag.Providers],
-          },
-        });
+        const res = await fetch(readmeUrl);
 
         const data = await res.text();
         const { content } = matter(data);

@@ -6,7 +6,7 @@ import { users } from './user';
 
 /**
  * OIDC authorization code
- * One of the models that oidc-provider needs to persist
+ * Legacy internal OIDC provider persistence table.
  */
 export const oidcAuthorizationCodes = pgTable(
   'oidc_authorization_codes',
@@ -29,7 +29,7 @@ export const oidcAuthorizationCodes = pgTable(
 
 /**
  * OIDC access token
- * One of the models that oidc-provider needs to persist
+ * Legacy internal OIDC provider persistence table.
  */
 export const oidcAccessTokens = pgTable(
   'oidc_access_tokens',
@@ -52,7 +52,7 @@ export const oidcAccessTokens = pgTable(
 
 /**
  * OIDC refresh token
- * One of the models that oidc-provider needs to persist
+ * Legacy internal OIDC provider persistence table.
  */
 export const oidcRefreshTokens = pgTable(
   'oidc_refresh_tokens',
@@ -75,7 +75,7 @@ export const oidcRefreshTokens = pgTable(
 
 /**
  * OIDC device code
- * One of the models that oidc-provider needs to persist
+ * Legacy internal OIDC provider persistence table.
  */
 export const oidcDeviceCodes = pgTable(
   'oidc_device_codes',
@@ -97,7 +97,7 @@ export const oidcDeviceCodes = pgTable(
 
 /**
  * OIDC interaction session
- * One of the models that oidc-provider needs to persist
+ * Legacy internal OIDC provider persistence table.
  */
 export const oidcInteractions = pgTable('oidc_interactions', {
   id: varchar('id', { length: 255 }).primaryKey(),
@@ -108,7 +108,7 @@ export const oidcInteractions = pgTable('oidc_interactions', {
 
 /**
  * OIDC grant record
- * One of the models that oidc-provider needs to persist
+ * Legacy internal OIDC provider persistence table.
  */
 export const oidcGrants = pgTable(
   'oidc_grants',
@@ -153,7 +153,7 @@ export const oidcClients = pgTable('oidc_clients', {
 
 /**
  * OIDC session
- * One of the models that oidc-provider needs to persist
+ * Legacy internal OIDC provider persistence table.
  */
 export const oidcSessions = pgTable(
   'oidc_sessions',

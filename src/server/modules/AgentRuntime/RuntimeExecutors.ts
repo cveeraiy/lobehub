@@ -437,7 +437,7 @@ export const createRuntimeExecutors = (
         if (isOnboardingAgent && !alreadyHasOnboardingContext && ctx.serverDB && ctx.userId) {
           try {
             const { formatWebOnboardingStateMessage } =
-              await import('@lobechat/builtin-tool-web-onboarding/utils');
+              await import('@lobechat/builtin-tools/webOnboardingUtils');
             const { UserPersonaModel } = await import('@/database/models/userMemory/persona');
             const onboardingService = new OnboardingService(ctx.serverDB, ctx.userId);
             const docService = new AgentDocumentsService(ctx.serverDB, ctx.userId);

@@ -89,3 +89,48 @@ async def test_mark_onboarded(client: httpx.AsyncClient) -> None:
 async def test_reset_settings(client: httpx.AsyncClient) -> None:
     r = await client.delete("/api/user/settings")
     assert r.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_patch_onboarding_document_applies_line_hunk(client: httpx.AsyncClient) -> None:
+    await client.put(
+        "/api/user/onboarding/document",
+        json={"content": "one\ntwo\nthree\n", "type": "persona"},
+    )
+
+    r = await client.patch(
+        "/api/user/onboarding/document",
+        json={
+            "hunks": [{"content": "TWO", "endLine": 2, "mode": "replaceLines", "startLine": 2}],
+            "type": "persona",
+        },
+    )
+
+    assert r.status_code == 200
+    data = r.json()
+    assert data["applied"] == 1
+    assert data["type"] == "persona"
+
+    read = await client.get("/api/user/onboarding/document", params={"type": "persona"})
+    assert read.status_code == 200
+    assert read.json()["content"] == "one\nTWO\nthree\n"
+
+
+@pytest.mark.asyncio
+async def test_patch_onboarding_document_returns_structured_error(
+    client: httpx.AsyncClient,
+) -> None:
+    await client.put(
+        "/api/user/onboarding/document",
+        json={"content": "same\nsame\n", "type": "persona"},
+    )
+
+    r = await client.patch(
+        "/api/user/onboarding/document",
+        json={"hunks": [{"replace": "other", "search": "same"}], "type": "persona"},
+    )
+
+    assert r.status_code == 400
+    detail = r.json()["detail"]
+    assert detail["success"] is False
+    assert detail["error"]["code"] == "HUNK_AMBIGUOUS"

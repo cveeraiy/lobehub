@@ -25,11 +25,9 @@ import {
   UserInteractionIdentifier,
   UserInteractionInterventions,
 } from '@lobechat/builtin-tool-user-interaction/client';
-import {
-  WebOnboardingInterventions,
-  WebOnboardingManifest,
-} from '@lobechat/builtin-tool-web-onboarding/client';
 import { type BuiltinIntervention } from '@lobechat/types';
+
+import { WebOnboardingInterventions, WebOnboardingManifest } from './webOnboarding/client';
 
 /**
  * Builtin tools interventions registry

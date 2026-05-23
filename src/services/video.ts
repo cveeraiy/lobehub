@@ -1,7 +1,7 @@
 import debug from 'debug';
 
 import { restClient } from '@/libs/rest';
-import type { CreateVideoServicePayload } from '@/server/routers/lambda/video';
+import type { CreateVideoServicePayload } from '@/types/mediaGeneration';
 
 const log = debug('ethos-video:service');
 
