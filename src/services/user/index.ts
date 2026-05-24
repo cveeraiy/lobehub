@@ -1,7 +1,7 @@
 /**
  * User service backed by the Python REST API.
  */
-import { type MarkdownPatchHunk } from '@lobechat/markdown-patch';
+import { type MarkdownPatchHunk } from '@lobechat/builtin-tools';
 import { type PartialDeep } from 'type-fest';
 
 import { restClient } from '@/libs/rest';

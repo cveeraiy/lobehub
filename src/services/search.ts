@@ -1,9 +1,9 @@
 import {
+  type CrawlUniformResult,
   type SearchQuery,
   type SearchServiceImpl,
   type UniformSearchResponse,
 } from '@lobechat/types';
-import { type CrawlUniformResult } from '@lobechat/web-crawler';
 
 import { restClient } from '@/libs/rest';
 

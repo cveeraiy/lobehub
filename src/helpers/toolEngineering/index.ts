@@ -2,13 +2,13 @@
  * Tools Engineering - Unified tools processing using ToolsEngine
  */
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
-import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import {
   alwaysOnToolIds,
   CloudSandboxManifest,
   defaultToolIds,
   KnowledgeBaseManifest,
   MemoryManifest,
+  WebBrowsingManifest,
 } from '@lobechat/builtin-tools';
 import { createEnableChecker, type PluginEnableChecker } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';

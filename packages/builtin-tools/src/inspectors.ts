@@ -1,54 +1,30 @@
 import {
-  AgentBuilderInspectors,
-  AgentBuilderManifest,
-} from '@lobechat/builtin-tool-agent-builder/client';
-import {
   ClaudeCodeIdentifier,
   ClaudeCodeInspectors,
 } from '@lobechat/builtin-tool-claude-code/client';
-import {
-  GroupAgentBuilderInspectors,
-  GroupAgentBuilderManifest,
-} from '@lobechat/builtin-tool-group-agent-builder/client';
 import {
   LocalSystemInspectors,
   LocalSystemManifest,
 } from '@lobechat/builtin-tool-local-system/client';
 import { PageAgentInspectors, PageAgentManifest } from '@lobechat/builtin-tool-page-agent/client';
-import {
-  WebBrowsingInspectors,
-  WebBrowsingManifest,
-} from '@lobechat/builtin-tool-web-browsing/client';
-import {
-  LobeActivatorInspectors,
-  LobeActivatorManifest,
-} from '@lobechat/builtin-tools/activatorClient';
-import {
-  AgentManagementInspectors,
-  AgentManagementManifest,
-} from '@lobechat/builtin-tools/agentManagementClient';
-import {
-  CloudSandboxIdentifier,
-  CloudSandboxInspectors,
-} from '@lobechat/builtin-tools/cloudSandboxClient';
-import {
-  GroupManagementInspectors,
-  GroupManagementManifest,
-} from '@lobechat/builtin-tools/groupManagementClient';
-import { GTDInspectors, GTDManifest } from '@lobechat/builtin-tools/gtdClient';
-import {
-  KnowledgeBaseInspectors,
-  KnowledgeBaseManifest,
-} from '@lobechat/builtin-tools/knowledgeBaseClient';
-import { MessageInspectors, MessageManifest } from '@lobechat/builtin-tools/messageClient';
 import { createRunCommandInspector } from '@lobechat/shared-tool-ui/inspectors';
 import { type BuiltinInspector } from '@lobechat/types';
 
+import { LobeActivatorInspectors, LobeActivatorManifest } from './activator/client';
+import { AgentBuilderInspectors, AgentBuilderManifest } from './agentBuilder/client';
+import { AgentManagementInspectors, AgentManagementManifest } from './agentManagement/client';
+import { CloudSandboxIdentifier, CloudSandboxInspectors } from './cloudSandbox/client';
 import { CodexInspectors } from './codex';
+import { GroupAgentBuilderInspectors, GroupAgentBuilderManifest } from './groupAgentBuilder/client';
+import { GroupManagementInspectors, GroupManagementManifest } from './groupManagement/client';
+import { GTDInspectors, GTDManifest } from './gtd/client';
+import { KnowledgeBaseInspectors, KnowledgeBaseManifest } from './knowledgeBase/client';
 import { MemoryInspectors, MemoryManifest } from './memory/client';
+import { MessageInspectors, MessageManifest } from './message/client';
 import { NotebookInspectors, NotebookManifest } from './notebook/client';
 import { SkillsInspectors, SkillsManifest } from './skills/client';
 import { SkillStoreInspectors, SkillStoreManifest } from './skillStore/client';
+import { WebBrowsingInspectors, WebBrowsingManifest } from './webBrowsing/client';
 
 /**
  * Builtin tools inspector registry

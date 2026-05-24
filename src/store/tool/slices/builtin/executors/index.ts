@@ -4,14 +4,14 @@
  * Central registry for all builtin tool executors.
  * Executors are registered as class instances by identifier.
  */
-import { agentBuilderExecutor } from '@lobechat/builtin-tool-agent-builder/executor';
-import { groupAgentBuilderExecutor } from '@lobechat/builtin-tool-group-agent-builder/executor';
 import { localSystemExecutor } from '@lobechat/builtin-tool-local-system/executor';
+import { agentBuilderExecutor } from '@lobechat/builtin-tools/agentBuilderExecutor';
 import { agentManagementExecutor } from '@lobechat/builtin-tools/agentManagementExecutor';
 import { calculatorExecutor } from '@lobechat/builtin-tools/calculatorExecutor';
 import { cloudSandboxExecutor } from '@lobechat/builtin-tools/cloudSandboxExecutor';
 import { credsExecutor } from '@lobechat/builtin-tools/credsExecutor';
 import { cronExecutor } from '@lobechat/builtin-tools/cronExecutor';
+import { groupAgentBuilderExecutor } from '@lobechat/builtin-tools/groupAgentBuilderExecutor';
 import { groupManagementExecutor } from '@lobechat/builtin-tools/groupManagementExecutor';
 import { gtdExecutor } from '@lobechat/builtin-tools/gtdExecutor';
 import { knowledgeBaseExecutor } from '@lobechat/builtin-tools/knowledgeBaseExecutor';

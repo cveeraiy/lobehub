@@ -55,6 +55,59 @@ def _image_size(data: Any) -> tuple[int | None, int | None]:
     return None, None
 
 
+def _schema_tool(schema: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "function",
+        "function": {
+            "name": schema.get("name") or "structured_output",
+            "description": schema.get("description")
+            or "Generate structured output according to the provided schema",
+            "parameters": schema.get("schema") or {"type": "object", "properties": {}},
+        },
+    }
+
+
+def _decode_tool_arguments(arguments: Any) -> Any:
+    if isinstance(arguments, str):
+        return json.loads(arguments)
+    return arguments
+
+
+def _extract_tool_result(data: dict[str, Any], *, schema_tool_name: str | None = None) -> Any:
+    message = ((data.get("choices") or [{}])[0].get("message") or {})
+    tool_calls = message.get("tool_calls") or []
+    if not tool_calls:
+        return None
+
+    results: list[dict[str, Any]] = []
+    for call in tool_calls:
+        fn = call.get("function") or {}
+        name = fn.get("name")
+        arguments = _decode_tool_arguments(fn.get("arguments") or "{}")
+        if schema_tool_name and name == schema_tool_name:
+            return arguments
+        results.append({"arguments": arguments, "name": name})
+
+    return results
+
+
+def _extract_json_content(data: dict[str, Any]) -> Any:
+    content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "{}")
+    if not isinstance(content, str):
+        return content
+
+    text = content.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+
+    return json.loads(text)
+
+
 async def _resolve(session: AsyncSession, user_id: str, provider: str):
     return await provider_runtime.resolve_provider_config(session, user_id, provider)
 
@@ -115,6 +168,24 @@ async def generate_object(
     payload = body.get("payload") or {}
     runtime = await _resolve(session, user_id, provider)
     model = payload.get("model") or body.get("model") or "gpt-4o-mini"
+    schema = payload.get("schema")
+    tools = payload.get("tools")
+
+    extra_kwargs = provider_runtime.chat_extra_kwargs(runtime, payload)
+    schema_tool_name: str | None = None
+    if tools:
+        extra_kwargs["tools"] = tools
+        extra_kwargs["tool_choice"] = "auto"
+    elif isinstance(schema, dict):
+        tool = _schema_tool(schema)
+        schema_tool_name = tool["function"]["name"]
+        extra_kwargs["tools"] = [tool]
+        extra_kwargs["tool_choice"] = {
+            "type": "function",
+            "function": {"name": schema_tool_name},
+        }
+    else:
+        extra_kwargs["response_format"] = {"type": "json_object"}
 
     response = await llm_service.chat(
         payload.get("messages") or [],
@@ -123,19 +194,20 @@ async def generate_object(
         temperature=payload.get("temperature"),
         api_key=runtime.api_key,
         api_base=runtime.api_base,
-        extra_kwargs={
-            **provider_runtime.chat_extra_kwargs(runtime, payload),
-            "response_format": {"type": "json_object"},
-        },
+        extra_kwargs=extra_kwargs,
     )
     data = _jsonable(response)
-    content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "{}")
-    if isinstance(content, str):
+    if isinstance(data, dict):
         try:
-            return json.loads(content)
-        except json.JSONDecodeError:
+            tool_result = _extract_tool_result(data, schema_tool_name=schema_tool_name)
+            if tool_result is not None:
+                return tool_result
+            parsed = _extract_json_content(data)
+            return parsed if isinstance(parsed, (dict, list)) else {"content": parsed}
+        except (TypeError, json.JSONDecodeError):
+            content = (((data.get("choices") or [{}])[0].get("message") or {}).get("content") or "")
             return {"content": content}
-    return content
+    return data
 
 
 @router.get("/models/{provider}")

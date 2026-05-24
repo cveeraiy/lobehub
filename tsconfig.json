@@ -21,7 +21,6 @@
       "@/const/*": ["./packages/const/src/*", "./src/const/*"],
       "@/utils/*": ["./packages/utils/src/*", "./src/utils/*"],
       "@/types/*": ["./packages/types/src/*", "./src/types/*"],
-      "@lobechat/agent-manager-runtime": ["./packages/agent-manager-runtime/src/index.ts"],
       "@lobechat/tool-runtime": ["./packages/tool-runtime/src/index.ts"],
       "@/*": ["./src/*"],
       "~test-utils": ["./tests/utils.tsx"]

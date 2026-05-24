@@ -1,8 +1,8 @@
-import { AgentBuilderIdentifier } from '@lobechat/builtin-tool-agent-builder';
-import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
 import {
+  AgentBuilderIdentifier,
   AgentManagementIdentifier,
+  GroupAgentBuilderIdentifier,
   GTDIdentifier,
   LobeActivatorIdentifier,
   WebOnboardingIdentifier,

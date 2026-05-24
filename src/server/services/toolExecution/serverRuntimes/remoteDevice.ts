@@ -1,7 +1,4 @@
-import {
-  RemoteDeviceExecutionRuntime,
-  RemoteDeviceIdentifier,
-} from '@lobechat/builtin-tool-remote-device';
+import { RemoteDeviceExecutionRuntime, RemoteDeviceIdentifier } from '@lobechat/builtin-tools';
 
 import { deviceProxy } from '../deviceProxy';
 import { type ServerRuntimeRegistration } from './types';

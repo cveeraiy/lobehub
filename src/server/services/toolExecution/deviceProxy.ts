@@ -1,4 +1,4 @@
-import { type DeviceAttachment } from '@lobechat/builtin-tool-remote-device';
+import { type DeviceAttachment } from '@lobechat/builtin-tools';
 import {
   type DeviceStatusResult,
   type DeviceSystemInfo,

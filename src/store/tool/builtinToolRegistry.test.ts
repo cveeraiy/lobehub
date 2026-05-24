@@ -1,13 +1,11 @@
 import {
   GroupAgentBuilderApiName,
   GroupAgentBuilderIdentifier,
-} from '@lobechat/builtin-tool-group-agent-builder';
-import { GroupAgentBuilderInspectors } from '@lobechat/builtin-tool-group-agent-builder/client';
-import {
   SkillStoreApiName,
   SkillStoreIdentifier,
   WebOnboardingIdentifier,
 } from '@lobechat/builtin-tools';
+import { GroupAgentBuilderInspectors } from '@lobechat/builtin-tools/groupAgentBuilderClient';
 import { builtinToolIdentifiers } from '@lobechat/builtin-tools/identifiers';
 import { SkillStoreInspectors, SkillStoreRenders } from '@lobechat/builtin-tools/skillStoreClient';
 import { describe, expect, it } from 'vitest';

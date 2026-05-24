@@ -4,12 +4,10 @@ import {
   LocalSystemListFilesPlaceholder,
   LocalSystemSearchFilesPlaceholder,
 } from '@lobechat/builtin-tool-local-system/client';
-import {
-  WebBrowsingManifest,
-  WebBrowsingPlaceholders,
-} from '@lobechat/builtin-tool-web-browsing/client';
-import { NotebookIdentifier, NotebookPlaceholders } from '@lobechat/builtin-tools/notebookClient';
 import { type BuiltinPlaceholder } from '@lobechat/types';
+
+import { NotebookIdentifier, NotebookPlaceholders } from './notebook/client';
+import { WebBrowsingManifest, WebBrowsingPlaceholders } from './webBrowsing/client';
 
 /**
  * Builtin tools placeholders registry

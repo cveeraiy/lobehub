@@ -94,6 +94,9 @@ class Settings(BaseSettings):
     # ── Embedding ──────────────────────────────────────────────────────
     embedding_batch_size: int = 50
     embedding_concurrency: int = 10
+    memory_user_memory_embedding_provider: Optional[str] = None
+    memory_user_memory_embedding_model: str = "openai/text-embedding-3-small"
+    memory_user_memory_embedding_dimensions: int = 1024
     default_files_config: Optional[str] = None
 
     # ── Langfuse (tracing) ───────────────────────────────────────

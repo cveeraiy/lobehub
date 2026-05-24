@@ -1,31 +1,18 @@
 import {
-  AgentBuilderInterventions,
-  AgentBuilderManifest,
-} from '@lobechat/builtin-tool-agent-builder/client';
-import {
   LocalSystemIdentifier,
   LocalSystemInterventions,
 } from '@lobechat/builtin-tool-local-system/client';
-import {
-  UserInteractionIdentifier,
-  UserInteractionInterventions,
-} from '@lobechat/builtin-tool-user-interaction/client';
-import { CloudSandboxManifest } from '@lobechat/builtin-tools';
-import {
-  AgentMarketplaceInterventions,
-  AgentMarketplaceManifest,
-} from '@lobechat/builtin-tools/agentMarketplaceClient';
-import { CloudSandboxInterventions } from '@lobechat/builtin-tools/cloudSandboxClient';
-import {
-  GroupManagementInterventions,
-  GroupManagementManifest,
-} from '@lobechat/builtin-tools/groupManagementClient';
-import { GTDInterventions, GTDManifest } from '@lobechat/builtin-tools/gtdClient';
-import { MessageInterventions, MessageManifest } from '@lobechat/builtin-tools/messageClient';
 import { type BuiltinIntervention } from '@lobechat/types';
 
+import { AgentBuilderInterventions, AgentBuilderManifest } from './agentBuilder/client';
+import { AgentMarketplaceInterventions, AgentMarketplaceManifest } from './agentMarketplace/client';
+import { CloudSandboxInterventions, CloudSandboxManifest } from './cloudSandbox/client';
+import { GroupManagementInterventions, GroupManagementManifest } from './groupManagement/client';
+import { GTDInterventions, GTDManifest } from './gtd/client';
 import { MemoryInterventions, MemoryManifest } from './memory/client';
+import { MessageInterventions, MessageManifest } from './message/client';
 import { NotebookInterventions, NotebookManifest } from './notebook/client';
+import { UserInteractionIdentifier, UserInteractionInterventions } from './userInteraction/client';
 import { WebOnboardingInterventions, WebOnboardingManifest } from './webOnboarding/client';
 
 /**

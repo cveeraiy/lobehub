@@ -1,15 +1,20 @@
-import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { WebBrowsingExecutionRuntime } from '@lobechat/builtin-tool-web-browsing/executionRuntime';
+import { WebBrowsingManifest } from '@lobechat/builtin-tools';
+import { WebBrowsingExecutionRuntime } from '@lobechat/builtin-tools/webBrowsingExecutionRuntime';
 
 import { DocumentModel } from '@/database/models/document';
 import { AgentDocumentsService } from '@/server/services/agentDocuments';
-import { SearchService } from '@/server/services/search';
+import { PythonSearchProxyService } from '@/server/services/pythonSearchProxy';
 
 import { type ServerRuntimeRegistration } from './types';
 
 export const webBrowsingRuntime: ServerRuntimeRegistration = {
   factory: (context) => {
     const { userId, serverDB, agentId } = context;
+
+    if (!userId) {
+      throw new Error('userId is required for Web Browsing execution');
+    }
+
     const canSaveDocuments = userId && serverDB && agentId;
 
     return new WebBrowsingExecutionRuntime({
@@ -35,7 +40,7 @@ export const webBrowsingRuntime: ServerRuntimeRegistration = {
             },
           }
         : undefined,
-      searchService: new SearchService(),
+      searchService: new PythonSearchProxyService(userId),
     });
   },
   identifier: WebBrowsingManifest.identifier,

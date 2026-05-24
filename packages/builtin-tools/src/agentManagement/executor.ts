@@ -5,7 +5,6 @@
  * deleting, searching, and calling AI agents.
  * Delegates to AgentManagerRuntime for actual implementation.
  */
-import { AgentManagerRuntime } from '@lobechat/agent-manager-runtime';
 import {
   BaseExecutor,
   type BuiltinToolContext,
@@ -20,6 +19,7 @@ import { useChatStore } from '@/store/chat';
 import { dbMessageSelectors } from '@/store/chat/slices/message/selectors';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 
+import { AgentManagerRuntime } from '../agentManagerRuntime';
 import {
   AgentManagementApiName,
   AgentManagementIdentifier,

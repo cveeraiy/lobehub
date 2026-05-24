@@ -1,44 +1,28 @@
-import { AgentBuilderManifest } from '@lobechat/builtin-tool-agent-builder';
-import { AgentBuilderRenders } from '@lobechat/builtin-tool-agent-builder/client';
 import { ClaudeCodeIdentifier, ClaudeCodeRenders } from '@lobechat/builtin-tool-claude-code/client';
-import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
-import { GroupAgentBuilderRenders } from '@lobechat/builtin-tool-group-agent-builder/client';
 import {
   LocalSystemManifest,
   LocalSystemRenders,
 } from '@lobechat/builtin-tool-local-system/client';
-import {
-  WebBrowsingManifest,
-  WebBrowsingRenders,
-} from '@lobechat/builtin-tool-web-browsing/client';
-import {
-  AgentManagementManifest,
-  CloudSandboxManifest,
-  GroupManagementManifest,
-} from '@lobechat/builtin-tools';
-import {
-  LobeActivatorManifest,
-  LobeActivatorRenders,
-} from '@lobechat/builtin-tools/activatorClient';
-import { AgentManagementRenders } from '@lobechat/builtin-tools/agentManagementClient';
-import { CloudSandboxRenders } from '@lobechat/builtin-tools/cloudSandboxClient';
-import { GroupManagementRenders } from '@lobechat/builtin-tools/groupManagementClient';
-import { GTDManifest, GTDRenders } from '@lobechat/builtin-tools/gtdClient';
-import {
-  KnowledgeBaseManifest,
-  KnowledgeBaseRenders,
-} from '@lobechat/builtin-tools/knowledgeBaseClient';
-import { MessageManifest, MessageRenders } from '@lobechat/builtin-tools/messageClient';
 import { RunCommandRender } from '@lobechat/shared-tool-ui/renders';
 import { type BuiltinRender } from '@lobechat/types';
 
+import { LobeActivatorManifest, LobeActivatorRenders } from './activator/client';
+import { AgentBuilderManifest, AgentBuilderRenders } from './agentBuilder/client';
 import { AgentDocumentsManifest } from './agentDocuments';
 import { AgentDocumentsRenders } from './agentDocuments/client';
+import { AgentManagementManifest, AgentManagementRenders } from './agentManagement/client';
+import { CloudSandboxManifest, CloudSandboxRenders } from './cloudSandbox/client';
 import { CodexRenders } from './codex';
+import { GroupAgentBuilderManifest, GroupAgentBuilderRenders } from './groupAgentBuilder/client';
+import { GroupManagementManifest, GroupManagementRenders } from './groupManagement/client';
+import { GTDManifest, GTDRenders } from './gtd/client';
+import { KnowledgeBaseManifest, KnowledgeBaseRenders } from './knowledgeBase/client';
 import { MemoryManifest, MemoryRenders } from './memory/client';
+import { MessageManifest, MessageRenders } from './message/client';
 import { NotebookManifest, NotebookRenders } from './notebook/client';
 import { SkillsManifest, SkillsRenders } from './skills/client';
 import { SkillStoreManifest, SkillStoreRenders } from './skillStore/client';
+import { WebBrowsingManifest, WebBrowsingRenders } from './webBrowsing/client';
 
 export interface BuiltinRenderRegistryEntry {
   apiName: string;

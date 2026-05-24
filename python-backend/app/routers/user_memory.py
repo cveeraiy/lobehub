@@ -15,6 +15,7 @@ from pydantic import Field as PField
 from sqlalchemy import and_, asc, delete, desc, func, literal_column, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models.memory import (
@@ -586,6 +587,62 @@ async def delete_all_memories(
     return {"ok": True}
 
 
+# ── Retrieve for topic (must be before /{memory_id} wildcard) ────────
+
+@router.get("/retrieve-for-topic")
+async def retrieve_memory_for_topic(
+    topicId: str = Query(...),
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    """Retrieve relevant memories for a topic by embedding the topic's user messages."""
+    stmt = (
+        select(Message.content)
+        .where(and_(Message.topic_id == topicId, Message.user_id == user_id, Message.role == "user"))
+        .order_by(asc(Message.created_at))
+        .limit(50)
+    )
+    rows = (await session.execute(stmt)).scalars().all()
+    user_text = " ".join([c for c in rows if c])[:7000]
+    if not user_text.strip():
+        return _empty_search_result()
+
+    try:
+        embeddings = await _embed([user_text])
+    except Exception as e:
+        logger.warning("Failed to embed topic messages: %s", e)
+        return _empty_search_result()
+
+    query_vec = embeddings[0] if embeddings else None
+    if not query_vec:
+        return _empty_search_result()
+
+    identities = await _vector_search(session, user_id, query_vec, UserMemoryIdentity, UserMemoryIdentity.description_vector, 2, _identity_search_dict)
+    preferences = await _vector_search(session, user_id, query_vec, UserMemoryPreference, UserMemoryPreference.conclusion_directives_vector, 5, _preference_search_dict)
+    activities = await _vector_search(session, user_id, query_vec, UserMemoryActivity, UserMemoryActivity.narrative_vector, 5, _activity_search_dict)
+    experiences = await _vector_search(session, user_id, query_vec, UserMemoryExperience, UserMemoryExperience.situation_vector, 5, _experience_search_dict)
+    contexts = await _vector_search(session, user_id, query_vec, UserMemoryContext, UserMemoryContext.description_vector, 5, _context_search_dict)
+
+    return {
+        "identities": identities,
+        "preferences": preferences,
+        "activities": activities,
+        "experiences": experiences,
+        "contexts": contexts,
+        "meta": {
+            "appliedFilters": {},
+            "appliedQueries": [user_text[:200]],
+            "layers": {
+                "identities": {"hasMore": False, "returned": len(identities), "total": len(identities)},
+                "preferences": {"hasMore": False, "returned": len(preferences), "total": len(preferences)},
+                "activities": {"hasMore": False, "returned": len(activities), "total": len(activities)},
+                "experiences": {"hasMore": False, "returned": len(experiences), "total": len(experiences)},
+                "contexts": {"hasMore": False, "returned": len(contexts), "total": len(contexts)},
+            },
+        },
+    }
+
+
 # ── Single Memory CRUD (/{memory_id} routes AFTER fixed paths) ──────
 
 @router.get("/{memory_id}")
@@ -654,8 +711,25 @@ async def delete_memory(
 # ══════════════════════════════════════════════════════════════════════
 
 
-EMBEDDING_MODEL = "openai/text-embedding-3-small"
-EMBEDDING_DIMENSIONS = 1024
+def _embedding_model() -> str:
+    model = settings.memory_user_memory_embedding_model
+    provider = settings.memory_user_memory_embedding_provider
+    if provider and "/" not in model:
+        return f"{provider}/{model}"
+    return model
+
+
+def _embedding_dimensions() -> int:
+    return settings.memory_user_memory_embedding_dimensions
+
+
+def _has_embedding_credentials() -> bool:
+    model = _embedding_model()
+    if model.startswith("openai/"):
+        return bool(settings.openai_api_key)
+    if model.startswith("bedrock/"):
+        return bool(settings.aws_access_key_id and settings.aws_secret_access_key and settings.aws_region)
+    return True
 
 # ── Query schemas ─────────────────────────────────────────────────────
 
@@ -776,7 +850,14 @@ async def _embed(texts: list[str]) -> list[list[float]]:
     from app.services import llm_service
     if not texts:
         return []
-    return await llm_service.embed(texts, model=EMBEDDING_MODEL, dimensions=EMBEDDING_DIMENSIONS)
+    if not _has_embedding_credentials():
+        logger.debug("Skipping memory embedding because credentials are not configured")
+        return []
+    return await llm_service.embed(
+        texts,
+        model=_embedding_model(),
+        dimensions=_embedding_dimensions(),
+    )
 
 
 async def _embed_single(text: str | None) -> list[float] | None:
@@ -1144,60 +1225,6 @@ async def search_memory(
         "meta": {
             "appliedFilters": {},
             "appliedQueries": queries,
-            "layers": {
-                "identities": {"hasMore": False, "returned": len(identities), "total": len(identities)},
-                "preferences": {"hasMore": False, "returned": len(preferences), "total": len(preferences)},
-                "activities": {"hasMore": False, "returned": len(activities), "total": len(activities)},
-                "experiences": {"hasMore": False, "returned": len(experiences), "total": len(experiences)},
-                "contexts": {"hasMore": False, "returned": len(contexts), "total": len(contexts)},
-            },
-        },
-    }
-
-
-@router.get("/retrieve-for-topic")
-async def retrieve_memory_for_topic(
-    topicId: str = Query(...),
-    user_id: str = Depends(get_current_user_id),
-    session: AsyncSession = Depends(get_db),
-):
-    from app.models.message import Message
-    stmt = (
-        select(Message.content)
-        .where(and_(Message.topic_id == topicId, Message.user_id == user_id, Message.role == "user"))
-        .order_by(asc(Message.created_at))
-        .limit(50)
-    )
-    rows = (await session.execute(stmt)).scalars().all()
-    user_text = " ".join([c for c in rows if c])[:7000]
-    if not user_text.strip():
-        return _empty_search_result()
-
-    try:
-        embeddings = await _embed([user_text])
-    except Exception as e:
-        logger.warning("Failed to embed topic messages: %s", e)
-        return _empty_search_result()
-
-    query_vec = embeddings[0] if embeddings else None
-    if not query_vec:
-        return _empty_search_result()
-
-    identities = await _vector_search(session, user_id, query_vec, UserMemoryIdentity, UserMemoryIdentity.description_vector, 2, _identity_search_dict)
-    preferences = await _vector_search(session, user_id, query_vec, UserMemoryPreference, UserMemoryPreference.conclusion_directives_vector, 5, _preference_search_dict)
-    activities = await _vector_search(session, user_id, query_vec, UserMemoryActivity, UserMemoryActivity.narrative_vector, 5, _activity_search_dict)
-    experiences = await _vector_search(session, user_id, query_vec, UserMemoryExperience, UserMemoryExperience.situation_vector, 5, _experience_search_dict)
-    contexts = await _vector_search(session, user_id, query_vec, UserMemoryContext, UserMemoryContext.description_vector, 5, _context_search_dict)
-
-    return {
-        "identities": identities,
-        "preferences": preferences,
-        "activities": activities,
-        "experiences": experiences,
-        "contexts": contexts,
-        "meta": {
-            "appliedFilters": {},
-            "appliedQueries": [user_text[:200]],
             "layers": {
                 "identities": {"hasMore": False, "returned": len(identities), "total": len(identities)},
                 "preferences": {"hasMore": False, "returned": len(preferences), "total": len(preferences)},

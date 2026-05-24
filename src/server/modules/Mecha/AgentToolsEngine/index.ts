@@ -10,8 +10,6 @@
  * - No dependency on frontend stores (useToolStore, useAgentStore, etc.)
  */
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
-import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
-import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import {
   AgentDocumentsManifest,
   alwaysOnToolIds,
@@ -21,6 +19,8 @@ import {
   KnowledgeBaseManifest,
   MemoryManifest,
   MessageManifest,
+  RemoteDeviceManifest,
+  WebBrowsingManifest,
 } from '@lobechat/builtin-tools';
 import { createEnableChecker, type LobeToolManifest } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';

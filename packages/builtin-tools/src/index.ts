@@ -1,14 +1,10 @@
-import { AgentBuilderManifest } from '@lobechat/builtin-tool-agent-builder';
-import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import { PageAgentManifest } from '@lobechat/builtin-tool-page-agent';
-import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
-import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
-import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { isDesktop, RECOMMENDED_SKILLS, RecommendedSkillType } from '@lobechat/const';
 import { type LobeBuiltinTool } from '@lobechat/types';
 
 import { LobeActivatorManifest } from './activator';
+import { AgentBuilderManifest } from './agentBuilder';
 import { AgentDocumentsManifest } from './agentDocuments';
 import { AgentManagementManifest } from './agentManagement';
 import { AgentMarketplaceManifest } from './agentMarketplace';
@@ -17,16 +13,20 @@ import { CalculatorManifest } from './calculator';
 import { CloudSandboxManifest } from './cloudSandbox';
 import { CredsManifest } from './creds';
 import { CronManifest } from './cron';
+import { GroupAgentBuilderManifest } from './groupAgentBuilder';
 import { GroupManagementManifest } from './groupManagement';
 import { GTDManifest } from './gtd';
 import { KnowledgeBaseManifest } from './knowledgeBase';
 import { LobeAgentManifest } from './lobeAgent';
 import { MemoryManifest } from './memory';
 import { MessageManifest } from './message';
+import { RemoteDeviceManifest } from './remoteDevice';
 import { SkillsManifest } from './skills';
 import { SkillStoreManifest } from './skillStore';
 import { TaskManifest } from './task';
 import { TopicReferenceManifest } from './topicReference';
+import { UserInteractionManifest } from './userInteraction';
+import { WebBrowsingManifest } from './webBrowsing';
 import { WebOnboardingManifest } from './webOnboarding';
 
 export {
@@ -42,6 +42,26 @@ export {
   LobeActivatorManifest,
   type ToolManifestInfo,
 } from './activator';
+export {
+  AgentBuilderApiName,
+  type AgentBuilderApiNameType,
+  AgentBuilderIdentifier,
+  AgentBuilderManifest,
+  systemPrompt as agentBuilderSystemPrompt,
+  type AvailableModel,
+  type AvailableProvider,
+  type GetAvailableModelsParams,
+  type GetAvailableModelsState,
+  type InstallPluginParams,
+  type InstallPluginState,
+  type MarketToolItem,
+  type SearchMarketToolsParams,
+  type SearchMarketToolsState,
+  type UpdateAgentConfigParams,
+  type UpdateConfigState,
+  type UpdatePromptParams,
+  type UpdatePromptState,
+} from './agentBuilder';
 export {
   type AgentDocumentLoadRule,
   type AgentDocumentReference,
@@ -83,6 +103,21 @@ export {
   type CallAgentState,
   createCallAgentManifest,
 } from './agentManagement';
+export {
+  type CreateAgentParams as AgentManagerCreateAgentParams,
+  type CreateAgentState as AgentManagerCreateAgentState,
+  type DeleteAgentState as AgentManagerDeleteAgentState,
+  AgentManagerRuntime,
+  type AgentManagerRuntimeServices,
+  type SearchAgentParams as AgentManagerSearchAgentParams,
+  type SearchAgentState as AgentManagerSearchAgentState,
+  type UpdateAgentConfigParams as AgentManagerUpdateAgentConfigParams,
+  type UpdateAgentConfigState as AgentManagerUpdateAgentConfigState,
+  type AgentSearchItem,
+  type IAgentService,
+  type IDiscoverService,
+  type SearchAgentSource,
+} from './agentManagerRuntime';
 export {
   AgentMarketplaceApiName,
   AgentMarketplaceExecutionRuntime,
@@ -189,6 +224,25 @@ export {
   type UpdateCronJobParams,
   type UpdateCronJobState,
 } from './cron';
+export {
+  type BatchCreateAgentsParams,
+  type CreateAgentParams,
+  type CreateGroupParams,
+  type CreateGroupState,
+  type GetAgentInfoParams,
+  GroupAgentBuilderApiName,
+  type GroupAgentBuilderApiNameType,
+  GroupAgentBuilderIdentifier,
+  GroupAgentBuilderManifest,
+  systemPrompt as groupAgentBuilderSystemPrompt,
+  type InviteAgentParams,
+  type RemoveAgentParams,
+  type SearchAgentParams,
+  type UpdateAgentConfigWithIdParams,
+  type UpdateAgentPromptParams,
+  type UpdateGroupParams,
+  type UpdateGroupPromptParams,
+} from './groupAgentBuilder';
 export {
   type BroadcastParams,
   type CreateWorkflowParams,
@@ -309,6 +363,17 @@ export {
   type UpdateDocumentState as NotebookUpdateDocumentState,
 } from './notebook';
 export {
+  type DeviceAttachment,
+  generateSystemPrompt as generateRemoteDeviceSystemPrompt,
+  RemoteDeviceApiName,
+  type RemoteDeviceApiNameType,
+  RemoteDeviceExecutionRuntime,
+  RemoteDeviceIdentifier,
+  RemoteDeviceManifest,
+  type RemoteDeviceRuntimeService,
+  systemPrompt as remoteDeviceSystemPrompt,
+} from './remoteDevice';
+export {
   type ActivateSkillParams,
   type ActivateSkillState,
   type CommandResult,
@@ -360,6 +425,27 @@ export {
   TopicReferenceManifest,
 } from './topicReference';
 export {
+  UserInteractionApiName,
+  UserInteractionExecutionRuntime,
+  UserInteractionIdentifier,
+  UserInteractionManifest,
+  systemPrompt as userInteractionSystemPrompt,
+} from './userInteraction';
+export {
+  WebBrowsingApiName,
+  type WebBrowsingApiNameType,
+  WebBrowsingExecutionRuntime,
+  WebBrowsingManifest,
+  systemPrompt as webBrowsingSystemPrompt,
+} from './webBrowsing';
+export {
+  type MarkdownPatchDeleteHunk,
+  type MarkdownPatchDeleteLinesHunk,
+  type MarkdownPatchHunk,
+  type MarkdownPatchInsertAtHunk,
+  type MarkdownPatchMode,
+  type MarkdownPatchReplaceHunk,
+  type MarkdownPatchReplaceLinesHunk,
   type UpdateDocumentArgs,
   WebOnboardingApiName,
   type WebOnboardingDocumentType,

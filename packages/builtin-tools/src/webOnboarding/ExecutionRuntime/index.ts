@@ -1,7 +1,6 @@
-import type { MarkdownPatchHunk } from '@lobechat/markdown-patch';
-import { applyMarkdownPatch, formatMarkdownPatchError } from '@lobechat/markdown-patch';
 import type { BuiltinServerRuntimeOutput, SaveUserQuestionInput } from '@lobechat/types';
 
+import type { MarkdownPatchHunk } from '../types';
 import { createDocumentReadResult, createWebOnboardingToolResult } from './utils';
 
 export interface WebOnboardingRuntimeService {
@@ -9,6 +8,14 @@ export interface WebOnboardingRuntimeService {
     content: string;
     finishedAt?: string;
     success: boolean;
+  }>;
+  patchDocument: (
+    type: 'soul' | 'persona',
+    hunks: MarkdownPatchHunk[],
+  ) => Promise<{
+    applied: number;
+    id: string | null;
+    type: 'soul' | 'persona';
   }>;
   readDocument: (type: 'soul' | 'persona') => Promise<{
     content: string | null;
@@ -71,30 +78,14 @@ export class WebOnboardingExecutionRuntime {
     hunks: MarkdownPatchHunk[];
     type: 'soul' | 'persona';
   }): Promise<BuiltinServerRuntimeOutput> {
-    const current = await this.service.readDocument(params.type);
-    const patched = applyMarkdownPatch(current.content ?? '', params.hunks);
-
-    if (!patched.ok) {
-      return {
-        content: formatMarkdownPatchError(patched.error),
-        error: {
-          body: patched.error,
-          message: formatMarkdownPatchError(patched.error),
-          type: patched.error.code,
-        },
-        state: { error: patched.error, type: params.type },
-        success: false,
-      };
-    }
-
-    const updated = await this.service.updateDocument(params.type, patched.content);
+    const updated = await this.service.patchDocument(params.type, params.hunks);
     if (!updated.id) {
       return { content: `Failed to update ${params.type} document.`, success: false };
     }
 
     return {
-      content: `Updated ${params.type} document (${updated.id}). Applied ${patched.applied} hunk(s).`,
-      state: { applied: patched.applied, id: updated.id, type: params.type },
+      content: `Updated ${params.type} document (${updated.id}). Applied ${updated.applied} hunk(s).`,
+      state: { applied: updated.applied, id: updated.id, type: params.type },
       success: true,
     };
   }

@@ -1,4 +1,4 @@
-import { WebBrowsingApiName, WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
+import { WebBrowsingApiName, WebBrowsingManifest } from '@lobechat/builtin-tools';
 import { type ChatToolPayload, type CreateMessageParams, type SearchQuery } from '@lobechat/types';
 import { nanoid } from '@lobechat/utils';
 

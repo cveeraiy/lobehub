@@ -1,4 +1,4 @@
-import { AgentBuilderIdentifier } from '@lobechat/builtin-tool-agent-builder';
+import { AgentBuilderIdentifier } from '@lobechat/builtin-tools';
 import { KLAVIS_SERVER_TYPES, LOBEHUB_SKILL_PROVIDERS } from '@lobechat/const';
 import { type OfficialToolItem } from '@lobechat/context-engine';
 import { type FetchSSEOptions } from '@lobechat/fetch-sse';
