@@ -4,8 +4,8 @@ import { Link2 } from 'lucide-react';
 import { memo } from 'react';
 
 import { SESSION_CHAT_TOPIC_URL } from '@/const/url';
-import { type MemorySource } from '@/database/repositories/userMemory';
 import Link from '@/libs/router/Link';
+import { type MemorySource } from '@/types/userMemory';
 
 const SourceLink = memo<{ source?: MemorySource | null }>(({ source }) => {
   if (!source?.agentId || !source.id) return;

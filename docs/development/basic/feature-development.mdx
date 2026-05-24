@@ -19,10 +19,10 @@ We will use [RFC 021 - Custom Assistant Opening Guidance](https://github.com/lob
 
 Ethos uses a PostgreSQL database, with [Drizzle ORM](https://orm.drizzle.team/) to operate the database.
 
-All schemas are located in `packages/database/src/schemas/`. We need to adjust the `agents` table to add two fields corresponding to the configuration items:
+All schemas are located in `src/database/schemas/`. We need to adjust the `agents` table to add two fields corresponding to the configuration items:
 
 ```diff
-// packages/database/src/schemas/agent.ts
+// src/database/schemas/agent.ts
 export const agents = pgTable(
   'agents',
   {
@@ -101,8 +101,8 @@ The project is divided into multiple frontend and backend layers by responsibili
 | tRPC Router       | src/server/routers/                  | tRPC entry, validates input, routes to service        |
 | Server Service    | src/server/services/                 | Server-side business logic, with DB access            |
 | Server Module     | src/server/modules/                  | Server-side modules, no direct DB access              |
-| Repository        | packages/database/src/repositories/  | Complex queries, cross-table operations               |
-| DB Model          | packages/database/src/models/        | Single-table CRUD operations                          |
+| Repository        | src/database/repositories/  | Complex queries, cross-table operations               |
+| DB Model          | src/database/models/        | Single-table CRUD operations                          |
 +-------------------+--------------------------------------+------------------------------------------------------+
 ```
 
@@ -341,7 +341,7 @@ The project uses Vitest for unit testing. See the [Testing Skill Guide](https://
 bunx vitest run --silent='passed-only' '[file-path]'
 
 # Database package tests
-cd packages/database && bunx vitest run --silent='passed-only' '[file]'
+bunx vitest run --silent='passed-only' '[file]'
 ```
 
 **Testing suggestions for new features:**

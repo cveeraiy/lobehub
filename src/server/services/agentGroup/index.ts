@@ -1,17 +1,15 @@
 import { DEFAULT_AGENT_CONFIG, DEFAULT_CHAT_GROUP_CHAT_CONFIG } from '@lobechat/const';
-import { type LobeChatDatabase } from '@lobechat/database';
-import { type LobeAgentConfig } from '@lobechat/types';
+import type { LobeAgentConfig, LobeChatGroupConfig } from '@lobechat/types';
 import { cleanObject, merge } from '@lobechat/utils';
 import { type PartialDeep } from 'type-fest';
 
 import { AgentModel } from '@/database/models/agent';
 import { ChatGroupModel } from '@/database/models/chatGroup';
-import { type UserModel } from '@/database/models/user';
 import { AgentGroupRepository } from '@/database/repositories/agentGroup';
-import { type ChatGroupConfig } from '@/database/types/chatGroup';
 import { getServerDefaultAgentConfig } from '@/server/globalConfig';
+import type { LobeChatDatabase } from '@/server/types/database';
 
-type DefaultAgentConfig = Awaited<ReturnType<UserModel['getUserSettingsDefaultAgentConfig']>>;
+type DefaultAgentConfig = { config?: PartialDeep<LobeAgentConfig> } | null | undefined | unknown;
 
 /**
  * ChatGroup Service
@@ -82,7 +80,7 @@ export class AgentGroupService {
    * Normalize ChatGroupConfig with defaults.
    * Merges DEFAULT_CHAT_GROUP_CHAT_CONFIG with the provided config.
    */
-  normalizeGroupConfig(config?: ChatGroupConfig | null): ChatGroupConfig | undefined {
+  normalizeGroupConfig(config?: LobeChatGroupConfig | null): LobeChatGroupConfig | undefined {
     return config
       ? {
           ...DEFAULT_CHAT_GROUP_CHAT_CONFIG,
@@ -109,7 +107,9 @@ export class AgentGroupService {
     agents: T[],
   ) {
     const userDefaultAgentConfig =
-      (defaultAgentConfig as { config?: PartialDeep<LobeAgentConfig> })?.config || {};
+      defaultAgentConfig && typeof defaultAgentConfig === 'object' && 'config' in defaultAgentConfig
+        ? ((defaultAgentConfig as { config?: PartialDeep<LobeAgentConfig> }).config ?? {})
+        : {};
 
     const serverDefaultAgentConfig = getServerDefaultAgentConfig();
     const baseConfig = merge(DEFAULT_AGENT_CONFIG, serverDefaultAgentConfig);

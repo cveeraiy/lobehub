@@ -1,5 +1,5 @@
-import { TaskIdentifier as TaskSkillIdentifier } from '@lobechat/builtin-skills';
 import { BriefIdentifier } from '@lobechat/builtin-tools';
+import { TaskSkillIdentifier } from '@lobechat/const';
 import type { ExecAgentResult } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import debug from 'debug';
@@ -8,9 +8,9 @@ import { TopicTrigger } from '@/const/topic';
 import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
-import type { LobeChatDatabase } from '@/database/type';
 import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 import { TaskLifecycleService } from '@/server/services/taskLifecycle';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { buildTaskPrompt } from './buildTaskPrompt';
 

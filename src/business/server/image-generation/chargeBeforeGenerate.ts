@@ -1,4 +1,4 @@
-import { type NewGeneration, type NewGenerationBatch } from '@/database/schemas';
+import type { NewGeneration, NewGenerationBatch } from '@/types/generation';
 import type { CreateImageServicePayload } from '@/types/mediaGeneration';
 
 interface ChargeParams {

@@ -3,8 +3,8 @@ import debug from 'debug';
 import { desc, eq } from 'drizzle-orm';
 
 import { messages } from '@/database/schemas';
-import { type LobeChatDatabase } from '@/database/type';
 import { genRangeWhere, genWhere } from '@/database/utils/genWhere';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { type MessageMetadata } from '@/types/message';
 import { type UsageLog, type UsageRecordItem } from '@/types/usage/usageRecord';
 import { formatDate } from '@/utils/format';
@@ -43,7 +43,7 @@ export class UsageRecordService {
         ]),
       )
       .orderBy(desc(messages.createdAt));
-    return spends.map((spend) => {
+    return spends.map((spend: any) => {
       const metadata = spend.metadata as MessageMetadata;
       return {
         createdAt: spend.createdAt,

@@ -12,7 +12,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -135,7 +135,6 @@ async def send_message_in_server(
     session: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Create user + assistant messages atomically. Mirrors TS ``aiChat.sendMessageInServer``."""
-    from app.models._helpers import id_generator
 
     topic_id = body.topic_id
     thread_id = body.thread_id
@@ -185,7 +184,10 @@ async def send_message_in_server(
                 role=pm.role,
                 content=pm.content,
                 parent_id=parent_id,
+                group_id=body.group_id,
                 metadata_=pm.metadata,
+                tool_call_id=pm.tool_call_id,
+                tools=pm.tools,
             )
             session.add(pre_msg)
             await session.flush()
@@ -203,7 +205,9 @@ async def send_message_in_server(
         agent_id=body.agent_id,
         role="user",
         content=body.new_user_message.content,
+        editor_data=body.new_user_message.editor_data,
         parent_id=parent_id,
+        group_id=body.group_id,
         metadata_=user_meta,
     )
     session.add(user_msg)
@@ -220,6 +224,7 @@ async def send_message_in_server(
         model=body.new_assistant_message.model,
         provider=body.new_assistant_message.provider,
         parent_id=user_msg.id,
+        group_id=body.group_id,
         metadata_=body.new_assistant_message.metadata,
     )
     session.add(asst_msg)

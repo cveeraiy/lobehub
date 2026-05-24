@@ -1,9 +1,10 @@
-import * as builtinAgents from '@lobechat/builtin-agents';
-import { GroupManagementIdentifier } from '@lobechat/builtin-tool-group-management';
-import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
-import { NotebookIdentifier } from '@lobechat/builtin-tool-notebook';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { TaskIdentifier } from '@lobechat/builtin-tools';
+import {
+  GroupManagementIdentifier,
+  GTDIdentifier,
+  NotebookIdentifier,
+  TaskIdentifier,
+} from '@lobechat/builtin-tools';
 import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -15,6 +16,7 @@ import * as aiInfraStore from '@/store/aiInfra';
 import * as userSelectors from '@/store/user/selectors';
 
 import { resolveAgentConfig } from './agentConfigResolver';
+import * as builtinAgents from './builtinAgentDefinitionCache';
 import { resolveEnabledChatModelConfig } from './modelFallback';
 
 vi.hoisted(() => {
@@ -609,7 +611,7 @@ describe('resolveAgentConfig', () => {
           .spyOn(builtinAgents, 'getAgentRuntimeConfig')
           .mockImplementation((slug, ctx) => ({
             // This simulates the actual INBOX runtime: [GTDIdentifier, NotebookIdentifier, ...(ctx.plugins || [])]
-            plugins: [GTDIdentifier, NotebookIdentifier, ...(ctx.plugins || [])],
+            plugins: [GTDIdentifier, NotebookIdentifier, ...(ctx?.plugins || [])],
             systemRole: 'Inbox system role',
           }));
 

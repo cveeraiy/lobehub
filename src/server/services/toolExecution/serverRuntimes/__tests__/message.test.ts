@@ -1,4 +1,4 @@
-import { MessageToolIdentifier } from '@lobechat/builtin-tool-message';
+import { MessageToolIdentifier } from '@lobechat/builtin-tools';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ToolExecutionContext } from '../../types';

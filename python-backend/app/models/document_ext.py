@@ -1,6 +1,6 @@
 """DocumentHistories table. (Non-MVP)
 
-Source: packages/database/src/schemas/documentHistory.ts
+Source: src/database/schemas/documentHistory.ts
 """
 
 from __future__ import annotations

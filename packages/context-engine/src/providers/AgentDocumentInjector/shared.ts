@@ -1,8 +1,8 @@
 import type {
   AgentDocumentLoadRule,
   AgentDocumentLoadRules,
-} from '../../../../database/src/models/agentDocuments';
-import { matchesLoadRules } from '../../../../database/src/models/agentDocuments';
+} from '../../../../../src/database/models/agentDocuments';
+import { matchesLoadRules } from '../../../../../src/database/models/agentDocuments';
 
 export type { AgentDocumentLoadRule, AgentDocumentLoadRules };
 

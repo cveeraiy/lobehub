@@ -3,7 +3,7 @@ import {
   type CredSummary,
   injectCredsContext,
   type UserCredsContext,
-} from '@lobechat/builtin-tool-creds';
+} from '@lobechat/builtin-tools';
 import { resourcesTreePrompt } from '@lobechat/prompts';
 import type { RuntimeSelectedSkill, UserCredSummary } from '@lobechat/types';
 

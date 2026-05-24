@@ -3,6 +3,7 @@
 import { memo } from 'react';
 
 import { useAiInfraStore } from '@/store/aiInfra';
+import { useToolStore } from '@/store/tool';
 import { useUserMemoryStore } from '@/store/userMemory';
 
 interface DeferredStoreInitializationProps {
@@ -11,9 +12,11 @@ interface DeferredStoreInitializationProps {
 
 const DeferredStoreInitialization = memo<DeferredStoreInitializationProps>(({ isLogin }) => {
   const useInitAiProviderKeyVaults = useAiInfraStore((s) => s.useFetchAiProviderRuntimeState);
+  const useFetchBuiltinSkills = useToolStore((s) => s.useFetchBuiltinSkills);
   const useFetchPersona = useUserMemoryStore((s) => s.useFetchPersona);
 
   useInitAiProviderKeyVaults(isLogin, false);
+  useFetchBuiltinSkills();
   useFetchPersona(isLogin);
 
   return null;

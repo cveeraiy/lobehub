@@ -1,4 +1,3 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import debug from 'debug';
 import urlJoin from 'url-join';
 
@@ -7,6 +6,7 @@ import { fileEnv } from '@/envs/file';
 import { getRedisConfig } from '@/envs/redis';
 import { initializeRedis, isRedisEnabled } from '@/libs/redis';
 import { FileS3 } from '@/server/modules/S3';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { type FileServiceImpl } from './type';
 

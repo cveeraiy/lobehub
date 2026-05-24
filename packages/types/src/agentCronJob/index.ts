@@ -14,7 +14,7 @@ export interface ExecutionConditions {
 export const cronPatternSchema = z
   .string()
   .regex(
-    /^(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|[hms]))+)|((((\d+,)+\d+|(\d+([/-])\d+)|\d+|\*) ?){5,7})$/,
+    /^(?:@(?:annually|yearly|monthly|weekly|daily|hourly|reboot)|@every (?:\d+(?:ns|us|µs|ms|[hms]))+|(?:[\d*/,-]+ ){4,6}[\d*/,-]+)$/,
     'Invalid cron pattern',
   );
 
@@ -109,3 +109,29 @@ export const UpdateAgentCronJobSchema = InsertAgentCronJobSchema.partial();
 // Type exports
 export type InsertAgentCronJob = z.infer<typeof InsertAgentCronJobSchema>;
 export type UpdateAgentCronJob = z.infer<typeof UpdateAgentCronJobSchema>;
+
+export type CreateAgentCronJobData = InsertAgentCronJob;
+export type UpdateAgentCronJobData = UpdateAgentCronJob;
+
+export interface AgentCronJob {
+  [key: string]: unknown;
+  accessedAt?: Date | null;
+  agentId: string;
+  content: string;
+  createdAt: Date;
+  cronPattern: string;
+  description?: string | null;
+  editData?: Record<string, unknown> | null;
+  enabled?: boolean | null;
+  executionConditions?: ExecutionConditions | null;
+  groupId?: string | null;
+  id: string;
+  lastExecutedAt?: Date | null;
+  maxExecutions?: number | null;
+  name?: string | null;
+  remainingExecutions?: number | null;
+  timezone?: string | null;
+  totalExecutions?: number | null;
+  updatedAt: Date;
+  userId?: string;
+}

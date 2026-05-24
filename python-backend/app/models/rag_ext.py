@@ -1,6 +1,6 @@
 """UnstructuredChunks table. (Non-MVP)
 
-Source: packages/database/src/schemas/rag.ts
+Source: src/database/schemas/rag.ts
 """
 
 from __future__ import annotations
@@ -9,8 +9,9 @@ import uuid as _uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Index, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Index, UniqueConstraint
 from sqlalchemy import text as sa_text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import _utcnow, json_column
@@ -27,8 +28,7 @@ class UnstructuredChunk(SQLModel, table=True):
 
     id: str = Field(
         default_factory=lambda: str(_uuid.uuid4()),
-        primary_key=True,
-        max_length=255,
+        sa_column=Column(PG_UUID(as_uuid=False), primary_key=True),
     )
     text: Optional[str] = None
     metadata_: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("metadata"))
@@ -36,7 +36,10 @@ class UnstructuredChunk(SQLModel, table=True):
     type: Optional[str] = Field(default=None, max_length=255)
 
     parent_id: Optional[str] = Field(default=None, max_length=255)
-    composite_id: Optional[str] = Field(default=None, foreign_key="chunks.id")
+    composite_id: Optional[str] = Field(
+        default=None,
+        sa_column=Column(PG_UUID(as_uuid=False), ForeignKey("chunks.id")),
+    )
     client_id: Optional[str] = None
     user_id: Optional[str] = Field(default=None, foreign_key="users.id")
     file_id: Optional[str] = Field(default=None, foreign_key="files.id")

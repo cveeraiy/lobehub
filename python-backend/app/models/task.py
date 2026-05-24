@@ -1,6 +1,6 @@
 """Tasks, TaskDependencies, TaskDocuments, TaskTopics, Briefs, TaskComments tables. (Non-MVP)
 
-Source: packages/database/src/schemas/task.ts
+Source: src/database/schemas/task.ts
 """
 
 from __future__ import annotations
@@ -9,10 +9,11 @@ import uuid as _uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Index, UniqueConstraint, text
+from sqlalchemy import Column, Index, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, SQLModel
 
-from app.models._helpers import _utcnow, id_generator, create_nanoid, json_column
+from app.models._helpers import _utcnow, id_generator, json_column
 
 
 class Task(SQLModel, table=True):
@@ -89,7 +90,7 @@ class TaskDependency(SQLModel, table=True):
         Index("task_deps_user_id_idx", "user_id"),
     )
 
-    id: str = Field(default_factory=lambda: str(_uuid.uuid4()), primary_key=True, max_length=255)
+    id: str = Field(default_factory=lambda: str(_uuid.uuid4()), sa_column=Column(PG_UUID(as_uuid=False), primary_key=True))
     task_id: str = Field(foreign_key="tasks.id", nullable=False)
     depends_on_id: str = Field(foreign_key="tasks.id", nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
@@ -110,7 +111,7 @@ class TaskDocument(SQLModel, table=True):
         Index("task_docs_user_id_idx", "user_id"),
     )
 
-    id: str = Field(default_factory=lambda: str(_uuid.uuid4()), primary_key=True, max_length=255)
+    id: str = Field(default_factory=lambda: str(_uuid.uuid4()), sa_column=Column(PG_UUID(as_uuid=False), primary_key=True))
     task_id: str = Field(foreign_key="tasks.id", nullable=False)
     document_id: str = Field(foreign_key="documents.id", nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
@@ -130,7 +131,7 @@ class TaskTopic(SQLModel, table=True):
         Index("task_topics_user_id_idx", "user_id"),
     )
 
-    id: str = Field(default_factory=lambda: str(_uuid.uuid4()), primary_key=True, max_length=255)
+    id: str = Field(default_factory=lambda: str(_uuid.uuid4()), sa_column=Column(PG_UUID(as_uuid=False), primary_key=True))
     task_id: str = Field(foreign_key="tasks.id", nullable=False)
     topic_id: Optional[str] = Field(default=None, foreign_key="topics.id")
     user_id: str = Field(foreign_key="users.id", nullable=False)

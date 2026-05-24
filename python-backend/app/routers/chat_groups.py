@@ -12,7 +12,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import and_, delete, desc, func, select, update
+from sqlalchemy import and_, delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -149,7 +149,6 @@ async def create_chat_group(
     # Link supervisor to group
     link = ChatGroupAgent(
         chat_group_id=group.id,
-        group_id=group.id,
         agent_id=supervisor.id,
         user_id=user_id,
         role="supervisor",
@@ -210,7 +209,6 @@ async def create_group_with_members(
     # 4. Link supervisor
     session.add(ChatGroupAgent(
         chat_group_id=group.id,
-        group_id=group.id,
         agent_id=supervisor.id,
         user_id=user_id,
         role="supervisor",
@@ -221,7 +219,6 @@ async def create_group_with_members(
     for index, mid in enumerate(member_ids):
         session.add(ChatGroupAgent(
             chat_group_id=group.id,
-            group_id=group.id,
             agent_id=mid,
             user_id=user_id,
             role="participant",
@@ -390,7 +387,6 @@ async def duplicate_chat_group(
             await session.flush()
             session.add(ChatGroupAgent(
                 chat_group_id=new_group.id,
-                group_id=new_group.id,
                 agent_id=new_agent.id,
                 user_id=user_id,
                 role=cga.role,
@@ -403,7 +399,6 @@ async def duplicate_chat_group(
             # Reference non-virtual agents
             session.add(ChatGroupAgent(
                 chat_group_id=new_group.id,
-                group_id=new_group.id,
                 agent_id=agent.id,
                 user_id=user_id,
                 role=cga.role,
@@ -446,7 +441,6 @@ async def add_agents_to_group(
         if not existing:
             session.add(ChatGroupAgent(
                 chat_group_id=group_id,
-                group_id=group_id,
                 agent_id=agent_id,
                 user_id=user_id,
                 role="participant",
@@ -491,7 +485,6 @@ async def batch_create_agents_in_group(
 
         session.add(ChatGroupAgent(
             chat_group_id=group_id,
-            group_id=group_id,
             agent_id=agent.id,
             user_id=user_id,
             role="participant",

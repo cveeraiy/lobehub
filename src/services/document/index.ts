@@ -1,6 +1,5 @@
-import { type DocumentItem } from '@lobechat/database/schemas';
-
 import { restClient } from '@/libs/rest';
+import { type DocumentItem } from '@/types/document';
 import type {
   CompareHistoryItemsInput,
   CompareHistoryItemsOutput,

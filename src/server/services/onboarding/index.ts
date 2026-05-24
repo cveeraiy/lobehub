@@ -1,6 +1,5 @@
 import { getDocumentTemplate } from '@lobechat/agent-templates';
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
-import { CURRENT_ONBOARDING_VERSION } from '@lobechat/const';
+import { BUILTIN_AGENT_SLUGS, CURRENT_ONBOARDING_VERSION } from '@lobechat/const';
 import type {
   ChatTopicMetadata,
   MessagePluginItem,
@@ -24,18 +23,12 @@ import { AgentModel } from '@/database/models/agent';
 import { MessageModel } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
 import { UserModel } from '@/database/models/user';
-import {
-  messages,
-  threads,
-  topics,
-  userPersonaDocumentHistories,
-  userPersonaDocuments,
-} from '@/database/schemas';
-import type { LobeChatDatabase } from '@/database/type';
+import { messages, threads, topics } from '@/database/schemas';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { AgentService } from '@/server/services/agent';
 import { AgentDocumentsService } from '@/server/services/agentDocuments';
 import { translation } from '@/server/translation';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 const STRUCTURED_FIELD_LABELS: Record<SaveUserQuestionField, string> = {
   agentEmoji: 'agent emoji',
@@ -188,7 +181,7 @@ export class OnboardingService {
 
     if (!topic || topic.agentId === inboxAgentId) return;
 
-    await this.db.transaction(async (tx) => {
+    await this.db.transaction(async (tx: any) => {
       await tx
         .update(topics)
         .set({ agentId: inboxAgentId, updatedAt: topics.updatedAt })
@@ -803,18 +796,6 @@ export class OnboardingService {
       });
     } catch (error) {
       console.error('[OnboardingService] Failed to reset responseLanguage:', error);
-    }
-
-    // Reset persona documents
-    try {
-      await this.db
-        .delete(userPersonaDocumentHistories)
-        .where(eq(userPersonaDocumentHistories.userId, this.userId));
-      await this.db
-        .delete(userPersonaDocuments)
-        .where(eq(userPersonaDocuments.userId, this.userId));
-    } catch (error) {
-      console.error('[OnboardingService] Failed to reset persona documents:', error);
     }
 
     try {

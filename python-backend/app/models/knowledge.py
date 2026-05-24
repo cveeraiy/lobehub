@@ -1,6 +1,6 @@
 """KnowledgeBases, KnowledgeBaseFiles tables.
 
-Source: packages/database/src/schemas/file.ts (knowledge_bases, knowledge_base_files)
+Source: src/database/schemas/file.ts (knowledge_bases, knowledge_base_files)
 """
 
 from __future__ import annotations
@@ -12,7 +12,6 @@ from sqlalchemy import Index, UniqueConstraint, text
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import _utcnow, id_generator, json_column
-
 
 # ── knowledge_bases ─────────────────────────────────────────────────────────
 
@@ -37,7 +36,7 @@ class KnowledgeBase(SQLModel, table=True):
     user_id: str = Field(foreign_key="users.id", nullable=False)
     client_id: Optional[str] = None
 
-    is_public: bool = Field(default=False)
+    is_public: Optional[bool] = Field(default=False, nullable=True)
     settings: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("settings"))
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})

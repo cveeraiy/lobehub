@@ -1,20 +1,20 @@
 """Chunks, Embeddings, DocumentChunks tables.
 
-Source: packages/database/src/schemas/rag.ts
+Source: src/database/schemas/rag.ts
 """
 
 from __future__ import annotations
 
 import uuid as _uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-from sqlalchemy import Column, Index, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, Index, PrimaryKeyConstraint, UniqueConstraint
 from sqlalchemy import text as sa_text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import VectorType, _utcnow, json_column
-
 
 # ── chunks ──────────────────────────────────────────────────────────────────
 
@@ -28,17 +28,16 @@ class Chunk(SQLModel, table=True):
 
     id: str = Field(
         default_factory=lambda: str(_uuid.uuid4()),
-        primary_key=True,
-        max_length=255,
+        sa_column=Column(PG_UUID(as_uuid=False), primary_key=True),
     )
-    text: Optional[str] = None
-    abstract: Optional[str] = None
-    metadata_: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("metadata"))
-    index: Optional[int] = None
-    type: Optional[str] = Field(default=None, max_length=255)
+    text: str | None = None
+    abstract: str | None = None
+    metadata_: dict[str, Any] | None = Field(default=None, sa_column=json_column("metadata"))
+    index: int | None = None
+    type: str | None = Field(default=None, max_length=255)
 
-    client_id: Optional[str] = None
-    user_id: Optional[str] = Field(default=None, foreign_key="users.id")
+    client_id: str | None = None
+    user_id: str | None = Field(default=None, foreign_key="users.id")
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": sa_text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": sa_text("now()")})
@@ -58,18 +57,20 @@ class Embedding(SQLModel, table=True):
 
     id: str = Field(
         default_factory=lambda: str(_uuid.uuid4()),
-        primary_key=True,
-        max_length=255,
+        sa_column=Column(PG_UUID(as_uuid=False), primary_key=True),
     )
-    chunk_id: Optional[str] = Field(default=None, foreign_key="chunks.id", sa_column_kwargs={"unique": True})
+    chunk_id: str | None = Field(
+        default=None,
+        sa_column=Column(PG_UUID(as_uuid=False), ForeignKey("chunks.id"), unique=True),
+    )
 
-    embeddings: Optional[list[float]] = Field(
+    embeddings: list[float] | None = Field(
         default=None,
         sa_column=Column("embeddings", VectorType(1024)),
     )
-    model: Optional[str] = None
-    client_id: Optional[str] = None
-    user_id: Optional[str] = Field(default=None, foreign_key="users.id")
+    model: str | None = None
+    client_id: str | None = None
+    user_id: str | None = Field(default=None, foreign_key="users.id")
 
 
 # ── document_chunks (junction) ──────────────────────────────────────────────
@@ -89,12 +90,29 @@ class DocumentChunk(SQLModel, table=True):
         nullable=False,
         max_length=30,
     )
-    chunk_id: str = Field(
-        foreign_key="chunks.id",
-        primary_key=True,
-        nullable=False,
+    chunk_id: str = Field(sa_column=Column(PG_UUID(as_uuid=False), ForeignKey("chunks.id"), primary_key=True))
+    page_index: int | None = None
+    user_id: str = Field(foreign_key="users.id", nullable=False)
+
+    created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": sa_text("now()")})
+
+
+# ── file_chunks (junction) ─────────────────────────────────────────────────
+
+
+class FileChunk(SQLModel, table=True):
+    __tablename__ = "file_chunks"
+    __table_args__ = (
+        PrimaryKeyConstraint("file_id", "chunk_id", name="file_chunks_file_id_chunk_id_pk"),
+        Index("file_chunks_user_id_idx", "user_id"),
+        Index("file_chunks_file_id_idx", "file_id"),
+        Index("file_chunks_chunk_id_idx", "chunk_id"),
     )
-    page_index: Optional[int] = None
+
+    file_id: str = Field(foreign_key="files.id", nullable=False)
+    chunk_id: str = Field(
+        sa_column=Column(PG_UUID(as_uuid=False), ForeignKey("chunks.id", ondelete="CASCADE"), nullable=False),
+    )
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": sa_text("now()")})

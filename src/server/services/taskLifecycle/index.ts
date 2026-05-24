@@ -20,11 +20,11 @@ import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
 import { TopicModel } from '@/database/models/topic';
-import type { LobeChatDatabase } from '@/database/type';
 import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { SystemAgentService } from '@/server/services/systemAgent';
 import { TaskReviewService } from '@/server/services/taskReview';
 import { createTaskSchedulerModule } from '@/server/services/taskScheduler';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import {
   isTrivialAssistantContent,

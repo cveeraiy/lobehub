@@ -1,6 +1,6 @@
 """AgentBotProviders, AgentCronJobs, AgentDocuments tables. (Non-MVP)
 
-Source: packages/database/src/schemas/agentBotProvider.ts, agentCronJob.ts, agentDocuments.ts
+Source: src/database/schemas/agentBotProvider.ts, agentCronJob.ts, agentDocuments.ts
 """
 
 from __future__ import annotations
@@ -9,10 +9,11 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import uuid4
 
-from sqlalchemy import Index, UniqueConstraint, text
+from sqlalchemy import Column, Index, UniqueConstraint, text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, SQLModel
 
-from app.models._helpers import _utcnow, create_nanoid, id_generator, json_column
+from app.models._helpers import _utcnow, id_generator, json_column
 
 
 class AgentBotProvider(SQLModel, table=True):
@@ -24,7 +25,7 @@ class AgentBotProvider(SQLModel, table=True):
         Index("agent_bot_providers_user_id_idx", "user_id"),
     )
 
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
+    id: str = Field(default_factory=lambda: str(uuid4()), sa_column=Column(PG_UUID(as_uuid=False), primary_key=True))
     agent_id: str = Field(foreign_key="agents.id", nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
@@ -95,7 +96,7 @@ class AgentDocument(SQLModel, table=True):
         Index("agent_documents_deleted_at_idx", "deleted_at"),
     )
 
-    id: str = Field(default_factory=lambda: create_nanoid(16), primary_key=True, max_length=255)
+    id: str = Field(default_factory=lambda: str(uuid4()), sa_column=Column(PG_UUID(as_uuid=False), primary_key=True))
     agent_id: str = Field(foreign_key="agents.id", nullable=False)
     document_id: str = Field(foreign_key="documents.id", nullable=False, max_length=255)
     user_id: str = Field(foreign_key="users.id", nullable=False)

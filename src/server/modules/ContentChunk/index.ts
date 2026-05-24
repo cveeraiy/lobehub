@@ -1,6 +1,6 @@
-import { type NewChunkItem, type NewUnstructuredChunkItem } from '@/database/schemas';
 import { knowledgeEnv } from '@/envs/knowledge';
 import { ChunkingLoader } from '@/libs/document-loaders';
+import type { NewChunkItem, NewUnstructuredChunkItem } from '@/types/rag';
 
 import { type ChunkingService } from './rules';
 import { ChunkingRuleParser } from './rules';

@@ -1,6 +1,6 @@
 """AgentSkills table.
 
-Source: packages/database/src/schemas/agentSkill.ts
+Source: src/database/schemas/agentSkill.ts
 """
 
 from __future__ import annotations

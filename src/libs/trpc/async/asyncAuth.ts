@@ -1,9 +1,9 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import { TRPCError } from '@trpc/server';
 import debug from 'debug';
 
 import { UserModel } from '@/database/models/user';
 import { validateInternalJWT } from '@/libs/trpc/utils/internalJwt';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { asyncTrpc } from './init';
 

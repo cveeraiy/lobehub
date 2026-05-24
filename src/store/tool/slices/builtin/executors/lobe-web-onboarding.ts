@@ -1,4 +1,3 @@
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
 import {
   type UpdateDocumentArgs,
   WebOnboardingApiName,
@@ -8,6 +7,7 @@ import {
   createDocumentReadResult,
   createWebOnboardingToolResult,
 } from '@lobechat/builtin-tools/webOnboardingUtils';
+import { BUILTIN_AGENT_SLUGS } from '@lobechat/const';
 import { type BuiltinToolContext, type BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 

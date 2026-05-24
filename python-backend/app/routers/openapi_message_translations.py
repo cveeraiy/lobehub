@@ -57,7 +57,7 @@ async def _find_message(session: AsyncSession, user_id: str, message_id: str) ->
 
 async def _find_translate(session: AsyncSession, message_id: str) -> MessageTranslate | None:
     return (
-        await session.execute(select(MessageTranslate).where(MessageTranslate.message_id == message_id))
+        await session.execute(select(MessageTranslate).where(MessageTranslate.id == message_id))
     ).scalar_one_or_none()
 
 
@@ -67,10 +67,10 @@ def _translate_dict(row: MessageTranslate | None, *, message_id: str, user_id: s
     return {
         "clientId": None,
         "content": row.content,
-        "from": row.from_lang,
+        "from": row.from_,
         "id": message_id,
         "messageId": message_id,
-        "to": row.to_lang,
+        "to": row.to,
         "userId": user_id,
     }
 
@@ -101,22 +101,23 @@ async def update_message_translation(
     await _find_message(session, user_id, message_id)
     row = await _find_translate(session, message_id)
     if row:
-        values: dict[str, Any] = {"updated_at": _now()}
+        values: dict[str, Any] = {}
         if body.content is not None:
             values["content"] = body.content
         if body.from_ is not None:
-            values["from_lang"] = body.from_
+            values["from_"] = body.from_
         if body.to is not None:
-            values["to_lang"] = body.to
+            values["to"] = body.to
         await session.execute(update(MessageTranslate).where(MessageTranslate.id == row.id).values(**values))
         await session.flush()
         row = await _find_translate(session, message_id)
     else:
         row = MessageTranslate(
             content=body.content,
-            from_lang=body.from_,
-            message_id=message_id,
-            to_lang=body.to,
+            from_=body.from_,
+            id=message_id,
+            to=body.to,
+            user_id=user_id,
         )
         session.add(row)
         await session.flush()
@@ -157,5 +158,5 @@ async def delete_message_translation(
     session: AsyncSession = Depends(get_db),
 ):
     await _find_message(session, user_id, message_id)
-    await session.execute(delete(MessageTranslate).where(MessageTranslate.message_id == message_id))
+    await session.execute(delete(MessageTranslate).where(MessageTranslate.id == message_id))
     return _success({"deleted": True, "messageId": message_id}, "Delete message translation successfully")

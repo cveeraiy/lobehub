@@ -2,7 +2,7 @@ import {
   type ISandboxService,
   type SandboxCallToolResult,
   type SandboxExportFileResult,
-} from '@lobechat/builtin-tool-cloud-sandbox';
+} from '@lobechat/builtin-tools';
 import { type CodeInterpreterToolName } from '@lobehub/market-sdk';
 import debug from 'debug';
 import { sha256 } from 'js-sha256';

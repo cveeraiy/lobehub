@@ -117,7 +117,7 @@ async def get_user_state(
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
     us = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
     preference = user.preference or {}
     settings_permissions = (
@@ -226,7 +226,7 @@ async def get_user_settings(
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
     us = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
     return {
         "userId": user_id,
@@ -247,17 +247,17 @@ async def update_user_settings(
 ):
     """Update a target user's settings (admin only)."""
     existing = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
     values = body.model_dump(exclude_none=True)
     if not values:
         return {"ok": True}
 
     if existing:
-        stmt = update(UserSettings).where(UserSettings.user_id == user_id).values(**values)
+        stmt = update(UserSettings).where(UserSettings.id == user_id).values(**values)
         await session.execute(stmt)
     else:
-        us = UserSettings(user_id=user_id, **values)
+        us = UserSettings(id=user_id, **values)
         session.add(us)
         await session.flush()
     return {"ok": True}
@@ -275,16 +275,16 @@ async def update_user_permissions(
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
     existing = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
     if existing:
         await session.execute(
             update(UserSettings)
-            .where(UserSettings.user_id == user_id)
+            .where(UserSettings.id == user_id)
             .values(settings_permissions=body.permissions)
         )
     else:
-        session.add(UserSettings(user_id=user_id, settings_permissions=body.permissions))
+        session.add(UserSettings(id=user_id, settings_permissions=body.permissions))
         await session.flush()
     return {"ok": True}
 

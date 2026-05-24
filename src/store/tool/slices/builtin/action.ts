@@ -1,9 +1,11 @@
 import { defaultUninstalledBuiltinTools } from '@lobechat/builtin-tools';
+import type { BuiltinSkill } from '@lobechat/types';
 import debug from 'debug';
 import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
 import { mutate } from '@/libs/swr';
+import { agentSkillService } from '@/services/skill';
 import { userService } from '@/services/user';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
@@ -16,6 +18,7 @@ const n = setNamespace('builtinTool');
 const log = debug('ethos-store:builtin-tool');
 
 const UNINSTALLED_BUILTIN_TOOLS = 'loadUninstalledBuiltinTools';
+const BUILTIN_SKILLS = 'loadBuiltinSkills';
 
 /**
  * Builtin Tool Action Interface
@@ -70,6 +73,22 @@ export class BuiltinToolActionImpl {
 
   toggleBuiltinToolLoading = (key: string, value: boolean): void => {
     this.#set({ builtinToolLoading: { [key]: value } }, false, n('toggleBuiltinToolLoading'));
+  };
+
+  useFetchBuiltinSkills = (enabled = true): SWRResponse<BuiltinSkill[]> => {
+    return useSWR<BuiltinSkill[]>(
+      enabled ? BUILTIN_SKILLS : null,
+      async () => {
+        const skills = await agentSkillService.listBuiltin();
+        return skills;
+      },
+      {
+        onSuccess: (skills) => {
+          this.#set({ builtinSkills: skills }, false, n('useFetchBuiltinSkills'));
+        },
+        revalidateOnFocus: false,
+      },
+    );
   };
 
   transformApiArgumentsToAiState = async (

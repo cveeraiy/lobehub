@@ -15,7 +15,6 @@ import useSWR from 'swr';
 
 import AutoSaveHint from '@/components/Editor/AutoSaveHint';
 import Loading from '@/components/Loading/BrandTextLoading';
-import { type UpdateAgentCronJobData } from '@/database/schemas/agentCronJob';
 import NavHeader from '@/features/NavHeader';
 import WideScreenContainer from '@/features/WideScreenContainer';
 import { useQueryRoute } from '@/hooks/useQueryRoute';
@@ -27,6 +26,7 @@ import { useChatStore } from '@/store/chat';
 import { serverConfigSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
 import { labPreferSelectors } from '@/store/user/selectors';
+import { type UpdateAgentCronJobData } from '@/types/agentCronJob';
 
 import CronJobContentEditor from './features/CronJobContentEditor';
 import CronJobHeader from './features/CronJobHeader';

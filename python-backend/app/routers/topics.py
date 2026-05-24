@@ -109,15 +109,15 @@ async def _delete_topics_by_ids(
             {"message_ids": message_ids, "uid": user_id},
         )
         await session.execute(
-            text("DELETE FROM message_plugins WHERE message_id = ANY(:message_ids)"),
+            text("DELETE FROM message_plugins WHERE id = ANY(:message_ids)"),
             {"message_ids": message_ids},
         )
         await session.execute(
-            text("DELETE FROM message_tts WHERE message_id = ANY(:message_ids)"),
+            text("DELETE FROM message_tts WHERE id = ANY(:message_ids)"),
             {"message_ids": message_ids},
         )
         await session.execute(
-            text("DELETE FROM message_translates WHERE message_id = ANY(:message_ids)"),
+            text("DELETE FROM message_translates WHERE id = ANY(:message_ids)"),
             {"message_ids": message_ids},
         )
         await session.execute(
@@ -429,7 +429,7 @@ async def delete_topic(
 
 
 @router.delete("")
-async def batch_delete_topics(
+async def delete_topics_by_filter(
     session_id: Optional[str] = None,
     agent_id: Optional[str] = None,
     user_id: str = Depends(get_current_user_id),

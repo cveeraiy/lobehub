@@ -5,8 +5,8 @@ import { useTheme } from 'antd-style';
 import { memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 
-import { type QueryTagsResult } from '@/database/models/userMemory';
 import UserAvatar from '@/features/User/UserAvatar';
+import { type QueryTagsResult } from '@/types/userMemory';
 
 // Configuration constants
 const CONFIG = {

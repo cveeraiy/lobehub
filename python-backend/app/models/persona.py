@@ -1,6 +1,6 @@
 """UserPersonaDocuments, UserPersonaDocumentHistories tables. (Non-MVP)
 
-Source: packages/database/src/schemas/userMemories/persona.ts
+Canonical database model for user persona documents.
 """
 
 from __future__ import annotations

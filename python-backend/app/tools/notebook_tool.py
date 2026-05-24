@@ -1,9 +1,9 @@
-"""Notebook server runtime tool — note CRUD scoped to user.
+"""Notebook server runtime tool — document CRUD scoped to user.
 
-Ports TS ``serverRuntimes/notebook.ts``:
-- createNote, readNote, updateNote, deleteNote, listNotes
+Ports the legacy TypeScript ``lobe-notebook`` server runtime:
+- createDocument, updateDocument, getDocument, deleteDocument
 
-Simplified version that stores notes as documents with file_type='notebook/note'.
+The older ``lobehub_notebook`` note APIs remain registered for compatibility.
 """
 
 from __future__ import annotations
@@ -16,8 +16,266 @@ from app.tools.registry import register, register_context_handler
 
 logger = logging.getLogger(__name__)
 
-NOTEBOOK_IDENTIFIER = "lobehub_notebook"
+NOTEBOOK_IDENTIFIER = "lobe-notebook"
+LEGACY_NOTEBOOK_IDENTIFIER = "lobehub_notebook"
 NOTE_FILE_TYPE = "notebook/note"
+NOTEBOOK_APIS = ["createDocument", "updateDocument", "getDocument", "deleteDocument"]
+LEGACY_NOTE_APIS = ["createNote", "readNote", "updateNote", "deleteNote", "listNotes"]
+
+
+def _json(data: dict[str, Any]) -> str:
+    return json.dumps(data, ensure_ascii=False)
+
+
+def _count_words(content: str) -> int:
+    return len([part for part in content.strip().split() if part])
+
+
+def _count_lines(content: str) -> int:
+    return len(content.split("\n"))
+
+
+def _to_notebook_document(doc: Any) -> dict[str, Any]:
+    source_type = "ai" if doc.source_type == "api" else doc.source_type
+    return {
+        "content": doc.content or "",
+        "createdAt": doc.created_at.isoformat() if doc.created_at else None,
+        "description": doc.description or "",
+        "id": doc.id,
+        "sourceType": source_type,
+        "title": doc.title or "Untitled",
+        "type": doc.file_type or "markdown",
+        "updatedAt": doc.updated_at.isoformat() if doc.updated_at else None,
+        "wordCount": doc.total_char_count,
+    }
+
+
+def _success(content: str, state: dict[str, Any] | None = None) -> dict[str, Any]:
+    result: dict[str, Any] = {"content": content, "success": True}
+    if state is not None:
+        result["state"] = state
+    return result
+
+
+def _failure(content: str, message: str, error_type: str) -> dict[str, Any]:
+    return {
+        "content": content,
+        "error": {"message": message, "type": error_type},
+        "success": False,
+    }
+
+
+async def _get_document(session: Any, user_id: str, document_id: str) -> Any | None:
+    from sqlalchemy import and_, select
+
+    from app.models.file import Document
+
+    stmt = select(Document).where(and_(Document.id == document_id, Document.user_id == user_id))
+    return (await session.execute(stmt)).scalar_one_or_none()
+
+
+async def _delete_document(session: Any, user_id: str, document_id: str) -> bool:
+    from sqlalchemy import and_, delete
+
+    from app.models.file import Document
+    from app.models.task import TaskDocument
+    from app.models.topic_ext import TopicDocument
+
+    doc = await _get_document(session, user_id, document_id)
+    if not doc:
+        return False
+
+    await session.execute(delete(TaskDocument).where(TaskDocument.document_id == document_id))
+    await session.execute(delete(TopicDocument).where(TopicDocument.document_id == document_id))
+    await session.execute(delete(Document).where(and_(Document.id == document_id, Document.user_id == user_id)))
+    await session.flush()
+    return True
+
+
+async def _pin_task_document(session: Any, user_id: str, task_id: str, document_id: str) -> None:
+    from sqlalchemy import and_, select
+
+    from app.models.task import TaskDocument
+
+    existing = (
+        await session.execute(
+            select(TaskDocument).where(
+                and_(
+                    TaskDocument.task_id == task_id,
+                    TaskDocument.document_id == document_id,
+                    TaskDocument.user_id == user_id,
+                )
+            )
+        )
+    ).scalar_one_or_none()
+    if existing:
+        return
+
+    session.add(TaskDocument(task_id=task_id, document_id=document_id, user_id=user_id, pinned_by="agent"))
+
+
+async def run_notebook_api(
+    api_name: str,
+    arguments: dict[str, Any],
+    *,
+    session: Any,
+    user_id: str,
+) -> dict[str, Any]:
+    from datetime import UTC, datetime
+
+    from sqlalchemy import and_, select
+
+    from app.models.file import Document
+    from app.models.topic_ext import TopicDocument
+
+    if api_name == "createDocument":
+        title = arguments.get("title") or "Untitled"
+        content = arguments.get("content") or ""
+        document_type = arguments.get("type") or "markdown"
+        topic_id = arguments.get("topicId") or arguments.get("topic_id")
+        task_id = arguments.get("taskId") or arguments.get("task_id")
+
+        if not content:
+            return _failure(
+                "Error: Missing content. The document content is required.",
+                "The document content is required.",
+                "MissingContentError",
+            )
+
+        if not topic_id:
+            return _failure(
+                "Error: No topic context. Documents must be created within a topic.",
+                "Documents must be created within a topic.",
+                "MissingTopicContextError",
+            )
+
+        doc = Document(
+            user_id=user_id,
+            title=title,
+            content=content,
+            file_type=document_type,
+            source=f"notebook:{topic_id}",
+            source_type="api",
+            total_char_count=_count_words(content),
+            total_line_count=_count_lines(content),
+        )
+        session.add(doc)
+        await session.flush()
+        await session.refresh(doc)
+
+        topic_doc = (
+            await session.execute(
+                select(TopicDocument).where(
+                    and_(
+                        TopicDocument.topic_id == topic_id,
+                        TopicDocument.document_id == doc.id,
+                        TopicDocument.user_id == user_id,
+                    )
+                )
+            )
+        ).scalar_one_or_none()
+        if not topic_doc:
+            session.add(TopicDocument(topic_id=topic_id, document_id=doc.id, user_id=user_id))
+
+        if task_id:
+            await _pin_task_document(session, user_id, task_id, doc.id)
+
+        await session.flush()
+        await session.refresh(doc)
+        notebook_doc = _to_notebook_document(doc)
+        return _success(
+            f'📄 Created document: "{title}"\n\nYou can view and edit this document in the Portal sidebar.',
+            {"document": notebook_doc},
+        )
+
+    if api_name == "updateDocument":
+        document_id = arguments.get("id")
+        if not document_id:
+            return _failure("Error: Missing document id.", "Document id is required.", "MissingDocumentIdError")
+
+        doc = await _get_document(session, user_id, document_id)
+        if not doc:
+            return _failure(
+                f"Error: Document not found: {document_id}",
+                f"Document not found: {document_id}",
+                "DocumentNotFoundError",
+            )
+
+        if "title" in arguments:
+            doc.title = arguments.get("title")
+
+        if "content" in arguments:
+            content = arguments.get("content") or ""
+            if arguments.get("append") and doc.content:
+                content = f"{doc.content}\n\n{content}"
+            doc.content = content
+            # Match the TS runtime service update path, which counts characters
+            # after updates even though create stores word count.
+            doc.total_char_count = len(content)
+            doc.total_line_count = _count_lines(content)
+
+        doc.updated_at = datetime.now(UTC).replace(tzinfo=None)
+        session.add(doc)
+        await session.flush()
+        await session.refresh(doc)
+
+        notebook_doc = _to_notebook_document(doc)
+        action_desc = "Appended to" if arguments.get("append") else "Updated"
+        return _success(f'📝 {action_desc} document: "{notebook_doc["title"]}"', {"document": notebook_doc})
+
+    if api_name == "getDocument":
+        document_id = arguments.get("id")
+        if not document_id:
+            return _failure("Error: Missing document id.", "Document id is required.", "MissingDocumentIdError")
+
+        doc = await _get_document(session, user_id, document_id)
+        if not doc:
+            return _failure(
+                f"Error: Document not found: {document_id}",
+                f"Document not found: {document_id}",
+                "DocumentNotFoundError",
+            )
+
+        notebook_doc = _to_notebook_document(doc)
+        return _success(
+            f'📄 Document: "{notebook_doc["title"]}"\n\n{notebook_doc["content"]}',
+            {"document": notebook_doc},
+        )
+
+    if api_name == "deleteDocument":
+        document_id = arguments.get("id")
+        if not document_id:
+            return _failure("Error: Missing document id.", "Document id is required.", "MissingDocumentIdError")
+
+        doc = await _get_document(session, user_id, document_id)
+        if not doc:
+            return _failure(
+                f"Error: Document not found: {document_id}",
+                f"Document not found: {document_id}",
+                "DocumentNotFoundError",
+            )
+
+        title = doc.title
+        await _delete_document(session, user_id, document_id)
+        return _success(f'🗑️ Deleted document: "{title}"', {"deletedId": document_id})
+
+    return _failure(
+        f"Error: Unknown notebook API: {api_name}",
+        f"Unknown notebook API: {api_name}",
+        "UnknownApiError",
+    )
+
+
+async def _notebook_context_dispatch(
+    arguments: dict[str, Any],
+    session: Any,
+    user_id: str,
+    *,
+    api_name: str = "",
+    **kwargs: Any,
+) -> str:
+    del kwargs
+    return _json(await run_notebook_api(api_name, arguments, session=session, user_id=user_id))
 
 
 async def notebook_with_context(
@@ -156,14 +414,14 @@ async def notebook_with_context(
 
 @register(
     NOTEBOOK_IDENTIFIER,
-    description="Notebook — create, read, update, delete and list notes. "
-                "APIs: createNote, readNote, updateNote, deleteNote, listNotes.",
+    description="Notebook — create, update, read, and delete topic-scoped documents. "
+                "APIs: createDocument, updateDocument, getDocument, deleteDocument.",
     parameters={
         "type": "object",
         "properties": {
             "api_name": {
                 "type": "string",
-                "enum": ["createNote", "readNote", "updateNote", "deleteNote", "listNotes"],
+                "enum": NOTEBOOK_APIS,
             },
             "arguments": {"type": "object"},
         },
@@ -174,4 +432,35 @@ async def notebook_tool_context_required(args: dict[str, Any]) -> str:
     return json.dumps({"error": "Notebook tool requires server context (session + user_id)."})
 
 
-register_context_handler(NOTEBOOK_IDENTIFIER, notebook_with_context)
+@register(
+    LEGACY_NOTEBOOK_IDENTIFIER,
+    description="Legacy notebook note CRUD. APIs: createNote, readNote, updateNote, deleteNote, listNotes.",
+    parameters={
+        "type": "object",
+        "properties": {
+            "api_name": {"type": "string", "enum": LEGACY_NOTE_APIS},
+            "arguments": {"type": "object"},
+        },
+        "required": ["api_name", "arguments"],
+    },
+)
+async def legacy_notebook_tool_context_required(args: dict[str, Any]) -> str:
+    return json.dumps({"error": "Legacy notebook tool requires server context (session + user_id)."})
+
+
+async def _legacy_notebook_context_dispatch(
+    arguments: dict[str, Any],
+    session: Any,
+    user_id: str,
+    *,
+    api_name: str = "",
+    **kwargs: Any,
+) -> str:
+    return await notebook_with_context(api_name, arguments, session, user_id, **kwargs)
+
+
+for _api in NOTEBOOK_APIS:
+    register_context_handler(f"{NOTEBOOK_IDENTIFIER}__{_api}", _notebook_context_dispatch)
+
+for _api in LEGACY_NOTE_APIS:
+    register_context_handler(f"{LEGACY_NOTEBOOK_IDENTIFIER}__{_api}", _legacy_notebook_context_dispatch)

@@ -3,7 +3,7 @@ import {
   type AgentTemplateFetcher,
   normalizeAgentTemplate,
   type RawAgentTemplate,
-} from '@lobechat/builtin-tool-agent-marketplace';
+} from '@lobechat/builtin-tools';
 
 import { restClient } from '@/libs/rest';
 

@@ -1,6 +1,3 @@
-import { type LobeChatDatabase } from '@lobechat/database';
-import { type DocumentItem } from '@lobechat/database/schemas';
-import { documents, files } from '@lobechat/database/schemas';
 import { loadFile } from '@lobechat/file-loaders';
 import debug from 'debug';
 import { and, eq } from 'drizzle-orm';
@@ -8,9 +5,11 @@ import isEqual from 'fast-deep-equal';
 
 import { DocumentModel } from '@/database/models/document';
 import { FileModel } from '@/database/models/file';
+import { documents, files } from '@/database/schemas';
 import { isValidEditorData } from '@/libs/editor/isValidEditorData';
 import { normalizeEditorDataDiffNodes } from '@/libs/editor/normalizeDiffNodes';
-import { type LobeDocument } from '@/types/document';
+import type { LobeChatDatabase } from '@/server/types/database';
+import { type DocumentItem, type LobeDocument } from '@/types/document';
 
 import { FileService } from '../file';
 import { DocumentHistoryService } from './history';
@@ -28,6 +27,8 @@ import type {
 } from './types';
 
 const log = debug('ethos-chat:service:document');
+
+type DocumentUpdate = Partial<Omit<DocumentItem, 'accessedAt' | 'createdAt' | 'updatedAt'>>;
 
 export class DocumentService {
   userId: string;
@@ -294,7 +295,7 @@ export class DocumentService {
    * Update document
    */
   async updateDocument(id: string, params: UpdateDocumentParams): Promise<UpdateDocumentResult> {
-    return this.db.transaction(async (tx) => {
+    return this.db.transaction(async (tx: any) => {
       const transactionDb = tx as unknown as LobeChatDatabase;
       const documentModel = new DocumentModel(transactionDb, this.userId);
       const fileModel = new FileModel(transactionDb, this.userId);
@@ -362,7 +363,7 @@ export class DocumentService {
       }
 
       if (Object.keys(updates).length > 0) {
-        await documentModel.update(id, updates as Partial<DocumentItem>);
+        await documentModel.update(id, updates as DocumentUpdate);
       }
 
       if ((params.title !== undefined || params.parentId !== undefined) && currentDocument.fileId) {

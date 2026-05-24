@@ -1,7 +1,7 @@
 /**
  * @vitest-environment happy-dom
  */
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
+import { BUILTIN_AGENT_SLUGS } from '@lobechat/const';
 import { render, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

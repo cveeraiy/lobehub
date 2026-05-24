@@ -1,5 +1,5 @@
-import { type SidebarAgentItem, type SidebarAgentListResponse } from '@/database/repositories/home';
 import { restClient } from '@/libs/rest';
+import { type SidebarAgentItem, type SidebarAgentListResponse } from '@/types/home';
 
 type RawSidebarAgentItem = Omit<SidebarAgentItem, 'updatedAt'> & {
   updatedAt?: string | null;

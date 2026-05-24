@@ -1,5 +1,5 @@
-import { type SidebarAgentItem, type SidebarGroup } from '@/database/repositories/home';
 import { type HomeStore } from '@/store/home/store';
+import { type SidebarAgentItem, type SidebarGroup } from '@/types/home';
 
 /**
  * Get all pinned agents

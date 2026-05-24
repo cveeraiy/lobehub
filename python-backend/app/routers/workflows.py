@@ -5,14 +5,31 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db import get_db
 from app.services.workflows.handlers import execute_workflow_handler
-from app.services.workflows.temporal_backend import TemporalUnavailableError, start_temporal_workflow
+from app.services.workflows.temporal_backend import (
+    TemporalUnavailableError,
+    cancel_temporal_workflow,
+    start_temporal_workflow,
+    workflow_id_for,
+)
 
 router = APIRouter(prefix="/api/workflows", tags=["Workflows"])
+
+
+class WorkflowCancelBody(BaseModel):
+    workflow_id: str | None = Field(default=None, alias="workflowId")
+    workflow_name: str | None = Field(default=None, alias="workflowName")
+    workflow_run_id: str | None = Field(default=None, alias="workflowRunId")
+    payload: dict[str, Any] = {}
+    reason: str | None = None
+    terminate: bool = False
+
+    model_config = {"populate_by_name": True}
 
 
 async def _json(request: Request) -> dict[str, Any]:
@@ -37,6 +54,26 @@ async def _run_workflow(name: str, payload: dict[str, Any], session: AsyncSessio
         return await execute_workflow_handler(name, payload, session)
     except ValueError as exc:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
+
+
+@router.post("/control/cancel")
+async def cancel_workflow(body: WorkflowCancelBody):
+    workflow_id = body.workflow_id
+    if not workflow_id and body.workflow_name:
+        workflow_id = workflow_id_for(body.workflow_name, body.payload)
+    if not workflow_id:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "workflowId or workflowName is required")
+    try:
+        return await cancel_temporal_workflow(
+            workflow_id,
+            reason=body.reason,
+            run_id=body.workflow_run_id,
+            terminate=body.terminate,
+        )
+    except TemporalUnavailableError:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Temporal backend is unavailable") from None
+    except Exception as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, f"Temporal backend failed: {exc}") from exc
 
 
 @router.post("/task/heartbeat-tick")

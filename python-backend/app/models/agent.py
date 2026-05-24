@@ -1,6 +1,6 @@
 """Agent, AgentsKnowledgeBases, AgentsFiles tables.
 
-Source: packages/database/src/schemas/agent.ts
+Source: src/database/schemas/agent.ts
 """
 
 from __future__ import annotations
@@ -8,11 +8,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Index, UniqueConstraint, text
+from sqlalchemy import Index, PrimaryKeyConstraint, UniqueConstraint, text
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import _utcnow, id_generator, json_column
-
 
 # ── agents ──────────────────────────────────────────────────────────────────
 
@@ -77,6 +76,7 @@ class AgentKnowledgeBase(SQLModel, table=True):
     __tablename__ = "agents_knowledge_bases"
     __table_args__ = (
         Index("agents_knowledge_bases_agent_id_idx", "agent_id"),
+        Index("agents_knowledge_bases_knowledge_base_id_idx", "knowledge_base_id"),
         Index("agents_knowledge_bases_user_id_idx", "user_id"),
     )
 
@@ -84,8 +84,10 @@ class AgentKnowledgeBase(SQLModel, table=True):
     knowledge_base_id: str = Field(foreign_key="knowledge_bases.id", primary_key=True, nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
-    enabled: bool = Field(default=True)
+    enabled: Optional[bool] = Field(default=True, nullable=True)
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    accessed_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
 
 
 # ── agents_files (junction) ─────────────────────────────────────────────────
@@ -94,13 +96,17 @@ class AgentKnowledgeBase(SQLModel, table=True):
 class AgentFile(SQLModel, table=True):
     __tablename__ = "agents_files"
     __table_args__ = (
+        PrimaryKeyConstraint("file_id", "agent_id", "user_id", name="agents_files_file_id_agent_id_user_id_pk"),
         Index("agents_files_agent_id_idx", "agent_id"),
+        Index("agents_files_file_id_idx", "file_id"),
         Index("agents_files_user_id_idx", "user_id"),
     )
 
-    agent_id: str = Field(foreign_key="agents.id", primary_key=True, nullable=False)
-    file_id: str = Field(foreign_key="files.id", primary_key=True, nullable=False)
+    agent_id: str = Field(foreign_key="agents.id", nullable=False)
+    file_id: str = Field(foreign_key="files.id", nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
-    enabled: bool = Field(default=True)
+    enabled: Optional[bool] = Field(default=True, nullable=True)
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    accessed_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})

@@ -1,111 +1,59 @@
-import { AgentDocumentsExecutionRuntime } from '@lobechat/builtin-tool-agent-documents/executionRuntime';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AgentDocumentsExecutionRuntime } from '@lobechat/builtin-tools/agentDocumentsExecutionRuntime';
+import { describe, expect, it, vi } from 'vitest';
 
-import { TaskModel } from '@/database/models/task';
-import { AgentDocumentsService } from '@/server/services/agentDocuments';
+import { callPythonBackend } from '@/server/utils/pythonBackend';
 
 import { agentDocumentsRuntime } from '../agentDocuments';
 
-vi.mock('@/server/services/agentDocuments');
-vi.mock('@/database/models/task');
+vi.mock('@/server/utils/pythonBackend');
 
 describe('agentDocumentsRuntime', () => {
   it('should have correct identifier', () => {
     expect(agentDocumentsRuntime.identifier).toBe('lobe-agent-documents');
   });
 
-  it('should throw if userId is missing', () => {
-    expect(() =>
-      agentDocumentsRuntime.factory({ serverDB: {} as any, toolManifestMap: {} }),
-    ).toThrow('userId and serverDB are required for Agent Documents execution');
+  it('should call Python tool execution with agent and scope context', async () => {
+    vi.mocked(callPythonBackend).mockResolvedValue({
+      result: JSON.stringify({ content: 'ok', success: true }),
+    });
+    const runtime = agentDocumentsRuntime.factory({
+      agentId: 'agent-1',
+      documentId: 'documents-row-id',
+      scope: 'page',
+      taskId: 'task-1',
+      toolManifestMap: {},
+      topicId: 'topic-1',
+      userId: 'user-1',
+    });
+
+    const result = await runtime.replaceDocumentContent({
+      content: 'updated',
+      id: 'agent-doc-assoc-id',
+    });
+
+    expect(result).toEqual({ content: 'ok', success: true });
+    expect(callPythonBackend).toHaveBeenCalledWith('/api/tools/run', 'user-1', {
+      body: {
+        arguments: {
+          agentId: 'agent-1',
+          content: 'updated',
+          currentDocumentId: 'documents-row-id',
+          id: 'agent-doc-assoc-id',
+          scope: 'page',
+          taskId: 'task-1',
+          topicId: 'topic-1',
+        },
+        tool_name: 'lobe-agent-documents__replaceDocumentContent',
+      },
+    });
   });
 
-  it('should throw if serverDB is missing', () => {
-    expect(() => agentDocumentsRuntime.factory({ toolManifestMap: {}, userId: 'user-1' })).toThrow(
-      'userId and serverDB are required for Agent Documents execution',
+  it('should throw at execution time if userId is missing', async () => {
+    const runtime = agentDocumentsRuntime.factory({ toolManifestMap: {} });
+
+    await expect(runtime.readDocument({ id: 'agent-doc-assoc-id' })).rejects.toThrow(
+      'userId is required for Agent Documents execution',
     );
-  });
-});
-
-describe('agentDocumentsRuntime auto-pin to task', () => {
-  const newDoc = {
-    documentId: 'documents-row-id',
-    filename: 'daily-brief',
-    id: 'agent-doc-assoc-id',
-    title: 'Daily Brief',
-  };
-
-  let serviceImpl: {
-    copyDocumentById: ReturnType<typeof vi.fn>;
-    createDocument: ReturnType<typeof vi.fn>;
-    createForTopic: ReturnType<typeof vi.fn>;
-  };
-  let pinDocument: ReturnType<typeof vi.fn>;
-
-  beforeEach(() => {
-    serviceImpl = {
-      copyDocumentById: vi.fn().mockResolvedValue(newDoc),
-      createDocument: vi.fn().mockResolvedValue(newDoc),
-      createForTopic: vi.fn().mockResolvedValue(newDoc),
-    };
-    pinDocument = vi.fn().mockResolvedValue(undefined);
-
-    vi.mocked(AgentDocumentsService).mockImplementation(() => serviceImpl as any);
-    vi.mocked(TaskModel).mockImplementation(() => ({ pinDocument }) as any);
-  });
-
-  const buildContext = (taskId?: string) => ({
-    serverDB: {} as never,
-    taskId,
-    toolManifestMap: {},
-    userId: 'user-1',
-  });
-
-  it('pins newly created document when taskId is in context', async () => {
-    const runtime = agentDocumentsRuntime.factory(buildContext('task-1'));
-
-    await runtime.createDocument({ content: 'body', title: 'Daily Brief' }, { agentId: 'agent-1' });
-
-    expect(pinDocument).toHaveBeenCalledWith('task-1', 'documents-row-id', 'agent');
-  });
-
-  it('skips pin when no taskId is provided', async () => {
-    const runtime = agentDocumentsRuntime.factory(buildContext());
-
-    await runtime.createDocument({ content: 'body', title: 'Daily Brief' }, { agentId: 'agent-1' });
-
-    expect(pinDocument).not.toHaveBeenCalled();
-  });
-
-  it('pins documents created via createTopicDocument', async () => {
-    const runtime = agentDocumentsRuntime.factory(buildContext('task-1'));
-
-    await runtime.createDocument(
-      { content: 'body', target: 'currentTopic', title: 'Topic Note' },
-      { agentId: 'agent-1', topicId: 'topic-1' },
-    );
-
-    expect(pinDocument).toHaveBeenCalledWith('task-1', 'documents-row-id', 'agent');
-  });
-
-  it('pins documents produced by copyDocument', async () => {
-    const runtime = agentDocumentsRuntime.factory(buildContext('task-1'));
-
-    await runtime.copyDocument(
-      { id: 'agent-doc-assoc-id', newTitle: 'Copy' },
-      { agentId: 'agent-1' },
-    );
-
-    expect(pinDocument).toHaveBeenCalledWith('task-1', 'documents-row-id', 'agent');
-  });
-
-  it('does not pin when service returns undefined (e.g. copy of missing doc)', async () => {
-    serviceImpl.copyDocumentById.mockResolvedValue(undefined);
-    const runtime = agentDocumentsRuntime.factory(buildContext('task-1'));
-
-    await runtime.copyDocument({ id: 'missing' }, { agentId: 'agent-1' });
-
-    expect(pinDocument).not.toHaveBeenCalled();
   });
 });
 

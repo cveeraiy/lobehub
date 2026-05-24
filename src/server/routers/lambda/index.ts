@@ -44,12 +44,10 @@ import { knowledgeRouter } from './knowledge';
 import { knowledgeBaseRouter } from './knowledgeBase';
 import { marketRouter } from './market';
 import { messageRouter } from './message';
-import { notebookRouter } from './notebook';
 import { notificationRouter } from './notification';
 import { pluginRouter } from './plugin';
 import { ragEvalRouter } from './ragEval';
 import { recentRouter } from './recent';
-import { searchRouter } from './search';
 import { sessionRouter } from './session';
 import { sessionGroupRouter } from './sessionGroup';
 import { shareRouter } from './share';
@@ -99,12 +97,10 @@ export const lambdaRouter = router({
   knowledgeBase: knowledgeBaseRouter,
   market: marketRouter,
   message: messageRouter,
-  notebook: notebookRouter,
   notification: notificationRouter,
   plugin: pluginRouter,
   ragEval: ragEvalRouter,
   recent: recentRouter,
-  search: searchRouter,
   session: sessionRouter,
   sessionGroup: sessionGroupRouter,
   share: shareRouter,

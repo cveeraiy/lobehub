@@ -650,7 +650,7 @@ async def delete_memory(
 
 # ══════════════════════════════════════════════════════════════════════
 #  Advanced Query / Search / Tool-add endpoints
-#  (Maps to userMemories.ts TRPC router — used by index.rest.ts)
+#  (REST replacement for the retired TS user memory TRPC router)
 # ══════════════════════════════════════════════════════════════════════
 
 
@@ -1909,6 +1909,9 @@ def _identity_search_dict(i: UserMemoryIdentity, distance: float) -> dict:
     return {
         "id": i.id, "type": i.type, "description": i.description,
         "role": i.role, "relationship": i.relationship,
+        "episodicDate": i.episodic_date.isoformat() if i.episodic_date else None,
+        "createdAt": i.created_at.isoformat() if i.created_at else None,
+        "updatedAt": i.updated_at.isoformat() if i.updated_at else None,
         "tags": i.tags, "distance": distance,
     }
 
@@ -1918,6 +1921,9 @@ def _preference_search_dict(p: UserMemoryPreference, distance: float) -> dict:
         "id": p.id, "type": p.type,
         "conclusionDirectives": p.conclusion_directives,
         "suggestions": p.suggestions,
+        "scorePriority": p.score_priority,
+        "createdAt": p.created_at.isoformat() if p.created_at else None,
+        "updatedAt": p.updated_at.isoformat() if p.updated_at else None,
         "tags": p.tags, "distance": distance,
     }
 
@@ -2027,6 +2033,13 @@ def _activity_dict(a: UserMemoryActivity) -> dict[str, Any]:
         "ends_at": a.ends_at.isoformat() if a.ends_at else None,
         "created_at": a.created_at.isoformat() if a.created_at else None,
         "updated_at": a.updated_at.isoformat() if a.updated_at else None,
+        "associatedObjects": a.associated_objects,
+        "associatedSubjects": a.associated_subjects,
+        "associatedLocations": a.associated_locations,
+        "startsAt": a.starts_at.isoformat() if a.starts_at else None,
+        "endsAt": a.ends_at.isoformat() if a.ends_at else None,
+        "createdAt": a.created_at.isoformat() if a.created_at else None,
+        "updatedAt": a.updated_at.isoformat() if a.updated_at else None,
     }
 
 
@@ -2040,6 +2053,13 @@ def _context_dict(c: UserMemoryContext) -> dict[str, Any]:
         "tags": c.tags,
         "created_at": c.created_at.isoformat() if c.created_at else None,
         "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+        "associatedObjects": c.associated_objects,
+        "associatedSubjects": c.associated_subjects,
+        "currentStatus": c.current_status,
+        "scoreImpact": c.score_impact,
+        "scoreUrgency": c.score_urgency,
+        "createdAt": c.created_at.isoformat() if c.created_at else None,
+        "updatedAt": c.updated_at.isoformat() if c.updated_at else None,
     }
 
 
@@ -2055,6 +2075,11 @@ def _experience_dict(e: UserMemoryExperience) -> dict[str, Any]:
         "tags": e.tags,
         "created_at": e.created_at.isoformat() if e.created_at else None,
         "updated_at": e.updated_at.isoformat() if e.updated_at else None,
+        "keyLearning": e.key_learning,
+        "possibleOutcome": e.possible_outcome,
+        "scoreConfidence": e.score_confidence,
+        "createdAt": e.created_at.isoformat() if e.created_at else None,
+        "updatedAt": e.updated_at.isoformat() if e.updated_at else None,
     }
 
 

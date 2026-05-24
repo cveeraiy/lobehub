@@ -1,6 +1,6 @@
-import { MessageToolIdentifier } from '@lobechat/builtin-tool-message';
-import type { BotProviderQuery } from '@lobechat/builtin-tool-message/executionRuntime';
-import { MessageExecutionRuntime } from '@lobechat/builtin-tool-message/executionRuntime';
+import { MessageToolIdentifier } from '@lobechat/builtin-tools';
+import type { BotProviderQuery } from '@lobechat/builtin-tools/messageExecutionRuntime';
+import { MessageExecutionRuntime } from '@lobechat/builtin-tools/messageExecutionRuntime';
 
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';

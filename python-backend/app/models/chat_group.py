@@ -1,6 +1,6 @@
 """ChatGroups, ChatGroupAgents tables. (Non-MVP)
 
-Source: packages/database/src/schemas/chatGroup.ts
+Source: src/database/schemas/chatGroup.ts
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ class ChatGroup(SQLModel, table=True):
     editor_data: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("editor_data"))
     config: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("config"))
     client_id: Optional[str] = None
-    pinned: bool = Field(default=False)
+    pinned: Optional[bool] = Field(default=False, nullable=True)
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
@@ -53,13 +53,13 @@ class ChatGroupAgent(SQLModel, table=True):
     )
 
     chat_group_id: str = Field(foreign_key="chat_groups.id", primary_key=True, nullable=False)
-    group_id: Optional[str] = Field(default=None)
     agent_id: str = Field(foreign_key="agents.id", primary_key=True, nullable=False)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
-    enabled: bool = Field(default=True)
-    order: int = Field(default=0)
+    enabled: Optional[bool] = Field(default=True, nullable=True)
+    order: Optional[int] = Field(default=0, nullable=True)
     role: Optional[str] = Field(default="participant", max_length=255)
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    accessed_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})

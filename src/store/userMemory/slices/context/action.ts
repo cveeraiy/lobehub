@@ -3,9 +3,9 @@ import { produce } from 'immer';
 import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
-import { type DisplayContextMemory } from '@/database/repositories/userMemory';
 import { memoryCRUDService, userMemoryService } from '@/services/userMemory';
 import { type StoreSetter } from '@/store/types';
+import { type DisplayContextMemory } from '@/types/userMemory';
 import { LayersEnum } from '@/types/userMemory';
 import { setNamespace } from '@/utils/storeDebug';
 

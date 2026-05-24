@@ -279,7 +279,7 @@ class TaskReviewService:
 
         try:
             from app.models.user import UserSettings
-            stmt = select(UserSettings).where(UserSettings.user_id == self._uid)
+            stmt = select(UserSettings).where(UserSettings.id == self._uid)
             result = await self._db.execute(stmt)
             setting = result.scalar_one_or_none()
 

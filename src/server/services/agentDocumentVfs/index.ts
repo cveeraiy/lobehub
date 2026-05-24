@@ -1,11 +1,7 @@
-import type { LobeChatDatabase } from '@lobechat/database';
-
-import {
-  AgentAccess,
-  type AgentDocument,
-  AgentDocumentModel,
-} from '@/database/models/agentDocuments';
-import { DOCUMENT_FOLDER_TYPE } from '@/database/schemas';
+import { AgentAccess, AgentDocumentModel } from '@/database/models/agentDocuments';
+import type { LobeChatDatabase } from '@/server/types/database';
+import type { AgentDocument } from '@/types/agentDocument';
+import { DOCUMENT_FOLDER_TYPE } from '@/types/files';
 
 import { createMarkdownEditorSnapshot } from '../agentDocuments/headlessEditor';
 import { AgentDocumentVfsError } from './errors';

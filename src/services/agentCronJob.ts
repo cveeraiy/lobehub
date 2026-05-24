@@ -1,9 +1,9 @@
+import { restClient } from '@/libs/rest';
 import {
   type AgentCronJob,
   type CreateAgentCronJobData,
   type UpdateAgentCronJobData,
-} from '@/database/schemas/agentCronJob';
-import { restClient } from '@/libs/rest';
+} from '@/types/agentCronJob';
 
 interface ServiceResponse<T> {
   data: T;

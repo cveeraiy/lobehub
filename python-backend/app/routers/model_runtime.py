@@ -10,7 +10,7 @@ import litellm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
-from app.deps.auth import get_current_user_id
+from app.dependencies import get_current_user_id
 from app.services import llm_service
 from app.services import provider_runtime
 from app.services.ai_infra_service import service as ai_svc

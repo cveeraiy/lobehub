@@ -1,6 +1,5 @@
-import type { GenerationTopicItem } from '@/database/schemas';
 import { restClient } from '@/libs/rest';
-import type { ImageGenerationTopic } from '@/types/generation';
+import type { GenerationTopicItem, ImageGenerationTopic } from '@/types/generation';
 import type { UpdateGenerationTopicValue } from '@/types/mediaGeneration';
 
 export class ServerService {

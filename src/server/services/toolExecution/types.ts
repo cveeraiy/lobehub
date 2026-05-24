@@ -1,6 +1,7 @@
 import { type LobeToolManifest } from '@lobechat/context-engine';
-import { type LobeChatDatabase } from '@lobechat/database';
 import { type ChatToolPayload } from '@lobechat/types';
+
+import type { LobeChatDatabase } from '@/server/types/database';
 
 export interface ToolExecutionContext {
   /** Target device ID for device proxy tool calls */

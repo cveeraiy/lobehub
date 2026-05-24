@@ -12,7 +12,6 @@ import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { ChunkModel } from '@/database/models/chunk';
 import { EmbeddingModel } from '@/database/models/embedding';
 import { FileModel } from '@/database/models/file';
-import { type NewChunkItem, type NewEmbeddingsItem } from '@/database/schemas';
 import { fileEnv } from '@/envs/file';
 import { asyncAuthedProcedure, asyncRouter as router } from '@/libs/trpc/async';
 import { getServerDefaultFilesConfig } from '@/server/globalConfig';
@@ -22,6 +21,7 @@ import { FileService } from '@/server/services/file';
 import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { type IAsyncTaskError } from '@/types/asyncTask';
 import { AsyncTaskError, AsyncTaskErrorType, AsyncTaskStatus } from '@/types/asyncTask';
+import type { NewChunkItem, NewEmbeddingsItem } from '@/types/rag';
 import { safeParseJSON } from '@/utils/safeParseJSON';
 import { sanitizeUTF8 } from '@/utils/sanitizeUTF8';
 

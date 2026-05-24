@@ -1,12 +1,15 @@
 /**
  * Tools Engineering - Unified tools processing using ToolsEngine
  */
-import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
-import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
-import { MemoryManifest } from '@lobechat/builtin-tool-memory';
 import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { alwaysOnToolIds, defaultToolIds } from '@lobechat/builtin-tools';
+import {
+  alwaysOnToolIds,
+  CloudSandboxManifest,
+  defaultToolIds,
+  KnowledgeBaseManifest,
+  MemoryManifest,
+} from '@lobechat/builtin-tools';
 import { createEnableChecker, type PluginEnableChecker } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
 import { type ChatCompletionTool, type ToolManifest, type WorkingModel } from '@lobechat/types';

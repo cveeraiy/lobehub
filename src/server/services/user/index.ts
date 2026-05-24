@@ -1,11 +1,11 @@
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
-import { type LobeChatDatabase } from '@lobechat/database';
 
 import { initNewUserForBusiness } from '@/business/server/user';
 import { UserModel } from '@/database/models/user';
 import { initializeServerAnalytics } from '@/libs/analytics';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { FileS3 } from '@/server/modules/S3';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 type CreatedUser = {
   createdAt?: Date | null;

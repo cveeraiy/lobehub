@@ -3,9 +3,9 @@ import type { EvalBenchmarkRubric } from '@lobechat/types';
 import debug from 'debug';
 
 import { UserModel } from '@/database/models/user';
-import type { LobeChatDatabase } from '@/database/type';
 import { evaluate, type EvaluateResult, type RubricResult } from '@/server/modules/EvalRubric';
 import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 const log = debug('task-review');
 

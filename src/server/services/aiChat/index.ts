@@ -1,8 +1,7 @@
-import { type LobeChatDatabase } from '@lobechat/database';
-
 import { MessageModel } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
 import { FileService } from '@/server/services/file';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 export class AiChatService {
   private userId: string;

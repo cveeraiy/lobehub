@@ -1,10 +1,10 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import { type ChatToolPayload } from '@lobechat/types';
 import { detectTruncatedJSON, safeParseJSON } from '@lobechat/utils';
 import debug from 'debug';
 
 import { KlavisService } from '@/server/services/klavis';
 import { MarketService } from '@/server/services/market';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { getServerRuntime, hasServerRuntime } from './serverRuntimes';
 import { type IToolExecutor, type ToolExecutionContext, type ToolExecutionResult } from './types';

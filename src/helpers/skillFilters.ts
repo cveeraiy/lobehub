@@ -1,4 +1,4 @@
-import { AgentBrowserIdentifier } from '@lobechat/builtin-skills';
+import { AgentBrowserIdentifier } from '@lobechat/const';
 import { type BuiltinSkill } from '@lobechat/types';
 
 const DESKTOP_ONLY_BUILTIN_SKILLS = new Set([AgentBrowserIdentifier]);

@@ -1,6 +1,6 @@
 """GenerationTopics, GenerationBatches, Generations tables. (Non-MVP)
 
-Source: packages/database/src/schemas/generation.ts
+Source: src/database/schemas/generation.ts
 """
 
 from __future__ import annotations
@@ -8,7 +8,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Index, text
+from sqlalchemy import Column, ForeignKey, Index, text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import _utcnow, id_generator, json_column
@@ -58,7 +59,10 @@ class GenerationBatch(SQLModel, table=True):
     negative_prompt: Optional[str] = None
     params: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("params"))
 
-    async_task_id: Optional[str] = Field(default=None, foreign_key="async_tasks.id")
+    async_task_id: Optional[str] = Field(
+        default=None,
+        sa_column=Column(PG_UUID(as_uuid=False), ForeignKey("async_tasks.id")),
+    )
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})

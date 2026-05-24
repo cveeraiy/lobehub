@@ -2,10 +2,10 @@ import debug from 'debug';
 
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { TopicModel } from '@/database/models/topic';
-import { type LobeChatDatabase } from '@/database/type';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { getMessageGatewayClient } from '@/server/services/gateway/MessageGatewayClient';
 import { SystemAgentService } from '@/server/services/systemAgent';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 import { AgentBridgeService } from './AgentBridgeService';

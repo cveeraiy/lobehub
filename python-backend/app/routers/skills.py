@@ -26,6 +26,26 @@ _VALID_VISIBILITY = ("private", "public", "restricted")
 router = APIRouter(prefix="/api/skills", tags=["Skills"])
 
 
+def _builtin_skill_dict(skill: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "avatar": skill.get("avatar"),
+        "content": skill.get("content") or skill.get("prompt") or "",
+        "description": skill.get("description"),
+        "display_name": skill.get("name"),
+        "id": None,
+        "identifier": skill.get("identifier"),
+        "manifest": {
+            "description": skill.get("description"),
+            "name": skill.get("name"),
+            "prompt": skill.get("prompt") or skill.get("content") or "",
+            "tools": skill.get("tools", []),
+        },
+        "name": skill.get("name"),
+        "resources": skill.get("resources") or {},
+        "source": "builtin",
+    }
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
@@ -193,6 +213,12 @@ async def search_skills_query(
     return await search_skills(q=query or q, user_id=user_id, session=session)
 
 
+@router.get("/builtin")
+async def list_builtin_skills():
+    """Return the built-in skill catalog. This endpoint is public catalog data."""
+    return [_builtin_skill_dict(skill) for skill in BUILTIN_SKILLS]
+
+
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @router.get("")
@@ -250,17 +276,7 @@ async def list_skills(
 
     # 3. Builtins
     seen_identifiers = {s["identifier"] for s in user_skills + shared_skills}
-    builtin_skills = [
-        {
-            "id": None,
-            "identifier": b["identifier"],
-            "display_name": b["name"],
-            "description": b["description"],
-            "source": "builtin",
-        }
-        for b in BUILTIN_SKILLS
-        if b["identifier"] not in seen_identifiers
-    ]
+    builtin_skills = [_builtin_skill_dict(b) for b in BUILTIN_SKILLS if b["identifier"] not in seen_identifiers]
 
     if source == "builtin":
         return builtin_skills
@@ -299,19 +315,7 @@ async def get_skill_by_identifier(
     # Fall back to builtin
     builtin = get_builtin_skill(identifier)
     if builtin:
-        return {
-            "id": None,
-            "identifier": builtin["identifier"],
-            "display_name": builtin["name"],
-            "description": builtin["description"],
-            "manifest": {
-                "name": builtin["name"],
-                "description": builtin["description"],
-                "prompt": builtin["prompt"],
-                "tools": builtin.get("tools", []),
-            },
-            "source": "builtin",
-        }
+        return _builtin_skill_dict(builtin)
 
     raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
 
@@ -326,9 +330,14 @@ async def get_skill_by_name(
         and_(AgentSkill.display_name == name, AgentSkill.user_id == user_id)
     )
     row = (await session.execute(stmt)).scalar_one_or_none()
-    if not row:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
-    return _skill_dict(row)
+    if row:
+        return _skill_dict(row)
+
+    builtin = get_builtin_skill(name)
+    if builtin:
+        return _builtin_skill_dict(builtin)
+
+    raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -593,6 +602,19 @@ async def list_skill_resources(
     session: AsyncSession = Depends(get_db),
 ):
     """List resources for a skill."""
+    builtin = get_builtin_skill(skill_id)
+    if builtin:
+        want_content = include_content or includeContent
+        resources = []
+        for path, meta in (builtin.get("resources") or {}).items():
+            entry: dict[str, Any] = {"path": path}
+            if isinstance(meta, dict):
+                entry.update(meta)
+            if not want_content:
+                entry.pop("content", None)
+            resources.append(entry)
+        return resources
+
     skill = await _find_accessible_skill(session, user_id, skill_id)
     if not skill:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")
@@ -619,6 +641,13 @@ async def read_skill_resource(
     session: AsyncSession = Depends(get_db),
 ):
     """Read a specific resource file from a skill."""
+    builtin = get_builtin_skill(skill_id)
+    if builtin:
+        resource = (builtin.get("resources") or {}).get(path)
+        if not resource:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Resource not found")
+        return resource
+
     skill = await _find_accessible_skill(session, user_id, skill_id)
     if not skill:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Skill not found")

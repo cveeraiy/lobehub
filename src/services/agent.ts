@@ -166,6 +166,30 @@ export interface CreateAgentOnlyResult {
   agentId: string;
 }
 
+export interface BuiltinAgentRuntimeDefinition {
+  avatar?: string | null;
+  persist?: Partial<Pick<LobeAgentConfig, 'chatConfig' | 'model' | 'provider'>> | null;
+  runtime: {
+    chatConfig?: Partial<LobeAgentConfig['chatConfig']>;
+    plugins?: string[];
+    systemRole: string;
+  };
+  slug: string;
+}
+
+export interface BuiltinAgentRuntimeContext {
+  groupSupervisorContext?: {
+    availableAgents: Array<{ id: string; title?: string | null }>;
+    groupId: string;
+    groupTitle: string;
+    systemPrompt?: string;
+  };
+  isDev?: boolean;
+  plugins?: string[];
+  targetAgentConfig?: LobeAgentConfig;
+  userLocale?: string;
+}
+
 class AgentService {
   checkByMarketIdentifier = async (marketIdentifier: string): Promise<boolean> => {
     const response = await restClient.get<MarketCheckResponse>('/agents/check-market', {
@@ -191,6 +215,32 @@ class AgentService {
     );
 
     return response?.id ?? null;
+  };
+
+  getBuiltinAgentDefinition = async (
+    slug: string,
+  ): Promise<BuiltinAgentRuntimeDefinition | null> => {
+    return maybeNullOn404(
+      restClient.get<BuiltinAgentRuntimeDefinition>(
+        `/agents/builtin-definitions/${encodeURIComponent(slug)}`,
+      ),
+    );
+  };
+
+  resolveBuiltinAgentDefinition = async (
+    slug: string,
+    context: BuiltinAgentRuntimeContext,
+  ): Promise<BuiltinAgentRuntimeDefinition | null> => {
+    return maybeNullOn404(
+      restClient.post<BuiltinAgentRuntimeDefinition>(
+        `/agents/builtin-definitions/${encodeURIComponent(slug)}/resolve`,
+        { body: context },
+      ),
+    );
+  };
+
+  listBuiltinAgentDefinitions = async (): Promise<BuiltinAgentRuntimeDefinition[]> => {
+    return restClient.get<BuiltinAgentRuntimeDefinition[]>('/agents/builtin-definitions');
   };
 
   createAgent = async (params: CreateAgentParams): Promise<CreateAgentResult> => {

@@ -1,8 +1,6 @@
 import { expo } from '@better-auth/expo';
 import { passkey } from '@better-auth/passkey';
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
-import { createNanoId, idGenerator, serverDB } from '@lobechat/database';
-import * as schema from '@lobechat/database/schemas';
 import bcrypt from 'bcryptjs';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { verifyPassword as defaultVerifyPassword } from 'better-auth/crypto';
@@ -15,6 +13,9 @@ import { validateEmail } from 'better-auth-harmony/email';
 import { ProxyAgent, setGlobalDispatcher } from 'undici';
 
 import { businessEmailValidator } from '@/business/server/better-auth';
+import * as schema from '@/database/schemas';
+import { serverDB } from '@/database/server';
+import { createNanoId, idGenerator } from '@/database/utils/idGenerator';
 import { appEnv } from '@/envs/app';
 import { authEnv } from '@/envs/auth';
 import {

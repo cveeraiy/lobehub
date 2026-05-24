@@ -1,9 +1,10 @@
 // @vitest-environment node
-import { type LobeChatDatabase } from '@lobechat/database';
-import { messages, sessions, topics } from '@lobechat/database/schemas';
-import { getTestDB } from '@lobechat/database/test-utils';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getTestDB } from '@/database/core/getTestDB';
+import { messages, sessions, topics } from '@/database/schemas';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { messageRouter } from '../../message';
 import { cleanupTestUser, createTestContext, createTestUser } from './setup';

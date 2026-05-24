@@ -323,6 +323,12 @@ async def get_run(
     run = await svc.get_run(run_id)
     if not run:
         raise HTTPException(404, "Run not found")
+    if run.status == "running":
+        await svc.check_and_handle_run_timeout(run_id)
+        await session.commit()
+        run = await svc.get_run(run_id)
+        if not run:
+            raise HTTPException(404, "Run not found")
     return {
         "id": run.id,
         "benchmark_id": run.benchmark_id,

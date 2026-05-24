@@ -9,13 +9,13 @@
  * because the activated state is persisted in message pluginState and accumulated
  * by selectActivatedToolIdsFromMessages at each agentic loop step.
  */
+import { SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
 import {
   ActivatorExecutionRuntime,
   type ActivatorRuntimeService,
   type ToolManifestInfo,
-} from '@lobechat/builtin-tool-activator/executionRuntime';
-import { ActivatorExecutor } from '@lobechat/builtin-tool-activator/executor';
-import { SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
+} from '@lobechat/builtin-tools/activatorExecutionRuntime';
+import { ActivatorExecutor } from '@lobechat/builtin-tools/activatorExecutor';
 
 import { restClient } from '@/libs/rest';
 import { getToolStoreState } from '@/store/tool';

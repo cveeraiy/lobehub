@@ -1,7 +1,8 @@
-import { builtinSkills } from '@lobechat/builtin-skills';
+import type { BuiltinSkill } from '@lobechat/types';
 
 import { filterBuiltinSkills } from '@/helpers/skillFilters';
 import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import { callPythonBackend } from '@/server/utils/pythonBackend';
 
 import type { SkillMountProvider, SkillMountProviderRequest } from '../SkillMount';
 import type { SkillMountNode } from '../types';
@@ -13,14 +14,23 @@ import {
 } from './ProviderSkillsReadonly';
 
 export class ProviderSkillsBuiltin implements SkillMountProvider {
-  private readonly skills = filterBuiltinSkills(builtinSkills);
+  constructor(private readonly userId: string) {}
+
+  private async getSkills(): Promise<BuiltinSkill[]> {
+    const skills = await callPythonBackend<BuiltinSkill[]>('/api/skills/builtin', this.userId, {
+      method: 'GET',
+    });
+
+    return filterBuiltinSkills(skills);
+  }
 
   async get(input: SkillMountProviderRequest): Promise<SkillMountNode> {
     if (!input.resolvedPath.skillName) {
       return buildReadonlyNamespaceRootNode('builtin');
     }
 
-    const skill = this.skills.find((item) => item.identifier === input.resolvedPath.skillName);
+    const skills = await this.getSkills();
+    const skill = skills.find((item) => item.identifier === input.resolvedPath.skillName);
 
     if (!skill) {
       throw new AgentDocumentVfsError(
@@ -52,10 +62,11 @@ export class ProviderSkillsBuiltin implements SkillMountProvider {
 
   async list(input: SkillMountProviderRequest): Promise<SkillMountNode[]> {
     if (!input.resolvedPath.skillName) {
-      return listReadonlySkillRootNodes('builtin', this.skills);
+      return listReadonlySkillRootNodes('builtin', await this.getSkills());
     }
 
-    const skill = this.skills.find((item) => item.identifier === input.resolvedPath.skillName);
+    const skills = await this.getSkills();
+    const skill = skills.find((item) => item.identifier === input.resolvedPath.skillName);
 
     if (!skill) {
       throw new AgentDocumentVfsError(

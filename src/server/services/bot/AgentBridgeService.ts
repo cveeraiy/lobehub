@@ -6,11 +6,11 @@ import debug from 'debug';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { TopicModel } from '@/database/models/topic';
 import { UserModel } from '@/database/models/user';
-import type { LobeChatDatabase } from '@/database/type';
 import { getMessageGatewayClient } from '@/server/services/gateway/MessageGatewayClient';
 import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 import { isQueueAgentRuntimeEnabled } from '@/server/services/queue/impls';
 import { SystemAgentService } from '@/server/services/systemAgent';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { createAbortError, isAbortError } from '@/server/utils/runtimeAbort';
 
 import { formatPrompt as formatPromptUtil } from './formatPrompt';

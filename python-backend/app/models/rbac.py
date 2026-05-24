@@ -1,6 +1,6 @@
 """RBAC tables: roles, permissions, role_permissions, user_roles. (Non-MVP)
 
-Source: packages/database/src/schemas/rbac.ts
+Source: src/database/schemas/rbac.ts
 """
 
 from __future__ import annotations

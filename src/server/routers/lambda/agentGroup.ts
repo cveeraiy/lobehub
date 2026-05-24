@@ -1,11 +1,10 @@
-import { InsertChatGroupSchema } from '@lobechat/types';
+import { InsertChatGroupSchema, type LobeChatGroupConfig } from '@lobechat/types';
 import { z } from 'zod';
 
 import { AgentModel } from '@/database/models/agent';
 import { ChatGroupModel } from '@/database/models/chatGroup';
 import { UserModel } from '@/database/models/user';
 import { AgentGroupRepository } from '@/database/repositories/agentGroup';
-import { type ChatGroupConfig } from '@/database/types/chatGroup';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { AgentGroupService } from '@/server/services/agentGroup';
@@ -117,7 +116,9 @@ export const agentGroupRouter = router({
   createGroup: agentGroupProcedure.input(InsertChatGroupSchema).mutation(async ({ input, ctx }) => {
     const { group, supervisorAgentId } = await ctx.agentGroupRepo.createGroupWithSupervisor({
       ...input,
-      config: ctx.agentGroupService.normalizeGroupConfig(input.config as ChatGroupConfig | null),
+      config: ctx.agentGroupService.normalizeGroupConfig(
+        input.config as LobeChatGroupConfig | null,
+      ),
     });
 
     return { group, supervisorAgentId };
@@ -173,7 +174,7 @@ export const agentGroupRouter = router({
         : undefined;
 
       const normalizedConfig = ctx.agentGroupService.normalizeGroupConfig(
-        input.groupConfig.config as ChatGroupConfig | null,
+        input.groupConfig.config as LobeChatGroupConfig | null,
       );
 
       const { group, supervisorAgentId } = await ctx.agentGroupRepo.createGroupWithSupervisor(
@@ -316,7 +317,7 @@ export const agentGroupRouter = router({
       return ctx.chatGroupModel.update(input.id, {
         ...input.value,
         config: ctx.agentGroupService.normalizeGroupConfig(
-          input.value.config as ChatGroupConfig | null,
+          input.value.config as LobeChatGroupConfig | null,
         ),
       });
     }),

@@ -5,8 +5,8 @@ import { RequestTrigger } from '@lobechat/types';
 import debug from 'debug';
 
 import { UserModel } from '@/database/models/user';
-import { type LobeChatDatabase } from '@/database/type';
 import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 const log = debug('ethos-server:system-agent-service');
 

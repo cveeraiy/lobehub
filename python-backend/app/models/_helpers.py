@@ -1,6 +1,6 @@
 """Shared helpers for SQLModel table definitions.
 
-Mirrors packages/database/src/schemas/_helpers.ts and utils/idGenerator.ts.
+Mirrors src/database/schemas/_helpers.ts and utils/idGenerator.ts.
 """
 
 from __future__ import annotations

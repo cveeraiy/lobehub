@@ -1,5 +1,8 @@
 // @vitest-environment node
-import { type LobeChatDatabase } from '@lobechat/database';
+import { eq } from 'drizzle-orm';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getTestDB } from '@/database/core/getTestDB';
 import {
   agentEvalBenchmarks,
   agentEvalDatasets,
@@ -7,10 +10,8 @@ import {
   agentEvalRunTopics,
   agentEvalTestCases,
   topics,
-} from '@lobechat/database/schemas';
-import { getTestDB } from '@lobechat/database/test-utils';
-import { eq } from 'drizzle-orm';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+} from '@/database/schemas';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { agentEvalRouter } from '../../agentEval';
 import { cleanupTestUser, createTestContext, createTestUser } from './setup';

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models.message import Message, MessageFile, MessagePlugin, MessageQuery, MessageQueryChunk
-from app.models.message_ext import MessageGroup, MessageTts, MessageTranslate
+from app.models.message_ext import MessageGroup, MessageTranslate, MessageTts
 
 router = APIRouter(prefix="/api/messages", tags=["Messages"])
 
@@ -27,26 +27,47 @@ def _now() -> datetime:
 class CreateMessageBody(BaseModel):
     role: str  # user | assistant | system | tool
     content: Optional[str] = None
+    editor_data: Optional[dict[str, Any]] = None
+    summary: Optional[str] = None
+    reasoning: Optional[dict[str, Any]] = None
+    search: Optional[dict[str, Any]] = None
     session_id: Optional[str] = None
     topic_id: Optional[str] = None
     agent_id: Optional[str] = None
     group_id: Optional[str] = None
     thread_id: Optional[str] = None
     parent_id: Optional[str] = None
+    quota_id: Optional[str] = None
+    target_id: Optional[str] = None
+    message_group_id: Optional[str] = None
     model: Optional[str] = None
     provider: Optional[str] = None
+    favorite: Optional[bool] = None
     tools: Optional[list[dict[str, Any]]] = None
     tool_call_id: Optional[str] = None
     reasoning_content: Optional[str] = None
+    trace_id: Optional[str] = None
+    observation_id: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
     error: Optional[dict[str, Any]] = None
 
 
 class UpdateMessageBody(BaseModel):
     content: Optional[str] = None
+    editor_data: Optional[dict[str, Any]] = None
+    summary: Optional[str] = None
+    reasoning: Optional[dict[str, Any]] = None
+    search: Optional[dict[str, Any]] = None
     reasoning_content: Optional[str] = None
     model: Optional[str] = None
     provider: Optional[str] = None
+    favorite: Optional[bool] = None
+    trace_id: Optional[str] = None
+    observation_id: Optional[str] = None
+    quota_id: Optional[str] = None
+    target_id: Optional[str] = None
+    group_id: Optional[str] = None
+    message_group_id: Optional[str] = None
     tools: Optional[list[dict[str, Any]]] = None
     error: Optional[dict[str, Any]] = None
     token_count: Optional[int] = None
@@ -184,7 +205,6 @@ async def create_message(
 ):
     data = body.model_dump(exclude_none=True)
     metadata = data.pop("metadata", None)
-    data.pop("group_id", None)
     msg = Message(user_id=user_id, metadata_=metadata, **data)
     session.add(msg)
     await session.flush()
@@ -521,7 +541,7 @@ async def get_heatmaps(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    from sqlalchemy import cast, func, Date
+    from sqlalchemy import Date, cast, func
     stmt = (
         select(
             cast(Message.created_at, Date).label("date"),
@@ -693,7 +713,7 @@ async def update_message_plugin(
     session: AsyncSession = Depends(get_db),
 ):
     # Find existing plugin row or create
-    stmt = select(MessagePlugin).where(MessagePlugin.message_id == message_id)
+    stmt = select(MessagePlugin).where(MessagePlugin.id == message_id)
     existing = (await session.execute(stmt)).scalar_one_or_none()
     if existing:
         values = body.model_dump(exclude_none=True)
@@ -702,7 +722,7 @@ async def update_message_plugin(
                 update(MessagePlugin).where(MessagePlugin.id == existing.id).values(**values)
             )
     else:
-        plugin = MessagePlugin(message_id=message_id, **body.model_dump(exclude_none=True))
+        plugin = MessagePlugin(id=message_id, user_id=user_id, **body.model_dump(exclude_none=True))
         session.add(plugin)
         await session.flush()
     return {"ok": True}
@@ -715,7 +735,7 @@ async def update_plugin_state(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    stmt = select(MessagePlugin).where(MessagePlugin.message_id == message_id)
+    stmt = select(MessagePlugin).where(MessagePlugin.id == message_id)
     existing = (await session.execute(stmt)).scalar_one_or_none()
     if existing:
         merged = {**(existing.state or {}), **body}
@@ -723,7 +743,7 @@ async def update_plugin_state(
             update(MessagePlugin).where(MessagePlugin.id == existing.id).values(state=merged)
         )
     else:
-        plugin = MessagePlugin(message_id=message_id, state=body)
+        plugin = MessagePlugin(id=message_id, user_id=user_id, state=body)
         session.add(plugin)
         await session.flush()
     return {"ok": True}
@@ -736,7 +756,7 @@ async def update_plugin_error(
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
-    stmt = select(MessagePlugin).where(MessagePlugin.message_id == message_id)
+    stmt = select(MessagePlugin).where(MessagePlugin.id == message_id)
     existing = (await session.execute(stmt)).scalar_one_or_none()
     if existing:
         await session.execute(
@@ -782,7 +802,7 @@ async def update_tool_message(
     )
     # Update plugin state/error if provided
     if body.plugin_state is not None or body.plugin_error is not None:
-        stmt = select(MessagePlugin).where(MessagePlugin.message_id == message_id)
+        stmt = select(MessagePlugin).where(MessagePlugin.id == message_id)
         existing = (await session.execute(stmt)).scalar_one_or_none()
         if existing:
             plugin_vals: dict[str, Any] = {}
@@ -894,20 +914,28 @@ async def update_tts(
 ):
     if remove or body is None:
         await session.execute(
-            delete(MessageTts).where(MessageTts.message_id == message_id)
+            delete(MessageTts).where(MessageTts.id == message_id)
         )
         return {"ok": True}
     existing = (await session.execute(
-        select(MessageTts).where(MessageTts.message_id == message_id)
+        select(MessageTts).where(MessageTts.id == message_id)
     )).scalar_one_or_none()
     if existing:
-        vals = body.model_dump(exclude_none=True)
-        vals["updated_at"] = _now()
+        body_values = body.model_dump(exclude_none=True)
+        vals = {
+            ("file_id" if key == "file" else key): value
+            for key, value in body_values.items()
+        }
         await session.execute(
             update(MessageTts).where(MessageTts.id == existing.id).values(**vals)
         )
     else:
-        tts = MessageTts(message_id=message_id, **body.model_dump(exclude_none=True))
+        body_values = body.model_dump(exclude_none=True)
+        vals = {
+            ("file_id" if key == "file" else key): value
+            for key, value in body_values.items()
+        }
+        tts = MessageTts(id=message_id, user_id=user_id, **vals)
         session.add(tts)
         await session.flush()
     return {"ok": True}
@@ -923,29 +951,30 @@ async def update_translate(
 ):
     if remove or body is None:
         await session.execute(
-            delete(MessageTranslate).where(MessageTranslate.message_id == message_id)
+            delete(MessageTranslate).where(MessageTranslate.id == message_id)
         )
         return {"ok": True}
     existing = (await session.execute(
-        select(MessageTranslate).where(MessageTranslate.message_id == message_id)
+        select(MessageTranslate).where(MessageTranslate.id == message_id)
     )).scalar_one_or_none()
     if existing:
-        vals: dict[str, Any] = {"updated_at": _now()}
+        vals: dict[str, Any] = {}
         if body.content is not None:
             vals["content"] = body.content
         if body.from_lang is not None:
-            vals["from_lang"] = body.from_lang
+            vals["from_"] = body.from_lang
         if body.to is not None:
-            vals["to_lang"] = body.to
+            vals["to"] = body.to
         await session.execute(
             update(MessageTranslate).where(MessageTranslate.id == existing.id).values(**vals)
         )
     else:
         tr = MessageTranslate(
-            message_id=message_id,
             content=body.content,
-            from_lang=body.from_lang,
-            to_lang=body.to,
+            from_=body.from_lang,
+            id=message_id,
+            to=body.to,
+            user_id=user_id,
         )
         session.add(tr)
         await session.flush()
@@ -1058,19 +1087,29 @@ def _msg_dict(m: Message) -> dict[str, Any]:
         "id": m.id,
         "role": m.role,
         "content": m.content,
+        "editor_data": m.editor_data,
+        "summary": m.summary,
+        "reasoning": m.reasoning,
+        "search": m.search,
         "reasoning_content": m.reasoning_content,
         "model": m.model,
         "provider": m.provider,
+        "favorite": m.favorite,
         "session_id": m.session_id,
         "topic_id": m.topic_id,
         "agent_id": m.agent_id,
         "parent_id": m.parent_id,
+        "quota_id": m.quota_id,
+        "group_id": m.group_id,
+        "target_id": m.target_id,
         "thread_id": m.thread_id,
         "message_group_id": m.message_group_id,
         "tool_call_id": m.tool_call_id,
         "tools": m.tools,
         "metadata": m.metadata_,
         "error": m.error,
+        "trace_id": m.trace_id,
+        "observation_id": m.observation_id,
         "token_count": m.token_count,
         "input_tokens": m.input_tokens,
         "output_tokens": m.output_tokens,

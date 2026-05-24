@@ -1,4 +1,4 @@
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
+import { BUILTIN_AGENT_SLUGS } from '@lobechat/const';
 import { memo } from 'react';
 
 import Loading from '@/components/Loading/BrandTextLoading';

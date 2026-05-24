@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,6 +38,8 @@ def _now() -> datetime:
 # ── Schemas ──────────────────────────────────────────────────────────
 
 class UpdateSettingsBody(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     general: Optional[dict[str, Any]] = None
     default_agent: Optional[dict[str, Any]] = None
     hotkey: Optional[dict[str, Any]] = None
@@ -91,7 +93,7 @@ async def get_user_state(
 
     # Get settings
     user_settings = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
 
     # Count messages (for guide state)
@@ -164,10 +166,26 @@ async def update_settings(
 ):
     """Upsert user settings (general, language_model, tts, etc.)."""
     existing = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
 
     values = body.model_dump(exclude_none=True)
+    known_fields = set(UpdateSettingsBody.model_fields)
+    extra_general = {
+        key: value
+        for key, value in values.items()
+        if key not in known_fields
+    }
+    values = {
+        key: value
+        for key, value in values.items()
+        if key in known_fields
+    }
+    if extra_general:
+        values["general"] = {
+            **(values.get("general") or {}),
+            **extra_general,
+        }
     enterprise_policy = await get_enterprise_ai_policy_service().resolve_for_user(user_id, session)
     blocked_paths = _blocked_managed_setting_paths(values, enterprise_policy.managed_settings)
     if blocked_paths:
@@ -192,11 +210,11 @@ async def update_settings(
             values["key_vaults"] = json.dumps(values["key_vaults"])
 
     if existing:
-        values["updated_at"] = _now()
-        stmt = update(UserSettings).where(UserSettings.user_id == user_id).values(**values)
-        await session.execute(stmt)
+        if values:
+            stmt = update(UserSettings).where(UserSettings.id == user_id).values(**values)
+            await session.execute(stmt)
     else:
-        us = UserSettings(user_id=user_id, **values)
+        us = UserSettings(id=user_id, **values)
         session.add(us)
         await session.flush()
 
@@ -211,7 +229,7 @@ async def reset_settings(
     """Reset user settings to defaults (delete the row)."""
     from sqlalchemy import delete
     await session.execute(
-        delete(UserSettings).where(UserSettings.user_id == user_id)
+        delete(UserSettings).where(UserSettings.id == user_id)
     )
     return {"ok": True}
 

@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { SESSION_CHAT_TOPIC_URL } from '@/const/url';
-import { type SearchResult } from '@/database/repositories/search';
+import { type SearchResult } from '@/types/search';
 import { markdownToTxt } from '@/utils/markdownToTxt';
 
 import { CommandItem } from './components';

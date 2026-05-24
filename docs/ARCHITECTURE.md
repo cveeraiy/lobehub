@@ -289,8 +289,8 @@ Infrastructure modules providing cross-cutting capabilities:
 ### ORM & Schema
 
 - **ORM:** Drizzle ORM with PostgreSQL
-- **Schema location:** `packages/database/src/schemas/` (28 schema files)
-- **Migrations:** `packages/database/migrations/`
+- **Schema location:** `src/database/schemas/` (28 schema files)
+- **Migrations:** `src/database/migrations/`
 - **Config:** `drizzle.config.ts` at project root
 
 ### Schema Domains
@@ -320,7 +320,7 @@ Infrastructure modules providing cross-cutting capabilities:
 ### Database Architecture
 
 ```
-packages/database/src/
+src/database/
 ├── schemas/        # Drizzle table definitions (28 files)
 ├── models/         # Data access models (143 items)
 ├── repositories/   # Repository pattern abstractions (40 items)
@@ -354,7 +354,7 @@ Python FastAPI
 Backend Service
     │
     ▼
-Database Model (packages/database/src/models/)
+Database Model (src/database/models/)
     │
     ▼
 PostgreSQL
@@ -545,18 +545,18 @@ When `enterprise_mode` is enabled, these features are force-disabled:
 
 ### Core Packages
 
-| Package                       | Description                                       |
-| ----------------------------- | ------------------------------------------------- |
-| `@lobechat/database`          | Drizzle schemas, models, repositories, migrations |
-| `@lobechat/agent-runtime`     | Agent execution runtime                           |
-| `@lobechat/context-engine`    | LLM context assembly (history, RAG, tools)        |
-| `@lobechat/model-runtime`     | Multi-provider model abstraction                  |
-| `@lobechat/model-bank`        | Model metadata, capabilities, pricing             |
-| `@lobechat/conversation-flow` | Conversation flow management                      |
-| `@lobechat/types`             | Shared TypeScript types                           |
-| `@lobechat/const`             | Shared constants                                  |
-| `@lobechat/utils`             | Shared utilities                                  |
-| `@lobechat/prompts`           | System prompt templates                           |
+| Package                       | Description                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| `src/database`                | Temporary legacy Drizzle schemas, models, repositories, migrations |
+| `@lobechat/agent-runtime`     | Agent execution runtime                                            |
+| `@lobechat/context-engine`    | LLM context assembly (history, RAG, tools)                         |
+| `@lobechat/model-runtime`     | Multi-provider model abstraction                                   |
+| `@lobechat/model-bank`        | Model metadata, capabilities, pricing                              |
+| `@lobechat/conversation-flow` | Conversation flow management                                       |
+| `@lobechat/types`             | Shared TypeScript types                                            |
+| `@lobechat/const`             | Shared constants                                                   |
+| `@lobechat/utils`             | Shared utilities                                                   |
+| `@lobechat/prompts`           | System prompt templates                                            |
 
 ### Tool Packages (\~25)
 

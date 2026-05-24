@@ -1,6 +1,5 @@
-import type { GenerationBatchItem } from '@/database/schemas';
 import { restClient } from '@/libs/rest';
-import type { Generation, GenerationBatch } from '@/types/generation';
+import type { Generation, GenerationBatch, GenerationBatchItem } from '@/types/generation';
 
 type GenerationBatchWithAsyncTaskId = GenerationBatch & {
   generations: (Generation & { asyncTaskId?: string | null })[];

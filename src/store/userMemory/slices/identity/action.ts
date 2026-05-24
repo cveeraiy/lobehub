@@ -8,9 +8,9 @@ import { produce } from 'immer';
 import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
-import { type AddIdentityEntryResult } from '@/database/models/userMemory';
 import { memoryCRUDService, userMemoryService } from '@/services/userMemory';
 import { type StoreSetter } from '@/store/types';
+import { type AddIdentityEntryResult } from '@/types/userMemory';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type UserMemoryStore } from '../../store';

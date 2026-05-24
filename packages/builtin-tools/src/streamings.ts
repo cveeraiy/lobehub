@@ -3,38 +3,36 @@ import {
   AgentBuilderStreamings,
 } from '@lobechat/builtin-tool-agent-builder/client';
 import {
-  AgentDocumentsManifest,
-  AgentDocumentsStreamings,
-} from '@lobechat/builtin-tool-agent-documents/client';
-import {
-  AgentManagementManifest,
-  AgentManagementStreamings,
-} from '@lobechat/builtin-tool-agent-management/client';
-import {
   ClaudeCodeIdentifier,
   ClaudeCodeStreamings,
 } from '@lobechat/builtin-tool-claude-code/client';
-import {
-  CloudSandboxManifest,
-  CloudSandboxStreamings,
-} from '@lobechat/builtin-tool-cloud-sandbox/client';
 import {
   GroupAgentBuilderManifest,
   GroupAgentBuilderStreamings,
 } from '@lobechat/builtin-tool-group-agent-builder/client';
 import {
-  GroupManagementManifest,
-  GroupManagementStreamings,
-} from '@lobechat/builtin-tool-group-management/client';
-import { GTDManifest, GTDStreamings } from '@lobechat/builtin-tool-gtd/client';
-import {
   LocalSystemManifest,
   LocalSystemStreamings,
 } from '@lobechat/builtin-tool-local-system/client';
-import { MemoryManifest, MemoryStreamings } from '@lobechat/builtin-tool-memory/client';
-import { MessageManifest, MessageStreamings } from '@lobechat/builtin-tool-message/client';
-import { NotebookManifest, NotebookStreamings } from '@lobechat/builtin-tool-notebook/client';
+import {
+  AgentManagementManifest,
+  AgentManagementStreamings,
+} from '@lobechat/builtin-tools/agentManagementClient';
+import {
+  CloudSandboxManifest,
+  CloudSandboxStreamings,
+} from '@lobechat/builtin-tools/cloudSandboxClient';
+import {
+  GroupManagementManifest,
+  GroupManagementStreamings,
+} from '@lobechat/builtin-tools/groupManagementClient';
+import { GTDManifest, GTDStreamings } from '@lobechat/builtin-tools/gtdClient';
+import { MessageManifest, MessageStreamings } from '@lobechat/builtin-tools/messageClient';
 import { type BuiltinStreaming } from '@lobechat/types';
+
+import { AgentDocumentsManifest, AgentDocumentsStreamings } from './agentDocuments/client';
+import { MemoryManifest, MemoryStreamings } from './memory/client';
+import { NotebookManifest, NotebookStreamings } from './notebook/client';
 
 /**
  * Builtin tools streaming renderer registry

@@ -30,10 +30,10 @@ import {
 } from '@lobechat/types';
 import { type z } from 'zod';
 
-import type { QueryIdentityRolesResult, QueryTagsResult } from '@/database/models/userMemory';
 import { restClient } from '@/libs/rest';
 import type { PersonaData } from '@/store/userMemory/initialState';
 import type { IdentityForInjection } from '@/store/userMemory/types';
+import type { QueryIdentityRolesResult, QueryTagsResult } from '@/types/userMemory';
 
 class UserMemoryService {
   addActivityMemory = async (

@@ -1,8 +1,5 @@
-import type { LobeChatDatabase } from '@lobechat/database';
-import { topics } from '@lobechat/database/schemas';
 import type { OpenAIChatMessage } from '@lobechat/model-runtime';
 import type { ChatTopicMetadata } from '@lobechat/types';
-import { and, eq } from 'drizzle-orm';
 import { u } from 'unist-builder';
 import { toXml } from 'xast-util-to-xml';
 import type { Child } from 'xastscript';
@@ -30,11 +27,15 @@ export interface ChatTopicProviderOptions {
 
 export interface ChatTopicResultRecorderOptions {
   currentMetadata?: ChatTopicMetadata;
-  database: LobeChatDatabase;
   lastMessageAt?: string;
   messageCount?: number;
   topicId: string;
   traceId?: string;
+  updateTopicMetadata: (input: {
+    metadata: ChatTopicMetadata;
+    topicId: string;
+    userId: string;
+  }) => Promise<void>;
 }
 
 export class LobeChatTopicContextProvider implements MemoryContextProvider<
@@ -160,10 +161,11 @@ export class LobeChatTopicResultRecorder implements MemoryResultRecorder<{
       userMemoryExtractStatus: 'completed',
     };
 
-    await this.options.database
-      .update(topics)
-      .set({ metadata: updatedMetadata, updatedAt: topics.updatedAt })
-      .where(and(eq(topics.id, this.options.topicId), eq(topics.userId, job.userId)));
+    await this.options.updateTopicMetadata({
+      metadata: updatedMetadata,
+      topicId: this.options.topicId,
+      userId: job.userId,
+    });
   }
 
   async recordFail(job: MemoryExtractionJob, error: Error): Promise<void> {
@@ -193,9 +195,10 @@ export class LobeChatTopicResultRecorder implements MemoryResultRecorder<{
       userMemoryExtractStatus: 'failed',
     };
 
-    await this.options.database
-      .update(topics)
-      .set({ metadata: updatedMetadata, updatedAt: topics.updatedAt })
-      .where(and(eq(topics.id, this.options.topicId), eq(topics.userId, job.userId)));
+    await this.options.updateTopicMetadata({
+      metadata: updatedMetadata,
+      topicId: this.options.topicId,
+      userId: job.userId,
+    });
   }
 }

@@ -49,3 +49,25 @@ export interface BriefArtifactDocument {
 export interface BriefArtifacts {
   documents?: BriefArtifactDocument[];
 }
+
+export interface BriefItem {
+  actions: unknown;
+  agentId: string | null;
+  artifacts: BriefArtifacts | null;
+  createdAt: Date;
+  cronJobId: string | null;
+  id: string;
+  metadata: unknown;
+  priority: string | null;
+  readAt: Date | null;
+  resolvedAction: string | null;
+  resolvedAt: Date | null;
+  resolvedComment: string | null;
+  summary: string;
+  taskId: string | null;
+  title: string;
+  topicId: string | null;
+  trigger: string | null;
+  type: string;
+  userId: string;
+}

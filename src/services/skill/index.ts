@@ -1,4 +1,5 @@
 import type {
+  BuiltinSkill,
   CreateSkillInput,
   ImportGitHubInput,
   ImportUrlInput,
@@ -31,6 +32,11 @@ type RawSkillListResponse =
       total_count?: number;
       totalCount?: number;
     };
+
+type RawBuiltinSkill = BuiltinSkill & {
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
 
 const toDate = (value: unknown) => {
   if (value instanceof Date) return value;
@@ -120,6 +126,19 @@ class AgentSkillService {
       params: source ? { source } : undefined,
     });
     return normalizeSkillListResponse(response);
+  }
+
+  async listBuiltin(): Promise<BuiltinSkill[]> {
+    const response = await restClient.get<RawBuiltinSkill[]>('/skills/builtin');
+    return response.map((skill) => ({
+      avatar: skill.avatar,
+      content: skill.content,
+      description: skill.description,
+      identifier: skill.identifier,
+      name: skill.name,
+      resources: skill.resources,
+      source: 'builtin',
+    }));
   }
 
   async search(query: string): Promise<{ data: SkillListItem[]; total: number }> {

@@ -2,7 +2,7 @@ import {
   type SidebarAgentItem,
   type SidebarAgentListResponse,
   type SidebarGroup,
-} from '@/database/repositories/home';
+} from '@/types/home';
 
 export interface AgentListState {
   /**

@@ -1,4 +1,4 @@
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
+import { BUILTIN_AGENT_SLUGS } from '@lobechat/const';
 import type { ConversationContext } from '@lobechat/types';
 import { isChatGroupSessionId } from '@lobechat/types';
 import type { ReactNode } from 'react';

@@ -19,10 +19,12 @@ from app.services.workflows.temporal_definitions import (
 try:
     from temporalio.client import Client
     from temporalio.common import WorkflowIDReusePolicy
+    from temporalio.exceptions import WorkflowAlreadyStartedError
     from temporalio.worker import Worker
 except Exception:  # pragma: no cover - exercised when dependency is absent in old envs
     Client = None
     WorkflowIDReusePolicy = None
+    WorkflowAlreadyStartedError = None
     Worker = None
 
 
@@ -52,6 +54,19 @@ def workflow_id_for(name: str, payload: dict[str, Any]) -> str:
     return f"ethos-{safe_name}-{safe_identity}"
 
 
+def workflow_id_reuse_policy(value: str | None = None):
+    if WorkflowIDReusePolicy is None:
+        raise TemporalUnavailableError("temporalio is not installed")
+    normalized = (value or settings.temporal_workflow_id_reuse_policy).strip().lower().replace("-", "_")
+    mapping = {
+        "allow_duplicate": WorkflowIDReusePolicy.ALLOW_DUPLICATE,
+        "allow_duplicate_failed_only": WorkflowIDReusePolicy.ALLOW_DUPLICATE_FAILED_ONLY,
+        "reject_duplicate": WorkflowIDReusePolicy.REJECT_DUPLICATE,
+        "terminate_if_running": WorkflowIDReusePolicy.TERMINATE_IF_RUNNING,
+    }
+    return mapping.get(normalized, WorkflowIDReusePolicy.ALLOW_DUPLICATE_FAILED_ONLY)
+
+
 async def get_temporal_client():
     if Client is None:
         raise TemporalUnavailableError("temporalio is not installed")
@@ -63,25 +78,66 @@ async def start_temporal_workflow(name: str, payload: dict[str, Any]) -> dict[st
         raise TemporalUnavailableError("temporalio is not installed")
     client = await get_temporal_client()
     workflow_id = workflow_id_for(name, payload)
-    handle = await client.start_workflow(
-        EthosWorkflow.run,
-        {
-            "activityTimeoutSeconds": settings.temporal_activity_timeout_seconds,
-            "name": name,
-            "payload": payload,
-            "workflowTimeoutSeconds": settings.temporal_workflow_timeout_seconds,
-        },
-        id=workflow_id,
-        id_reuse_policy=WorkflowIDReusePolicy.ALLOW_DUPLICATE,
-        task_queue=settings.temporal_task_queue,
-        execution_timeout=timedelta(seconds=settings.temporal_workflow_timeout_seconds),
-    )
+    try:
+        handle = await client.start_workflow(
+            EthosWorkflow.run,
+            {
+                "activityTimeoutSeconds": settings.temporal_activity_timeout_seconds,
+                "activityMaxAttempts": settings.temporal_activity_max_attempts,
+                "childWorkflowMaxAttempts": settings.temporal_child_workflow_max_attempts,
+                "name": name,
+                "payload": payload,
+                "webhookMaxAttempts": settings.temporal_webhook_max_attempts,
+                "workflowTimeoutSeconds": settings.temporal_workflow_timeout_seconds,
+            },
+            id=workflow_id,
+            id_reuse_policy=workflow_id_reuse_policy(),
+            task_queue=settings.temporal_task_queue,
+            execution_timeout=timedelta(seconds=settings.temporal_workflow_timeout_seconds),
+        )
+    except Exception as exc:
+        if WorkflowAlreadyStartedError is not None and isinstance(exc, WorkflowAlreadyStartedError):
+            return {
+                "accepted": False,
+                "duplicate": True,
+                "success": True,
+                "temporalTaskQueue": settings.temporal_task_queue,
+                "workflowName": name,
+                "workflowId": workflow_id,
+            }
+        raise
     return {
         "accepted": True,
         "success": True,
         "temporalTaskQueue": settings.temporal_task_queue,
         "workflowName": name,
         "workflowRunId": handle.result_run_id,
+        "workflowId": workflow_id,
+    }
+
+
+async def cancel_temporal_workflow(
+    workflow_id: str,
+    *,
+    reason: str | None = None,
+    run_id: str | None = None,
+    terminate: bool = False,
+) -> dict[str, Any]:
+    if not temporal_available():
+        raise TemporalUnavailableError("temporalio is not installed")
+    client = await get_temporal_client()
+    handle = client.get_workflow_handle(workflow_id, run_id=run_id)
+    if terminate:
+        await handle.terminate(reason=reason)
+        action = "terminated"
+    else:
+        await handle.cancel()
+        action = "canceled"
+    return {
+        "action": action,
+        "reason": reason,
+        "runId": run_id,
+        "success": True,
         "workflowId": workflow_id,
     }
 

@@ -1,17 +1,6 @@
-import { LobeActivatorManifest } from '@lobechat/builtin-tool-activator';
 import { AgentBuilderManifest } from '@lobechat/builtin-tool-agent-builder';
-import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
-import { AgentManagementManifest } from '@lobechat/builtin-tool-agent-management';
-import { AgentMarketplaceManifest } from '@lobechat/builtin-tool-agent-marketplace';
-import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
-import { CredsManifest } from '@lobechat/builtin-tool-creds';
 import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
-import { GroupManagementManifest } from '@lobechat/builtin-tool-group-management';
-import { GTDManifest } from '@lobechat/builtin-tool-gtd';
-import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
-import { MemoryManifest } from '@lobechat/builtin-tool-memory';
-import { MessageManifest } from '@lobechat/builtin-tool-message';
 import { PageAgentManifest } from '@lobechat/builtin-tool-page-agent';
 import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
 import { UserInteractionManifest } from '@lobechat/builtin-tool-user-interaction';
@@ -19,16 +8,102 @@ import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
 import { isDesktop, RECOMMENDED_SKILLS, RecommendedSkillType } from '@lobechat/const';
 import { type LobeBuiltinTool } from '@lobechat/types';
 
+import { LobeActivatorManifest } from './activator';
+import { AgentDocumentsManifest } from './agentDocuments';
+import { AgentManagementManifest } from './agentManagement';
+import { AgentMarketplaceManifest } from './agentMarketplace';
 import { BriefManifest } from './brief';
 import { CalculatorManifest } from './calculator';
+import { CloudSandboxManifest } from './cloudSandbox';
+import { CredsManifest } from './creds';
 import { CronManifest } from './cron';
+import { GroupManagementManifest } from './groupManagement';
+import { GTDManifest } from './gtd';
+import { KnowledgeBaseManifest } from './knowledgeBase';
 import { LobeAgentManifest } from './lobeAgent';
+import { MemoryManifest } from './memory';
+import { MessageManifest } from './message';
 import { SkillsManifest } from './skills';
 import { SkillStoreManifest } from './skillStore';
 import { TaskManifest } from './task';
 import { TopicReferenceManifest } from './topicReference';
 import { WebOnboardingManifest } from './webOnboarding';
 
+export {
+  type ActivatedToolInfo,
+  type ActivateToolsParams,
+  type ActivateToolsState,
+  type ActivateSkillParams as ActivatorActivateSkillParams,
+  type ActivateSkillState as ActivatorActivateSkillState,
+  ActivatorApiName,
+  ActivatorExecutionRuntime,
+  systemPrompt as activatorSystemPrompt,
+  LobeActivatorIdentifier,
+  LobeActivatorManifest,
+  type ToolManifestInfo,
+} from './activator';
+export {
+  type AgentDocumentLoadRule,
+  type AgentDocumentReference,
+  AgentDocumentsApiName,
+  AgentDocumentsExecutionRuntime,
+  AgentDocumentsIdentifier,
+  AgentDocumentsManifest,
+  systemPrompt as agentDocumentsSystemPrompt,
+  type CopyDocumentArgs,
+  type CopyDocumentState,
+  type CreateDocumentArgs,
+  type CreateDocumentState,
+  type ListDocumentsArgs,
+  type ListDocumentsState,
+  type LoadRuleScope,
+  type ModifyDocumentInsertOperation,
+  type ModifyDocumentNodesArgs,
+  type ModifyDocumentNodesState,
+  type ModifyDocumentOperation,
+  type ModifyDocumentRemoveOperation,
+  type ModifyDocumentUpdateOperation,
+  type ReadDocumentArgs,
+  type ReadDocumentState,
+  type RemoveDocumentArgs,
+  type RemoveDocumentState,
+  type RenameDocumentArgs,
+  type RenameDocumentState,
+  type ReplaceDocumentContentArgs,
+  type ReplaceDocumentContentState,
+  type UpdateLoadRuleArgs,
+  type UpdateLoadRuleState,
+} from './agentDocuments';
+export {
+  AgentManagementApiName,
+  type AgentManagementApiNameType,
+  AgentManagementIdentifier,
+  AgentManagementManifest,
+  type CallAgentParams,
+  type CallAgentState,
+  createCallAgentManifest,
+} from './agentManagement';
+export {
+  AgentMarketplaceApiName,
+  AgentMarketplaceExecutionRuntime,
+  AgentMarketplaceIdentifier,
+  AgentMarketplaceManifest,
+  systemPrompt as agentMarketplaceSystemPrompt,
+  type AgentTemplate,
+  type AgentTemplateFetcher,
+  buildAgentMarketplaceToolResult,
+  fetchAgentTemplates,
+  type FetchAgentTemplatesOptions,
+  getTemplatesByCategories,
+  type InstallMarketplaceAgentSummary,
+  MARKETPLACE_CATEGORY_VALUES,
+  MarketplaceCategory,
+  normalizeAgentTemplate,
+  type OnboardingFullResponse,
+  type PickState,
+  type RawAgentTemplate,
+  setAgentTemplatesFetcher,
+} from './agentMarketplace';
 export { BriefApiName, BriefIdentifier, BriefManifest } from './brief';
 export {
   type BaseParams,
@@ -56,6 +131,35 @@ export {
   type SortParams,
   type SortState,
 } from './calculator';
+export {
+  CloudSandboxApiName,
+  type CloudSandboxApiNameType,
+  CloudSandboxExecutionRuntime,
+  CloudSandboxIdentifier,
+  CloudSandboxManifest,
+  type ISandboxService,
+  type SandboxCallToolResult,
+  type SandboxExportFileResult,
+} from './cloudSandbox';
+export {
+  checkCredsSatisfied,
+  type CredRequirement,
+  CredsApiName,
+  type CredsApiNameType,
+  CredsExecutionRuntime,
+  CredsIdentifier,
+  CredsManifest,
+  systemPrompt as credsSystemPrompt,
+  type CredSummary,
+  type CredSummaryForContext,
+  generateCredsList,
+  generateKlavisServicesList,
+  groupCredsByType,
+  type ICredsService,
+  injectCredsContext,
+  type KlavisServiceSummary,
+  type UserCredsContext,
+} from './creds';
 export {
   type CreateCronJobParams,
   type CreateCronJobState,
@@ -86,6 +190,59 @@ export {
   type UpdateCronJobState,
 } from './cron';
 export {
+  type BroadcastParams,
+  type CreateWorkflowParams,
+  type DelegateParams,
+  type ExecuteTaskParams,
+  type ExecuteTasksParams,
+  GroupManagementApiName,
+  type GroupManagementApiNameType,
+  GroupManagementIdentifier,
+  GroupManagementManifest,
+  systemPrompt as groupManagementSystemPrompt,
+  type InterruptParams,
+  type SpeakParams,
+  type SummarizeParams,
+  type VoteParams,
+} from './groupManagement';
+export {
+  GTDApiName,
+  type GTDApiNameType,
+  GTDExecutionRuntime,
+  GTDIdentifier,
+  GTDManifest,
+  systemPrompt as gtdSystemPrompt,
+} from './gtd';
+export {
+  type AddFilesArgs,
+  type CreateKnowledgeBaseArgs,
+  type CreateKnowledgeBaseState,
+  type DeleteKnowledgeBaseArgs,
+  type FileContentDetail,
+  type FileDetail,
+  type FileInfo,
+  type GetFileDetailArgs,
+  type GetFileDetailState,
+  KnowledgeBaseApiName,
+  type CreateDocumentArgs as KnowledgeBaseCreateDocumentArgs,
+  type CreateDocumentState as KnowledgeBaseCreateDocumentState,
+  type KnowledgeBaseFileInfo,
+  KnowledgeBaseIdentifier,
+  type KnowledgeBaseInfo,
+  KnowledgeBaseManifest,
+  systemPrompt as knowledgeBaseSystemPrompt,
+  type ListFilesArgs,
+  type ListFilesState,
+  type ListKnowledgeBasesState,
+  type ReadKnowledgeArgs,
+  type ReadKnowledgeState,
+  type RemoveFilesArgs,
+  type SearchKnowledgeBaseArgs,
+  type SearchKnowledgeBaseState,
+  type ViewKnowledgeBaseArgs,
+  type ViewKnowledgeBaseState,
+} from './knowledgeBase';
+export {
   type AnalyzeVisualMediaContentOptions,
   type AnalyzeVisualMediaNormalizedInput,
   type AnalyzeVisualMediaParams,
@@ -115,6 +272,42 @@ export {
   type VisualMediaUrlValidationResult,
   type VisualSourceMessage,
 } from './lobeAgent';
+export {
+  MemoryApiName,
+  type MemoryApiNameType,
+  MemoryExecutionRuntime,
+  MemoryIdentifier,
+  MemoryManifest,
+  systemPrompt as memorySystemPrompt,
+} from './memory';
+export {
+  MessageApiName,
+  type MessageApiNameType,
+  MessageExecutionRuntime,
+  MessageManifest,
+  MessagePlatform,
+  type MessagePlatformType,
+  systemPrompt as messageSystemPrompt,
+  MessageToolIdentifier,
+} from './message';
+export {
+  type DocumentType,
+  NotebookApiName,
+  type CreateDocumentArgs as NotebookCreateDocumentArgs,
+  type CreateDocumentState as NotebookCreateDocumentState,
+  type DeleteDocumentArgs as NotebookDeleteDocumentArgs,
+  type DeleteDocumentState as NotebookDeleteDocumentState,
+  type NotebookDocument,
+  type DocumentSourceType as NotebookDocumentSourceType,
+  NotebookExecutionRuntime,
+  type GetDocumentArgs as NotebookGetDocumentArgs,
+  type GetDocumentState as NotebookGetDocumentState,
+  NotebookIdentifier,
+  NotebookManifest,
+  systemPrompt as notebookSystemPrompt,
+  type UpdateDocumentArgs as NotebookUpdateDocumentArgs,
+  type UpdateDocumentState as NotebookUpdateDocumentState,
+} from './notebook';
 export {
   type ActivateSkillParams,
   type ActivateSkillState,

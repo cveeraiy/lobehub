@@ -4,12 +4,11 @@ import { Chat, ConsoleLogger, type Message, type MessageContext } from 'chat';
 import debug from 'debug';
 
 import { getServerDB } from '@/database/core/db-adaptor';
-import type { DecryptedBotProvider } from '@/database/models/agentBotProvider';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
-import type { LobeChatDatabase } from '@/database/type';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 import { emitPythonAgentSignalSourceEvent } from '@/server/services/pythonAgentSignalProxy';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 import { AgentBridgeService } from './AgentBridgeService';
@@ -85,6 +84,15 @@ const summarizeMessageAttachments = (message: Message): Array<Record<string, unk
 
 interface ResolvedAgentInfo {
   agentId: string;
+  userId: string;
+}
+
+interface DecryptedBotProvider {
+  agentId: string;
+  applicationId: string;
+  credentials: Record<string, string>;
+  id: string;
+  settings?: Record<string, unknown> | null;
   userId: string;
 }
 

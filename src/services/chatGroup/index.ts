@@ -1,12 +1,12 @@
 import type { AgentGroupDetail, AgentGroupMember } from '@lobechat/types';
 
+import { restClient } from '@/libs/rest';
 import type {
   ChatGroupAgentItem,
   ChatGroupItem,
   NewChatGroup,
   NewChatGroupAgent,
-} from '@/database/schemas';
-import { restClient } from '@/libs/rest';
+} from '@/types/chatGroup';
 
 export interface GroupMemberConfig {
   avatar?: string;

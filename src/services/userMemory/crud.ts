@@ -1,7 +1,7 @@
 import { type NewUserMemoryIdentity } from '@lobechat/types';
 
-import type { AddIdentityEntryResult } from '@/database/models/userMemory';
 import { restClient } from '@/libs/rest';
+import type { AddIdentityEntryResult } from '@/types/userMemory';
 
 class MemoryCRUDService {
   // ============ Identity CRUD ============

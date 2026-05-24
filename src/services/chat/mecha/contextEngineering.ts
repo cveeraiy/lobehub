@@ -1,21 +1,21 @@
-import { LobeActivatorIdentifier } from '@lobechat/builtin-tool-activator';
 import { AgentBuilderIdentifier } from '@lobechat/builtin-tool-agent-builder';
-import { AgentManagementIdentifier } from '@lobechat/builtin-tool-agent-management';
+import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
+import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
+import {
+  AgentManagementIdentifier,
+  GTDIdentifier,
+  LobeActivatorIdentifier,
+  WebOnboardingIdentifier,
+} from '@lobechat/builtin-tools';
 import {
   CredsIdentifier,
   type CredSummary,
-  generateCredsList,
-  generateKlavisServicesList,
-  type KlavisServiceSummary,
-} from '@lobechat/builtin-tool-creds';
-import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
-import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
-import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { WebOnboardingIdentifier } from '@lobechat/builtin-tools';
-import {
   CronIdentifier,
   type CronJobSummaryForContext,
+  generateCredsList,
   generateCronJobsList,
+  generateKlavisServicesList,
+  type KlavisServiceSummary,
 } from '@lobechat/builtin-tools';
 import { KLAVIS_SERVER_TYPES, LOBEHUB_SKILL_PROVIDERS } from '@lobechat/const';
 import type {
@@ -760,16 +760,16 @@ export const contextEngineering = async ({
       ...VARIABLE_GENERATORS,
       model: () => model,
       provider: () => provider,
-      // NOTICE: required by builtin-tool-creds/src/systemRole.ts
+      // NOTICE: required by packages/builtin-tools/src/creds/systemRole.ts
       CREDS_LIST: () => (credsList ? generateCredsList(credsList) : ''),
-      // NOTICE: required by builtin-tool-creds/src/systemRole.ts (Klavis integrations)
+      // NOTICE: required by packages/builtin-tools/src/creds/systemRole.ts (Klavis integrations)
       KLAVIS_SERVICES_LIST: () => klavisServicesList,
       // NOTICE: required by packages/builtin-tools/src/cron/systemRole.ts
       CRON_JOBS_LIST: () => (cronJobsList ? generateCronJobsList(cronJobsList, cronJobsTotal) : ''),
-      // NOTICE(@nekomeowww): required by builtin-tool-memory/src/systemRole.ts
+      // NOTICE(@nekomeowww): required by built-in memory system role rendering
       memory_effort: () => (userMemoryConfig ? (memoryContext?.effort ?? '') : ''),
-      // Current agent + topic identity — referenced by the Ethos builtin
-      // skill (packages/builtin-skills/src/lobehub/content.ts) so the model
+      // Current agent + topic identity — referenced by the Ethos built-in
+      // skill catalog so the model
       // can run `lh agent run -a {{agent_id}}` etc without first having to
       // search for itself. Read lazily from stores so we only pay the cost
       // when the placeholder actually appears in a rendered message.

@@ -7,15 +7,44 @@ from typing import Any
 
 try:
     from temporalio import activity, workflow
-    from temporalio.common import RetryPolicy
+    from temporalio.common import RetryPolicy, WorkflowIDReusePolicy
+    from temporalio.exceptions import CancelledError
 except Exception:  # pragma: no cover - only used before dependency sync
     activity = None
     workflow = None
+    CancelledError = None
     RetryPolicy = None
+    WorkflowIDReusePolicy = None
 
 
 def temporal_definitions_available() -> bool:
-    return activity is not None and workflow is not None and RetryPolicy is not None
+    return activity is not None and workflow is not None and RetryPolicy is not None and WorkflowIDReusePolicy is not None
+
+
+def _positive_int(value: Any, default: int) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        parsed = default
+    return max(1, parsed)
+
+
+def _activity_retry_policy(input_: dict[str, Any], *, default: int = 3):
+    if RetryPolicy is None:
+        return None
+    return RetryPolicy(maximum_attempts=_positive_int(input_.get("activityMaxAttempts"), default))
+
+
+def _webhook_retry_policy(input_: dict[str, Any]):
+    if RetryPolicy is None:
+        return None
+    return RetryPolicy(maximum_attempts=_positive_int(input_.get("webhookMaxAttempts"), 5))
+
+
+def _child_retry_policy(input_: dict[str, Any]):
+    if RetryPolicy is None:
+        return None
+    return RetryPolicy(maximum_attempts=_positive_int(input_.get("childWorkflowMaxAttempts"), 1))
 
 
 if activity is not None:
@@ -87,7 +116,7 @@ if workflow is not None:
                 return await workflow.execute_activity(
                     deliver_webhook_activity,
                     input_.get("payload") or {},
-                    retry_policy=RetryPolicy(maximum_attempts=5),
+                    retry_policy=_webhook_retry_policy(input_),
                     start_to_close_timeout=timedelta(seconds=timeout_seconds),
                 )
             if name == "task/schedule-dispatch":
@@ -107,7 +136,7 @@ if workflow is not None:
             return await workflow.execute_activity(
                 execute_ethos_workflow_activity,
                 input_,
-                retry_policy=RetryPolicy(maximum_attempts=3),
+                retry_policy=_activity_retry_policy(input_),
                 start_to_close_timeout=timedelta(seconds=timeout_seconds),
             )
 
@@ -116,7 +145,7 @@ if workflow is not None:
         return await workflow.execute_activity(
             execute_ethos_workflow_activity,
             input_,
-            retry_policy=RetryPolicy(maximum_attempts=3),
+            retry_policy=_activity_retry_policy(input_),
             start_to_close_timeout=timedelta(seconds=timeout_seconds),
         )
 
@@ -125,7 +154,7 @@ if workflow is not None:
         return await workflow.execute_activity(
             plan_ethos_workflow_activity,
             input_,
-            retry_policy=RetryPolicy(maximum_attempts=3),
+            retry_policy=_activity_retry_policy(input_),
             start_to_close_timeout=timedelta(seconds=timeout_seconds),
         )
 
@@ -133,9 +162,56 @@ if workflow is not None:
     def _child_input(name: str, payload: dict[str, Any], parent: dict[str, Any]) -> dict[str, Any]:
         return {
             "activityTimeoutSeconds": parent.get("activityTimeoutSeconds") or 900,
+            "activityMaxAttempts": parent.get("activityMaxAttempts") or 3,
+            "childWorkflowMaxAttempts": parent.get("childWorkflowMaxAttempts") or 1,
             "name": name,
             "payload": payload,
+            "webhookMaxAttempts": parent.get("webhookMaxAttempts") or 5,
+            "workflowTimeoutSeconds": parent.get("workflowTimeoutSeconds") or 3600,
         }
+
+
+    async def _start_child(name: str, payload: dict[str, Any], parent: dict[str, Any], child_id: str):
+        return await workflow.start_child_workflow(
+            EthosWorkflow.run,
+            _child_input(name, payload, parent),
+            id=f"{workflow.info().workflow_id}:{child_id}",
+            id_reuse_policy=WorkflowIDReusePolicy.ALLOW_DUPLICATE_FAILED_ONLY,
+            parent_close_policy=workflow.ParentClosePolicy.TERMINATE,
+            retry_policy=_child_retry_policy(parent),
+            task_queue=workflow.info().task_queue,
+            execution_timeout=timedelta(seconds=int(parent.get("workflowTimeoutSeconds") or 3600)),
+        )
+
+
+    async def _collect_child_failures(items: list[Any], handles: list[Any], key: str) -> list[dict[str, str]]:
+        failures: list[dict[str, str]] = []
+        for item, handle in zip(items, handles):
+            try:
+                await handle
+            except Exception as exc:
+                if _is_cancelled_failure(exc):
+                    raise
+                failures.append({"error": str(exc), key: str(item)})
+        return failures
+
+
+    def _is_cancelled_failure(exc: BaseException) -> bool:
+        current: BaseException | None = exc
+        while current is not None:
+            if CancelledError is not None and isinstance(current, CancelledError):
+                return True
+            current = current.__cause__
+        return False
+
+
+    async def _await_child_result(handle: Any) -> Any:
+        try:
+            return await handle
+        except Exception as exc:
+            if _is_cancelled_failure(exc):
+                raise
+            raise
 
 
     async def _run_schedule_dispatch_workflow(input_: dict[str, Any], timeout_seconds: int) -> dict[str, Any]:
@@ -155,21 +231,15 @@ if workflow is not None:
         handles = []
         for item in due:
             handles.append(
-                await workflow.start_child_workflow(
-                    EthosWorkflow.run,
-                    _child_input("task/schedule-execute", {"taskId": item["taskId"], "userId": item["userId"]}, input_),
-                    id=f"{workflow.info().workflow_id}:task:{item['taskId']}",
-                    task_queue=workflow.info().task_queue,
-                    execution_timeout=timedelta(seconds=int(input_.get("workflowTimeoutSeconds") or 3600)),
+                await _start_child(
+                    "task/schedule-execute",
+                    {"taskId": item["taskId"], "userId": item["userId"]},
+                    input_,
+                    f"task:{item['taskId']}",
                 )
             )
 
-        failures: list[dict[str, str]] = []
-        for item, handle in zip(due, handles):
-            try:
-                await handle.result()
-            except Exception as exc:
-                failures.append({"error": str(exc), "taskId": item["taskId"]})
+        failures = await _collect_child_failures([item["taskId"] for item in due], handles, "taskId")
         return {
             "dispatched": len(due) - len(failures),
             "due": len(due),
@@ -200,11 +270,11 @@ if workflow is not None:
         for index, test_case_id in enumerate(test_case_ids):
             child_payload = {**payload, "testCaseId": test_case_id}
             handles.append(
-                await workflow.start_child_workflow(
-                    EthosWorkflow.run,
-                    _child_input("agent-eval-run/execute-test-case", child_payload, input_),
-                    id=f"{workflow.info().workflow_id}:case:{test_case_id}:{index}",
-                    task_queue=workflow.info().task_queue,
+                await _start_child(
+                    "agent-eval-run/execute-test-case",
+                    child_payload,
+                    input_,
+                    f"case:{test_case_id}:{index}",
                 )
             )
 
@@ -214,7 +284,7 @@ if workflow is not None:
         total_score = 0.0
         for test_case_id, handle in zip(test_case_ids, handles):
             try:
-                result = await handle.result()
+                result = await _await_child_result(handle)
                 completed += 1
                 passed += 1 if result.get("passed") else 0
                 total_score += float(result.get("score") or 0)
@@ -258,16 +328,20 @@ if workflow is not None:
             batch = user_ids[index : index + 10]
             child_payload = {**payload, "userId": batch[0], "userIds": batch, "topicCursor": None}
             handles.append(
-                await workflow.start_child_workflow(
-                    EthosWorkflow.run,
-                    _child_input("memory-user-memory/pipelines/chat-topic/process-user-topics", child_payload, input_),
-                    id=f"{workflow.info().workflow_id}:users:{index}",
-                    task_queue=workflow.info().task_queue,
+                await _start_child(
+                    "memory-user-memory/pipelines/chat-topic/process-user-topics",
+                    child_payload,
+                    input_,
+                    f"users:{index}",
                 )
             )
-        for handle in handles:
-            await handle.result()
-        return {"batches": len(handles), "processedUsers": len(user_ids), "success": True}
+        failures = await _collect_child_failures([str(index) for index in range(len(handles))], handles, "batch")
+        return {
+            "batches": len(handles),
+            "failures": failures,
+            "processedUsers": len(user_ids),
+            "success": not failures,
+        }
 
 
     async def _run_memory_process_user_topics_workflow(input_: dict[str, Any], timeout_seconds: int) -> dict[str, Any]:
@@ -285,16 +359,20 @@ if workflow is not None:
                 batch = topic_ids[index : index + 4]
                 child_payload = {**payload, "topicIds": batch, "userId": user_id, "userIds": [user_id]}
                 handles.append(
-                    await workflow.start_child_workflow(
-                        EthosWorkflow.run,
-                        _child_input("memory-user-memory/pipelines/chat-topic/process-topics", child_payload, input_),
-                        id=f"{workflow.info().workflow_id}:user:{user_id}:topics:{index}",
-                        task_queue=workflow.info().task_queue,
+                    await _start_child(
+                        "memory-user-memory/pipelines/chat-topic/process-topics",
+                        child_payload,
+                        input_,
+                        f"user:{user_id}:topics:{index}",
                     )
                 )
-        for handle in handles:
-            await handle.result()
-        return {"processedUsers": len(user_ids), "scheduledBatches": len(handles), "success": True}
+        failures = await _collect_child_failures([str(index) for index in range(len(handles))], handles, "batch")
+        return {
+            "failures": failures,
+            "processedUsers": len(user_ids),
+            "scheduledBatches": len(handles),
+            "success": not failures,
+        }
 
 
     async def _run_memory_process_topics_workflow(input_: dict[str, Any], timeout_seconds: int) -> dict[str, Any]:
@@ -316,26 +394,29 @@ if workflow is not None:
                 "userIds": [user_id],
             }
             handles.append(
-                await workflow.start_child_workflow(
-                    EthosWorkflow.run,
-                    _child_input("memory-user-memory/pipelines/chat-topic/process-topic", child_payload, input_),
-                    id=f"{workflow.info().workflow_id}:topic:{topic_id}:{index}",
-                    task_queue=workflow.info().task_queue,
+                await _start_child(
+                    "memory-user-memory/pipelines/chat-topic/process-topic",
+                    child_payload,
+                    input_,
+                    f"topic:{topic_id}:{index}",
                 )
             )
-        for handle in handles:
-            await handle.result()
+        failures = await _collect_child_failures([str(topic_id) for topic_id in topic_ids], handles, "topicId")
+        if failures:
+            return {
+                "failures": failures,
+                "processedTopics": len(topic_ids) - len(failures),
+                "processedUsers": 1,
+                "success": False,
+            }
 
-        await workflow.start_child_workflow(
-            EthosWorkflow.run,
-            _child_input(
-                "memory-user-memory/pipelines/persona/update-writing",
-                {"userId": user_id, "userIds": [user_id]},
-                input_,
-            ),
-            id=f"{workflow.info().workflow_id}:persona:{user_id}",
-            task_queue=workflow.info().task_queue,
+        persona_handle = await _start_child(
+            "memory-user-memory/pipelines/persona/update-writing",
+            {"userId": user_id, "userIds": [user_id]},
+            input_,
+            f"persona:{user_id}",
         )
+        await _await_child_result(persona_handle)
         return {"processedTopics": len(topic_ids), "processedUsers": 1, "success": True}
 
 

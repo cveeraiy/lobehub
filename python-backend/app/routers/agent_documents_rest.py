@@ -10,9 +10,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field as PField
-from sqlalchemy import and_, delete, desc, func, select, update
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from pydantic import Field as PField
+from sqlalchemy import and_, delete, desc, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
@@ -250,7 +251,6 @@ async def initialize_from_template(
             file_type="markdown",
             source="agent",
             source_type="api",
-            slug=tmpl["filename"],
             total_char_count=len(tmpl["content"]),
             total_line_count=tmpl["content"].count("\n") + 1,
         )
@@ -541,7 +541,6 @@ async def rename_document(
     await session.execute(
         update(Document).where(Document.id == doc_id).values(
             title=body.new_title,
-            slug=body.new_title,
             updated_at=_now(),
         )
     )

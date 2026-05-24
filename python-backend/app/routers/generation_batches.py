@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import and_, select, delete, desc
+from fastapi import APIRouter, Depends
+from sqlalchemy import and_, delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.generation import GenerationBatch, Generation
+from app.models.generation import Generation, GenerationBatch
 from app.models.misc import AsyncTask
 
 router = APIRouter(prefix="/api/generation-batches", tags=["Generation Batches"])
@@ -124,17 +124,17 @@ async def delete_generation_batch(
         )
     )
 
-    # Delete async task if exists
-    if batch.async_task_id:
-        await session.execute(
-            delete(AsyncTask).where(AsyncTask.id == batch.async_task_id)
-        )
-
     # Delete batch
     await session.execute(
         delete(GenerationBatch).where(
             and_(GenerationBatch.id == batch_id, GenerationBatch.user_id == user_id)
         )
     )
+
+    # Delete async task after the batch row no longer references it.
+    if batch.async_task_id:
+        await session.execute(
+            delete(AsyncTask).where(AsyncTask.id == batch.async_task_id)
+        )
 
     return _batch_dict(batch)

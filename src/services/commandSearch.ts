@@ -1,5 +1,5 @@
-import type { SearchResult } from '@/database/repositories/search';
 import { restClient } from '@/libs/rest';
+import type { SearchResult } from '@/types/search';
 
 interface RestSearchResponse {
   agents?: Array<{ description?: string | null; id: string; title?: string | null }>;

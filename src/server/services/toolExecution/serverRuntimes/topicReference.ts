@@ -1,9 +1,9 @@
 import { TopicReferenceIdentifier } from '@lobechat/builtin-tools';
-import type { LobeChatDatabase } from '@lobechat/database';
 import type { BuiltinServerRuntimeOutput } from '@lobechat/types';
 
 import { MessageModel } from '@/database/models/message';
 import { TopicModel } from '@/database/models/topic';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import type { ServerRuntimeRegistration } from './types';
 

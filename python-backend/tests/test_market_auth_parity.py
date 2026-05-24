@@ -299,7 +299,7 @@ def test_market_connect_tool_refresh_revoke_and_lists(client: TestClient) -> Non
 @pytest.mark.asyncio
 async def test_inject_market_creds_returns_executor_shape(monkeypatch: pytest.MonkeyPatch) -> None:
     settings_row = UserSettings(
-        user_id="user-1",
+        id="user-1",
         market={
             "creds": [
                 {
@@ -351,7 +351,7 @@ async def test_inject_market_creds_returns_executor_shape(monkeypatch: pytest.Mo
 @pytest.mark.asyncio
 async def test_inject_market_creds_for_skill_returns_sdk_shape(monkeypatch: pytest.MonkeyPatch) -> None:
     settings_row = UserSettings(
-        user_id="user-1",
+        id="user-1",
         market={
             "creds": [
                 {
@@ -397,7 +397,7 @@ async def test_inject_market_creds_for_skill_returns_sdk_shape(monkeypatch: pyte
 async def test_inject_market_creds_for_skill_without_local_declaration_is_noop(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    settings_row = UserSettings(user_id="user-1", market={"creds": []})
+    settings_row = UserSettings(id="user-1", market={"creds": []})
 
     async def fake_get_or_create_user_settings(*args: Any, **kwargs: Any) -> UserSettings:
         return settings_row

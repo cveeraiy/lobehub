@@ -187,6 +187,10 @@ class Settings(BaseSettings):
     temporal_task_queue: str = "ethos-workflows"
     temporal_workflow_timeout_seconds: int = 3600
     temporal_activity_timeout_seconds: int = 900
+    temporal_activity_max_attempts: int = 3
+    temporal_webhook_max_attempts: int = 5
+    temporal_child_workflow_max_attempts: int = 1
+    temporal_workflow_id_reuse_policy: str = "allow_duplicate_failed_only"
     temporal_fallback_to_inline: bool = True
 
 

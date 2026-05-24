@@ -29,7 +29,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db_context
-from app.models.agent import Agent, AgentKnowledgeBase
+from app.models.agent import Agent
 from app.models.file import File
 from app.models.message import Message, MessageFile, MessagePlugin
 from app.models.persona import UserPersonaDocument
@@ -37,9 +37,8 @@ from app.models.skill import AgentSkill
 from app.models.topic import Topic
 from app.models.topic_ext import Thread
 from app.services.agent_runtime import AgentRuntimeService, agent_runtime
-from app.services.ai_agent.ingest_attachment import IngestResult, ingest_attachment
+from app.services.ai_agent.ingest_attachment import ingest_attachment
 from app.services.ai_agent.types import (
-    AgentError,
     AgentErrorType,
     AppContext,
     ExecAgentParams,
@@ -49,7 +48,6 @@ from app.services.ai_agent.types import (
     ExecSubAgentTaskParams,
     ExecSubAgentTaskResult,
     ResumeApproval,
-    StepEvent,
     ToolManifest,
 )
 
@@ -544,7 +542,7 @@ class AiAgentService:
 
         # Fetch the plugin row for validation
         stmt = select(MessagePlugin).where(
-            MessagePlugin.message_id == approval.parent_message_id,
+            MessagePlugin.id == approval.parent_message_id,
         )
         plugin = (await session.execute(stmt)).scalar_one_or_none()
         if not plugin:
@@ -993,7 +991,6 @@ class AiAgentService:
             await session.flush()
 
             thread_id = thread.id
-            started_at = _utcnow_iso()
             logger.debug("exec_sub_agent_task: created thread %s", thread_id)
 
         # 2. Delegate to exec_agent with threadId

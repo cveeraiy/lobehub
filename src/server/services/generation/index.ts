@@ -1,4 +1,3 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import { parseDataUri } from '@lobechat/model-runtime';
 import debug from 'debug';
 import { sha256 } from 'js-sha256';
@@ -8,6 +7,7 @@ import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 
 import { FileService } from '@/server/services/file';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { calculateThumbnailDimensions } from '@/utils/number';
 import { getYYYYmmddHHMMss } from '@/utils/time';
 import { inferFileExtensionFromImageUrl } from '@/utils/url';

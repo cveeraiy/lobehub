@@ -18,10 +18,10 @@ dotenvExpand.expand(dotenv.config()); // Load .env
 dotenvExpand.expand(dotenv.config({ override: true, path: `.env.${env}` })); // Load .env.[env] and override
 dotenvExpand.expand(dotenv.config({ override: true, path: `.env.${env}.local` })); // Load .env.[env].local and override
 
-const migrationsFolder = join(__dirname, '../../packages/database/migrations');
+const migrationsFolder = join(__dirname, '../../src/database/migrations');
 
 const runMigrations = async () => {
-  const { serverDB } = await import('../../packages/database/src/server');
+  const { serverDB } = await import('../../src/database/server');
 
   const time = Date.now();
   if (process.env.DATABASE_DRIVER === 'node') {

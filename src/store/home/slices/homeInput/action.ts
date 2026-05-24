@@ -1,4 +1,4 @@
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
+import { BUILTIN_AGENT_SLUGS } from '@lobechat/const';
 
 import { chatGroupService } from '@/services/chatGroup';
 import { documentService } from '@/services/document';

@@ -120,7 +120,7 @@ Open this URL to develop the SPA locally with the production backend.
 bunx vitest run --silent='passed-only' 'path/to/file.test.ts'
 
 # Database package tests
-cd packages/database && bunx vitest run --silent='passed-only' 'path/to/file.test.ts'
+bunx vitest run --silent='passed-only' 'path/to/file.test.ts'
 
 # Type check
 bun run type-check

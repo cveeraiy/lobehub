@@ -1,8 +1,8 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import debug from 'debug';
 
 import { LOBE_CHAT_AUTH_HEADER } from '@/envs/auth';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 const log = debug('ethos-async:context');
 

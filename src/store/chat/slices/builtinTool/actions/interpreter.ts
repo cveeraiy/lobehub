@@ -1,4 +1,4 @@
-import { CloudSandboxIdentifier } from '@lobechat/builtin-tool-cloud-sandbox';
+import { CloudSandboxIdentifier } from '@lobechat/builtin-tools';
 import {
   type CodeInterpreterFileItem,
   type CodeInterpreterParams,

@@ -1,5 +1,5 @@
-import type { MessagePlatformType } from '@lobechat/builtin-tool-message';
-import type { MessageRuntimeService } from '@lobechat/builtin-tool-message/executionRuntime';
+import type { MessagePlatformType } from '@lobechat/builtin-tools';
+import type { MessageRuntimeService } from '@lobechat/builtin-tools/messageExecutionRuntime';
 import {
   DEFAULT_BOT_HISTORY_LIMIT,
   MAX_BOT_HISTORY_LIMIT,
@@ -8,7 +8,6 @@ import {
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import type { DecryptedBotProvider } from '@/database/models/agentBotProvider';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
@@ -20,6 +19,14 @@ import { SlackApi } from '@/server/services/bot/platforms/slack/api';
 import { SlackMessageService } from '@/server/services/bot/platforms/slack/service';
 import { TelegramApi } from '@/server/services/bot/platforms/telegram/api';
 import { TelegramMessageService } from '@/server/services/bot/platforms/telegram/service';
+
+interface DecryptedBotProvider {
+  applicationId: string;
+  credentials: Record<string, string>;
+  enabled: boolean;
+  platform: string;
+  settings?: Record<string, unknown> | null;
+}
 
 // ── Middleware ────────────────────────────────────────────
 

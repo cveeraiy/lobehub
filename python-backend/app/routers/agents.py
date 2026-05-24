@@ -7,16 +7,17 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
-from sqlalchemy import and_, asc, delete, desc, func, or_, select, text, update
+from sqlalchemy import and_, delete, desc, or_, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agents.builtin import get_builtin_agent_definition, list_builtin_agent_definitions
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.agent import Agent, AgentKnowledgeBase, AgentFile
+from app.models.agent import Agent, AgentFile, AgentKnowledgeBase
 from app.models.agent_ops import AgentDocument
 from app.models.knowledge import KnowledgeBase
-from app.models.session import Session
 from app.models.message import Message
+from app.models.session import Session
 from app.models.topic import Topic
 
 router = APIRouter(prefix="/api/agents", tags=["Agents"])
@@ -168,11 +169,24 @@ async def get_builtin_agent(
     if agent:
         return _agent_dict(agent)
 
+    definition = get_builtin_agent_definition(slug)
+    if not definition:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Builtin agent not found")
+
+    persist = definition.get("persist") or {}
+    runtime = definition.get("runtime") or {}
+
     # 2. Auto-create the builtin agent
     agent = Agent(
+        avatar=definition.get("avatar"),
+        chat_config=persist.get("chatConfig") or runtime.get("chatConfig"),
+        model=persist.get("model"),
+        plugins=runtime.get("plugins"),
+        provider=persist.get("provider"),
+        system_role=runtime.get("systemRole"),
+        title="Default Agent" if slug in ("default", "inbox") else slug.replace("-", " ").title(),
         user_id=user_id,
         slug=slug,
-        title="Default Agent" if slug in ("default", "inbox") else slug.replace("-", " ").title(),
         virtual=True,
     )
     session.add(agent)
@@ -180,6 +194,27 @@ async def get_builtin_agent(
     await session.commit()
     await session.refresh(agent)
     return _agent_dict(agent)
+
+
+@router.get("/builtin-definitions")
+async def list_builtin_agent_definitions_endpoint():
+    return list_builtin_agent_definitions()
+
+
+@router.get("/builtin-definitions/{slug}")
+async def get_builtin_agent_definition_endpoint(slug: str):
+    definition = get_builtin_agent_definition(slug)
+    if not definition:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Builtin agent not found")
+    return definition
+
+
+@router.post("/builtin-definitions/{slug}/resolve")
+async def resolve_builtin_agent_definition_endpoint(slug: str, context: dict[str, Any] | None = None):
+    definition = get_builtin_agent_definition(slug, context)
+    if not definition:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Builtin agent not found")
+    return definition
 
 
 @router.get("/config-by-session/{session_id}")
@@ -367,8 +402,8 @@ async def delete_agent(
         await session.execute(
             text(
                 "DELETE FROM chat_groups_agents "
-                "WHERE user_id = :uid AND group_id IN "
-                "(SELECT id FROM chat_groups WHERE session_id = ANY(:session_ids))"
+                "WHERE user_id = :uid AND chat_group_id IN "
+                "(SELECT id FROM chat_groups WHERE group_id = ANY(:session_ids))"
             ),
             {"session_ids": session_ids, "uid": user_id},
         )
@@ -420,15 +455,15 @@ async def delete_agent(
             {"message_ids": message_ids, "uid": user_id},
         )
         await session.execute(
-            text("DELETE FROM message_plugins WHERE message_id = ANY(:message_ids)"),
+            text("DELETE FROM message_plugins WHERE id = ANY(:message_ids)"),
             {"message_ids": message_ids},
         )
         await session.execute(
-            text("DELETE FROM message_tts WHERE message_id = ANY(:message_ids)"),
+            text("DELETE FROM message_tts WHERE id = ANY(:message_ids)"),
             {"message_ids": message_ids},
         )
         await session.execute(
-            text("DELETE FROM message_translates WHERE message_id = ANY(:message_ids)"),
+            text("DELETE FROM message_translates WHERE id = ANY(:message_ids)"),
             {"message_ids": message_ids},
         )
         await session.execute(
@@ -449,7 +484,10 @@ async def delete_agent(
 
     if session_ids:
         await session.execute(
-            text("DELETE FROM message_groups WHERE user_id = :uid AND session_id = ANY(:session_ids)"),
+            text(
+                "DELETE FROM message_groups WHERE user_id = :uid AND topic_id IN "
+                "(SELECT id FROM topics WHERE session_id = ANY(:session_ids))"
+            ),
             {"session_ids": session_ids, "uid": user_id},
         )
     if topic_ids:

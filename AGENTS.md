@@ -110,7 +110,7 @@ Open this URL to develop locally against the production backend (app.lobehub.com
 bunx vitest run --silent='passed-only' '[file-path]'
 
 # Database package
-cd packages/database && bunx vitest run --silent='passed-only' '[file]'
+bunx vitest run --silent='passed-only' '[file]'
 ```
 
 - Prefer `vi.spyOn` over `vi.mock`

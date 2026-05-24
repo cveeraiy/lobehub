@@ -4,7 +4,6 @@ import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 
-import { type SearchResult } from '@/database/repositories/search';
 import { useCreateNewModal } from '@/features/LibraryModal';
 import { useGroupWizard } from '@/layout/GlobalProvider/GroupWizardProvider';
 import { useCreateMenuItems } from '@/routes/(main)/home/_layout/hooks';
@@ -15,6 +14,7 @@ import { useChatStore } from '@/store/chat';
 import { useGlobalStore } from '@/store/global';
 import { globalHelpers } from '@/store/global/helpers';
 import { useHomeStore } from '@/store/home';
+import { type SearchResult } from '@/types/search';
 
 import { useCommandMenuContext } from './CommandMenuContext';
 import { type ThemeMode } from './types';

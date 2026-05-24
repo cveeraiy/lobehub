@@ -1,9 +1,10 @@
 // @vitest-environment node
-import type { LobeChatDatabase } from '@lobechat/database';
-import { agentSkills, files, globalFiles, users } from '@lobechat/database/schemas';
-import { getTestDB } from '@lobechat/database/test-utils';
 import { and, eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getTestDB } from '@/database/core/getTestDB';
+import { agentSkills, files, globalFiles, users } from '@/database/schemas';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { SkillImportError } from './errors';
 import { SkillImporter } from './importer';

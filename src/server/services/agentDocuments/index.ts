@@ -6,20 +6,20 @@ import type {
   PolicyLoad,
 } from '@lobechat/agent-templates';
 import { DocumentLoadPosition, getDocumentTemplate } from '@lobechat/agent-templates';
-import type { LobeChatDatabase } from '@lobechat/database';
-import { DOCUMENT_FOLDER_TYPE } from '@lobechat/database/schemas';
 
-import type {
-  AgentDocument,
-  AgentDocumentWithRules,
-  ToolUpdateLoadRule,
-} from '@/database/models/agentDocuments';
 import {
   AgentDocumentModel,
   buildDocumentFilename,
   extractMarkdownH1Title,
 } from '@/database/models/agentDocuments';
 import { TopicDocumentModel } from '@/database/models/topicDocument';
+import type { LobeChatDatabase } from '@/server/types/database';
+import type {
+  AgentDocument,
+  AgentDocumentWithRules,
+  ToolUpdateLoadRule,
+} from '@/types/agentDocument';
+import { DOCUMENT_FOLDER_TYPE } from '@/types/files';
 
 import { AgentDocumentVfsError } from '../agentDocumentVfs/errors';
 import { isManagedSkillDocument } from '../agentDocumentVfs/mounts/skills/providers/providerSkillsAgentDocumentUtils';

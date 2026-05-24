@@ -1,10 +1,9 @@
-import { LobeActivatorIdentifier } from '@lobechat/builtin-tool-activator';
+import { LobeActivatorIdentifier, SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
 import {
   ActivatorExecutionRuntime,
   type ActivatorRuntimeService,
   type ToolManifestInfo,
-} from '@lobechat/builtin-tool-activator/executionRuntime';
-import { SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
+} from '@lobechat/builtin-tools/activatorExecutionRuntime';
 
 import {
   emitToolOutcomeSafely,

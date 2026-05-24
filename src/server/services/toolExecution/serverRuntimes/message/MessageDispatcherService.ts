@@ -34,7 +34,7 @@ import type {
   SendMessageState,
   UnpinMessageParams,
   UnpinMessageState,
-} from '@lobechat/builtin-tool-message/executionRuntime';
+} from '@lobechat/builtin-tools/messageExecutionRuntime';
 
 export type AsyncServiceFactory = () => Promise<MessageRuntimeService>;
 

@@ -329,7 +329,7 @@ class OnboardingService:
 
     async def _get_user_settings(self) -> Optional[UserSettings]:
         result = await self._db.execute(
-            select(UserSettings).where(UserSettings.user_id == self._user_id)
+            select(UserSettings).where(UserSettings.id == self._user_id)
         )
         return result.scalar_one_or_none()
 
@@ -344,11 +344,11 @@ class OnboardingService:
             kwargs["updated_at"] = _now()
             await self._db.execute(
                 update(UserSettings)
-                .where(UserSettings.user_id == self._user_id)
+                .where(UserSettings.id == self._user_id)
                 .values(**kwargs)
             )
         else:
-            us = UserSettings(user_id=self._user_id, **kwargs)
+            us = UserSettings(id=self._user_id, **kwargs)
             self._db.add(us)
             await self._db.flush()
 

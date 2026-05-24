@@ -1,10 +1,10 @@
 import { type LobeToolManifest } from '@lobechat/context-engine';
-import { type LobeChatDatabase } from '@lobechat/database';
 import debug from 'debug';
 
 import { PluginModel } from '@/database/models/plugin';
 import { getKlavisClient, isKlavisClientAvailable } from '@/libs/klavis';
 import { type ToolExecutionResult } from '@/server/services/toolExecution/types';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 const log = debug('ethos-server:klavis-service');
 

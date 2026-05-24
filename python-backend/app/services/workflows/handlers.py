@@ -215,22 +215,81 @@ async def agent_eval_test_case_plan(payload: dict[str, Any], session: AsyncSessi
     user_id = required(payload, "userId", "user_id")
     if not run_id or not user_id:
         raise ValueError("Missing required fields: runId, userId")
+    svc = AgentEvalService(session, user_id)
     explicit_ids = payload.get("testCaseIds") or payload.get("test_case_ids")
     if isinstance(explicit_ids, list) and explicit_ids:
-        return {"runId": run_id, "testCaseIds": [str(case_id) for case_id in explicit_ids], "userId": user_id}
-    svc = AgentEvalService(session, user_id)
-    return {"runId": run_id, "testCaseIds": await svc.list_run_test_case_ids(run_id), "userId": user_id}
+        candidate_ids = [str(case_id) for case_id in explicit_ids]
+    else:
+        candidate_ids = await svc.list_run_test_case_ids(run_id)
+    pending_ids = await svc.filter_test_cases_needing_execution(run_id, candidate_ids)
+    return {
+        "filtered": len(candidate_ids) - len(pending_ids),
+        "runId": run_id,
+        "testCaseIds": pending_ids,
+        "totalCandidates": len(candidate_ids),
+        "userId": user_id,
+    }
 
 
 async def finalize_eval_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
     run_id = required(payload, "runId", "run_id")
     user_id = required(payload, "userId", "user_id")
-    status_value = payload.get("status") or "completed"
+    status_value = payload.get("status")
     if not run_id or not user_id:
         raise ValueError("Missing required fields: runId, userId")
     svc = AgentEvalService(session, user_id)
-    await svc.update_run_status(run_id, str(status_value))
-    return {"runId": run_id, "status": status_value, "success": True}
+    return await svc.finalize_run_from_topics(
+        run_id,
+        status=str(status_value) if status_value else None,
+    )
+
+
+async def run_agent_trajectory_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    user_id = required(payload, "userId", "user_id")
+    if not user_id:
+        raise ValueError("Missing required field: userId")
+    svc = AgentEvalService(session, user_id)
+    return await svc.execute_agent_trajectory(payload)
+
+
+async def run_thread_trajectory_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    user_id = required(payload, "userId", "user_id")
+    if not user_id:
+        raise ValueError("Missing required field: userId")
+    svc = AgentEvalService(session, user_id)
+    return await svc.execute_thread_trajectory(payload)
+
+
+async def resume_agent_trajectory_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    user_id = required(payload, "userId", "user_id")
+    if not user_id:
+        raise ValueError("Missing required field: userId")
+    svc = AgentEvalService(session, user_id)
+    return await svc.execute_resumed_agent_trajectory(payload)
+
+
+async def resume_thread_trajectory_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    user_id = required(payload, "userId", "user_id")
+    if not user_id:
+        raise ValueError("Missing required field: userId")
+    svc = AgentEvalService(session, user_id)
+    return await svc.execute_resumed_thread_trajectory(payload)
+
+
+async def on_trajectory_complete_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    user_id = required(payload, "userId", "user_id")
+    if not user_id:
+        raise ValueError("Missing required field: userId")
+    svc = AgentEvalService(session, user_id)
+    return await svc.record_trajectory_completion(payload)
+
+
+async def on_thread_complete_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
+    user_id = required(payload, "userId", "user_id")
+    if not user_id:
+        raise ValueError("Missing required field: userId")
+    svc = AgentEvalService(session, user_id)
+    return await svc.record_thread_completion(payload)
 
 
 async def memory_extraction_workflow(payload: dict[str, Any], session: AsyncSession) -> dict[str, Any]:
@@ -298,14 +357,14 @@ async def agent_signal_run_workflow(payload: dict[str, Any], session: AsyncSessi
 WORKFLOW_HANDLERS = {
     "agent-eval-run/execute-test-case": run_eval_workflow,
     "agent-eval-run/finalize-run": finalize_eval_workflow,
-    "agent-eval-run/on-thread-complete": finalize_eval_workflow,
-    "agent-eval-run/on-trajectory-complete": finalize_eval_workflow,
+    "agent-eval-run/on-thread-complete": on_thread_complete_workflow,
+    "agent-eval-run/on-trajectory-complete": on_trajectory_complete_workflow,
     "agent-eval-run/paginate-test-cases": run_eval_workflow,
-    "agent-eval-run/resume-agent-trajectory": run_eval_workflow,
-    "agent-eval-run/resume-thread-trajectory": run_eval_workflow,
-    "agent-eval-run/run-agent-trajectory": run_eval_workflow,
+    "agent-eval-run/resume-agent-trajectory": resume_agent_trajectory_workflow,
+    "agent-eval-run/resume-thread-trajectory": resume_thread_trajectory_workflow,
+    "agent-eval-run/run-agent-trajectory": run_agent_trajectory_workflow,
     "agent-eval-run/run-benchmark": run_eval_workflow,
-    "agent-eval-run/run-thread-trajectory": run_eval_workflow,
+    "agent-eval-run/run-thread-trajectory": run_thread_trajectory_workflow,
     "agent-signal/run": agent_signal_run_workflow,
     "memory-user-memory/call-cron-hourly-analysis": memory_extraction_workflow,
     "memory-user-memory/pipelines/chat-topic/process-topic": memory_process_topic_workflow,

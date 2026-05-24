@@ -1,6 +1,6 @@
 """Agent eval tables: benchmarks, datasets, test_cases, runs, run_topics. (Non-MVP)
 
-Source: packages/database/src/schemas/agentEvals.ts
+Source: src/database/schemas/agentEvals.ts
 """
 
 from __future__ import annotations

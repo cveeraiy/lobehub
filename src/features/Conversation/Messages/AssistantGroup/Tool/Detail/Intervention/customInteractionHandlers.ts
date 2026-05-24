@@ -1,8 +1,8 @@
+import { UserInteractionIdentifier } from '@lobechat/builtin-tool-user-interaction';
 import {
   AgentMarketplaceIdentifier,
   buildAgentMarketplaceToolResult,
-} from '@lobechat/builtin-tool-agent-marketplace';
-import { UserInteractionIdentifier } from '@lobechat/builtin-tool-user-interaction';
+} from '@lobechat/builtin-tools';
 import type { OnboardingAgentMarketplacePickSnapshot } from '@lobechat/types';
 
 import { topicService } from '@/services/topic';

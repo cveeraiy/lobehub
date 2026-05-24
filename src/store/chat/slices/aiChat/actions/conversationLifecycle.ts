@@ -1,10 +1,10 @@
 // Disable the auto sort key eslint rule to make the code more logic and readable
-import type { CallAgentParams, CallAgentState } from '@lobechat/builtin-tool-agent-management';
+import type { CallAgentParams, CallAgentState } from '@lobechat/builtin-tools';
 import {
   AgentManagementApiName,
   AgentManagementIdentifier,
   createCallAgentManifest,
-} from '@lobechat/builtin-tool-agent-management';
+} from '@lobechat/builtin-tools';
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
 import { LOADING_FLAT } from '@lobechat/const';
 import { formatSelectedSkillsContext, formatSelectedToolsContext } from '@lobechat/context-engine';

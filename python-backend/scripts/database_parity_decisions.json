@@ -1,0 +1,411 @@
+{
+  "missing_tables": {
+    "accounts": {
+      "decision": "retire",
+      "reason": "Better Auth account persistence is retired because Keycloak is the only auth provider."
+    },
+    "auth_sessions": {
+      "decision": "retire",
+      "reason": "Better Auth DB sessions are retired; Python owns Keycloak-backed session handling."
+    },
+    "nextauth_authenticators": {
+      "decision": "retire",
+      "reason": "Legacy NextAuth/WebAuthn persistence is retired."
+    },
+    "nextauth_sessions": {
+      "decision": "retire",
+      "reason": "Legacy NextAuth DB sessions are retired."
+    },
+    "nextauth_verificationtokens": {
+      "decision": "retire",
+      "reason": "Legacy NextAuth verification tokens are retired."
+    },
+    "oauth_handoffs": {
+      "decision": "retire_candidate",
+      "reason": "Internal OAuth credential handoff should be retired with the TS OIDC provider unless a desktop/mobile Keycloak callback flow still requires it."
+    },
+    "oidc_access_tokens": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider persistence is retired."
+    },
+    "oidc_authorization_codes": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider persistence is retired."
+    },
+    "oidc_clients": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider clients are retired; market OIDC is separate."
+    },
+    "oidc_consents": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider consent persistence is retired."
+    },
+    "oidc_device_codes": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider device flow persistence is retired."
+    },
+    "oidc_grants": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider persistence is retired."
+    },
+    "oidc_interactions": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider interaction persistence is retired."
+    },
+    "oidc_refresh_tokens": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider persistence is retired."
+    },
+    "oidc_sessions": {
+      "decision": "retire",
+      "reason": "Legacy internal TS OIDC provider sessions are retired."
+    },
+    "passkey": {
+      "decision": "retire",
+      "reason": "Better Auth passkeys are retired because Keycloak is the only auth provider."
+    },
+    "two_factor": {
+      "decision": "retire",
+      "reason": "Better Auth two-factor persistence is retired because Keycloak owns MFA."
+    },
+    "verifications": {
+      "decision": "retire",
+      "reason": "Better Auth verification persistence is retired because Keycloak owns auth verification flows."
+    },
+    "agents_to_sessions": {
+      "decision": "retire_with_migration",
+      "reason": "Python canonical schema uses sessions.agent_id for the single active session agent. Existing join rows are backfilled into sessions.agent_id before the TS join table is retired."
+    }
+  },
+  "table_mismatches": {
+    "agent_bot_providers": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Bot provider persistence is active Python backend behavior; UUID/text id shape must be settled before TS schema removal."
+    },
+    "agent_cron_jobs": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python owns agent scheduling and uses schedule/config/run counters instead of the retired TS cron-pattern/edit-data shape.",
+      "accept_python_missing_columns": [
+        "content",
+        "cron_pattern",
+        "edit_data",
+        "execution_conditions",
+        "group_id",
+        "last_executed_at",
+        "max_executions",
+        "remaining_executions",
+        "total_executions"
+      ],
+      "accept_python_extra_columns": [
+        "condition",
+        "config",
+        "last_run_at",
+        "next_run_at",
+        "schedule",
+        "total_failures",
+        "total_runs"
+      ],
+      "accept_changed_columns": ["enabled"],
+      "accept_python_missing_foreign_key_columns": [["group_id"]]
+    },
+    "agent_documents": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Agent-document linkage is active RAG behavior; id type mismatch must be resolved."
+    },
+    "agent_eval_benchmarks": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python eval APIs own benchmark execution metadata and keep agent/config linkage instead of the TS identifier/rubric catalog shape.",
+      "accept_python_missing_columns": [
+        "identifier",
+        "is_system",
+        "metadata",
+        "reference_url",
+        "rubrics"
+      ],
+      "accept_python_extra_columns": ["agent_id", "config"],
+      "accept_changed_columns": ["user_id"],
+      "accept_python_extra_foreign_key_columns": [["agent_id"]],
+      "accept_python_missing_unique_columns": [["identifier", "user_id"]]
+    },
+    "agent_eval_datasets": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python eval keeps the active dataset fields needed by current E2E flows and retires TS eval config/mode metadata.",
+      "accept_python_missing_columns": ["eval_config", "eval_mode", "identifier", "metadata"],
+      "accept_changed_columns": ["user_id"],
+      "accept_python_missing_unique_columns": [["identifier", "user_id"]]
+    },
+    "agent_eval_run_topics": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python eval run-topic rows use a stable row id plus Python result payloads instead of the TS composite key/result columns.",
+      "accept_primary_key_mismatch": true,
+      "accept_python_missing_columns": ["eval_result", "passed", "user_id"],
+      "accept_python_extra_columns": ["id", "result", "updated_at"],
+      "accept_changed_columns": ["status", "test_case_id", "topic_id"],
+      "accept_python_missing_foreign_key_columns": [["user_id"]]
+    },
+    "agent_eval_runs": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python eval run execution stores benchmark/completion/error/results state and does not use the retired TS target-agent metrics shape.",
+      "accept_python_missing_columns": ["metrics", "name", "target_agent_id"],
+      "accept_python_extra_columns": ["benchmark_id", "completed_at", "error", "results"],
+      "accept_changed_columns": ["dataset_id"],
+      "accept_python_extra_foreign_key_columns": [["benchmark_id"]],
+      "accept_python_missing_foreign_key_columns": [["target_agent_id"]]
+    },
+    "agent_eval_test_cases": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python eval test cases use input/expected-output for current execution and retire TS content/config/sort metadata.",
+      "accept_python_missing_columns": ["content", "eval_config", "eval_mode", "sort_order"],
+      "accept_python_extra_columns": ["expected_output", "input"]
+    },
+    "agent_skills": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python skill sharing/storage owns display/file/visibility fields and retires the TS zip hash/name source shape.",
+      "accept_python_missing_columns": [
+        "content",
+        "editor_data",
+        "name",
+        "source",
+        "zip_file_hash"
+      ],
+      "accept_python_extra_columns": ["avatar", "display_name", "file_id", "visibility"],
+      "accept_changed_columns": ["description", "manifest"],
+      "accept_python_extra_foreign_key_columns": [["file_id"]],
+      "accept_python_missing_foreign_key_columns": [["zip_file_hash"]],
+      "accept_python_extra_unique_columns": [["identifier", "user_id"]],
+      "accept_python_missing_unique_columns": [["user_id", "name"]]
+    },
+    "agents": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python agent records keep REST/runtime fields and retire TS client-id/few-shot/params/agency config storage.",
+      "accept_python_missing_columns": ["agency_config", "client_id", "few_shots", "params"],
+      "accept_changed_columns": ["opening_questions", "pinned", "slug", "virtual"],
+      "accept_python_extra_unique_columns": [["market_identifier", "user_id"]],
+      "accept_python_missing_unique_columns": [["client_id", "user_id"]]
+    },
+    "agents_files": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Agent-file relation is active RAG behavior; primary key and timestamp/nullability drift must be resolved."
+    },
+    "agents_knowledge_bases": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Agent-knowledge-base relation is active RAG behavior; timestamp/nullability drift must be resolved."
+    },
+    "ai_models": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Model catalog is active backend configuration; missing organization/type/nullability fields need Python parity."
+    },
+    "ai_providers": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Provider catalog is active backend configuration; nullability drift must be settled."
+    },
+    "api_keys": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python API keys intentionally avoid raw key persistence and keep prefix/usage metadata for secure REST handling.",
+      "accept_python_missing_columns": ["accessed_at", "key"],
+      "accept_python_extra_columns": ["key_prefix", "usage_count"],
+      "accept_changed_columns": ["enabled", "key_hash", "name"],
+      "accept_python_missing_unique_columns": [["key"], ["key_hash"]]
+    },
+    "async_tasks": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Async task records back workflows and generation/runtime work; UUID/text and metadata fields must align."
+    },
+    "chat_groups": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Chat group data is active and e2e-covered; nullable pinned drift should be resolved."
+    },
+    "chat_groups_agents": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Chat group membership is active and e2e-covered; relation columns and constraints differ."
+    },
+    "documents": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Document schema is active file/RAG behavior; missing slug uniqueness must be ported or retired explicitly."
+    },
+    "files": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Task id fields now use UUID in Python/runtime; remaining file schema parity should be resolved with the file/document domain."
+    },
+    "generation_batches": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python media generation owns batch/task/topic linkage and stores provider params directly instead of the retired TS config/dimension columns.",
+      "accept_python_missing_columns": [
+        "config",
+        "generation_topic_id",
+        "height",
+        "ratio",
+        "width"
+      ],
+      "accept_python_extra_columns": ["async_task_id", "negative_prompt", "params", "topic_id"],
+      "accept_changed_columns": ["model", "prompt", "provider"],
+      "accept_python_extra_foreign_key_columns": [["async_task_id"], ["topic_id"]],
+      "accept_python_missing_foreign_key_columns": [["generation_topic_id"]]
+    },
+    "generation_topics": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python generation topics keep favorite state and retire TS cover URL storage.",
+      "accept_python_missing_columns": ["cover_url"],
+      "accept_python_extra_columns": ["favorite"],
+      "accept_changed_columns": ["type"]
+    },
+    "generations": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python generation records store runtime status/provider/prompt params directly and link to Python batch/topic ids.",
+      "accept_python_missing_columns": ["asset", "async_task_id", "generation_batch_id"],
+      "accept_python_extra_columns": [
+        "batch_id",
+        "duration",
+        "error",
+        "model",
+        "params",
+        "prompt",
+        "provider",
+        "status",
+        "topic_id",
+        "type"
+      ],
+      "accept_python_extra_foreign_key_columns": [["batch_id"], ["topic_id"]],
+      "accept_python_missing_foreign_key_columns": [["async_task_id"], ["generation_batch_id"]]
+    },
+    "knowledge_bases": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Knowledge base data is active RAG behavior; public flag nullability drift should be resolved."
+    },
+    "message_chunks": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Chunk id UUID drift is resolved; remaining nullability and timestamp differences should be settled with message/RAG relation parity."
+    },
+    "message_groups": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Message grouping is active chat behavior; extra session relation and missing client uniqueness need a decision."
+    },
+    "message_plugins": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Tool/plugin message persistence is active chat behavior; id/user/client fields and FKs diverge."
+    },
+    "message_queries": {
+      "decision": "must_align_before_db_removal",
+      "reason": "RAG query persistence is active; embedding FK, client id, and id type drift must be resolved."
+    },
+    "message_query_chunks": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Chunk/query id UUID drift is resolved; remaining primary key, nullability, numeric precision, and timestamp differences need message/RAG parity."
+    },
+    "message_translates": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Translation metadata may be user-visible chat data; field names and FKs must align or be explicitly retired."
+    },
+    "message_tts": {
+      "decision": "must_align_before_db_removal",
+      "reason": "TTS metadata may be user-visible chat data; file/id/user constraints need Python parity or retirement."
+    },
+    "messages": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python keeps usage accounting, streaming/tool-call compatibility, and RAG/search query pointers on messages for active REST/runtime APIs; canonical TS columns and FKs are aligned.",
+      "accept_python_extra_columns": [
+        "cache_creation_input_tokens",
+        "cache_read_input_tokens",
+        "input_tokens",
+        "output_tokens",
+        "rag_query_id",
+        "reasoning_content",
+        "search_query_id",
+        "token_count",
+        "tool_call_id",
+        "total_price"
+      ]
+    },
+    "messages_files": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Message-file relation is active attachment behavior; timestamp drift should be settled."
+    },
+    "notification_deliveries": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python notification delivery keeps user/error/update fields and text ids for current REST behavior.",
+      "accept_python_missing_columns": ["failed_reason", "provider_message_id"],
+      "accept_python_extra_columns": ["delivered_at", "error", "updated_at", "user_id"],
+      "accept_changed_columns": ["id", "notification_id"],
+      "accept_python_extra_foreign_key_columns": [["user_id"]]
+    },
+    "notifications": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python notifications use body/dedup/read metadata fields and retire TS action/archive/read naming.",
+      "accept_python_missing_columns": [
+        "action_url",
+        "content",
+        "dedupe_key",
+        "is_archived",
+        "is_read",
+        "type"
+      ],
+      "accept_python_extra_columns": ["body", "dedup_key", "metadata", "read_at"],
+      "accept_changed_columns": ["category", "id"],
+      "accept_python_missing_unique_columns": [["user_id", "dedupe_key"]]
+    },
+    "rag_eval_evaluation_records": {
+      "decision": "domain_decision_required",
+      "reason": "RAG eval persistence depends on eval product scope; decide whether to port or retire with eval."
+    },
+    "sessions": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python uses sessions.agent_id to replace the retired agents_to_sessions join; other session display fields have been aligned.",
+      "accept_python_extra_columns": ["agent_id"],
+      "accept_python_extra_foreign_key_columns": [["agent_id"]]
+    },
+    "task_dependencies": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Task graph persistence has UUID/text drift; align with Python task runtime before removing TS schema."
+    },
+    "task_documents": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Task-document persistence has UUID/text drift; align with Python task runtime before removing TS schema."
+    },
+    "task_topics": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Task-topic persistence has UUID/text drift; align with Python task runtime before removing TS schema."
+    },
+    "threads": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Threads are active conversation data; content/client/editor fields and uniqueness must be resolved."
+    },
+    "topic_shares": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python topic sharing owns public/password/expiry metadata and retires TS visibility/page-view semantics.",
+      "accept_python_missing_columns": ["accessed_at", "page_view_count", "visibility"],
+      "accept_python_extra_columns": ["expires_at", "is_public", "metadata", "password_hash"],
+      "accept_python_extra_unique_columns": [["topic_id", "user_id"]],
+      "accept_python_missing_unique_columns": [["topic_id"]]
+    },
+    "topics": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Topics are active chat data; missing content/editor/group/mode/trigger fields must be ported or retired explicitly."
+    },
+    "unstructured_chunks": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Chunk id UUID drift is resolved; any remaining unstructured chunk parity belongs with the RAG/domain alignment pass."
+    },
+    "user_memories": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Memory is active Python behavior; accessed_count bigint/integer/nullability drift must be resolved."
+    },
+    "user_memories_contexts": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Memory scoring fields use numeric in Drizzle and float in Python; choose canonical precision before removal."
+    },
+    "user_memories_preferences": {
+      "decision": "must_align_before_db_removal",
+      "reason": "Memory scoring fields use numeric in Drizzle and float in Python; choose canonical precision before removal."
+    },
+    "user_settings": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python carries settings_permissions for current REST behavior; keep documented until TS settings permissions migration is retired or ported.",
+      "accept_python_extra_columns": ["settings_permissions"]
+    },
+    "users": {
+      "decision": "intentional_python_canonical",
+      "reason": "Python keeps organization compatibility while legacy organization columns are retired; user core columns are aligned.",
+      "accept_python_extra_columns": ["organization"]
+    }
+  }
+}

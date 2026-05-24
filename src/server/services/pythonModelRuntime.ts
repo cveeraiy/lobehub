@@ -1,4 +1,4 @@
-import type { LobeChatDatabase } from '@/database/type';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { callPythonBackend } from '@/server/utils/pythonBackend';
 
 interface PythonModelRuntimeOptions {

@@ -1,6 +1,6 @@
 """User memory tables (5 layers + base).
 
-Source: packages/database/src/schemas/userMemories/index.ts
+Canonical database models for user memory tables.
 """
 
 from __future__ import annotations
@@ -8,11 +8,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Column, Index, text
+from sqlalchemy import BigInteger, Column, Index, Numeric, text
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import VectorType, _utcnow, id_generator, json_column, text_array_column
-
 
 # ── user_memories (base layer) ──────────────────────────────────────────────
 
@@ -46,7 +45,7 @@ class UserMemory(SQLModel, table=True):
     )
 
     status: Optional[str] = Field(default=None, max_length=255)
-    accessed_count: int = Field(default=0)
+    accessed_count: Optional[int] = Field(default=0, sa_column=Column(BigInteger, nullable=True))
     last_accessed_at: datetime = Field(default_factory=_utcnow)
     captured_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
 
@@ -88,8 +87,8 @@ class UserMemoryContext(SQLModel, table=True):
     type: Optional[str] = Field(default=None, max_length=255)
     current_status: Optional[str] = None
 
-    score_impact: Optional[float] = Field(default=0)
-    score_urgency: Optional[float] = Field(default=0)
+    score_impact: Optional[float] = Field(default=0, sa_column=Column(Numeric, nullable=True))
+    score_urgency: Optional[float] = Field(default=0, sa_column=Column(Numeric, nullable=True))
 
     captured_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
 
@@ -123,7 +122,7 @@ class UserMemoryPreference(SQLModel, table=True):
 
     type: Optional[str] = Field(default=None, max_length=255)
     suggestions: Optional[str] = None
-    score_priority: Optional[float] = Field(default=0)
+    score_priority: Optional[float] = Field(default=0, sa_column=Column(Numeric, nullable=True))
 
     captured_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
 

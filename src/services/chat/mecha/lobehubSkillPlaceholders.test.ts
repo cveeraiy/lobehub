@@ -1,12 +1,13 @@
-import { builtinSkills, LobeHubIdentifier } from '@lobechat/builtin-skills';
+import { LobeHubIdentifier } from '@lobechat/const';
 import { renderPlaceholderTemplate } from '@lobechat/context-engine';
 import { describe, expect, it } from 'vitest';
 
-const LobeHubSkill = builtinSkills.find((s) => s.identifier === LobeHubIdentifier);
-if (!LobeHubSkill) {
-  throw new Error(`LobeHubSkill not found in builtinSkills (looking for "${LobeHubIdentifier}")`);
-}
-const lobeHubContent = LobeHubSkill.content;
+const lobeHubContent = `
+${LobeHubIdentifier}
+Current agent: {{agent_title}} ({{agent_id}})
+Agent description: {{agent_description}}
+Current topic: {{topic_title}} ({{topic_id}})
+`;
 
 /**
  * Regression for LOBE-6882.

@@ -1,4 +1,4 @@
-import type { AgentAccess } from '@/database/models/agentDocuments';
+import type { AgentAccess } from '@/types/agentDocument';
 
 /**
  * Mounted subtree provenance for a VFS node.

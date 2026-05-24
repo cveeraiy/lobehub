@@ -21,7 +21,11 @@ import debug from 'debug';
 import { createAgentToolsEngine } from '@/helpers/toolEngineering';
 import { isCanUseVideo, isCanUseVision } from '@/services/chat/helper';
 import { type ResolvedAgentConfig } from '@/services/chat/mecha';
-import { composeEnabledTools, resolveAgentConfig } from '@/services/chat/mecha';
+import {
+  composeEnabledTools,
+  preloadAgentConfigRuntime,
+  resolveAgentConfig,
+} from '@/services/chat/mecha';
 import { messageService } from '@/services/message';
 import { getAgentStoreState } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
@@ -485,6 +489,14 @@ export class StreamingExecutorActionImpl {
     // Step 1: Create Agent State (resolves config once)
     // ===========================================
     // agentConfig contains isSubTask filtering and is passed to callLLM executor
+    await preloadAgentConfigRuntime({
+      agentId: effectiveAgentId || '',
+      disableTools,
+      groupId,
+      isSubTask,
+      scope,
+    });
+
     const {
       state: initialAgentState,
       context: initialAgentContext,

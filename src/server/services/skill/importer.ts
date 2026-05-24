@@ -1,6 +1,5 @@
 import { readFile } from 'node:fs/promises';
 
-import { type LobeChatDatabase } from '@lobechat/database';
 import {
   type CreateSkillInput,
   type ImportGitHubInput,
@@ -15,6 +14,7 @@ import debug from 'debug';
 import { AgentSkillModel } from '@/database/models/agentSkill';
 import { GitHub, GitHubNotFoundError, GitHubParseError } from '@/server/modules/GitHub';
 import { FileService } from '@/server/services/file';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { SkillImportError, SkillManifestError } from './errors';
 import { SkillParser } from './parser';

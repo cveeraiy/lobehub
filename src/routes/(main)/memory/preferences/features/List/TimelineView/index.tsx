@@ -2,8 +2,8 @@
 
 import { memo } from 'react';
 
-import { type DisplayPreferenceMemory } from '@/database/repositories/userMemory';
 import { useUserMemoryStore } from '@/store/userMemory';
+import { type DisplayPreferenceMemory } from '@/types/userMemory';
 
 import { TimelineView as GenericTimelineView } from '../../../../features/TimeLineView';
 import { PeriodHeader, TimelineItemWrapper } from '../../../../features/TimeLineView/PeriodGroup';

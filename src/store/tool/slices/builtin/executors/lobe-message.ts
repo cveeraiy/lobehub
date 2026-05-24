@@ -5,7 +5,7 @@
  * Delegates all operations to the server since they require
  * database access (bot credentials, platform adapters).
  */
-import { MessageApiName, MessageToolIdentifier } from '@lobechat/builtin-tool-message';
+import { MessageApiName, MessageToolIdentifier } from '@lobechat/builtin-tools';
 import type { BuiltinToolContext, BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 

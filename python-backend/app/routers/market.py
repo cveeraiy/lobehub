@@ -180,7 +180,7 @@ async def _market_access_headers(
     headers: dict[str, str] = {}
 
     settings_row = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
     market_state = dict(settings_row.market or {}) if settings_row and settings_row.market else {}
     market_token = market_state.get("accessToken") or request.cookies.get("mp_token")
@@ -249,11 +249,11 @@ def _market_profile(user: dict[str, Any]) -> dict[str, Any]:
 
 async def _get_or_create_user_settings(session: AsyncSession, user_id: str) -> UserSettings:
     settings_row = (
-        await session.execute(select(UserSettings).where(UserSettings.user_id == user_id))
+        await session.execute(select(UserSettings).where(UserSettings.id == user_id))
     ).scalar_one_or_none()
     if settings_row is not None:
         return settings_row
-    settings_row = UserSettings(user_id=user_id, market={"creds": [], "files": {}, "oauthConnections": []})
+    settings_row = UserSettings(id=user_id, market={"creds": [], "files": {}, "oauthConnections": []})
     session.add(settings_row)
     await session.flush()
     return settings_row

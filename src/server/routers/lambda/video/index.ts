@@ -17,13 +17,7 @@ import { chargeAfterGenerate } from '@/business/server/video-generation/chargeAf
 import { chargeBeforeGenerate } from '@/business/server/video-generation/chargeBeforeGenerate';
 import { getVideoFreeQuota } from '@/business/server/video-generation/getVideoFreeQuota';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
-import {
-  asyncTasks,
-  generationBatches,
-  generations,
-  type NewGeneration,
-  type NewGenerationBatch,
-} from '@/database/schemas';
+import { asyncTasks, generationBatches, generations } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
@@ -33,6 +27,7 @@ import { processBackgroundVideoPolling } from '@/server/services/generation/vide
 import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 import { afterResponse } from '@/server/utils/afterResponse';
 import { AsyncTaskStatus, AsyncTaskType } from '@/types/asyncTask';
+import type { NewGeneration, NewGenerationBatch } from '@/types/generation';
 
 import { createVideoTaskSubmitError } from './error';
 

@@ -1,8 +1,8 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DocumentModel } from '@/database/models/document';
 import { FileModel } from '@/database/models/file';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { FileService } from '../../file';
 import { DocumentHistoryService } from '../history';

@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
@@ -19,17 +20,17 @@ from app.dependencies import get_current_user_id
 from app.models.agent_ops import AgentBotProvider
 from app.services.bot.platforms import platform_registry
 from app.services.bot.platforms.line.definition import fetch_line_bot_info
+from app.services.bot.platforms.wechat.client import (
+    WechatApiError,
+    fetch_qr_code,
+    poll_qr_status,
+)
 from app.services.bot.runtime_status import (
     clear_bot_runtime_status,
     get_bot_runtime_status,
     update_bot_runtime_status,
 )
 from app.services.key_vault.service import KeyVaultService
-from app.services.bot.platforms.wechat.client import (
-    WechatApiError,
-    fetch_qr_code,
-    poll_qr_status,
-)
 
 router = APIRouter(prefix="/api/agent-bot-providers", tags=["Agent Bot Providers"])
 
@@ -64,6 +65,14 @@ def _encode_credentials(credentials: dict[str, str] | None) -> str | None:
     except (RuntimeError, ValueError):
         pass
     return json.dumps(credentials)
+
+
+def _is_uuid(value: str) -> bool:
+    try:
+        UUID(value)
+    except ValueError:
+        return False
+    return True
 
 
 def _serialize(row: AgentBotProvider) -> dict[str, Any]:
@@ -213,6 +222,9 @@ async def get_bot_provider(
     session: AsyncSession = Depends(get_db),
 ):
     """Get a single bot provider by ID."""
+    if not _is_uuid(provider_id):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Bot provider not found")
+
     stmt = select(AgentBotProvider).where(
         and_(
             AgentBotProvider.id == provider_id,

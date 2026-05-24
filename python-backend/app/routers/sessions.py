@@ -38,6 +38,10 @@ class UpdateSessionBody(BaseModel):
     pinned: Optional[bool] = None
     group_id: Optional[str] = None
     slug: Optional[str] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    avatar: Optional[str] = None
+    background_color: Optional[str] = None
 
 
 class CreateGroupBody(BaseModel):
@@ -84,11 +88,16 @@ async def batch_create_sessions(
 ):
     added = 0
     for item in body:
+        meta = item.meta or {}
         s = Session(
             user_id=user_id,
             type=item.type,
             group_id=item.group,
             pinned=item.pinned or False,
+            title=meta.get("title"),
+            description=meta.get("description"),
+            avatar=meta.get("avatar"),
+            background_color=meta.get("backgroundColor") or meta.get("background_color"),
         )
         if item.id:
             s.id = item.id
@@ -251,7 +260,22 @@ async def create_session(
         await session.flush()
         agent_id = agent.id
 
-    s = Session(user_id=user_id, agent_id=agent_id, group_id=group_id, type=body.type)
+    meta = session_payload.get("meta") or {}
+    s = Session(
+        user_id=user_id,
+        agent_id=agent_id,
+        group_id=group_id,
+        type=body.type,
+        title=session_payload.get("title") or meta.get("title"),
+        description=session_payload.get("description") or meta.get("description"),
+        avatar=session_payload.get("avatar") or meta.get("avatar"),
+        background_color=(
+            session_payload.get("background_color")
+            or session_payload.get("backgroundColor")
+            or meta.get("background_color")
+            or meta.get("backgroundColor")
+        ),
+    )
     session.add(s)
     await session.flush()
     return {"id": s.id}
@@ -310,6 +334,10 @@ async def clone_session(
         agent_id=orig.agent_id,
         group_id=orig.group_id,
         type=orig.type,
+        title=orig.title,
+        description=orig.description,
+        avatar=orig.avatar,
+        background_color=orig.background_color,
     )
     session.add(new_session)
     await session.flush()
@@ -495,6 +523,10 @@ def _session_dict(s: Session) -> dict[str, Any]:
         "type": s.type,
         "pinned": s.pinned,
         "slug": s.slug,
+        "title": s.title,
+        "description": s.description,
+        "avatar": s.avatar,
+        "background_color": s.background_color,
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
     }

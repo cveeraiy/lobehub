@@ -34,7 +34,7 @@ Our testing strategy includes:
 bunx vitest run --silent='passed-only' 'path/to/test.test.ts'
 
 # Run tests in a package (e.g., database)
-cd packages/database && bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
+bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
 
 # Type checking
 bun run type-check
@@ -247,11 +247,11 @@ For database and ORM tests in packages:
 
 ```bash
 # Client DB tests
-cd packages/database
+cd .
 bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
 
 # Server DB tests
-cd packages/database
+cd .
 TEST_SERVER_DB=1 bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
 ```
 

@@ -1,8 +1,8 @@
-import type { AgentDocument } from '@/database/models/agentDocuments';
-import { PolicyLoad } from '@/database/models/agentDocuments';
-import { DOCUMENT_FOLDER_TYPE } from '@/database/schemas';
 import { exportEditorDataSnapshot } from '@/server/services/agentDocuments/headlessEditor';
 import { AgentDocumentVfsError } from '@/server/services/agentDocumentVfs/errors';
+import type { AgentDocument } from '@/types/agentDocument';
+import { PolicyLoad } from '@/types/agentDocument';
+import { DOCUMENT_FOLDER_TYPE } from '@/types/files';
 
 import { getUnifiedSkillNamespaceRootPath } from '../path';
 import type { SkillMountNode } from '../types';

@@ -130,7 +130,6 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PWD=${POSTGRES_PASSWORD}
       - POSTGRES_SEEDS=postgresql
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
     ports:
       - '7233:7233'
     restart: always

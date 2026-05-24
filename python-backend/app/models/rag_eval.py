@@ -1,6 +1,6 @@
 """RAG eval tables. (Non-MVP)
 
-Source: packages/database/src/schemas/ragEvals.ts
+Source: src/database/schemas/ragEvals.ts
 """
 
 from __future__ import annotations
@@ -8,7 +8,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Optional
 
-from sqlalchemy import Index, text
+from sqlalchemy import Column, ForeignKey, Index, text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import _utcnow, create_nanoid, json_column, text_array_column
@@ -96,7 +97,10 @@ class RagEvalEvaluationRecord(SQLModel, table=True):
 
     language_model: Optional[str] = None
     embedding_model: Optional[str] = None
-    question_embedding_id: Optional[str] = Field(default=None, foreign_key="embeddings.id")
+    question_embedding_id: Optional[str] = Field(
+        default=None,
+        sa_column=Column(PG_UUID(as_uuid=False), ForeignKey("embeddings.id")),
+    )
 
     duration: Optional[int] = None
     dataset_record_id: str = Field(foreign_key="rag_eval_dataset_records.id", nullable=False)

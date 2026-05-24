@@ -1,4 +1,3 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import {
   type SkillResourceContent,
   type SkillResourceMeta,
@@ -9,6 +8,7 @@ import debug from 'debug';
 import { sha256 } from 'js-sha256';
 
 import { FileService } from '@/server/services/file';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { SkillResourceError } from './errors';
 

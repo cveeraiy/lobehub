@@ -2,7 +2,7 @@ import {
   type ActivateToolsParams,
   ActivatorApiName,
   LobeActivatorIdentifier,
-} from '@lobechat/builtin-tool-activator';
+} from '@lobechat/builtin-tools';
 import { builtinToolIdentifiers } from '@lobechat/builtin-tools/identifiers';
 import { safeParseJSON } from '@lobechat/utils';
 import { ActionIcon, Avatar, Flexbox, Icon } from '@lobehub/ui';

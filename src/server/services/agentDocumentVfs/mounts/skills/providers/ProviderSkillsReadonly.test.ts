@@ -1,22 +1,43 @@
 // @vitest-environment node
-import { builtinSkills } from '@lobechat/builtin-skills';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { filterBuiltinSkills } from '@/helpers/skillFilters';
+import { callPythonBackend } from '@/server/utils/pythonBackend';
 
 import { ProviderSkillsBuiltin } from './ProviderSkillsBuiltin';
 import { ProviderSkillsInstalledActive } from './ProviderSkillsInstalledActive';
 import { ProviderSkillsInstalledAll } from './ProviderSkillsInstalledAll';
 
+vi.mock('@/server/utils/pythonBackend', () => ({
+  callPythonBackend: vi.fn(),
+}));
+
 describe('readonly skill providers', () => {
-  const builtinSkill = filterBuiltinSkills(builtinSkills)[0];
-  const builtinSkillWithResources = filterBuiltinSkills(builtinSkills).find(
-    (skill) => skill.resources && Object.keys(skill.resources).length > 0,
-  );
+  const builtinSkill = {
+    content: '# Artifacts',
+    identifier: 'lobe-artifacts',
+    name: 'Artifacts',
+    source: 'builtin',
+  };
+  const builtinSkillWithResources = {
+    content: '# Task',
+    identifier: 'task',
+    name: 'Task',
+    resources: {
+      'references/commands': {
+        content: '# Commands',
+        size: 10,
+      },
+    },
+    source: 'builtin',
+  };
+
+  beforeEach(() => {
+    vi.mocked(callPythonBackend).mockResolvedValue([builtinSkill, builtinSkillWithResources]);
+  });
 
   describe('ProviderSkillsBuiltin', () => {
     it('lists builtin skill directories at the namespace root by identifier', async () => {
-      const provider = new ProviderSkillsBuiltin();
+      const provider = new ProviderSkillsBuiltin('user-1');
 
       const result = await provider.list({
         agentId: 'agent-1',
@@ -38,7 +59,7 @@ describe('readonly skill providers', () => {
     });
 
     it('reads SKILL.md content for a builtin skill from the identifier path', async () => {
-      const provider = new ProviderSkillsBuiltin();
+      const provider = new ProviderSkillsBuiltin('user-1');
 
       const result = await provider.get({
         agentId: 'agent-1',
@@ -58,19 +79,17 @@ describe('readonly skill providers', () => {
     });
 
     it('projects builtin resources as first-class VFS entries when present', async () => {
-      expect(builtinSkillWithResources).toBeDefined();
-
-      const provider = new ProviderSkillsBuiltin();
-      const [resourcePath] = Object.keys(builtinSkillWithResources!.resources!);
+      const provider = new ProviderSkillsBuiltin('user-1');
+      const [resourcePath] = Object.keys(builtinSkillWithResources.resources);
       const topLevelSegment = resourcePath.split('/')[0];
 
       const result = await provider.list({
         agentId: 'agent-1',
-        path: `./lobe/skills/builtin/skills/${builtinSkillWithResources!.identifier}`,
+        path: `./lobe/skills/builtin/skills/${builtinSkillWithResources.identifier}`,
         resolvedPath: {
           namespace: 'builtin',
-          relativePath: builtinSkillWithResources!.identifier,
-          skillName: builtinSkillWithResources!.identifier,
+          relativePath: builtinSkillWithResources.identifier,
+          skillName: builtinSkillWithResources.identifier,
         },
       });
 
@@ -78,13 +97,13 @@ describe('readonly skill providers', () => {
         expect.arrayContaining([
           expect.objectContaining({
             name: 'SKILL.md',
-            path: `./lobe/skills/builtin/skills/${builtinSkillWithResources!.identifier}/SKILL.md`,
-            size: builtinSkillWithResources!.content.length,
+            path: `./lobe/skills/builtin/skills/${builtinSkillWithResources.identifier}/SKILL.md`,
+            size: builtinSkillWithResources.content.length,
             type: 'file',
           }),
           expect.objectContaining({
             name: topLevelSegment,
-            path: `./lobe/skills/builtin/skills/${builtinSkillWithResources!.identifier}/${topLevelSegment}`,
+            path: `./lobe/skills/builtin/skills/${builtinSkillWithResources.identifier}/${topLevelSegment}`,
           }),
         ]),
       );

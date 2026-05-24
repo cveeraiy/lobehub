@@ -1,6 +1,6 @@
 """Threads, TopicDocuments, TopicShares tables. (Non-MVP)
 
-Source: packages/database/src/schemas/topic.ts
+Source: src/database/schemas/topic.ts
 """
 
 from __future__ import annotations
@@ -18,8 +18,13 @@ from app.models._helpers import _utcnow, id_generator, json_column
 class Thread(SQLModel, table=True):
     __tablename__ = "threads"
     __table_args__ = (
+        UniqueConstraint("client_id", "user_id", name="threads_client_id_user_id_unique"),
         Index("threads_topic_id_idx", "topic_id"),
         Index("threads_user_id_idx", "user_id"),
+        Index("threads_type_idx", "type"),
+        Index("threads_agent_id_idx", "agent_id"),
+        Index("threads_group_id_idx", "group_id"),
+        Index("threads_parent_thread_id_idx", "parent_thread_id"),
     )
 
     id: str = Field(
@@ -34,17 +39,20 @@ class Thread(SQLModel, table=True):
     group_id: Optional[str] = Field(default=None, foreign_key="chat_groups.id")
     metadata_: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("metadata"))
     title: Optional[str] = None
-    source_message_id: Optional[str] = Field(default=None, foreign_key="messages.id")
+    content: Optional[str] = None
+    editor_data: Optional[dict[str, Any]] = Field(default=None, sa_column=json_column("editor_data"))
+    source_message_id: Optional[str] = None
     # 'standalone' | 'continuation' | 'isolation' | 'eval'
-    type: Optional[str] = Field(default="standalone", max_length=255)
+    type: str = Field(default="standalone", nullable=False, max_length=255)
     status: Optional[str] = Field(default="active", max_length=255)
+    client_id: Optional[str] = None
 
     parent_thread_id: Optional[str] = Field(default=None, foreign_key="threads.id")
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     accessed_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
-    last_active_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
+    last_active_at: Optional[datetime] = Field(default_factory=_utcnow, nullable=True, sa_column_kwargs={"server_default": text("now()")})
 
 
 class TopicDocument(SQLModel, table=True):

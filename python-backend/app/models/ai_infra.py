@@ -1,6 +1,6 @@
 """AiProviders, AiModels tables.
 
-Source: packages/database/src/schemas/aiInfra.ts
+Source: src/database/schemas/aiInfra.ts
 """
 
 from __future__ import annotations
@@ -12,7 +12,6 @@ from sqlalchemy import Index, text
 from sqlmodel import Field, SQLModel
 
 from app.models._helpers import _utcnow, json_column
-
 
 # ── ai_providers ────────────────────────────────────────────────────────────
 
@@ -30,7 +29,7 @@ class AiProvider(SQLModel, table=True):
     description: Optional[str] = None
     logo: Optional[str] = None
 
-    enabled: bool = Field(default=True)
+    enabled: Optional[bool] = Field(default=True, nullable=True)
     sort: Optional[int] = None
 
     # 'builtin' | 'custom'
@@ -66,11 +65,12 @@ class AiModel(SQLModel, table=True):
 
     display_name: Optional[str] = None
     description: Optional[str] = None
-    enabled: bool = Field(default=True)
+    organization: Optional[str] = Field(default=None, max_length=100)
+    enabled: Optional[bool] = Field(default=True, nullable=True)
     sort: Optional[int] = None
 
     # 'chat' | 'embedding' | 'tts' | 'stt' | 'image' | 'video'
-    type: Optional[str] = Field(default="chat", max_length=255)
+    type: str = Field(default="chat", nullable=False, max_length=20)
     # 'builtin' | 'custom' | 'remote'
     source: Optional[str] = Field(default="builtin", max_length=255)
 

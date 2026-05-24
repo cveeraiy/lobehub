@@ -10,7 +10,6 @@ import {
   selectVisualFileItems,
   validateVisualMediaUrls,
 } from '@lobechat/builtin-tools';
-import type { LobeChatDatabase } from '@lobechat/database';
 import type { ChatStreamPayload } from '@lobechat/model-runtime';
 import { consumeStreamUntilDone } from '@lobechat/model-runtime';
 import type { BuiltinServerRuntimeOutput } from '@lobechat/types';
@@ -20,6 +19,7 @@ import { MessageModel } from '@/database/models/message';
 import { toolsEnv } from '@/envs/tools';
 import { FileService } from '@/server/services/file';
 import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import type { ServerRuntimeRegistration } from './types';
 

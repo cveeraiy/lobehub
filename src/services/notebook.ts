@@ -1,4 +1,4 @@
-import type { DocumentType } from '@lobechat/builtin-tool-notebook';
+import type { DocumentType } from '@lobechat/builtin-tools';
 import type { NotebookDocument } from '@lobechat/types';
 
 import { restClient } from '@/libs/rest';

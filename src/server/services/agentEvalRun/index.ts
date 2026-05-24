@@ -1,5 +1,4 @@
 import { LOADING_FLAT } from '@lobechat/const';
-import { type LobeChatDatabase } from '@lobechat/database';
 import type {
   EvalBenchmarkRubric,
   EvalRunAgentSnapshot,
@@ -26,6 +25,7 @@ import { TopicModel } from '@/database/models/topic';
 import { evaluate } from '@/server/modules/EvalRubric';
 import { AgentService } from '@/server/services/agent';
 import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
+import type { LobeChatDatabase } from '@/server/types/database';
 import {
   AgentEvalRunWorkflow,
   type ResumeAgentTrajectoryPayload,

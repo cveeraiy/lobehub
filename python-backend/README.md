@@ -73,6 +73,12 @@ python -m app.workers.temporal_worker
 
 The Docker Compose dev stack includes Temporal on `localhost:7233` and Temporal UI on <http://localhost:8233>.
 
+To run the live Temporal smoke test after Temporal is up:
+
+```bash
+RUN_TEMPORAL_LIVE_TESTS=1 pytest tests/test_temporal_live.py -q
+```
+
 ### 5. Verify
 
 ```bash
