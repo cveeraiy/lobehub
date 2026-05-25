@@ -1,17 +1,15 @@
 import type {
   ActivityMemoryItemSchema,
   AddIdentityActionSchema,
+  BuiltinToolContext,
+  BuiltinToolResult,
   ContextMemoryItemSchema,
   ExperienceMemoryItemSchema,
   PreferenceMemoryItemSchema,
-  RemoveIdentityActionSchema,
-  UpdateIdentityActionSchema,
-} from '@lobechat/memory-user-memory/schemas';
-import type {
-  BuiltinToolContext,
-  BuiltinToolResult,
   QueryTaxonomyOptionsParams,
+  RemoveIdentityActionSchema,
   SearchMemoryParams,
+  UpdateIdentityActionSchema,
 } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 import type { z } from 'zod';

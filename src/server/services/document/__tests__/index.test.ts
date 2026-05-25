@@ -12,14 +12,14 @@ vi.mock('@/database/models/document');
 vi.mock('@/database/models/file');
 vi.mock('../../file');
 vi.mock('../history');
-vi.mock('@lobechat/file-loaders', () => ({
+vi.mock('@lobechat/local-file-shell', () => ({
   loadFile: vi.fn(),
 }));
 vi.mock('debug', () => ({
   default: () => vi.fn(),
 }));
 
-const { loadFile } = await import('@lobechat/file-loaders');
+const { loadFile } = await import('@lobechat/local-file-shell');
 
 const createEditorDataWithDiffNode = () => ({
   root: {

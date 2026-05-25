@@ -203,6 +203,7 @@ export class StreamingExecutorActionImpl {
     const toolsEngine = createAgentToolsEngine(
       { model: agentConfigData.model, provider: agentConfigData.provider! },
       effectivePluginIds,
+      effectiveAgentId,
     );
     // When skillActivateMode is 'manual':
     // Exclude only discovery tools (activator, skill-store) so runtime-managed defaults

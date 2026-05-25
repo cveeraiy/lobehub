@@ -17,19 +17,37 @@ export const generateToolName = (
 };
 
 /**
- * Ensure object-typed tool parameters carry an explicit `required` array.
+ * Ensure tool parameters are object JSON schemas and carry an explicit `required` array.
  *
  * Why: JSON Schema permits omitting `required` when nothing is required, but
  * some OpenAI-compatible upstreams (bailian, glm/zhipu) reject the field when
  * it arrives as `null` after intermediate proxies normalize the missing key.
  * Emitting `required: []` keeps the wire format consistent for strict providers.
+ *
+ * Some external manifests also provide `parameters` as a JSON string or another
+ * non-object shape. Tool-calling providers expect an object schema, so normalize
+ * invalid input to an empty object schema instead of letting provider validation
+ * fail at request time.
  */
-export const normalizeToolParameters = (
-  parameters: Record<string, any> | undefined,
-): Record<string, any> | undefined => {
-  if (!parameters || parameters.type !== 'object') return parameters;
-  if (Array.isArray(parameters.required)) return parameters;
-  return { ...parameters, required: [] };
+export const normalizeToolParameters = (parameters: unknown): Record<string, any> => {
+  let schema = parameters;
+
+  if (typeof schema === 'string') {
+    try {
+      schema = JSON.parse(schema);
+    } catch {
+      schema = undefined;
+    }
+  }
+
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+    return { properties: {}, required: [], type: 'object' };
+  }
+
+  const objectSchema = schema as Record<string, any>;
+  if (objectSchema.type !== 'object') return { properties: {}, required: [], type: 'object' };
+  if (Array.isArray(objectSchema.required)) return objectSchema;
+  return { ...objectSchema, required: [] };
 };
 
 /**

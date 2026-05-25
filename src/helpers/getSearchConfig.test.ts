@@ -144,6 +144,36 @@ describe('getSearchConfig', () => {
     });
   });
 
+  it('should use app web browsing for Bedrock even when the model advertises params search', () => {
+    vi.mocked(chatConfigByIdSelectors.getChatConfigById).mockReturnValue(
+      () =>
+        ({
+          searchMode: 'on',
+          useModelBuiltinSearch: true,
+        }) as any,
+    );
+
+    vi.mocked(aiInfraSelectors.aiProviderSelectors.isProviderHasBuiltinSearch).mockReturnValue(
+      () => false,
+    );
+    vi.mocked(aiInfraSelectors.aiModelSelectors.isModelHasBuiltinSearch).mockReturnValue(
+      () => true,
+    );
+    vi.mocked(aiInfraSelectors.aiModelSelectors.isModelBuiltinSearchInternal).mockReturnValue(
+      () => false,
+    );
+
+    const result = getSearchConfig('global.anthropic.claude-haiku-4-5-20251001-v1:0', 'bedrock');
+
+    expect(result).toEqual({
+      enabledSearch: true,
+      isProviderHasBuiltinSearch: false,
+      isModelHasBuiltinSearch: true,
+      useModelSearch: false,
+      useApplicationBuiltinSearchTool: true,
+    });
+  });
+
   it('should not use model search when model has builtin search but preference is disabled', () => {
     vi.mocked(chatConfigByIdSelectors.getChatConfigById).mockReturnValue(
       () =>

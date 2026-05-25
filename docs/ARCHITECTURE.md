@@ -593,7 +593,6 @@ Each builtin tool is a self-contained package:
 | `@lobechat/agent-tracing`        | Agent execution tracing & debugging          |
 | `@lobechat/observability-otel`   | OpenTelemetry integration                    |
 | `@lobechat/ssrf-safe-fetch`      | SSRF-protected HTTP client                   |
-| `@lobechat/file-loaders`         | Document parsing (PDF, DOCX, etc.)           |
 | `@lobechat/python-interpreter`   | Python code execution (Pyodide)              |
 | `@lobechat/heterogeneous-agents` | External agent adapters (Claude Code, Codex) |
 

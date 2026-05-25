@@ -127,8 +127,9 @@ export const createAgentToolsEngine = (
   workingModel: WorkingModel,
   /** Runtime-resolved plugin IDs (from agentConfigResolver), may include tools beyond the active agent */
   pluginIds?: string[],
+  agentId?: string,
 ) => {
-  const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
+  const searchConfig = getSearchConfig(workingModel.model, workingModel.provider, agentId);
   const agentState = getAgentStoreState();
   const userPlugins = agentSelectors.currentAgentPlugins(agentState) || [];
 

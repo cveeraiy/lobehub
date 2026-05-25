@@ -1,4 +1,4 @@
-import { loadFile } from '@lobechat/file-loaders';
+import { loadFile } from '@lobechat/local-file-shell';
 import debug from 'debug';
 import { and, eq } from 'drizzle-orm';
 import isEqual from 'fast-deep-equal';

@@ -1,25 +1,23 @@
-import type {
-  ActivityMemoryItemSchema,
-  AddIdentityActionSchema,
-  ContextMemoryItemSchema,
-  ExperienceMemoryItemSchema,
-  PreferenceMemoryItemSchema,
-  RemoveIdentityActionSchema,
-  UpdateIdentityActionSchema,
-} from '@lobechat/memory-user-memory/schemas';
 import { formatMemorySearchResults } from '@lobechat/prompts';
 import type {
+  ActivityMemoryItemSchema,
   AddActivityMemoryResult,
   AddContextMemoryResult,
   AddExperienceMemoryResult,
+  AddIdentityActionSchema,
   AddIdentityMemoryResult,
   AddPreferenceMemoryResult,
   BuiltinServerRuntimeOutput,
+  ContextMemoryItemSchema,
+  ExperienceMemoryItemSchema,
+  PreferenceMemoryItemSchema,
   QueryTaxonomyOptionsParams,
   QueryTaxonomyOptionsResult,
+  RemoveIdentityActionSchema,
   RemoveIdentityMemoryResult,
   SearchMemoryParams,
   SearchMemoryResult,
+  UpdateIdentityActionSchema,
   UpdateIdentityMemoryResult,
 } from '@lobechat/types';
 import type { z } from 'zod';

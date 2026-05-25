@@ -1,8 +1,7 @@
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
-import { loadFile } from '@lobechat/file-loaders';
-
+import { loadFile } from '../fileLoaders';
 import type { ReadFileParams, ReadFileResult } from '../types';
 import { expandTilde } from './expandTilde';
 

@@ -4,10 +4,11 @@ import type {
   ContextMemoryItemSchema,
   ExperienceMemoryItemSchema,
   PreferenceMemoryItemSchema,
+  QueryTaxonomyOptionsResult,
   RemoveIdentityActionSchema,
+  SearchMemoryResult,
   UpdateIdentityActionSchema,
-} from '@lobechat/memory-user-memory/schemas';
-import type { QueryTaxonomyOptionsResult, SearchMemoryResult } from '@lobechat/types';
+} from '@lobechat/types';
 import type { z } from 'zod';
 
 export const MemoryApiName = {

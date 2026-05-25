@@ -18,7 +18,7 @@ The Python backend is now a parallel backend implementation. Its strongest overl
   remaining TS server callers are retired.
 - `packages/agent-runtime`, `packages/agent-signal`, `packages/tool-runtime`, many `packages/builtin-tool-*`: Python has service/tool equivalents.
 - `packages/model-runtime`, `packages/model-bank`, `packages/openapi`, `packages/fetch-sse`: Python has LLM, chat, webapi, and streaming equivalents.
-- `packages/memory-user-memory`, `packages/file-loaders`: Python has service/router/tool coverage for memory and files/RAG. `packages/web-crawler` has been removed after moving shared response shapes to `@lobechat/types`.
+- `packages/memory-user-memory` and `packages/file-loaders` have been removed. Memory request schemas now live in `@lobechat/types`; Python owns memory routers/services/workflows. File loader helpers moved into `@lobechat/local-file-shell` for local desktop parsing while Python owns REST file/chunk/RAG parsing paths.
 
 The key architectural rule is now: **Python SQLModel is the canonical database owner; the remaining
 TypeScript Drizzle code under `src/database` is a temporary compatibility island until the legacy TS
@@ -92,11 +92,11 @@ server callers are deleted.**
 | `eval-dataset-parser`              | Backend/shared             | Parses CSV/XLSX/JSON/JSONL eval datasets.                                                                                       | Strong overlap with `app/routers/agent_eval.py` and `rag_eval.py` dataset import/parse endpoints.                                                                       |
 | `eval-rubric`                      | Backend/shared             | Rubric evaluator for agent eval benchmarks.                                                                                     | Compare with Python agent evaluation services.                                                                                                                          |
 | `fetch-sse`                        | Shared/client              | SSE fetch utilities and error parsing.                                                                                          | Python must emit compatible streaming/event/error shapes for SPA clients.                                                                                               |
-| `file-loaders`                     | Backend/shared             | File parsing/loaders and utility types.                                                                                         | Strong overlap with Python file/chunk/RAG parse services and upload routes.                                                                                             |
+| `file-loaders`                     | Removed                    | Package removed; remaining local desktop parser helper moved into `@lobechat/local-file-shell`.                                 | Python file/chunk/RAG parse services own REST parsing paths; legacy TS document fallback still uses the local helper until old TRPC paths are retired.                  |
 | `heterogeneous-agents`             | Shared/client              | External agent adapter registry/config/client labels.                                                                           | Compare with Python `agent_runtime` only if Python executes heterogeneous agents.                                                                                       |
 | `local-file-shell`                 | Backend/desktop            | Local file/shell helpers built on file loaders.                                                                                 | Mostly desktop/local. Python backend should not duplicate unless it owns local shell execution.                                                                         |
 | `markdown-patch`                   | Removed                    | Package removed; remaining hunk request type moved into `@lobechat/builtin-tools`.                                              | Python onboarding PATCH owns markdown patch application semantics.                                                                                                      |
-| `memory-user-memory`               | Backend/shared             | User memory extraction/conversion/providers/prompts/schemas.                                                                    | Strong overlap with `app/services/memory_service` and `app/routers/user_memory.py`.                                                                                     |
+| `memory-user-memory`               | Removed                    | Package removed; remaining memory tool request schemas moved into `@lobechat/types`.                                            | Python memory routers/services/workflows own memory execution and extraction behavior.                                                                                  |
 | `model-bank`                       | Shared/backend             | Provider/model catalog and standard parameter definitions.                                                                      | Strong overlap with `app/services/model_catalog`, `ai_infra_service`, and model/provider REST responses.                                                                |
 | `model-runtime`                    | Backend                    | Provider runtime layer for LLM calls and errors.                                                                                | Strong overlap with `app/services/llm_service`, `provider_runtime.py`, `webapi.py`, image/video generation routes.                                                      |
 | `observability-otel`               | Backend                    | OpenTelemetry helpers for node/trpc/gen-ai/modules.                                                                             | Python has Langfuse/runtime tracing; compare trace attributes only if cross-language observability must match.                                                          |
@@ -192,7 +192,7 @@ Important parity points:
 
 Compare:
 
-- TS: `memory-user-memory`, `file-loaders`, `eval-dataset-parser`, `eval-rubric`
+- TS: `eval-dataset-parser`, `eval-rubric`
 - Python: `memory_service`, `file_service`, `knowledge_service`, `search`, `web_search`, `agent_eval`, `rag_eval`
 
 Important parity points:

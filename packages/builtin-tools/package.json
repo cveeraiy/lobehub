@@ -77,7 +77,6 @@
     "@lobechat/builtin-tool-local-system": "workspace:*",
     "@lobechat/builtin-tool-page-agent": "workspace:*",
     "@lobechat/const": "workspace:*",
-    "@lobechat/memory-user-memory": "workspace:*",
     "@lobechat/prompts": "workspace:*",
     "@lobechat/shared-tool-ui": "workspace:*",
     "@lobechat/tool-runtime": "workspace:*"

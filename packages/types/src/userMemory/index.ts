@@ -1,3 +1,4 @@
+export * from './actionSchemas';
 export * from './activity';
 export * from './base';
 export * from './experience';

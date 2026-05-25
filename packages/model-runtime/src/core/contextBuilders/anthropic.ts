@@ -24,6 +24,28 @@ const isImageTypeSupported = (mimeType: string | null): boolean => {
  */
 const hasVisibleText = (text: string | null | undefined): text is string => !!text?.trim();
 
+const normalizeToolInputSchema = (parameters: unknown): Anthropic.Tool.InputSchema => {
+  let schema = parameters;
+
+  if (typeof schema === 'string') {
+    try {
+      schema = JSON.parse(schema);
+    } catch {
+      schema = undefined;
+    }
+  }
+
+  if (!schema || typeof schema !== 'object' || Array.isArray(schema)) {
+    return { properties: {}, required: [], type: 'object' };
+  }
+
+  const objectSchema = schema as Record<string, unknown>;
+  if (objectSchema.type !== 'object') return { properties: {}, required: [], type: 'object' };
+  if (Array.isArray(objectSchema.required)) return objectSchema as Anthropic.Tool.InputSchema;
+
+  return { ...objectSchema, required: [] } as Anthropic.Tool.InputSchema;
+};
+
 export const buildAnthropicBlock = async (
   content: UserMessageContentPart,
 ): Promise<Anthropic.ContentBlock | Anthropic.ImageBlockParam | undefined> => {
@@ -407,7 +429,7 @@ export const buildAnthropicTools = (
           ? { type: 'ephemeral' }
           : undefined,
       description: tool.function.description,
-      input_schema: tool.function.parameters as Anthropic.Tool.InputSchema,
+      input_schema: normalizeToolInputSchema(tool.function.parameters),
       name: tool.function.name,
     }),
   );

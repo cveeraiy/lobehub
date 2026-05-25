@@ -341,6 +341,57 @@ describe('LobeBedrockAI', () => {
         expect(bodyContent.tools).toBeDefined();
       });
 
+      it('should normalize stringified tool parameter schemas for Claude', async () => {
+        // Arrange
+        const mockStream = new ReadableStream({
+          start(controller) {
+            controller.enqueue('Hello, world!');
+            controller.close();
+          },
+        });
+        const mockResponse = Promise.resolve(mockStream);
+        (instance['client'].send as Mock).mockResolvedValue(mockResponse);
+
+        const tools = [
+          {
+            function: {
+              description: 'Get weather information',
+              name: 'get_weather',
+              parameters: JSON.stringify({
+                properties: {
+                  location: {
+                    type: 'string',
+                  },
+                },
+                type: 'object',
+              }),
+            },
+            type: 'function' as const,
+          },
+        ];
+
+        // Act
+        await instance.chat({
+          messages: [{ content: 'Hello', role: 'user' }],
+          model: 'anthropic.claude-v2:1',
+          temperature: 0.5,
+          tools: tools as any,
+        });
+
+        // Assert
+        const callArgs = (InvokeModelWithResponseStreamCommand as any as Mock).mock.calls[0][0];
+        const bodyContent = JSON.parse(callArgs.body);
+        expect(bodyContent.tools[0].input_schema).toEqual({
+          properties: {
+            location: {
+              type: 'string',
+            },
+          },
+          required: [],
+          type: 'object',
+        });
+      });
+
       it('should use default max_tokens when not provided', async () => {
         // Arrange
         const mockStream = new ReadableStream({
