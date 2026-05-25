@@ -4,6 +4,7 @@
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
 import {
   alwaysOnToolIds,
+  builtinTools,
   CloudSandboxManifest,
   defaultToolIds,
   KnowledgeBaseManifest,
@@ -90,7 +91,9 @@ export const createToolsEngine = (config: ToolsEngineConfig = {}): ToolsEngine =
   const pluginManifests = pluginSelectors.installedPluginManifestList(toolStoreState);
 
   // Get all builtin tool manifests
-  const builtinManifests = toolStoreState.builtinTools.map((tool) => tool.manifest as ToolManifest);
+  const builtinManifests = (toolStoreState.builtinTools || builtinTools).map(
+    (tool) => tool.manifest as ToolManifest,
+  );
 
   // Get Klavis tool manifests
   const klavisTools = klavisStoreSelectors.klavisAsLobeTools(toolStoreState);
@@ -127,7 +130,7 @@ export const createAgentToolsEngine = (
 ) => {
   const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
   const agentState = getAgentStoreState();
-  const userPlugins = agentSelectors.currentAgentPlugins(agentState);
+  const userPlugins = agentSelectors.currentAgentPlugins(agentState) || [];
 
   return createToolsEngine({
     defaultToolIds,
@@ -139,7 +142,9 @@ export const createAgentToolsEngine = (
 
         if (
           !isToolAvailableInCurrentEnv(pluginId, {
-            installedPlugins: installedPlugin ? [installedPlugin] : toolStoreState.installedPlugins,
+            installedPlugins: installedPlugin
+              ? [installedPlugin]
+              : toolStoreState.installedPlugins || [],
           })
         ) {
           return false;

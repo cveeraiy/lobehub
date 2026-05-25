@@ -18,6 +18,14 @@ import { useDetailContext } from './DetailProvider';
 
 const PAGE_SIZE = 12;
 
+const normalizeAgentResponse = (data?: {
+  items?: DiscoverAssistantItem[];
+  totalCount?: number;
+}) => ({
+  items: data?.items || [],
+  totalCount: data?.totalCount || 0,
+});
+
 interface AgentsProps {
   inModal?: boolean;
 }
@@ -47,16 +55,27 @@ const Agents = memo<AgentsProps>(({ inModal }) => {
   // Data accumulation logic
   useEffect(() => {
     if (data) {
+      const nextData = normalizeAgentResponse(data);
+
       if (currentPage === 1) {
-        setItems(data.items);
+        setItems(nextData.items);
       } else if (currentPage > prevPageRef.current) {
-        setItems((prev) => [...prev, ...data.items]);
+        setItems((prev) => [...prev, ...nextData.items]);
       }
-      setTotalCount(data.totalCount);
+      setTotalCount(nextData.totalCount);
       setIsInitialized(true);
       prevPageRef.current = currentPage;
     }
   }, [data, currentPage]);
+
+  useEffect(() => {
+    if (!isLoading && !error && !data) {
+      setItems([]);
+      setTotalCount(0);
+      setIsInitialized(true);
+      prevPageRef.current = currentPage;
+    }
+  }, [currentPage, data, error, isLoading]);
 
   const hasMore = items.length < totalCount;
 

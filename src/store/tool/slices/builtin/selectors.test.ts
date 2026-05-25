@@ -16,6 +16,18 @@ const mockBuiltinSkill = {
 
 describe('builtinToolSelectors', () => {
   describe('metaList', () => {
+    it('should tolerate persisted state missing builtin tool fields', () => {
+      const state = {
+        ...initialState,
+        builtinSkills: undefined,
+        builtinTools: undefined,
+        uninstalledBuiltinTools: undefined,
+      } as unknown as ToolStoreState;
+
+      expect(() => builtinToolSelectors.metaList(state)).not.toThrow();
+      expect(() => builtinToolSelectors.installedBuiltinSkills(state)).not.toThrow();
+    });
+
     it('should return meta list with builtin tools and skills', () => {
       const state = {
         ...initialState,

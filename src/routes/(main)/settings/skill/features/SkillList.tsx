@@ -1,5 +1,6 @@
 'use client';
 
+import { builtinTools } from '@lobechat/builtin-tools';
 import {
   getKlavisServerByServerIdentifier,
   getLobehubSkillProviderById,
@@ -67,8 +68,8 @@ const SkillList = memo(() => {
   const installedPluginList = useToolStore(pluginSelectors.installedPluginMetaList, isEqual);
   const marketAgentSkills = useToolStore(agentSkillsSelectors.getMarketAgentSkills, isEqual);
   const userAgentSkills = useToolStore(agentSkillsSelectors.getUserAgentSkills, isEqual);
-  const builtinSkills = useToolStore((s) => s.builtinSkills, isEqual);
-  const allBuiltinTools = useToolStore((s) => s.builtinTools, isEqual);
+  const builtinSkills = useToolStore((s) => s.builtinSkills || [], isEqual);
+  const allBuiltinTools = useToolStore((s) => s.builtinTools || builtinTools, isEqual);
   const uninstalledBuiltinTools = useToolStore(
     builtinToolSelectors.uninstalledBuiltinTools,
     isEqual,

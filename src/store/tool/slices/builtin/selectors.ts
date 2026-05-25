@@ -1,4 +1,8 @@
-import { runtimeManagedToolIds } from '@lobechat/builtin-tools';
+import {
+  builtinTools,
+  defaultUninstalledBuiltinTools,
+  runtimeManagedToolIds,
+} from '@lobechat/builtin-tools';
 import { type BuiltinSkill, type LobeToolMeta } from '@lobechat/types';
 
 import {
@@ -68,6 +72,14 @@ const getKlavisMetas = (s: ToolStoreState): LobeToolMeta[] =>
 const getKlavisMetasWithAvailability = (s: ToolStoreState): LobeToolMetaWithAvailability[] =>
   getKlavisMetas(s).map((meta) => ({ ...meta, availableInWeb: true }));
 
+const getBuiltinTools = (s: ToolStoreState): ToolStoreState['builtinTools'] =>
+  s.builtinTools || builtinTools;
+
+const getBuiltinSkills = (s: ToolStoreState): BuiltinSkill[] => s.builtinSkills || [];
+
+const getUninstalledBuiltinTools = (s: ToolStoreState): string[] =>
+  s.uninstalledBuiltinTools || defaultUninstalledBuiltinTools;
+
 // Set form for O(1) lookup inside the filter loop.
 const RUNTIME_MANAGED_TOOL_IDS = new Set(runtimeManagedToolIds);
 const USER_HIDDEN_BUILTIN_TOOL_IDS = new Set(['lobe-task']);
@@ -91,9 +103,9 @@ const buildVisibleMetaList = (
   s: ToolStoreState,
   { includeHidden }: { includeHidden: boolean },
 ): LobeToolMeta[] => {
-  const { uninstalledBuiltinTools } = s;
+  const uninstalledBuiltinTools = getUninstalledBuiltinTools(s);
 
-  const builtinMetas = s.builtinTools
+  const builtinMetas = getBuiltinTools(s)
     .filter((item) => {
       // Filter hidden tools (unless caller opts in)
       if (item.hidden && !includeHidden) return false;
@@ -118,7 +130,7 @@ const buildVisibleMetaList = (
     })
     .map(toBuiltinMeta);
 
-  const skillMetas = (s.builtinSkills || [])
+  const skillMetas = getBuiltinSkills(s)
     .filter((skill) => {
       if (!isBuiltinSkillAvailableInCurrentEnv(skill.identifier)) return false;
       if (uninstalledBuiltinTools.includes(skill.identifier)) return false;
@@ -165,7 +177,7 @@ const EXCLUDED_TOOLS = new Set([
  * Returns availability info so UI can show hints for unavailable tools
  */
 const allMetaList = (s: ToolStoreState): LobeToolMetaWithAvailability[] => {
-  const builtinMetas = s.builtinTools
+  const builtinMetas = getBuiltinTools(s)
     .filter((item) => {
       // Exclude internal tools that should not be user-configurable
       if (EXCLUDED_TOOLS.has(item.identifier)) return false;
@@ -174,7 +186,7 @@ const allMetaList = (s: ToolStoreState): LobeToolMetaWithAvailability[] => {
     })
     .map(toBuiltinMetaWithAvailability);
 
-  const skillMetas = (s.builtinSkills || []).map(toSkillMetaWithAvailability);
+  const skillMetas = getBuiltinSkills(s).map(toSkillMetaWithAvailability);
   const agentSkillMetas = agentSkillsSelectors
     .agentSkillMetaList(s)
     .map((meta) => ({ ...meta, availableInWeb: true }));
@@ -187,9 +199,9 @@ const allMetaList = (s: ToolStoreState): LobeToolMetaWithAvailability[] => {
  * Used for agent profile tool configuration where only installed tools should be shown
  */
 const installedAllMetaList = (s: ToolStoreState): LobeToolMetaWithAvailability[] => {
-  const { uninstalledBuiltinTools } = s;
+  const uninstalledBuiltinTools = getUninstalledBuiltinTools(s);
 
-  const builtinMetas = s.builtinTools
+  const builtinMetas = getBuiltinTools(s)
     .filter((item) => {
       if (EXCLUDED_TOOLS.has(item.identifier)) return false;
       if (USER_HIDDEN_BUILTIN_TOOL_IDS.has(item.identifier)) return false;
@@ -206,9 +218,9 @@ const installedAllMetaList = (s: ToolStoreState): LobeToolMetaWithAvailability[]
  * Get installed builtin skills (excludes uninstalled ones)
  */
 const installedBuiltinSkills = (s: ToolStoreState): BuiltinSkill[] =>
-  (s.builtinSkills || []).filter((skill) => {
+  getBuiltinSkills(s).filter((skill) => {
     if (!isBuiltinSkillAvailableInCurrentEnv(skill.identifier)) return false;
-    if (s.uninstalledBuiltinTools.includes(skill.identifier)) return false;
+    if (getUninstalledBuiltinTools(s).includes(skill.identifier)) return false;
 
     return true;
   });
@@ -216,13 +228,13 @@ const installedBuiltinSkills = (s: ToolStoreState): BuiltinSkill[] =>
 /**
  * Get uninstalled builtin tool identifiers
  */
-const uninstalledBuiltinTools = (s: ToolStoreState): string[] => s.uninstalledBuiltinTools;
+const uninstalledBuiltinTools = (s: ToolStoreState): string[] => getUninstalledBuiltinTools(s);
 
 /**
  * Check if a builtin tool is installed
  */
 const isBuiltinToolInstalled = (identifier: string) => (s: ToolStoreState) =>
-  !s.uninstalledBuiltinTools.includes(identifier);
+  !getUninstalledBuiltinTools(s).includes(identifier);
 
 export const builtinToolSelectors = {
   allMetaList,

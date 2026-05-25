@@ -9,7 +9,7 @@
  * because the activated state is persisted in message pluginState and accumulated
  * by selectActivatedToolIdsFromMessages at each agentic loop step.
  */
-import { SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
+import { builtinTools, SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
 import {
   ActivatorExecutionRuntime,
   type ActivatorRuntimeService,
@@ -52,7 +52,7 @@ const service: ActivatorRuntimeService = {
 
     for (const id of allowedIds) {
       // Search builtin tools
-      const builtin = s.builtinTools.find((t) => t.identifier === id);
+      const builtin = (s.builtinTools || builtinTools).find((t) => t.identifier === id);
       if (builtin) {
         results.push({
           apiDescriptions: builtin.manifest.api.map((a) => ({
@@ -68,7 +68,7 @@ const service: ActivatorRuntimeService = {
       }
 
       // Search installed plugins
-      const plugin = s.installedPlugins.find((p) => p.identifier === id);
+      const plugin = (s.installedPlugins || []).find((p) => p.identifier === id);
       if (plugin?.manifest) {
         results.push({
           apiDescriptions: (plugin.manifest.api || []).map((a) => ({

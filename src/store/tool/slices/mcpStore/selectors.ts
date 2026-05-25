@@ -3,11 +3,12 @@ import { type InstallPluginMeta } from '@/types/tool/plugin';
 import { type ToolStoreState } from '../../initialState';
 
 const mcpPluginList = (s: ToolStoreState) => {
-  const installedPluginIds = new Set(s.installedPlugins.map((i) => i.identifier));
+  const installedPluginIds = new Set((s.installedPlugins || []).map((i) => i.identifier));
+  const mcpPluginItems = s.mcpPluginItems || [];
   const list =
     s.listType === 'mcp'
-      ? s.mcpPluginItems
-      : s.mcpPluginItems.filter((p) => installedPluginIds.has(p.identifier));
+      ? mcpPluginItems
+      : mcpPluginItems.filter((p) => installedPluginIds.has(p.identifier));
 
   return list.map<InstallPluginMeta>((p) => ({
     author: p.author,
@@ -24,39 +25,40 @@ const mcpPluginList = (s: ToolStoreState) => {
   }));
 };
 
-const isPluginInstallLoading = (id: string) => (s: ToolStoreState) => s.pluginInstallLoading[id];
+const isPluginInstallLoading = (id: string) => (s: ToolStoreState) => s.pluginInstallLoading?.[id];
 
-const getMCPInstallProgress = (id: string) => (s: ToolStoreState) => s.mcpInstallProgress[id];
+const getMCPInstallProgress = (id: string) => (s: ToolStoreState) => s.mcpInstallProgress?.[id];
 
-const isMCPInstalling = (id: string) => (s: ToolStoreState) => !!s.mcpInstallProgress[id];
+const isMCPInstalling = (id: string) => (s: ToolStoreState) => !!s.mcpInstallProgress?.[id];
 
 const getPluginById = (id: string) => (s: ToolStoreState) => {
-  return s.mcpPluginItems.find((i) => i.identifier === id);
+  return (s.mcpPluginItems || []).find((i) => i.identifier === id);
 };
 
 const activeMCPPluginIdentifier = (s: ToolStoreState) => s.activeMCPIdentifier;
 
 const getMCPPluginRequiringConfig = (id: string) => (s: ToolStoreState) =>
-  s.mcpInstallProgress[id]?.configSchema;
+  s.mcpInstallProgress?.[id]?.configSchema;
 
 const isMCPPluginRequiringConfig = (id: string) => (s: ToolStoreState) =>
-  !!s.mcpInstallProgress[id]?.configSchema;
+  !!s.mcpInstallProgress?.[id]?.configSchema;
 
 // Check if plugin is installing (has install progress and not in config stage)
 const isMCPInstallInProgress = (id: string) => (s: ToolStoreState) => {
-  const progress = s.mcpInstallProgress[id];
+  const progress = s.mcpInstallProgress?.[id];
 
   return !!progress && !progress.needsConfig && progress.step !== 'Error';
 };
 
 // Test connection related selectors
-const isMCPConnectionTesting = (id: string) => (s: ToolStoreState) => s.mcpTestLoading[id] || false;
+const isMCPConnectionTesting = (id: string) => (s: ToolStoreState) =>
+  s.mcpTestLoading?.[id] || false;
 
-const getMCPConnectionTestError = (id: string) => (s: ToolStoreState) => s.mcpTestErrors[id];
+const getMCPConnectionTestError = (id: string) => (s: ToolStoreState) => s.mcpTestErrors?.[id];
 
 const getMCPConnectionTestState = (id: string) => (s: ToolStoreState) => ({
-  error: s.mcpTestErrors[id],
-  loading: s.mcpTestLoading[id] || false,
+  error: s.mcpTestErrors?.[id],
+  loading: s.mcpTestLoading?.[id] || false,
 });
 
 export const mcpStoreSelectors = {

@@ -19,7 +19,7 @@ export const BuiltinAgentSkillDetailProvider = ({
 }: BuiltinAgentSkillDetailProviderProps) => {
   const { t } = useTranslation(['setting']);
 
-  const builtinSkills = useToolStore((s) => s.builtinSkills, isEqual);
+  const builtinSkills = useToolStore((s) => s.builtinSkills || [], isEqual);
 
   const skill = useMemo(
     () => builtinSkills.find((s) => s.identifier === identifier),
