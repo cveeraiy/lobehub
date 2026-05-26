@@ -58,21 +58,18 @@ class ApiKey(SQLModel, table=True):
     __tablename__ = "api_keys"
     __table_args__ = (
         Index("api_keys_user_id_idx", "user_id"),
-        Index("api_keys_key_hash_idx", "key_hash"),
     )
 
     id: str = Field(default_factory=lambda: create_nanoid(16), primary_key=True, max_length=255)
     user_id: str = Field(foreign_key="users.id", nullable=False)
 
-    name: Optional[str] = None
-    key_hash: str = Field(nullable=False, max_length=255)
-    # First 8 chars for display
-    key_prefix: Optional[str] = Field(default=None, max_length=255)
+    name: str = Field(nullable=False, max_length=256)
+    key: str = Field(nullable=False, max_length=256)
+    key_hash: Optional[str] = Field(default=None, max_length=128)
     enabled: bool = Field(default=True)
 
     expires_at: Optional[datetime] = None
     last_used_at: Optional[datetime] = None
-    usage_count: int = Field(default=0)
 
     created_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})
     updated_at: datetime = Field(default_factory=_utcnow, sa_column_kwargs={"server_default": text("now()")})

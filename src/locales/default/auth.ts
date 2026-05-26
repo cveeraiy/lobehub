@@ -27,6 +27,7 @@ export default {
   'apikey.list.columns.name': 'Name',
   'apikey.list.columns.status': 'Enabled Status',
   'apikey.list.title': 'API Key List',
+  'apikey.message.operationFailed': 'API key operation failed',
   'apikey.validation.required': 'This field cannot be empty',
   'authModal.description':
     'Your login session has expired. Please sign in again to continue using cloud sync features.',

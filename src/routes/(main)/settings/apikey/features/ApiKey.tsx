@@ -4,7 +4,7 @@ import { type ActionType, type ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { Button } from '@lobehub/ui';
 import { useMutation } from '@tanstack/react-query';
-import { Popconfirm, Switch } from 'antd';
+import { App, Popconfirm, Switch } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import { Trash } from 'lucide-react';
 import { type FC } from 'react';
@@ -39,12 +39,17 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 const ApiKey: FC = () => {
   const { t } = useTranslation('auth');
+  const { message } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
 
   const actionRef = useRef<ActionType>(null);
+  const showError = (error: unknown) => {
+    message.error(error instanceof Error ? error.message : t('apikey.message.operationFailed'));
+  };
 
   const createMutation = useMutation({
     mutationFn: (params: CreateApiKeyParams) => apiKeyService.createApiKey(params),
+    onError: showError,
     onSuccess: () => {
       actionRef.current?.reload();
       setModalOpen(false);
@@ -54,6 +59,7 @@ const ApiKey: FC = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, params }: { id: string; params: UpdateApiKeyParams }) =>
       apiKeyService.updateApiKey(id, params),
+    onError: showError,
     onSuccess: () => {
       actionRef.current?.reload();
     },
@@ -61,6 +67,7 @@ const ApiKey: FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiKeyService.deleteApiKey(id),
+    onError: showError,
     onSuccess: () => {
       actionRef.current?.reload();
     },

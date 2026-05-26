@@ -39,6 +39,8 @@ async def test_create_api_key(client: httpx.AsyncClient, state: SharedState) -> 
     })
     assert r.status_code in (200, 201)
     data = r.json()
+    assert data["key"].startswith("sk-lh-")
+    assert len(data["key"]) == 22
     state.api_key_id = data.get("id") or data.get("keyId")
 
 
@@ -60,6 +62,7 @@ async def test_update_api_key_enabled(client: httpx.AsyncClient, state: SharedSt
     item = next((k for k in listed.json() if k["id"] == state.api_key_id), None)
     assert item is not None
     assert "enabled" in item
+    assert item["key"].startswith("sk-lh-")
 
 
 @pytest.mark.asyncio

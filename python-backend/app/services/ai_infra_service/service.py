@@ -263,6 +263,7 @@ async def update_provider_config(
         "config": config,
         "check_model": check_model,
         "fetch_on_client": fetch_on_client,
+        "updated_at": _now(),
     }
     # Remove None values so we only set fields that were provided
     common = {k: v for k, v in common.items() if v is not None}

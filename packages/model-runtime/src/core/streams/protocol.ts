@@ -386,6 +386,8 @@ export function createCallbacksTransformer(cb: ChatStreamCallbacks | undefined) 
           }
 
           case 'tool_calls': {
+            if (!Array.isArray(data)) break;
+
             if (!toolsCalling) toolsCalling = [];
             toolsCalling = parseToolCalls(toolsCalling, data);
 

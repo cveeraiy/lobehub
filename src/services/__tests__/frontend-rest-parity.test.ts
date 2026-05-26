@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { restClient } from '@/libs/rest';
 
+import { apiKeyService } from '../apiKey';
 import { businessService } from '../business';
 import { cloudSandboxService } from '../cloudSandbox';
 import { credsService } from '../creds';
@@ -184,6 +185,38 @@ describe('frontend REST parity services', () => {
     expect(restClient.get).toHaveBeenCalledWith('/subscription');
     expect(restClient.get).toHaveBeenCalledWith('/top-up');
     expect(restClient.get).toHaveBeenCalledWith('/spend');
+  });
+
+  it('covers API key REST endpoints', async () => {
+    vi.mocked(restClient.get).mockResolvedValueOnce([]);
+
+    await apiKeyService.createApiKey({
+      expiresAt: new Date('2026-01-01T00:00:00.000Z'),
+      name: 'Test Key',
+    });
+    await apiKeyService.getApiKeys();
+    await apiKeyService.updateApiKey('key-1', {
+      enabled: false,
+      expiresAt: null,
+      name: 'Updated Key',
+    });
+    await apiKeyService.deleteApiKey('key-1');
+
+    expect(restClient.post).toHaveBeenCalledWith('/api-keys', {
+      body: {
+        expires_at: new Date('2026-01-01T00:00:00.000Z'),
+        name: 'Test Key',
+      },
+    });
+    expect(restClient.get).toHaveBeenCalledWith('/api-keys');
+    expect(restClient.put).toHaveBeenCalledWith('/api-keys/key-1', {
+      body: {
+        enabled: false,
+        expires_at: null,
+        name: 'Updated Key',
+      },
+    });
+    expect(restClient.delete).toHaveBeenCalledWith('/api-keys/key-1');
   });
 
   it('covers device gateway status and proxy', async () => {

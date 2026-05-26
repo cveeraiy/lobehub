@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import secrets
+import string
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -12,15 +14,17 @@ from pydantic import BaseModel
 from sqlalchemy import and_, delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models.misc import ApiKey
+from app.services.key_vault.service import KeyVaultService
 
 router = APIRouter(prefix="/api/api-keys", tags=["API Keys"])
 
 
 class CreateApiKeyBody(BaseModel):
-    name: Optional[str] = None
+    name: str
     expires_at: Optional[datetime] = None
 
 
@@ -55,20 +59,20 @@ async def create_api_key(
     session: AsyncSession = Depends(get_db),
 ):
     """Create a new API key. The raw key is returned only once."""
-    raw_key = f"lh-{secrets.token_urlsafe(32)}"
-    key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
-    key_prefix = raw_key[:12]
+    raw_key = _generate_api_key()
+    key_hash = _hash_api_key(raw_key)
+    encrypted_key = KeyVaultService.from_env().encrypt(raw_key)
 
     api_key = ApiKey(
         user_id=user_id,
         name=body.name,
+        key=encrypted_key,
         key_hash=key_hash,
-        key_prefix=key_prefix,
         expires_at=body.expires_at,
     )
     session.add(api_key)
     await session.flush()
-    return {"id": api_key.id, "key": raw_key, "prefix": key_prefix}
+    return _key_dict(api_key, decrypted_key=raw_key)
 
 
 @router.get("/{key_id}")
@@ -134,7 +138,10 @@ async def validate_api_key(
     session: AsyncSession = Depends(get_db),
 ):
     """Validate an API key and return the associated user."""
-    key_hash = hashlib.sha256(body.key.encode()).hexdigest()
+    if not _validate_api_key_format(body.key):
+        return {"valid": False}
+
+    key_hash = _hash_api_key(body.key)
     row = (await session.execute(
         select(ApiKey).where(ApiKey.key_hash == key_hash)
     )).scalar_one_or_none()
@@ -147,29 +154,58 @@ async def validate_api_key(
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         if now > row.expires_at:
             return {"valid": False, "reason": "expired"}
-    # Update last_used_at and usage_count
+    # Update last_used_at.
     from sqlalchemy import update
     await session.execute(
         update(ApiKey)
         .where(ApiKey.id == row.id)
         .values(
             last_used_at=datetime.now(timezone.utc).replace(tzinfo=None),
-            usage_count=ApiKey.usage_count + 1,
         )
     )
     return {"valid": True, "user_id": row.user_id, "key_id": row.id}
 
 
-def _key_dict(k: ApiKey) -> dict[str, Any]:
+def _generate_api_key() -> str:
+    alphabet = string.ascii_lowercase + string.digits
+    return "sk-lh-" + "".join(secrets.choice(alphabet) for _ in range(16))
+
+
+def _validate_api_key_format(api_key: str) -> bool:
+    if not api_key.startswith("sk-lh-") or len(api_key) != 22:
+        return False
+    allowed = string.ascii_lowercase + string.digits
+    return all(char in allowed for char in api_key.removeprefix("sk-lh-"))
+
+
+def _hash_api_key(api_key: str) -> str:
+    if not settings.key_vaults_secret:
+        raise RuntimeError(
+            "`KEY_VAULTS_SECRET` is required for API key hash calculation. "
+            "Run `openssl rand -base64 32` and add it to your .env."
+        )
+    return hmac.new(settings.key_vaults_secret.encode(), api_key.encode(), hashlib.sha256).hexdigest()
+
+
+def _decrypt_api_key(encrypted_key: str) -> str:
+    plaintext, ok = KeyVaultService.from_env().decrypt(encrypted_key)
+    if not ok:
+        raise RuntimeError(
+            "Failed to decrypt API key. Please check whether KEY_VAULTS_SECRET is correct.",
+        )
+    return plaintext
+
+
+def _key_dict(k: ApiKey, decrypted_key: str | None = None) -> dict[str, Any]:
+    key = decrypted_key if decrypted_key is not None else _decrypt_api_key(k.key)
+
     return {
         "id": k.id,
         "name": k.name,
-        "key": k.key_prefix or "",
-        "prefix": k.key_prefix,
+        "key": key,
         "enabled": k.enabled,
         "lastUsedAt": k.last_used_at.isoformat() if k.last_used_at else None,
         "expiresAt": k.expires_at.isoformat() if k.expires_at else None,
-        "usageCount": k.usage_count,
         "createdAt": k.created_at.isoformat() if k.created_at else None,
         "updatedAt": k.updated_at.isoformat() if k.updated_at else None,
         "userId": k.user_id,

@@ -558,6 +558,17 @@ describe('createCallbacksTransformer', () => {
     });
   });
 
+  it('should ignore non-array tool_calls chunks', async () => {
+    const onToolsCalling = vi.fn();
+    const transformer = createCallbacksTransformer({ onToolsCalling });
+
+    const chunks = ['event: tool_calls\n', `data: ${JSON.stringify('tool_calls')}\n\n`];
+
+    await processChunks(transformer, chunks);
+
+    expect(onToolsCalling).not.toHaveBeenCalled();
+  });
+
   it('should call onCompletion and onFinal callbacks on flush with aggregated data', async () => {
     const onCompletion = vi.fn();
     const onFinal = vi.fn();
