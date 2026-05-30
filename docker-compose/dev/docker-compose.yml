@@ -118,40 +118,6 @@ services:
     networks:
       - lobe-network
 
-  temporal:
-    image: temporalio/auto-setup:latest
-    container_name: lobe-temporal
-    depends_on:
-      postgresql:
-        condition: service_healthy
-    environment:
-      - DB=postgres12
-      - DB_PORT=5432
-      - POSTGRES_USER=postgres
-      - POSTGRES_PWD=${POSTGRES_PASSWORD}
-      - POSTGRES_SEEDS=postgresql
-    ports:
-      - '7233:7233'
-    restart: always
-    networks:
-      - lobe-network
-    env_file:
-      - .env
-
-  temporal-ui:
-    image: temporalio/ui:latest
-    container_name: lobe-temporal-ui
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://localhost:9876
-    ports:
-      - '8233:8080'
-    restart: always
-    networks:
-      - lobe-network
-
   searxng:
     image: searxng/searxng
     container_name: lobe-searxng

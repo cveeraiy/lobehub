@@ -128,6 +128,20 @@ const localizeError = (error: ChatMessageError): ChatMessageError => {
   return error;
 };
 
+const isAssistantPlaceholderMessage = (message: {
+  content?: unknown;
+  role?: string;
+  tools?: unknown;
+}) => {
+  if (message.role !== 'assistant' || message.tools) return false;
+
+  return (
+    typeof message.content !== 'string' ||
+    !message.content.trim() ||
+    message.content === LOADING_FLAT
+  );
+};
+
 /**
  * Creates custom executors for the Chat Agent Runtime
  * These executors wrap existing chat store methods to integrate with agent-runtime
@@ -404,8 +418,9 @@ export const createAgentExecutors = (context: {
         },
       );
 
-      const messages = llmPayload.messages.filter((message) => message.id !== assistantMessageId);
-
+      const messages = llmPayload.messages.filter(
+        (message) => message.id !== assistantMessageId && !isAssistantPlaceholderMessage(message),
+      );
       // Expand dynamically activated tools (from lobe-activator activateTools API)
       // and merge them into the agent config for this LLM call
       const activatedToolIds = runtimeContext?.stepContext?.activatedToolIds;
@@ -497,6 +512,7 @@ export const createAgentExecutors = (context: {
           }
 
           const result = await handler.handleFinish({
+            content,
             traceId,
             observationId,
             toolCalls,

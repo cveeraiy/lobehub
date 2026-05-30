@@ -10,5 +10,6 @@ const getKnowledgeBaseNameById = (id: string) => (s: KnowledgeBaseStoreState) =>
 
 export const knowledgeBaseSelectors = {
   activeKnowledgeBaseId,
+  getKnowledgeBaseById,
   getKnowledgeBaseNameById,
 };

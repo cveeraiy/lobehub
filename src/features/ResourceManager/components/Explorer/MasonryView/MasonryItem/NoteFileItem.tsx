@@ -149,6 +149,11 @@ const NoteFileItem = memo<NoteFileItemProps>(
     ]);
 
     const isSupportedForChunking = !isChunkingUnsupported(fileType || '');
+    const handleChunking = () => {
+      if (!isCreatingFileParseTask) {
+        parseFiles([id]);
+      }
+    };
 
     const extractedTitle = markdownContent ? extractTitle(markdownContent) : null;
     const displayTitle = extractedTitle || name || t('file:pageList.untitled');
@@ -214,9 +219,7 @@ const NoteFileItem = memo<NoteFileItemProps>(
                 style={{ cursor: 'pointer' }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isCreatingFileParseTask) {
-                    parseFiles([id]);
-                  }
+                  handleChunking();
                 }}
               >
                 <Button
@@ -224,6 +227,10 @@ const NoteFileItem = memo<NoteFileItemProps>(
                   loading={isCreatingFileParseTask}
                   size={'small'}
                   type={'text'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChunking();
+                  }}
                 />
               </div>
             </Tooltip>

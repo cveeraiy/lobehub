@@ -209,12 +209,15 @@ export class StreamingExecutorActionImpl {
     // Exclude only discovery tools (activator, skill-store) so runtime-managed defaults
     // (skills, web-browsing, sandbox, memory, etc.) remain available for all agents.
     const isManualMode = agentConfig.chatConfig?.skillActivateMode === 'manual';
+    const hasExplicitTools = (mergedToolIds?.length ?? 0) > 0;
+    const shouldSkipDefaultTools =
+      disableTools || (agentConfigData.provider === 'bedrock' && !hasExplicitTools);
 
     const toolsDetailed = toolsEngine.generateToolsDetailed({
       excludeDefaultToolIds: isManualMode ? manualModeExcludeToolIds : undefined,
       model: agentConfigData.model,
       provider: agentConfigData.provider!,
-      skipDefaultTools: disableTools || undefined,
+      skipDefaultTools: shouldSkipDefaultTools || undefined,
       toolIds: mergedToolIds,
     });
 

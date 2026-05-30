@@ -47,6 +47,11 @@ class BatchDeleteChunksBody(BaseModel):
 class CreateParseFileTaskBody(BaseModel):
     id: str
     skip_exist: Optional[bool] = False
+    skipExist: Optional[bool] = None
+
+    @property
+    def should_skip_existing(self) -> bool:
+        return bool(self.skipExist if self.skipExist is not None else self.skip_exist)
 
 
 class CreateEmbeddingChunksTaskBody(BaseModel):
@@ -149,7 +154,7 @@ async def create_parse_file_task(
         .where(and_(File.id == body.id, File.user_id == user_id))
         .values(chunk_task_id=task.id)
     )
-    result = await parse_file_to_chunks(session, user_id, body.id, skip_exist=bool(body.skip_exist))
+    result = await parse_file_to_chunks(session, user_id, body.id, skip_exist=body.should_skip_existing)
     if result:
         task.status = "success"
     else:
@@ -185,7 +190,7 @@ async def retry_parse_file_task(
         .where(and_(File.id == body.id, File.user_id == user_id))
         .values(chunk_task_id=task.id)
     )
-    result = await parse_file_to_chunks(session, user_id, body.id, skip_exist=bool(body.skip_exist))
+    result = await parse_file_to_chunks(session, user_id, body.id, skip_exist=body.should_skip_existing)
     task.status = "success" if result else "error"
     return {"id": task.id, "success": True}
 

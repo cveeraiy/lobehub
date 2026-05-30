@@ -323,6 +323,11 @@ export class FileManageActionImpl {
       for (const uploadFile of uploadFiles) {
         this.#get().removeLocalResource(uploadFile.id);
       }
+      dispatchDockFileList({
+        ids: uploadFiles.map(({ id }) => id),
+        status: 'error',
+        type: 'updateFileStatuses',
+      });
 
       throw error;
     });

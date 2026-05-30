@@ -287,6 +287,7 @@ export default defineConfig({
     port: 9876,
     proxy: {
       '/api': `http://localhost:${process.env.PORT || 8000}`,
+      '/f': `http://localhost:${process.env.PORT || 8000}`,
       '/oidc/clear-session': `http://localhost:${process.env.PORT || 8000}`,
       '/webapi': `http://localhost:${process.env.PORT || 8000}`,
     },

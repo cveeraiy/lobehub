@@ -216,6 +216,64 @@ describe('FileUploadAction', () => {
       });
     });
 
+    it('should recover when existing file response has url without metadata', async () => {
+      const { result } = renderHook(() => useStore());
+
+      const mockFile = new File(['test content'], 'test.png', { type: 'image/png' });
+      const mockCheckResult = {
+        isExist: true,
+        url: 'files/user/existing.png',
+      };
+      const mockFileResponse = {
+        id: 'file-id-789',
+        url: '/f/file-id-789',
+      };
+      const onStatusUpdate = vi.fn();
+
+      vi.mocked(getImageDimensions).mockResolvedValue(undefined);
+      vi.spyOn(fileService, 'checkFileHash').mockResolvedValue(mockCheckResult);
+      vi.spyOn(fileService, 'createFile').mockResolvedValue(mockFileResponse);
+
+      const uploadResult = await act(async () => {
+        return await result.current.uploadWithProgress({
+          file: mockFile,
+          onStatusUpdate,
+        });
+      });
+
+      expect(fileService.createFile).toHaveBeenCalledWith(
+        {
+          fileType: mockFile.type,
+          hash: 'mock-hash-value',
+          metadata: {
+            date: '',
+            dirname: 'files/user',
+            filename: 'existing.png',
+            path: 'files/user/existing.png',
+          },
+          name: mockFile.name,
+          size: mockFile.size,
+          url: 'files/user/existing.png',
+        },
+        undefined,
+      );
+      expect(onStatusUpdate).toHaveBeenLastCalledWith({
+        id: mockFile.name,
+        type: 'updateFile',
+        value: {
+          fileUrl: mockFileResponse.url,
+          id: mockFileResponse.id,
+          status: 'success',
+          uploadState: { progress: 100, restTime: 0, speed: 0 },
+        },
+      });
+      expect(uploadResult).toEqual({
+        ...mockFileResponse,
+        dimensions: undefined,
+        filename: mockFile.name,
+      });
+    });
+
     describe('file does not exist (new upload)', () => {
       it('should upload new file successfully with progress callbacks', async () => {
         const { result } = renderHook(() => useStore());

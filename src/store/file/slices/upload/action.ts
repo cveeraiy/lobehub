@@ -57,6 +57,26 @@ type Setter = StoreSetter<FileStore>;
 export const createFileUploadSlice = (set: Setter, get: () => FileStore, _api?: unknown) =>
   new FileUploadActionImpl(set, get, _api);
 
+const isFileMetadata = (value: unknown): value is FileMetadata => {
+  if (!value || typeof value !== 'object') return false;
+
+  return typeof (value as Partial<FileMetadata>).path === 'string';
+};
+
+const metadataFromExistingFile = (file: File, url?: string, metadata?: unknown): FileMetadata => {
+  if (isFileMetadata(metadata)) return metadata;
+
+  const path = url || '';
+  const parts = path.split('/');
+
+  return {
+    date: '',
+    dirname: parts.slice(0, -1).join('/'),
+    filename: parts.at(-1) || file.name,
+    path,
+  };
+};
+
 export class FileUploadActionImpl {
   constructor(set: Setter, get: () => FileStore, _api?: unknown) {
     void _api;
@@ -109,7 +129,7 @@ export class FileUploadActionImpl {
 
       // 3. if file exist, just skip upload
       if (checkStatus.isExist) {
-        metadata = checkStatus.metadata as FileMetadata;
+        metadata = metadataFromExistingFile(file, checkStatus.url, checkStatus.metadata);
         onStatusUpdate?.({
           id: statusId,
           type: 'updateFile',

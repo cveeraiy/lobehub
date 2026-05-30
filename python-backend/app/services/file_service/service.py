@@ -47,7 +47,7 @@ class S3Client:
             aws_secret_access_key=secret_access_key,
             endpoint_url=endpoint,
             region_name=region or "us-east-1",
-            config=BotoConfig(s3={"addressing_style": "path"}),
+            config=BotoConfig(signature_version="s3v4", s3={"addressing_style": "path"}),
         )
 
     @classmethod
@@ -166,6 +166,7 @@ async def create_file_record(
             creator=user_id,
         )
         session.add(gf)
+        await session.flush()
 
     file_record = File(
         name=name,

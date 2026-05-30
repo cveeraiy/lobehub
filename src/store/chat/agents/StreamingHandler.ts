@@ -475,7 +475,7 @@ export class StreamingHandler {
     // Determine final content
     const finalContent = hasContentImages
       ? serializePartsForStorage(this.contentParts)
-      : this.output;
+      : this.output || finishData.content || '';
 
     // Determine final reasoning content
     const finalDuration =

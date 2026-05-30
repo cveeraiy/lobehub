@@ -1,14 +1,16 @@
 import { Icon } from '@lobehub/ui';
 import { cssVar } from 'antd-style';
 import { Loader2Icon } from 'lucide-react';
-import { type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import React, { memo, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import FileParsingStatus from '@/components/FileParsingStatus';
 import RepoIcon from '@/components/LibIcon';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { useResourceManagerStore } from '@/routes/(main)/resource/features/store';
 import { useKnowledgeBaseStore } from '@/store/library';
+import type { KnowledgeBaseProcessingSummary } from '@/types/knowledgeBase';
 
 import Actions from './Actions';
 import Editing from './Editing';
@@ -20,11 +22,12 @@ interface KnowledgeBaseItemProps {
   description?: string | null;
   id: string;
   name: string;
+  processing?: KnowledgeBaseProcessingSummary;
   style?: CSSProperties;
 }
 
 const KnowledgeBaseItem = memo<KnowledgeBaseItemProps>(
-  ({ id, name, description, active, style, className }) => {
+  ({ id, name, description, active, style, className, processing }) => {
     const setLibraryId = useResourceManagerStore((s) => s.setLibraryId);
     const navigate = useNavigate();
 
@@ -49,7 +52,7 @@ const KnowledgeBaseItem = memo<KnowledgeBaseItemProps>(
         navigate(`/resource/library/${id}`);
         setLibraryId(id);
       }
-    }, [editing, navigate, id]);
+    }, [editing, navigate, id, setLibraryId]);
 
     const handleDoubleClick = useCallback(
       (e: React.MouseEvent) => {
@@ -88,6 +91,11 @@ const KnowledgeBaseItem = memo<KnowledgeBaseItemProps>(
           loading={isLoading}
           style={style}
           title={name}
+          extra={
+            processing?.chunkingStatus ? (
+              <FileParsingStatus {...processing} hideEmbeddingButton />
+            ) : undefined
+          }
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
         />

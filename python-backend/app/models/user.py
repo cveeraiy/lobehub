@@ -11,7 +11,7 @@ from typing import Any
 from sqlalchemy import Index, PrimaryKeyConstraint, UniqueConstraint, text
 from sqlmodel import Field, SQLModel
 
-from app.models._helpers import _utcnow, json_column, text_array_column
+from app.models._helpers import _utcnow, json_column
 
 # ── users ───────────────────────────────────────────────────────────────────
 
@@ -39,7 +39,7 @@ class User(SQLModel, table=True):
     first_name: str | None = None
     last_name: str | None = None
     full_name: str | None = None
-    interests: list[str] | None = Field(default=None, sa_column=text_array_column("interests"))
+    interests: list[str] | None = Field(default=None, sa_column=json_column("interests"))
 
     is_onboarded: bool | None = Field(default=False)
     agent_onboarding: dict[str, Any] | None = Field(default=None, sa_column=json_column("agent_onboarding"))

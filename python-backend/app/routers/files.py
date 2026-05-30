@@ -8,13 +8,14 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from pydantic import BaseModel
-from sqlalchemy import and_, delete, desc, func, or_, select, update
+from sqlalchemy import and_, delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.dependencies import get_current_user_id
-from app.models.file import Document, File, GlobalFile
+from app.models.file import Document, File
 from app.models.misc import AsyncTask
+from app.models.rag import DocumentChunk
 from app.services.file_service import S3Client, create_file_record, delete_file_record, get_file_by_id
 
 router = APIRouter(prefix="/api/files", tags=["Files"])
@@ -123,7 +124,7 @@ async def upload_file(
 
     s3 = S3Client.from_settings()
     key = f"files/{user_id}/{file_hash[:8]}_{file.filename}"
-    s3.upload_bytes(key, data, content_type)
+    await s3.upload_bytes(key, data, content_type)
 
     result = await create_file_record(
         session, user_id,
@@ -143,7 +144,7 @@ async def create_presigned_url(
 ):
     """Return a presigned upload URL for direct client-side upload."""
     s3 = S3Client.from_settings()
-    url = s3.create_presigned_upload_url(body.key)
+    url = await s3.create_presigned_upload_url(body.key)
     return {"url": url}
 
 
@@ -175,7 +176,7 @@ async def remove_file(
     if f:
         try:
             s3 = S3Client.from_settings()
-            s3.delete_file(f.url)
+            await s3.delete_file(f.url)
         except Exception:
             pass  # Best-effort S3 delete
     await delete_file_record(session, user_id, file_id)
@@ -220,7 +221,14 @@ async def check_file_hash(
     stmt = select(File).where(and_(File.file_hash == file_hash, File.user_id == user_id)).limit(1)
     row = (await session.execute(stmt)).scalar_one_or_none()
     if row:
-        return {"isExist": True, "file": _file_dict(row)}
+        return {
+            "file": _file_dict(row),
+            "fileType": row.file_type,
+            "isExist": True,
+            "metadata": row.metadata_,
+            "size": row.size,
+            "url": row.url,
+        }
     return {"isExist": False}
 
 
@@ -352,6 +360,7 @@ async def get_knowledge_items(
     file_rows = (await session.execute(file_stmt)).scalars().all()
 
     result = [_file_dict(r) for r in file_rows]
+    await _attach_file_statuses(session, user_id, result, file_rows)
     has_more = len(result) >= limit
     return {"items": result, "has_more": has_more, "total": len(result)}
 
@@ -377,19 +386,7 @@ async def get_file_item_by_id(
     if not f:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found")
     item = _file_dict(f)
-    # Add status info from async tasks
-    chunk_status = None
-    embedding_status = None
-    if f.chunk_task_id:
-        task = (await session.execute(select(AsyncTask).where(AsyncTask.id == f.chunk_task_id))).scalar_one_or_none()
-        if task:
-            chunk_status = task.status
-    if f.embedding_task_id:
-        task = (await session.execute(select(AsyncTask).where(AsyncTask.id == f.embedding_task_id))).scalar_one_or_none()
-        if task:
-            embedding_status = task.status
-    item["chunking_status"] = chunk_status
-    item["embedding_status"] = embedding_status
+    await _attach_file_statuses(session, user_id, [item], [f])
     return item
 
 
@@ -449,24 +446,20 @@ async def get_knowledge_item_statuses_by_ids(
     file_stmt = select(File).where(and_(File.id.in_(ids), File.user_id == user_id))
     files = (await session.execute(file_stmt)).scalars().all()
     file_map = {f.id: f for f in files}
+    status_items = [_file_dict(f) for f in files]
+    await _attach_file_statuses(session, user_id, status_items, files)
+    status_by_id = {item["id"]: item for item in status_items}
 
     results = []
     for fid in ids:
         f = file_map.get(fid)
         if not f:
             continue
-        chunk_status = None
-        embedding_status = None
-        if f.chunk_task_id:
-            task = (await session.execute(select(AsyncTask).where(AsyncTask.id == f.chunk_task_id))).scalar_one_or_none()
-            chunk_status = task.status if task else None
-        if f.embedding_task_id:
-            task = (await session.execute(select(AsyncTask).where(AsyncTask.id == f.embedding_task_id))).scalar_one_or_none()
-            embedding_status = task.status if task else None
+        status_item = status_by_id.get(fid, {})
         results.append({
             "id": fid,
-            "chunkingStatus": chunk_status,
-            "embeddingStatus": embedding_status,
+            "chunkingStatus": status_item.get("chunking_status"),
+            "embeddingStatus": status_item.get("embedding_status"),
         })
     return results
 
@@ -607,11 +600,65 @@ async def delete_knowledge_items_by_query(
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
+async def _attach_file_statuses(
+    session: AsyncSession,
+    user_id: str,
+    items: list[dict[str, Any]],
+    files: list[File],
+) -> None:
+    if not items:
+        return
+
+    task_ids = {
+        task_id
+        for f in files
+        for task_id in (f.chunk_task_id, f.embedding_task_id)
+        if task_id
+    }
+    tasks: dict[str, AsyncTask] = {}
+    if task_ids:
+        rows = (
+            await session.execute(
+                select(AsyncTask).where(
+                    and_(AsyncTask.user_id == user_id, AsyncTask.id.in_(task_ids))
+                )
+            )
+        ).scalars().all()
+        tasks = {t.id: t for t in rows}
+
+    file_ids = [f.id for f in files]
+    chunk_counts: dict[str, int] = {}
+    if file_ids:
+        rows = (
+            await session.execute(
+                select(Document.file_id, func.count(DocumentChunk.chunk_id))
+                .join(DocumentChunk, DocumentChunk.document_id == Document.id)
+                .where(
+                    and_(Document.user_id == user_id, Document.file_id.in_(file_ids))
+                )
+                .group_by(Document.file_id)
+            )
+        ).all()
+        chunk_counts = {file_id: count for file_id, count in rows if file_id}
+
+    files_by_id = {f.id: f for f in files}
+    for item in items:
+        file = files_by_id.get(item["id"])
+        if not file:
+            continue
+
+        chunk_task = tasks.get(file.chunk_task_id) if file.chunk_task_id else None
+        embedding_task = tasks.get(file.embedding_task_id) if file.embedding_task_id else None
+        item["chunking_status"] = chunk_task.status if chunk_task else None
+        item["embedding_status"] = embedding_task.status if embedding_task else None
+        item["chunk_count"] = chunk_counts.get(file.id, 0)
+
+
 def _file_dict(f: File) -> dict[str, Any]:
     return {
         "id": f.id,
         "name": f.name,
-        "url": f.url,
+        "url": f"/f/{f.id}",
         "file_type": f.file_type,
         "size": f.size,
         "file_hash": f.file_hash,

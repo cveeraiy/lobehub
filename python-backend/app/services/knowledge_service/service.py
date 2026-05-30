@@ -12,12 +12,13 @@ import uuid as _uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from sqlalchemy import and_, delete, or_, select, update
+from sqlalchemy import and_, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent import AgentKnowledgeBase
 from app.models.file import Document, File
 from app.models.knowledge import KnowledgeBase, KnowledgeBaseFile
+from app.models.misc import AsyncTask
 from app.models.rag import Chunk, DocumentChunk, Embedding
 from app.models.rag_eval import (
     RagEvalDataset,
@@ -28,6 +29,8 @@ from app.models.rag_eval import (
 from app.services import llm_service
 
 logger = logging.getLogger(__name__)
+
+PROCESSING_STATUSES = {"pending", "processing"}
 
 
 def _now() -> datetime:
@@ -82,6 +85,149 @@ async def list_knowledge_bases(
         .order_by(KnowledgeBase.updated_at.desc())
     )
     return list((await session.execute(stmt)).scalars().all())
+
+
+async def get_knowledge_base_processing_statuses(
+    session: AsyncSession,
+    user_id: str,
+    kb_ids: list[str],
+) -> dict[str, dict[str, Any]]:
+    """Aggregate file processing state for each knowledge base."""
+    if not kb_ids:
+        return {}
+
+    file_rows = (
+        await session.execute(
+            select(
+                KnowledgeBaseFile.knowledge_base_id,
+                File.id,
+                File.chunk_task_id,
+                File.embedding_task_id,
+            )
+            .join(File, File.id == KnowledgeBaseFile.file_id)
+            .where(
+                and_(
+                    KnowledgeBaseFile.knowledge_base_id.in_(kb_ids),
+                    KnowledgeBaseFile.user_id == user_id,
+                    File.user_id == user_id,
+                )
+            )
+        )
+    ).all()
+
+    file_ids = [row.id for row in file_rows]
+    task_ids = {
+        task_id
+        for row in file_rows
+        for task_id in (row.chunk_task_id, row.embedding_task_id)
+        if task_id
+    }
+
+    tasks: dict[str, AsyncTask] = {}
+    if task_ids:
+        task_rows = (
+            await session.execute(
+                select(AsyncTask).where(
+                    and_(AsyncTask.id.in_(task_ids), AsyncTask.user_id == user_id)
+                )
+            )
+        ).scalars().all()
+        tasks = {task.id: task for task in task_rows}
+
+    chunk_counts: dict[str, int] = {}
+    embedded_counts: dict[str, int] = {}
+    if file_ids:
+        chunk_rows = (
+            await session.execute(
+                select(Document.file_id, func.count(DocumentChunk.chunk_id))
+                .join(DocumentChunk, DocumentChunk.document_id == Document.id)
+                .where(
+                    and_(
+                        Document.user_id == user_id,
+                        Document.file_id.in_(file_ids),
+                        DocumentChunk.user_id == user_id,
+                    )
+                )
+                .group_by(Document.file_id)
+            )
+        ).all()
+        chunk_counts = {row.file_id: int(row[1] or 0) for row in chunk_rows if row.file_id}
+
+        embedded_rows = (
+            await session.execute(
+                select(Document.file_id, func.count(Embedding.id))
+                .join(DocumentChunk, DocumentChunk.document_id == Document.id)
+                .join(Embedding, Embedding.chunk_id == DocumentChunk.chunk_id)
+                .where(
+                    and_(
+                        Document.user_id == user_id,
+                        Document.file_id.in_(file_ids),
+                        DocumentChunk.user_id == user_id,
+                        Embedding.user_id == user_id,
+                    )
+                )
+                .group_by(Document.file_id)
+            )
+        ).all()
+        embedded_counts = {row.file_id: int(row[1] or 0) for row in embedded_rows if row.file_id}
+
+    grouped: dict[str, list[Any]] = {kb_id: [] for kb_id in kb_ids}
+    for row in file_rows:
+        grouped.setdefault(row.knowledge_base_id, []).append(row)
+
+    summaries: dict[str, dict[str, Any]] = {}
+    for kb_id, rows in grouped.items():
+        file_count = len(rows)
+        total_chunks = sum(chunk_counts.get(row.id, 0) for row in rows)
+        total_embeddings = sum(embedded_counts.get(row.id, 0) for row in rows)
+
+        chunk_tasks = [tasks[row.chunk_task_id] for row in rows if row.chunk_task_id in tasks]
+        embedding_tasks = [
+            tasks[row.embedding_task_id] for row in rows if row.embedding_task_id in tasks
+        ]
+
+        chunking_status: str | None = None
+        chunking_error: dict[str, Any] | None = None
+        if file_count:
+            errored_task = next((task for task in chunk_tasks if task.status == "error"), None)
+            if errored_task:
+                chunking_status = "error"
+                chunking_error = errored_task.error
+            elif any(task.status in PROCESSING_STATUSES for task in chunk_tasks):
+                chunking_status = "processing"
+            elif total_chunks > 0 and len(chunk_tasks) == file_count:
+                chunking_status = "success"
+            elif total_chunks > 0 or chunk_tasks:
+                chunking_status = "processing"
+
+        embedding_status: str | None = None
+        embedding_error: dict[str, Any] | None = None
+        if total_chunks > 0:
+            errored_embedding = next(
+                (task for task in embedding_tasks if task.status == "error"), None
+            )
+            if errored_embedding:
+                embedding_status = "error"
+                embedding_error = errored_embedding.error
+            elif total_embeddings >= total_chunks:
+                embedding_status = "success"
+            elif any(task.status in PROCESSING_STATUSES for task in embedding_tasks):
+                embedding_status = "processing"
+            elif embedding_tasks:
+                embedding_status = "processing"
+
+        summaries[kb_id] = {
+            "chunk_count": total_chunks,
+            "chunking_error": chunking_error,
+            "chunking_status": chunking_status,
+            "embedding_count": total_embeddings,
+            "embedding_error": embedding_error,
+            "embedding_status": embedding_status,
+            "file_count": file_count,
+            "finish_embedding": embedding_status == "success",
+        }
+
+    return summaries
 
 
 async def update_knowledge_base(

@@ -26,5 +26,5 @@ async def create_presigned_url(
     going through the server.
     """
     s3 = S3Client.from_settings()
-    url = s3.create_presigned_upload_url(body.pathname)
+    url = await s3.create_presigned_upload_url(body.pathname)
     return {"url": url, "pathname": body.pathname}

@@ -44,6 +44,26 @@ class BatchFilesBody(BaseModel):
     model_config = {"populate_by_name": True}
 
 
+class BatchKnowledgeBaseStatusBody(BaseModel):
+    ids: list[str]
+
+
+def _kb_dict(kb: Any, status_summary: dict[str, Any] | None = None) -> dict[str, Any]:
+    status_summary = status_summary or {}
+    return {
+        "id": kb.id,
+        "name": kb.name,
+        "description": kb.description,
+        "avatar": kb.avatar,
+        "type": kb.type,
+        "settings": kb.settings,
+        "is_public": kb.is_public,
+        "created_at": kb.created_at.isoformat() if kb.created_at else None,
+        "updated_at": kb.updated_at.isoformat() if kb.updated_at else None,
+        **status_summary,
+    }
+
+
 # ── Endpoints ────────────────────────────────────────────────────────
 
 @router.get("")
@@ -52,14 +72,19 @@ async def list_kbs(
     session: AsyncSession = Depends(get_db),
 ):
     kbs = await svc.list_knowledge_bases(session, user_id)
-    return [
-        {
-            "id": k.id, "name": k.name, "description": k.description,
-            "avatar": k.avatar, "type": k.type,
-            "created_at": k.created_at.isoformat() if k.created_at else None,
-        }
-        for k in kbs
-    ]
+    statuses = await svc.get_knowledge_base_processing_statuses(
+        session, user_id, [k.id for k in kbs]
+    )
+    return [_kb_dict(k, statuses.get(k.id)) for k in kbs]
+
+
+@router.post("/statuses")
+async def get_kb_statuses(
+    body: BatchKnowledgeBaseStatusBody,
+    user_id: str = Depends(get_current_user_id),
+    session: AsyncSession = Depends(get_db),
+):
+    return await svc.get_knowledge_base_processing_statuses(session, user_id, body.ids)
 
 
 @router.get("/{kb_id}")
@@ -71,10 +96,8 @@ async def get_kb(
     kb = await svc.get_knowledge_base(session, user_id, kb_id)
     if not kb:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Knowledge base not found")
-    return {
-        "id": kb.id, "name": kb.name, "description": kb.description,
-        "avatar": kb.avatar, "type": kb.type, "settings": kb.settings,
-    }
+    statuses = await svc.get_knowledge_base_processing_statuses(session, user_id, [kb.id])
+    return _kb_dict(kb, statuses.get(kb.id))
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)

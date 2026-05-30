@@ -7,9 +7,12 @@ lexical fallback when vector embeddings are unavailable.
 
 from __future__ import annotations
 
+import logging
 import re
+from io import BytesIO
 from typing import Any
 
+from pypdf import PdfReader
 from sqlalchemy import and_, delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +20,9 @@ from app.models.file import Document, File
 from app.models.knowledge import KnowledgeBaseFile
 from app.models.rag import Chunk, DocumentChunk, Embedding
 from app.services import knowledge_service
+from app.services.file_service import S3Client
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_CHUNK_SIZE = 1200
 _DEFAULT_CHUNK_OVERLAP = 120
@@ -130,14 +136,67 @@ def _content_from_file_metadata(file: File) -> str:
     return ""
 
 
+def _extract_pdf_text(data: bytes) -> str:
+    reader = PdfReader(BytesIO(data))
+    pages = []
+    for page in reader.pages:
+        text = page.extract_text() or ""
+        if text.strip():
+            pages.append(text.strip())
+    return "\n\n".join(pages)
+
+
+def _extract_text_bytes(data: bytes) -> str:
+    for encoding in ("utf-8", "utf-16", "latin-1"):
+        try:
+            return data.decode(encoding).strip()
+        except UnicodeDecodeError:
+            continue
+    return ""
+
+
+async def _content_from_file_storage(file: File) -> str:
+    if not file.url or file.url.startswith(("http://", "https://")):
+        return ""
+
+    try:
+        data = await S3Client.from_settings().get_bytes(file.url)
+    except Exception:
+        logger.exception("Failed to read file bytes for parsing: %s", file.id)
+        return ""
+
+    file_type = (file.file_type or "").lower()
+    filename = (file.name or "").lower()
+    try:
+        if file_type == "application/pdf" or filename.endswith(".pdf"):
+            return _extract_pdf_text(data)
+        if file_type.startswith("text/") or filename.endswith((".md", ".markdown", ".txt", ".csv", ".json")):
+            return _extract_text_bytes(data)
+    except Exception:
+        logger.exception("Failed to extract text for file: %s", file.id)
+
+    return ""
+
+
+async def _content_from_file(file: File) -> str:
+    return _content_from_file_metadata(file) or await _content_from_file_storage(file)
+
+
 async def ensure_document_for_file(session: AsyncSession, user_id: str, file: File) -> Document:
     existing = (
         await session.execute(select(Document).where(and_(Document.file_id == file.id, Document.user_id == user_id)))
     ).scalar_one_or_none()
     if existing:
+        if not (existing.content or "").strip():
+            content = await _content_from_file(file)
+            if content:
+                existing.content = content
+                existing.total_char_count = len(content)
+                existing.total_line_count = content.count("\n") + 1
+                await session.flush()
         return existing
 
-    content = _content_from_file_metadata(file)
+    content = await _content_from_file(file)
     document = Document(
         user_id=user_id,
         title=file.name,

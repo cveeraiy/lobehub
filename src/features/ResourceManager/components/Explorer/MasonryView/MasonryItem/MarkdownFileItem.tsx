@@ -165,6 +165,11 @@ const MarkdownFileItem = memo<MarkdownFileItemProps>(
     ]);
 
     const isSupportedForChunking = !isChunkingUnsupported(fileType || '');
+    const handleChunking = () => {
+      if (!isCreatingFileParseTask) {
+        parseFiles([id]);
+      }
+    };
 
     return (
       <>
@@ -208,9 +213,7 @@ const MarkdownFileItem = memo<MarkdownFileItemProps>(
                 style={{ cursor: 'pointer' }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isCreatingFileParseTask) {
-                    parseFiles([id]);
-                  }
+                  handleChunking();
                 }}
               >
                 <Button
@@ -218,6 +221,10 @@ const MarkdownFileItem = memo<MarkdownFileItemProps>(
                   loading={isCreatingFileParseTask}
                   size={'small'}
                   type={'text'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChunking();
+                  }}
                 />
               </div>
             </Tooltip>

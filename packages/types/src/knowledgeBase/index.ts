@@ -1,3 +1,4 @@
+import type { FileParsingTask } from '../asyncTask';
 import type { FilesConfigItem } from '../user/settings/filesConfig';
 
 export enum KnowledgeBaseTabs {
@@ -6,7 +7,12 @@ export enum KnowledgeBaseTabs {
   Testing = 'testing',
 }
 
-export interface KnowledgeBaseItem {
+export interface KnowledgeBaseProcessingSummary extends FileParsingTask {
+  embeddingCount?: number | null;
+  fileCount?: number | null;
+}
+
+export interface KnowledgeBaseItem extends KnowledgeBaseProcessingSummary {
   avatar: string | null;
 
   createdAt: Date;

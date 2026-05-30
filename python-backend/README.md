@@ -71,7 +71,7 @@ When `TEMPORAL_ENABLED=true`, workflow HTTP endpoints enqueue durable Temporal w
 python -m app.workers.temporal_worker
 ```
 
-The Docker Compose dev stack includes Temporal on `localhost:7233` and Temporal UI on <http://localhost:8233>.
+Temporal is not started by the Docker Compose dev stack. Start a separate Temporal server before running live Temporal tests.
 
 To run the live Temporal smoke test after Temporal is up:
 
