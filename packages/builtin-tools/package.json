@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./builtinTools": "./src/builtinTools.ts",
     "./renders": "./src/renders.ts",
     "./displayControls": "./src/displayControls.ts",
     "./inspectors": "./src/inspectors.ts",

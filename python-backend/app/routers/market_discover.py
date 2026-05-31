@@ -235,11 +235,16 @@ async def get_agents_by_plugin(
     request: Request = None,
     _user_id: str = Depends(get_current_user_id),
 ):
-    return await _proxy_get(
-        "/api/assistants/by-plugin",
-        params={"pluginId": pluginId, "locale": locale, "page": page, "pageSize": pageSize},
-        headers=_auth_headers(request),
-    )
+    try:
+        return await _proxy_get(
+            "/api/assistants/by-plugin",
+            params={"pluginId": pluginId, "locale": locale, "page": page, "pageSize": pageSize},
+            headers=_auth_headers(request),
+        )
+    except HTTPException as e:
+        if e.status_code == 404:
+            return {"items": [], "page": page, "pageSize": pageSize, "total": 0, "totalPages": 0}
+        raise
 
 
 # ── MCP Market ───────────────────────────────────────────────────────

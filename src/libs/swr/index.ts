@@ -18,10 +18,14 @@ export const useClientDataSWR: SWRHook = (key, fetch, config) =>
     // we need to set it to 0.
     dedupingInterval: 0,
     focusThrottleInterval: 5 * 60 * 1000,
-    // Custom error retry logic: don't retry on 401 errors
+    // Custom error retry logic: don't retry on 401/429 errors
     onErrorRetry: (error: any, key: any, config: any, revalidate: any, { retryCount }: any) => {
       // Check if error is marked as non-retryable (e.g., 401 authentication errors)
       if (error?.meta?.shouldRetry === false) {
+        return;
+      }
+      // Don't retry rate-limit errors
+      if (error?.status === 429) {
         return;
       }
       // For other errors, use default SWR retry behavior

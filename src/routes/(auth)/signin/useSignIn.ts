@@ -264,6 +264,13 @@ export const useSignIn = () => {
       }
 
       if (result && 'error' in result && result.error) throw result.error;
+
+      // Manual redirect fallback — better-auth's redirectPlugin may not fire
+      // when the response is intercepted by fetch wrappers.
+      if (result && 'data' in result && result.data?.url && result.data?.redirect) {
+        window.location.href = result.data.url;
+        return;
+      }
     } catch (error) {
       console.error(`${normalizedProvider} sign in error:`, error);
       message.error(t('betterAuth.signin.socialError'));

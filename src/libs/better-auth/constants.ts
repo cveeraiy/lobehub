@@ -8,6 +8,7 @@ export const BUILTIN_BETTER_AUTH_PROVIDERS = [
   'github',
   'cognito',
   'microsoft',
+  'keycloak',
 ] as const;
 
 /**

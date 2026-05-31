@@ -108,20 +108,21 @@ def _get_oidc_config() -> dict[str, str]:
     }
 
 
-async def _exchange_code_for_tokens(code: str, redirect_uri: str) -> dict[str, Any]:
+async def _exchange_code_for_tokens(code: str, redirect_uri: str, code_verifier: str = "") -> dict[str, Any]:
     """Exchange authorization code for tokens at Keycloak's token endpoint."""
     oidc = _get_oidc_config()
+    data: dict[str, str] = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+        "client_id": settings.auth_oidc_client_id,
+    }
+    if settings.auth_oidc_client_secret:
+        data["client_secret"] = settings.auth_oidc_client_secret
+    if code_verifier:
+        data["code_verifier"] = code_verifier
     async with httpx.AsyncClient() as client:
-        resp = await client.post(
-            oidc["token_endpoint"],
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "redirect_uri": redirect_uri,
-                "client_id": settings.auth_oidc_client_id,
-                "client_secret": settings.auth_oidc_client_secret or "",
-            },
-        )
+        resp = await client.post(oidc["token_endpoint"], data=data)
         resp.raise_for_status()
         return resp.json()
 
@@ -181,20 +182,24 @@ def _user_to_session_data(user: User, claims: dict[str, Any] | None = None) -> d
         "name": user.first_name,
         "username": user.username,
         "roles": roles,
+        "db_role": user.role or "",
         "created_at": int(time.time()),
     }
 
 
-def _resolve_role(keycloak_roles: list[str]) -> str:
+def _resolve_role(keycloak_roles: list[str], db_role: str = "") -> str:
     """Map Keycloak realm roles to a Better Auth role string.
 
     The SPA checks ``session.user.role === 'admin' || session.user.role === 'super_admin'``
     to show admin-only features (admin panel, agent/system settings for all users).
+    Falls back to the DB role if no Keycloak roles are set.
     """
     if "super_admin" in keycloak_roles:
         return "super_admin"
     if "admin" in keycloak_roles:
         return "admin"
+    if db_role in ("admin", "super_admin"):
+        return db_role
     return "user"
 
 
@@ -219,7 +224,7 @@ def _session_to_better_auth_response(session_data: dict[str, Any]) -> dict[str, 
             "username": session_data.get("username"),
             "image": None,
             "emailVerified": True,
-            "role": _resolve_role(session_data.get("roles", [])),
+            "role": _resolve_role(session_data.get("roles", []), session_data.get("db_role", "")),
             "createdAt": datetime.now(timezone.utc).isoformat(),
             "updatedAt": datetime.now(timezone.utc).isoformat(),
         },
@@ -251,16 +256,22 @@ async def _initiate_oidc_login(request: Request) -> JSONResponse:
     callback_url = body.get("callbackURL", "/")
     oidc = _get_oidc_config()
 
-    # Generate state for CSRF protection
+    import base64
+    # Generate state, nonce, and PKCE verifier
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(16)
+    code_verifier = secrets.token_urlsafe(64)
+    code_challenge = base64.urlsafe_b64encode(
+        hashlib.sha256(code_verifier.encode()).digest()
+    ).rstrip(b"=").decode()
 
     # The SPA frontend URL where the user came from
     redirect_uri = f"{settings.app_url}/api/auth/callback/keycloak"
 
-    # Store state for validation in callback
+    # Store state + verifier for validation in callback
     _oidc_states[state] = {
         "callback_url": callback_url,
+        "code_verifier": code_verifier,
         "nonce": nonce,
         "created_at": time.time(),
     }
@@ -278,6 +289,8 @@ async def _initiate_oidc_login(request: Request) -> JSONResponse:
         "scope": settings.auth_oidc_scopes,
         "state": state,
         "nonce": nonce,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
     }
 
     auth_url = f"{oidc['authorization_endpoint']}?{urlencode(params)}"
@@ -309,12 +322,13 @@ async def oauth_callback(
     code: str = "",
     state: str = "",
     error: str = "",
+    error_description: str = "",
     db: AsyncSession = Depends(get_db),
 ):
     """Handle Keycloak OAuth callback. Exchanges code for tokens, creates session."""
     if error:
-        logger.error("OIDC callback error: %s", error)
-        return RedirectResponse(url="/signin?error=oauth_error")
+        logger.error("OIDC callback error: %s — %s", error, error_description)
+        return RedirectResponse(url=f"/signin?error=oauth_error&detail={error}:{error_description}")
 
     if not code or not state:
         return RedirectResponse(url="/signin?error=missing_params")
@@ -326,11 +340,12 @@ async def oauth_callback(
         return RedirectResponse(url="/signin?error=invalid_state")
 
     callback_url = state_data.get("callback_url", "/")
+    code_verifier = state_data.get("code_verifier", "")
     redirect_uri = f"{settings.app_url}/api/auth/callback/keycloak"
 
     try:
-        # Exchange code for tokens
-        tokens = await _exchange_code_for_tokens(code, redirect_uri)
+        # Exchange code for tokens (with PKCE verifier)
+        tokens = await _exchange_code_for_tokens(code, redirect_uri, code_verifier)
         id_token = tokens.get("id_token")
         if not id_token:
             logger.error("No id_token in token response")

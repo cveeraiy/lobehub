@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy import and_, delete, desc, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,6 +19,8 @@ from app.db import get_db
 from app.dependencies import get_current_user_id
 from app.models.file import File
 from app.models.skill import AgentSkill, AgentSkillShare
+from app.routers.market_discover import _auth_headers as _market_auth_headers
+from app.routers.market_discover import _proxy_get as _market_proxy_get
 from app.skills.builtin import BUILTIN_SKILLS, get_builtin_skill
 
 _VALID_VISIBILITY = ("private", "public", "restricted")
@@ -520,20 +522,35 @@ async def import_skill_from_github(
 @router.post("/import/market")
 async def import_skill_from_market(
     body: ImportFromMarketBody,
+    request: Request,
     user_id: str = Depends(get_current_user_id),
     session: AsyncSession = Depends(get_db),
 ):
     """Import a builtin/market skill by identifier."""
     builtin = get_builtin_skill(body.identifier)
-    if not builtin:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Market skill not found")
-    manifest = {
-        "identifier": builtin["identifier"],
-        "name": builtin["name"],
-        "description": builtin["description"],
-        "prompt": builtin.get("prompt"),
-        "tools": builtin.get("tools", []),
-    }
+    if builtin:
+        manifest = {
+            "identifier": builtin["identifier"],
+            "name": builtin["name"],
+            "description": builtin["description"],
+            "prompt": builtin.get("prompt"),
+            "tools": builtin.get("tools", []),
+        }
+    else:
+        # Fetch from upstream market API
+        data = await _market_proxy_get(
+            f"/api/v1/skills/{body.identifier}",
+            headers=_market_auth_headers(request),
+        )
+        if not data or not isinstance(data, dict):
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Market skill not found")
+        manifest = {
+            "identifier": data.get("identifier") or body.identifier,
+            "name": data.get("name") or data.get("displayName") or body.identifier,
+            "description": data.get("description") or "",
+            "prompt": data.get("prompt") or data.get("content") or "",
+            "tools": data.get("tools") or [],
+        }
     skill = await _save_imported_skill(
         session,
         user_id,

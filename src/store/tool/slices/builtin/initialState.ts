@@ -1,4 +1,4 @@
-import { builtinTools, defaultUninstalledBuiltinTools } from '@lobechat/builtin-tools';
+import { builtinTools, defaultUninstalledBuiltinTools } from '@lobechat/builtin-tools/builtinTools';
 import { type BuiltinSkill, type LobeBuiltinTool } from '@lobechat/types';
 
 export interface BuiltinToolState {

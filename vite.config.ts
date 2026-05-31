@@ -109,9 +109,18 @@ export default defineConfig({
   },
   define: sharedRendererDefine({ isMobile }),
   experimental: {
-    bundledDev: true,
+    bundledDev: false,
   },
   resolve: {
+    alias: (() => {
+      // Resolve the real (non-symlink) path so rolldown matches it regardless
+      // of which symlink path a workspace package resolves @lobehub/ui through.
+      const uiRoot = fs.realpathSync(path.resolve(__dirname, 'node_modules/@lobehub/ui'));
+      return ['awesome', 'base-ui', 'brand', 'chat', 'icons', 'mdx', 'mobile'].map((sub) => ({
+        find: `@lobehub/ui/${sub}`,
+        replacement: path.join(uiRoot, `es/${sub}/index.mjs`),
+      }));
+    })(),
     tsconfigPaths: true,
   },
   optimizeDeps: sharedOptimizeDeps,
