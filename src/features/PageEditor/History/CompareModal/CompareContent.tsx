@@ -7,10 +7,7 @@ import { RotateCcwIcon } from 'lucide-react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type {
-  DocumentHistoryListItem,
-  DocumentHistorySaveSource,
-} from '@/server/routers/lambda/_schema/documentHistory';
+import type { DocumentHistoryListItem, DocumentHistorySaveSource } from '@/types/documentHistory';
 
 import DocumentHistoryDiff from '../DocumentHistoryDiff';
 import { formatHistoryAbsoluteTime } from '../formatHistoryDate';

@@ -89,7 +89,10 @@ export class UserSettingsActionImpl {
 
     const diffs = difference(nextSettings, defaultSettings);
     const isEmptyObjectDiff = (value: unknown): boolean =>
-      !!value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value as object).length === 0;
+      !!value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      Object.keys(value as object).length === 0;
 
     // When user resets a field to default value, we need to explicitly include it in diffs
     // to override the previously saved non-default value in the backend

@@ -1,4 +1,4 @@
-import { TASK_STATUSES } from '@lobechat/builtin-tool-task';
+import { TASK_STATUSES } from '@lobechat/builtin-tools';
 import type { TaskListItem, TaskParticipant } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -10,7 +10,7 @@ import { TaskTopicModel } from '@/database/models/taskTopic';
 import { TopicModel } from '@/database/models/topic';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 import { TaskService } from '@/server/services/task';
 import { TaskLifecycleService } from '@/server/services/taskLifecycle';
 import { TaskReviewService } from '@/server/services/taskReview';
@@ -282,7 +282,7 @@ export const taskRouter = router({
         }
 
         if (target.operationId) {
-          const aiAgentService = new AiAgentService(ctx.serverDB, ctx.userId);
+          const aiAgentService = new PythonAgentProxyService(ctx.userId);
           await aiAgentService.interruptTask({ operationId: target.operationId });
         }
 
@@ -311,7 +311,7 @@ export const taskRouter = router({
         }
 
         if (target.status === 'running' && target.operationId) {
-          const aiAgentService = new AiAgentService(ctx.serverDB, ctx.userId);
+          const aiAgentService = new PythonAgentProxyService(ctx.userId);
           await aiAgentService.interruptTask({ operationId: target.operationId });
         }
 
@@ -1007,7 +1007,7 @@ export const taskRouter = router({
         // Cascade: when leaving `running`, cancel all running topics
         if (resolved.status === 'running' && status !== 'running') {
           const topics = await ctx.taskTopicModel.findByTaskId(resolved.id);
-          const aiAgentService = new AiAgentService(ctx.serverDB, ctx.userId);
+          const aiAgentService = new PythonAgentProxyService(ctx.userId);
 
           for (const t of topics) {
             if (t.status !== 'running' || !t.topicId) continue;

@@ -1,27 +1,24 @@
-import {
-  type MarketSkillItem,
-  type SearchSkillParams,
-  SkillStoreIdentifier,
-} from '@lobechat/builtin-tool-skill-store';
+import type { MarketSkillItem, SearchSkillParams } from '@lobechat/builtin-tools';
+import { SkillStoreIdentifier } from '@lobechat/builtin-tools';
 import {
   type SkillImportServiceResult,
   SkillStoreExecutionRuntime,
   type SkillStoreRuntimeService,
-} from '@lobechat/builtin-tool-skill-store/executionRuntime';
+} from '@lobechat/builtin-tools/skillStoreExecutionRuntime';
 import debug from 'debug';
 
 import { UserModel } from '@/database/models/user';
-import {
-  emitToolOutcomeSafely,
-  resolveToolOutcomeScope,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
 import { MarketService } from '@/server/services/market';
 import { SkillImporter } from '@/server/services/skill/importer';
+import {
+  emitToolOutcomeSafely,
+  redisPolicyStateStore,
+  resolveToolOutcomeScope,
+} from '@/server/services/toolOutcomeProxy';
 
-import { type ServerRuntimeRegistration } from './types';
+import type { ServerRuntimeRegistration } from './types';
 
-const log = debug('lobe-server:skill-store-runtime');
+const log = debug('ethos-server:skill-store-runtime');
 
 class SkillStoreServerRuntimeService implements SkillStoreRuntimeService {
   private agentId?: string;

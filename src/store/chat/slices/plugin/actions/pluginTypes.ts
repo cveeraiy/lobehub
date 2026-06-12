@@ -2,7 +2,6 @@ import { type ChatToolPayload, type RuntimeStepContext } from '@lobechat/types';
 import debug from 'debug';
 
 import { type MCPToolCallResult } from '@/libs/mcp';
-import { truncateToolResult } from '@/server/utils/truncateToolResult';
 import { mcpService } from '@/services/mcp';
 import { messageService } from '@/services/message';
 import { AI_RUNTIME_OPERATION_TYPES } from '@/store/chat/slices/operation';
@@ -11,12 +10,13 @@ import { useToolStore } from '@/store/tool';
 import { hasExecutor } from '@/store/tool/slices/builtin/executors';
 import { type StoreSetter } from '@/store/types';
 import { safeParseJSON } from '@/utils/safeParseJSON';
+import { truncateToolResult } from '@/utils/truncateToolResult';
 
 import { dbMessageSelectors } from '../../message/selectors';
 import { type RemoteToolExecutor } from './exector';
 import { klavisExecutor, lobehubSkillExecutor } from './exector';
 
-const log = debug('lobe-store:plugin-types');
+const log = debug('ethos-store:plugin-types');
 
 /**
  * Plugin type-specific implementations
@@ -46,7 +46,7 @@ export class PluginTypesActionImpl {
       return await this.#get().invokeKlavisTypePlugin(id, payload);
     }
 
-    // Check if this is a LobeHub Skill tool by source field
+    // Check if this is an Ethos Skill tool by source field
     if (payload.source === 'lobehubSkill') {
       return await this.#get().invokeLobehubSkillTypePlugin(id, payload);
     }

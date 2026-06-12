@@ -1,7 +1,4 @@
-import {
-  WebOnboardingApiName,
-  WebOnboardingIdentifier,
-} from '@lobechat/builtin-tool-web-onboarding';
+import { WebOnboardingApiName, WebOnboardingIdentifier } from '@lobechat/builtin-tools';
 
 interface ToolRenderRuleTarget {
   apiName: string;

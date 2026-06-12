@@ -1,4 +1,4 @@
-import { normalizeListTasksParams, UNFINISHED_TASK_STATUSES } from '@lobechat/builtin-tool-task';
+import { normalizeListTasksParams, UNFINISHED_TASK_STATUSES } from '@lobechat/builtin-tools';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createTaskRuntime } from '../task';

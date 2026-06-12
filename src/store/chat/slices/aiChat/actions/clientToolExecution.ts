@@ -9,7 +9,7 @@ import { hasExecutor, invokeExecutor } from '@/store/tool/slices/builtin/executo
 import { type StoreSetter } from '@/store/types';
 import { safeParseJSON } from '@/utils/safeParseJSON';
 
-const log = debug('lobe-store:client-tool-execution');
+const log = debug('ethos-store:client-tool-execution');
 
 type Setter = StoreSetter<ChatStore>;
 

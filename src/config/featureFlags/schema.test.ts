@@ -107,6 +107,12 @@ describe('mapFeatureFlagsEnvToState', () => {
     expect(mappedState.enableAuthCaptcha).toBe(true);
   });
 
+  it('should enable bot channels by default', () => {
+    const mappedState = mapFeatureFlagsEnvToState(DEFAULT_FEATURE_FLAGS);
+
+    expect(mappedState.enableBotChannels).toBe(false);
+  });
+
   it('should correctly map boolean feature flags to state', () => {
     const config = {
       provider_settings: true,
@@ -209,6 +215,57 @@ describe('mapFeatureFlagsEnvToState', () => {
     expect(mappedState.enableAgentOnboarding).toBe(false);
     expect(mappedState.enableAgentTask).toBe(false);
     expect(mappedState.isAgentEditable).toBe(false);
+  });
+
+  it('should disable consumer features when enterprise_mode is enabled', () => {
+    const config = {
+      ...DEFAULT_FEATURE_FLAGS,
+      enterprise_mode: true as const,
+      market: true as const,
+      ai_image: true as const,
+      changelog: true as const,
+      provider_settings: true as const,
+      openai_api_key: true as const,
+      openai_proxy_url: true as const,
+      check_updates: true as const,
+      cloud_promotion: true as const,
+      rag_eval: true as const,
+    };
+
+    const mappedState = mapFeatureFlagsEnvToState(config);
+
+    expect(mappedState.isEnterprise).toBe(true);
+    expect(mappedState.showMarket).toBe(false);
+    expect(mappedState.showAiImage).toBe(false);
+    expect(mappedState.showChangelog).toBe(false);
+    expect(mappedState.showProvider).toBe(false);
+    expect(mappedState.showOpenAIApiKey).toBe(false);
+    expect(mappedState.showOpenAIProxyUrl).toBe(false);
+    expect(mappedState.enableCheckUpdates).toBe(false);
+    expect(mappedState.showCloudPromotion).toBe(false);
+    expect(mappedState.enableRAGEval).toBe(false);
+    expect(mappedState.hideGitHub).toBe(true);
+
+    // These should NOT be affected by enterprise mode
+    expect(mappedState.enableKnowledgeBase).toBe(true);
+    expect(mappedState.enableSTT).toBe(true);
+    expect(mappedState.isAgentEditable).toBe(true);
+    expect(mappedState.showWelcomeSuggest).toBe(true);
+  });
+
+  it('should not affect features when enterprise_mode is disabled', () => {
+    const config = {
+      ...DEFAULT_FEATURE_FLAGS,
+      enterprise_mode: false as const,
+      market: true as const,
+      ai_image: true as const,
+    };
+
+    const mappedState = mapFeatureFlagsEnvToState(config);
+
+    expect(mappedState.isEnterprise).toBe(false);
+    expect(mappedState.showMarket).toBe(true);
+    expect(mappedState.showAiImage).toBe(true);
   });
 
   it('should handle mixed boolean and array values correctly', () => {

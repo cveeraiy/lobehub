@@ -1,7 +1,7 @@
 /**
  * Tests for Lobe Web Browsing Executor
  */
-import { WebBrowsingApiName } from '@lobechat/builtin-tool-web-browsing';
+import { WebBrowsingApiName } from '@lobechat/builtin-tools';
 import { SEARCH_SEARXNG_NOT_CONFIG } from '@lobechat/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

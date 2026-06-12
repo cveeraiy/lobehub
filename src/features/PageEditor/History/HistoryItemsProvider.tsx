@@ -9,7 +9,7 @@ import { createWithEqualityFn } from 'zustand/traditional';
 import type { StateCreator } from 'zustand/vanilla';
 import { createContext } from 'zustand-utils';
 
-import type { DocumentHistoryListItem } from '@/server/routers/lambda/_schema/documentHistory';
+import type { DocumentHistoryListItem } from '@/types/documentHistory';
 
 interface State {
   itemsById: Record<string, DocumentHistoryListItem>;

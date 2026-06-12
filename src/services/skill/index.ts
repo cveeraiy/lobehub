@@ -1,4 +1,5 @@
 import type {
+  BuiltinSkill,
   CreateSkillInput,
   ImportGitHubInput,
   ImportUrlInput,
@@ -12,83 +13,166 @@ import type {
   UpdateSkillInput,
 } from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
+
+type RawSkillItem = Partial<
+  SkillItem & {
+    created_at: Date | string;
+    updated_at: Date | string;
+    zip_file_hash: string | null;
+  }
+>;
+
+type RawSkillListResponse =
+  | SkillListItem[]
+  | {
+      data?: RawSkillItem[];
+      items?: RawSkillItem[];
+      total?: number;
+      total_count?: number;
+      totalCount?: number;
+    };
+
+type RawBuiltinSkill = BuiltinSkill & {
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
+
+const toDate = (value: unknown) => {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') return new Date(value);
+  return new Date(0);
+};
+
+const normalizeSkillItem = (item: RawSkillItem): SkillItem => ({
+  content: item.content ?? null,
+  createdAt: toDate(item.createdAt ?? item.created_at),
+  description: item.description ?? null,
+  editorData: item.editorData ?? null,
+  id: item.id ?? '',
+  identifier: item.identifier ?? '',
+  manifest: item.manifest ?? { description: item.description ?? '', name: item.name ?? '' },
+  name: item.name ?? item.manifest?.name ?? '',
+  resources: item.resources ?? null,
+  source: item.source ?? 'user',
+  updatedAt: toDate(item.updatedAt ?? item.updated_at),
+  zipFileHash: item.zipFileHash ?? item.zip_file_hash ?? null,
+});
+
+const normalizeSkillListResponse = (
+  response: RawSkillListResponse,
+): { data: SkillListItem[]; total: number } => {
+  const items = Array.isArray(response) ? response : (response.data ?? response.items ?? []);
+
+  return {
+    data: items.map(normalizeSkillItem),
+    total: Array.isArray(response)
+      ? response.length
+      : (response.total ?? response.totalCount ?? response.total_count ?? items.length),
+  };
+};
 
 class AgentSkillService {
   // ===== Create =====
 
   async createSkill(params: CreateSkillInput): Promise<SkillItem | undefined> {
-    return lambdaClient.agentSkills.create.mutate(params);
+    const skill = await restClient.post<RawSkillItem>('/skills', { body: params });
+    return skill ? normalizeSkillItem(skill) : undefined;
   }
 
   // ===== Import =====
 
   async importFromGitHub(params: ImportGitHubInput): Promise<SkillImportResult | undefined> {
-    return lambdaClient.agentSkills.importFromGitHub.mutate(params);
+    return restClient.post('/skills/import/github', { body: params });
   }
 
   async importFromUrl(params: ImportUrlInput): Promise<SkillImportResult | undefined> {
-    return lambdaClient.agentSkills.importFromUrl.mutate(params);
+    return restClient.post('/skills/import/url', { body: params });
   }
 
   async importFromZip(params: ImportZipInput): Promise<SkillImportResult | undefined> {
-    return lambdaClient.agentSkills.importFromZip.mutate(params);
+    return restClient.post('/skills/import/zip', { body: params });
   }
 
   async importFromMarket(identifier: string): Promise<SkillImportResult | undefined> {
-    return lambdaClient.agentSkills.importFromMarket.mutate({ identifier });
+    return restClient.post('/skills/import/market', { body: { identifier } });
   }
 
   // ===== Query =====
 
   async getById(id: string): Promise<SkillItem | undefined> {
-    return lambdaClient.agentSkills.getById.query({ id });
+    const skill = await restClient.get<RawSkillItem>(`/skills/${id}`);
+    return skill ? normalizeSkillItem(skill) : undefined;
   }
 
   async getZipUrl(id: string): Promise<{ name: string; url: string | null }> {
-    return lambdaClient.agentSkills.getByIdWithZipUrl.query({ id });
+    return restClient.get(`/skills/${id}/zip-url`);
   }
 
   async getByIdentifier(identifier: string): Promise<SkillItem | undefined> {
-    return lambdaClient.agentSkills.getByIdentifier.query({ identifier });
+    const skill = await restClient.get<RawSkillItem>('/skills/by-identifier', {
+      params: { identifier },
+    });
+    return skill ? normalizeSkillItem(skill) : undefined;
   }
 
   async getByName(name: string): Promise<SkillItem | undefined> {
-    return lambdaClient.agentSkills.getByName.query({ name });
+    const skill = await restClient.get<RawSkillItem>('/skills/by-name', { params: { name } });
+    return skill ? normalizeSkillItem(skill) : undefined;
   }
 
   async list(source?: SkillSource): Promise<{ data: SkillListItem[]; total: number }> {
-    return lambdaClient.agentSkills.list.query(source ? { source } : undefined);
+    const response = await restClient.get<RawSkillListResponse>('/skills', {
+      params: source ? { source } : undefined,
+    });
+    return normalizeSkillListResponse(response);
+  }
+
+  async listBuiltin(): Promise<BuiltinSkill[]> {
+    const response = await restClient.get<RawBuiltinSkill[]>('/skills/builtin');
+    return response.map((skill) => ({
+      avatar: skill.avatar,
+      content: skill.content,
+      description: skill.description,
+      identifier: skill.identifier,
+      name: skill.name,
+      resources: skill.resources,
+      source: 'builtin',
+    }));
   }
 
   async search(query: string): Promise<{ data: SkillListItem[]; total: number }> {
-    return lambdaClient.agentSkills.search.query({ query });
+    const response = await restClient.get<RawSkillListResponse>('/skills/search', {
+      params: { query },
+    });
+    return normalizeSkillListResponse(response);
   }
 
   // ===== Resources =====
 
   async listResources(id: string, includeContent?: boolean): Promise<SkillResourceTreeNode[]> {
-    return lambdaClient.agentSkills.listResources.query({ id, includeContent });
+    return restClient.get(`/skills/${id}/resources`, {
+      params: includeContent !== undefined ? { includeContent } : undefined,
+    });
   }
 
   async readResource(id: string, path: string): Promise<SkillResourceContent> {
-    return lambdaClient.agentSkills.readResource.query({ id, path });
+    return restClient.get(`/skills/${id}/resources/content`, { params: { path } });
   }
 
   // ===== Update =====
 
   async updateSkill(params: UpdateSkillInput): Promise<SkillItem> {
-    return lambdaClient.agentSkills.update.mutate({
-      content: params.content,
-      id: params.id,
-      manifest: params.manifest,
+    const skill = await restClient.put<RawSkillItem>(`/skills/${params.id}`, {
+      body: { content: params.content, manifest: params.manifest },
     });
+    return normalizeSkillItem(skill);
   }
 
   // ===== Delete =====
 
   async deleteSkill(id: string): Promise<{ success: boolean }> {
-    return lambdaClient.agentSkills.delete.mutate({ id });
+    return restClient.delete(`/skills/${id}`);
   }
 }
 

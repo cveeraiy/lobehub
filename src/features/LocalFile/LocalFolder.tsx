@@ -4,7 +4,6 @@ import path from 'path-browserify-esm';
 import React from 'react';
 
 import FileIcon from '@/components/FileIcon';
-import { localFileService } from '@/services/electron/localFileService';
 
 const styles = createStaticStyles(({ css }) => ({
   container: css`
@@ -38,12 +37,6 @@ interface LocalFolderProps {
 }
 
 export const LocalFolder = ({ path: pathname, size = 22 }: LocalFolderProps) => {
-  const handleClick = () => {
-    if (!path) return;
-
-    localFileService.openLocalFolder({ isDirectory: true, path: pathname });
-  };
-
   const { base } = path.parse(pathname);
 
   return (
@@ -53,7 +46,6 @@ export const LocalFolder = ({ path: pathname, size = 22 }: LocalFolderProps) => 
       className={styles.container}
       gap={4}
       style={{ display: 'inline-flex', verticalAlign: 'middle' }}
-      onClick={handleClick}
     >
       <FileIcon isDirectory fileName={base} size={size} variant={'raw'} />
       <Flexbox horizontal align={'baseline'} gap={4} style={{ overflow: 'hidden', width: '100%' }}>

@@ -1,15 +1,15 @@
 import type { EvalRunInputConfig, RubricType } from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 class AgentEvalService {
   // ============ Benchmark ============
   async listBenchmarks() {
-    return lambdaClient.agentEval.listBenchmarks.query();
+    return restClient.get('/agent-eval/benchmarks');
   }
 
   async getBenchmark(id: string) {
-    return lambdaClient.agentEval.getBenchmark.query({ id });
+    return restClient.get(`/agent-eval/benchmarks/${id}`);
   }
 
   async createBenchmark(params: {
@@ -20,7 +20,7 @@ class AgentEvalService {
     rubrics?: any[];
     tags?: string[];
   }) {
-    return lambdaClient.agentEval.createBenchmark.mutate(params);
+    return restClient.post('/agent-eval/benchmarks', { body: params });
   }
 
   async updateBenchmark(params: {
@@ -31,20 +31,21 @@ class AgentEvalService {
     name: string;
     tags?: string[];
   }) {
-    return lambdaClient.agentEval.updateBenchmark.mutate(params);
+    const { id, ...body } = params;
+    return restClient.put(`/agent-eval/benchmarks/${id}`, { body });
   }
 
   async deleteBenchmark(id: string) {
-    return lambdaClient.agentEval.deleteBenchmark.mutate({ id });
+    return restClient.delete(`/agent-eval/benchmarks/${id}`);
   }
 
   // ============ Dataset ============
   async listDatasets(benchmarkId: string) {
-    return lambdaClient.agentEval.listDatasets.query({ benchmarkId });
+    return restClient.get('/agent-eval/datasets', { params: { benchmarkId } });
   }
 
   async getDataset(id: string) {
-    return lambdaClient.agentEval.getDataset.query({ id });
+    return restClient.get(`/agent-eval/datasets/${id}`);
   }
 
   async createDataset(params: {
@@ -56,7 +57,7 @@ class AgentEvalService {
     metadata?: Record<string, unknown>;
     name: string;
   }) {
-    return lambdaClient.agentEval.createDataset.mutate(params);
+    return restClient.post('/agent-eval/datasets', { body: params });
   }
 
   async updateDataset(params: {
@@ -67,15 +68,16 @@ class AgentEvalService {
     metadata?: Record<string, unknown>;
     name: string;
   }) {
-    return lambdaClient.agentEval.updateDataset.mutate(params);
+    const { id, ...body } = params;
+    return restClient.put(`/agent-eval/datasets/${id}`, { body });
   }
 
   async deleteDataset(id: string) {
-    return lambdaClient.agentEval.deleteDataset.mutate({ id });
+    return restClient.delete(`/agent-eval/datasets/${id}`);
   }
 
   async parseDatasetFile(params: { filename?: string; pathname: string }) {
-    return lambdaClient.agentEval.parseDatasetFile.mutate(params);
+    return restClient.post('/agent-eval/datasets/parse-file', { body: params });
   }
 
   async importDataset(params: {
@@ -93,12 +95,12 @@ class AgentEvalService {
       sortOrder?: string;
     };
   }) {
-    return lambdaClient.agentEval.importDataset.mutate(params);
+    return restClient.post('/agent-eval/datasets/import', { body: params });
   }
 
   // ============ Test Case ============
   async listTestCases(params: { datasetId: string; limit?: number; offset?: number }) {
-    return lambdaClient.agentEval.listTestCases.query(params);
+    return restClient.get('/agent-eval/test-cases', { params: params as any });
   }
 
   async createTestCase(params: {
@@ -116,7 +118,7 @@ class AgentEvalService {
       tags?: string[];
     };
   }) {
-    return lambdaClient.agentEval.createTestCase.mutate(params);
+    return restClient.post('/agent-eval/test-cases', { body: params });
   }
 
   async updateTestCase(params: {
@@ -131,24 +133,25 @@ class AgentEvalService {
     metadata?: Record<string, unknown>;
     sortOrder?: number;
   }) {
-    return lambdaClient.agentEval.updateTestCase.mutate(params);
+    const { id, ...body } = params;
+    return restClient.put(`/agent-eval/test-cases/${id}`, { body });
   }
 
   async deleteTestCase(id: string) {
-    return lambdaClient.agentEval.deleteTestCase.mutate({ id });
+    return restClient.delete(`/agent-eval/test-cases/${id}`);
   }
 
   // ============ Run ============
   async listRuns(params: { benchmarkId?: string; datasetId?: string }) {
-    return lambdaClient.agentEval.listRuns.query(params);
+    return restClient.get('/agent-eval/runs', { params: params as any });
   }
 
   async getRunDetails(id: string) {
-    return lambdaClient.agentEval.getRunDetails.query({ id });
+    return restClient.get(`/agent-eval/runs/${id}`);
   }
 
   async getRunResults(id: string) {
-    return lambdaClient.agentEval.getRunResults.query({ id });
+    return restClient.get(`/agent-eval/runs/${id}/results`);
   }
 
   async createRun(params: {
@@ -157,38 +160,40 @@ class AgentEvalService {
     name?: string;
     targetAgentId?: string;
   }) {
-    return lambdaClient.agentEval.createRun.mutate(params);
+    return restClient.post('/agent-eval/runs', { body: params });
   }
 
   async startRun(id: string, force?: boolean) {
-    return lambdaClient.agentEval.startRun.mutate({ force, id });
+    return restClient.post(`/agent-eval/runs/${id}/start`, { body: { force } });
   }
 
   async abortRun(id: string) {
-    return lambdaClient.agentEval.abortRun.mutate({ id });
+    return restClient.post(`/agent-eval/runs/${id}/abort`);
   }
 
   async retryRunErrors(id: string) {
-    return lambdaClient.agentEval.retryRunErrors.mutate({ id });
+    return restClient.post(`/agent-eval/runs/${id}/retry-errors`);
   }
 
   async retryRunCase(runId: string, testCaseId: string) {
-    return lambdaClient.agentEval.retryRunCase.mutate({ runId, testCaseId });
+    return restClient.post(`/agent-eval/runs/${runId}/retry-case`, { body: { testCaseId } });
   }
 
   async resumeRunCase(runId: string, testCaseId: string, threadId?: string) {
-    return lambdaClient.agentEval.resumeRunCase.mutate({ runId, testCaseId, threadId });
+    return restClient.post(`/agent-eval/runs/${runId}/resume-case`, {
+      body: { testCaseId, threadId },
+    });
   }
 
   async batchResumeRunCases(
     runId: string,
     targets: Array<{ testCaseId: string; threadId?: string }>,
   ) {
-    return lambdaClient.agentEval.batchResumeRunCases.mutate({ runId, targets });
+    return restClient.post(`/agent-eval/runs/${runId}/batch-resume`, { body: { targets } });
   }
 
   async getResumableCases(runId: string) {
-    return lambdaClient.agentEval.getResumableCases.query({ runId });
+    return restClient.get(`/agent-eval/runs/${runId}/resumable-cases`);
   }
 
   async updateRun(params: {
@@ -198,11 +203,12 @@ class AgentEvalService {
     name?: string;
     targetAgentId?: string | null;
   }) {
-    return lambdaClient.agentEval.updateRun.mutate(params);
+    const { id, ...body } = params;
+    return restClient.put(`/agent-eval/runs/${id}`, { body });
   }
 
   async deleteRun(id: string) {
-    return lambdaClient.agentEval.deleteRun.mutate({ id });
+    return restClient.delete(`/agent-eval/runs/${id}`);
   }
 }
 

@@ -1,142 +1,136 @@
 import {
-  type ActivityMemoryItemSchema,
-  type AddIdentityActionSchema,
-  type ContextMemoryItemSchema,
-  type ExperienceMemoryItemSchema,
-  type PreferenceMemoryItemSchema,
-  type RemoveIdentityActionSchema,
-  type UpdateIdentityActionSchema,
-} from '@lobechat/memory-user-memory/schemas';
-import {
   type ActivityListParams,
   type ActivityListResult,
+  type ActivityMemoryItemSchema,
   type AddActivityMemoryResult,
   type AddContextMemoryResult,
   type AddExperienceMemoryResult,
+  type AddIdentityActionSchema,
   type AddIdentityMemoryResult,
   type AddPreferenceMemoryResult,
+  type ContextMemoryItemSchema,
   type ExperienceListParams,
   type ExperienceListResult,
+  type ExperienceMemoryItemSchema,
   type IdentityListParams,
   type IdentityListResult,
   type LayersEnum,
+  type PreferenceMemoryItemSchema,
   type QueryTaxonomyOptionsParams,
   type QueryTaxonomyOptionsResult,
+  type RemoveIdentityActionSchema,
   type RemoveIdentityMemoryResult,
   type SearchMemoryParams,
   type SearchMemoryResult,
   type TypesEnum,
+  type UpdateIdentityActionSchema,
   type UpdateIdentityMemoryResult,
 } from '@lobechat/types';
 import { type z } from 'zod';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
+import type { PersonaData } from '@/store/userMemory/initialState';
+import type { IdentityForInjection } from '@/store/userMemory/types';
+import type { QueryIdentityRolesResult, QueryTagsResult } from '@/types/userMemory';
 
 class UserMemoryService {
   addActivityMemory = async (
     params: z.infer<typeof ActivityMemoryItemSchema>,
   ): Promise<AddActivityMemoryResult> => {
-    return lambdaClient.userMemories.toolAddActivityMemory.mutate(params);
+    return restClient.post('/user-memory/add-activity', { body: params });
   };
 
   addContextMemory = async (
     params: z.infer<typeof ContextMemoryItemSchema>,
   ): Promise<AddContextMemoryResult> => {
-    return lambdaClient.userMemories.toolAddContextMemory.mutate(params);
+    return restClient.post('/user-memory/add-context', { body: params });
   };
 
   addExperienceMemory = async (
     params: z.infer<typeof ExperienceMemoryItemSchema>,
   ): Promise<AddExperienceMemoryResult> => {
-    return lambdaClient.userMemories.toolAddExperienceMemory.mutate(params);
+    return restClient.post('/user-memory/add-experience', { body: params });
   };
 
   addIdentityMemory = async (
     params: z.infer<typeof AddIdentityActionSchema>,
   ): Promise<AddIdentityMemoryResult> => {
-    return lambdaClient.userMemories.toolAddIdentityMemory.mutate(params);
+    return restClient.post('/user-memory/add-identity', { body: params });
   };
 
   addPreferenceMemory = async (
     params: z.infer<typeof PreferenceMemoryItemSchema>,
   ): Promise<AddPreferenceMemoryResult> => {
-    return lambdaClient.userMemories.toolAddPreferenceMemory.mutate(params);
+    return restClient.post('/user-memory/add-preference', { body: params });
   };
 
   removeIdentityMemory = async (
     params: z.infer<typeof RemoveIdentityActionSchema>,
   ): Promise<RemoveIdentityMemoryResult> => {
-    return lambdaClient.userMemories.toolRemoveIdentityMemory.mutate(params);
+    return restClient.post('/user-memory/remove-identity', { body: params });
   };
 
-  getMemoryDetail = async (params: { id: string; layer: LayersEnum }) => {
-    return lambdaClient.userMemories.getMemoryDetail.query(params);
+  getMemoryDetail = async (params: { id: string; layer: LayersEnum }): Promise<any> => {
+    return restClient.get(`/user-memory/${params.id}`, {
+      params: { layer: params.layer } as any,
+    });
   };
 
-  getPersona = async () => {
-    return lambdaClient.userMemory.getPersona.query();
+  getPersona = async (): Promise<PersonaData | null> => {
+    return restClient.get('/user-memory/persona');
   };
 
-  /**
-   * Query experiences with pagination, search, and sorting
-   * Returns flat structure optimized for frontend display
-   */
   queryExperiences = async (params?: ExperienceListParams): Promise<ExperienceListResult> => {
-    return lambdaClient.userMemories.queryExperiences.query(params);
+    return restClient.get('/user-memory/query/experiences', { params: params as any });
   };
 
-  /**
-   * Query activities with pagination, search, and sorting
-   * Returns flat structure optimized for frontend display
-   */
   queryActivities = async (params?: ActivityListParams): Promise<ActivityListResult> => {
-    return lambdaClient.userMemories.queryActivities.query(params);
+    return restClient.get('/user-memory/query/activities', { params: params as any });
   };
 
-  /**
-   * Query identities with pagination, search, and sorting
-   * Returns flat structure optimized for frontend display
-   */
   queryIdentities = async (params?: IdentityListParams): Promise<IdentityListResult> => {
-    return lambdaClient.userMemories.queryIdentities.query(params);
+    return restClient.get('/user-memory/query/identities', { params: params as any });
   };
 
   retrieveMemory = async (params: SearchMemoryParams): Promise<SearchMemoryResult> => {
-    return lambdaClient.userMemories.toolSearchMemory.query(params);
+    return restClient.post('/user-memory/search', { body: params });
   };
 
-  /**
-   * Retrieve memories for a specific topic
-   * Uses the topic's historySummary as the search query
-   */
   retrieveMemoryForTopic = async (topicId: string): Promise<SearchMemoryResult> => {
-    return lambdaClient.userMemories.retrieveMemoryForTopic.query({ topicId });
+    return restClient.get('/user-memory/retrieve-for-topic', {
+      params: { topicId } as any,
+    });
   };
 
   searchMemory = async (params: SearchMemoryParams): Promise<SearchMemoryResult> => {
-    return lambdaClient.userMemories.toolSearchMemory.query(params);
+    return restClient.post('/user-memory/search', { body: params });
   };
 
-  queryTags = async (params?: { layers?: LayersEnum[]; page?: number; size?: number }) => {
-    return lambdaClient.userMemories.queryTags.query(params);
+  queryTags = async (params?: {
+    layers?: LayersEnum[];
+    page?: number;
+    size?: number;
+  }): Promise<QueryTagsResult[]> => {
+    return restClient.get('/user-memory/tags', { params: params as any });
   };
 
-  queryIdentityRoles = async (params?: { page?: number; size?: number }) => {
-    return lambdaClient.userMemories.queryIdentityRoles.query(params);
+  queryIdentityRoles = async (params?: {
+    page?: number;
+    size?: number;
+  }): Promise<QueryIdentityRolesResult> => {
+    return restClient.get('/user-memory/identity-roles', { params: params as any });
   };
 
   queryTaxonomyOptions = async (
     params?: QueryTaxonomyOptionsParams,
   ): Promise<QueryTaxonomyOptionsResult> => {
-    return lambdaClient.userMemories.queryTaxonomyOptions.query(params);
+    return restClient.get('/user-memory/taxonomy-options', { params: params as any });
   };
 
-  /**
-   * Query identities for chat context injection
-   * Only returns user's own identities (relationship === 'self' or null)
-   */
-  queryIdentitiesForInjection = async (params?: { limit?: number }) => {
-    return lambdaClient.userMemories.queryIdentitiesForInjection.query(params);
+  queryIdentitiesForInjection = async (params?: {
+    limit?: number;
+  }): Promise<IdentityForInjection[]> => {
+    return restClient.get('/user-memory/identities-for-injection', { params: params as any });
   };
 
   queryMemories = async (params?: {
@@ -157,13 +151,13 @@ class UserMemoryService {
     tags?: string[];
     types?: TypesEnum[];
   }) => {
-    return lambdaClient.userMemories.queryMemories.query(params);
+    return restClient.get('/user-memory', { params: params as any });
   };
 
   updateIdentityMemory = async (
     params: z.infer<typeof UpdateIdentityActionSchema>,
   ): Promise<UpdateIdentityMemoryResult> => {
-    return lambdaClient.userMemories.toolUpdateIdentityMemory.mutate(params);
+    return restClient.post('/user-memory/update-identity', { body: params });
   };
 }
 

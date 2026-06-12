@@ -1,10 +1,9 @@
-import type { LobeChatDatabase } from '@lobechat/database';
-
 import { AgentModel } from '@/database/models/agent';
 import { AgentDocumentModel } from '@/database/models/agentDocuments';
 import { AgentSkillModel } from '@/database/models/agentSkill';
 import { DocumentService } from '@/server/services/document';
 import { SkillResourceService } from '@/server/services/skill/resource';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { ProviderSkillsAgentDocument } from './providers/ProviderSkillsAgentDocument';
 import { ProviderSkillsBuiltin } from './providers/ProviderSkillsBuiltin';
@@ -36,7 +35,7 @@ export const createSkillMount = (db: LobeChatDatabase, userId: string) => {
       agentDocumentModel,
       documentService,
     }),
-    'builtin': new ProviderSkillsBuiltin(),
+    'builtin': new ProviderSkillsBuiltin(userId),
     'installed-active': new ProviderSkillsInstalledActive({
       agentModel,
       skillModel,

@@ -1,12 +1,12 @@
-import { type AgentGroupDetail } from '@lobechat/types';
+import type { AgentGroupDetail, AgentGroupMember } from '@lobechat/types';
 
-import {
-  type ChatGroupAgentItem,
-  type ChatGroupItem,
-  type NewChatGroup,
-  type NewChatGroupAgent,
-} from '@/database/schemas';
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
+import type {
+  ChatGroupAgentItem,
+  ChatGroupItem,
+  NewChatGroup,
+  NewChatGroupAgent,
+} from '@/types/chatGroup';
 
 export interface GroupMemberConfig {
   avatar?: string;
@@ -25,131 +25,290 @@ export interface SupervisorConfig {
   backgroundColor?: string;
   description?: string;
   model?: string;
-  params?: any;
+  params?: unknown;
   provider?: string;
   systemRole?: string;
   tags?: string[];
   title?: string;
 }
 
+export interface BatchCreateAgentsResult {
+  agentIds?: string[];
+  agents: Array<{ id: string; title?: string | null }>;
+}
+
+interface RawChatGroupItem extends Partial<ChatGroupItem> {
+  background_color?: string | null;
+  client_id?: string | null;
+  created_at?: string | null;
+  editor_data?: ChatGroupItem['editorData'] | null;
+  group_id?: string | null;
+  market_identifier?: string | null;
+  name?: string | null;
+  updated_at?: string | null;
+}
+
+interface RawChatGroupAgentItem extends Partial<ChatGroupAgentItem> {
+  agent_id?: string;
+  chat_group_id?: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+interface RawGroupDetail extends RawChatGroupItem {
+  agents?: RawAgentGroupMember[];
+  supervisor_agent_id?: string | null;
+  supervisorAgentId?: string | null;
+}
+
+interface RawAgentGroupMember extends Partial<AgentGroupMember> {
+  agent_id?: string;
+  background_color?: string | null;
+  chat_group_id?: string;
+  created_at?: string | null;
+  id: string;
+  role?: string | null;
+  system_role?: string | null;
+  updated_at?: string | null;
+  user_id?: string;
+}
+
+const toDate = (value?: Date | string | null) => {
+  if (value instanceof Date) return value;
+  return value ? new Date(value) : new Date(0);
+};
+
+const toGroupBody = (value: Partial<ChatGroupItem | NewChatGroup>) => ({
+  avatar: value.avatar,
+  background_color: value.backgroundColor,
+  client_id: value.clientId,
+  config: value.config,
+  content: value.content,
+  description: value.description,
+  editor_data: value.editorData,
+  group_id: value.groupId,
+  id: value.id,
+  market_identifier: value.marketIdentifier,
+  pinned: value.pinned,
+  title: value.title,
+});
+
+const toAgentBody = (agent: GroupMemberConfig) => ({
+  ...agent,
+  background_color: agent.backgroundColor,
+  system_role: agent.systemRole,
+});
+
+const toGroup = (group: RawChatGroupItem): ChatGroupItem => {
+  const title = group.title ?? group.name ?? null;
+
+  return {
+    ...group,
+    backgroundColor: group.backgroundColor ?? group.background_color ?? null,
+    clientId: group.clientId ?? group.client_id ?? null,
+    createdAt: toDate(group.createdAt ?? group.created_at),
+    editorData: group.editorData ?? group.editor_data ?? null,
+    groupId: group.groupId ?? group.group_id ?? null,
+    id: group.id!,
+    marketIdentifier: group.marketIdentifier ?? group.market_identifier ?? null,
+    title,
+    updatedAt: toDate(group.updatedAt ?? group.updated_at),
+    userId: group.userId ?? '',
+  } as ChatGroupItem;
+};
+
+const toGroupAgent = (agent: RawChatGroupAgentItem): NewChatGroupAgent => ({
+  ...agent,
+  agentId: agent.agentId ?? agent.agent_id!,
+  chatGroupId: agent.chatGroupId ?? agent.chat_group_id!,
+  createdAt: toDate(agent.createdAt ?? agent.created_at),
+  updatedAt: toDate(agent.updatedAt ?? agent.updated_at),
+  userId: agent.userId ?? '',
+});
+
+const toGroupAgentsResult = (response: {
+  added?: RawChatGroupAgentItem[];
+  existing?: string[];
+}): { added: NewChatGroupAgent[]; existing: string[] } => ({
+  added: (response.added ?? []).map(toGroupAgent),
+  existing: response.existing ?? [],
+});
+
+const toGroupDetail = (detail: RawGroupDetail | null): AgentGroupDetail | null => {
+  if (!detail) return null;
+
+  const group = toGroup(detail);
+  const agents = (detail.agents ?? []).map((agent) => ({
+    ...agent,
+    backgroundColor: agent.backgroundColor ?? agent.background_color ?? null,
+    createdAt: toDate(agent.createdAt ?? agent.created_at),
+    isSupervisor: agent.isSupervisor === true || agent.role === 'supervisor',
+    systemRole: agent.systemRole ?? agent.system_role ?? null,
+    updatedAt: toDate(agent.updatedAt ?? agent.updated_at),
+    userId: agent.userId ?? agent.user_id ?? '',
+  })) as AgentGroupMember[];
+
+  return {
+    ...group,
+    agents,
+    supervisorAgentId:
+      detail.supervisorAgentId ??
+      detail.supervisor_agent_id ??
+      agents.find((agent) => agent.isSupervisor)?.id,
+  } as AgentGroupDetail;
+};
+
 class ChatGroupService {
-  /**
-   * Get a group by forkedFromIdentifier stored in config
-   * @returns group id if exists, null otherwise
-   */
   getGroupByForkedFromIdentifier = async (forkedFromIdentifier: string): Promise<string | null> => {
-    return lambdaClient.group.getGroupByForkedFromIdentifier.query({ forkedFromIdentifier });
+    return restClient.get<string | null>(
+      `/chat-groups/by-forked-from/${encodeURIComponent(forkedFromIdentifier)}`,
+    );
   };
 
-  /**
-   * Create a group with a supervisor agent.
-   * The supervisor agent is automatically created as a virtual agent.
-   */
-  createGroup = (
+  createGroup = async (
     params: Omit<NewChatGroup, 'userId'>,
   ): Promise<{ group: ChatGroupItem; supervisorAgentId: string }> => {
-    return lambdaClient.group.createGroup.mutate({
-      ...params,
-      config: params.config as any,
+    const response = await restClient.post<{
+      group: RawChatGroupItem;
+      supervisor_agent_id?: string;
+      supervisorAgentId?: string;
+    }>('/chat-groups', {
+      body: toGroupBody(params),
     });
+
+    return {
+      group: toGroup(response.group),
+      supervisorAgentId: response.supervisorAgentId ?? response.supervisor_agent_id!,
+    };
   };
 
-  /**
-   * Create a group with virtual member agents in one request.
-   * This is the recommended way to create a group from a template.
-   * Returns groupId, supervisorAgentId, and member agentIds.
-   */
-  createGroupWithMembers = (
+  createGroupWithMembers = async (
     groupConfig: Omit<NewChatGroup, 'userId'>,
     members: GroupMemberConfig[],
     supervisorConfig?: SupervisorConfig,
   ): Promise<{ agentIds: string[]; groupId: string; supervisorAgentId: string }> => {
-    return lambdaClient.group.createGroupWithMembers.mutate({
-      groupConfig: {
-        ...groupConfig,
-        config: groupConfig.config as any,
+    const response = await restClient.post<{
+      agent_ids?: string[];
+      agentIds?: string[];
+      group_id?: string;
+      groupId?: string;
+      supervisor_agent_id?: string;
+      supervisorAgentId?: string;
+    }>('/chat-groups/with-members', {
+      body: {
+        group_config: toGroupBody(groupConfig),
+        members: members.map(toAgentBody),
+        supervisor_config: supervisorConfig ? toAgentBody(supervisorConfig) : undefined,
       },
-      members,
-      supervisorConfig,
     });
+
+    return {
+      agentIds: response.agentIds ?? response.agent_ids ?? [],
+      groupId: response.groupId ?? response.group_id!,
+      supervisorAgentId: response.supervisorAgentId ?? response.supervisor_agent_id!,
+    };
   };
 
-  updateGroup = (id: string, value: Partial<ChatGroupItem>): Promise<ChatGroupItem> => {
-    return lambdaClient.group.updateGroup.mutate({
-      id,
-      value: {
-        ...value,
-        config: value.config as any,
-      },
+  updateGroup = async (id: string, value: Partial<ChatGroupItem>): Promise<ChatGroupItem> => {
+    await restClient.put(`/chat-groups/${id}`, {
+      body: toGroupBody(value),
     });
+
+    const group = await this.getGroup(id);
+    return group!;
   };
 
   deleteGroup = (id: string) => {
-    return lambdaClient.group.deleteGroup.mutate({ id });
+    return restClient.delete(`/chat-groups/${id}`);
   };
 
   getGroup = (id: string): Promise<ChatGroupItem | undefined> => {
-    return lambdaClient.group.getGroup.query({ id });
+    return restClient.get<RawChatGroupItem>(`/chat-groups/${id}`).then(toGroup);
   };
 
   getGroupDetail = (id: string): Promise<AgentGroupDetail | null> => {
-    return lambdaClient.group.getGroupDetail.query({ id });
+    return restClient.get<RawGroupDetail>(`/chat-groups/${id}/detail`).then(toGroupDetail);
   };
 
   getGroups = (): Promise<ChatGroupItem[]> => {
-    return lambdaClient.group.getGroups.query();
+    return restClient.get<RawChatGroupItem[]>('/chat-groups').then((groups) => groups.map(toGroup));
   };
 
-  addAgentsToGroup = (
+  addAgentsToGroup = async (
     groupId: string,
     agentIds: string[],
   ): Promise<{ added: NewChatGroupAgent[]; existing: string[] }> => {
-    return lambdaClient.group.addAgentsToGroup.mutate({ agentIds, groupId });
+    const response = await restClient.post<{
+      added?: RawChatGroupAgentItem[];
+      existing?: string[];
+    }>(`/chat-groups/${groupId}/agents`, { body: { agent_ids: agentIds } });
+    return toGroupAgentsResult(response);
   };
 
-  /**
-   * Batch create virtual agents and add them to an existing group.
-   * This is more efficient than calling createAgentOnly multiple times.
-   */
-  batchCreateAgentsInGroup = (groupId: string, agents: GroupMemberConfig[]) => {
-    return lambdaClient.group.batchCreateAgentsInGroup.mutate({
-      agents,
-      groupId,
+  batchCreateAgentsInGroup = async (
+    groupId: string,
+    agents: GroupMemberConfig[],
+  ): Promise<BatchCreateAgentsResult> => {
+    const response = await restClient.post<{
+      agent_ids?: string[];
+      agentIds?: string[];
+      agents: Array<{ id: string; title?: string | null }>;
+    }>(`/chat-groups/${groupId}/agents/batch-create`, {
+      body: { agents: agents.map(toAgentBody), group_id: groupId },
     });
+
+    return {
+      agentIds: response.agentIds ?? response.agent_ids,
+      agents: response.agents,
+    };
   };
 
   removeAgentsFromGroup = (groupId: string, agentIds: string[]) => {
-    return lambdaClient.group.removeAgentsFromGroup.mutate({ agentIds, groupId });
+    return restClient.post(`/chat-groups/${groupId}/agents/remove`, {
+      body: { agent_ids: agentIds },
+    });
   };
 
-  updateAgentInGroup = (
+  updateAgentInGroup = async (
     groupId: string,
     agentId: string,
     updates: Partial<Pick<NewChatGroupAgent, 'order' | 'role'>>,
   ): Promise<NewChatGroupAgent> => {
-    return lambdaClient.group.updateAgentInGroup.mutate({
-      agentId,
-      groupId,
-      updates: {
+    await restClient.put(`/chat-groups/${groupId}/agents/${agentId}`, {
+      body: {
         order: updates.order === null ? undefined : updates.order,
         role: updates.role === null ? undefined : updates.role,
       },
     });
+
+    const agents = await this.getGroupAgents(groupId);
+    return agents.find((agent) => agent.agentId === agentId)!;
   };
 
   getGroupAgents = (groupId: string): Promise<ChatGroupAgentItem[]> => {
-    return lambdaClient.group.getGroupAgents.query({ groupId });
+    return restClient
+      .get<RawChatGroupAgentItem[]>(`/chat-groups/${groupId}/agents`)
+      .then((agents) => agents.map(toGroupAgent) as ChatGroupAgentItem[]);
   };
 
-  /**
-   * Duplicate a chat group with all its members.
-   * Returns the new group ID and supervisor agent ID.
-   */
-  duplicateGroup = (
+  duplicateGroup = async (
     groupId: string,
     newTitle?: string,
   ): Promise<{ groupId: string; supervisorAgentId: string } | null> => {
-    return lambdaClient.group.duplicateGroup.mutate({ groupId, newTitle });
+    const response = await restClient.post<{
+      group_id?: string;
+      groupId?: string;
+      id?: string;
+      supervisor_agent_id?: string | null;
+      supervisorAgentId?: string | null;
+    }>(`/chat-groups/${groupId}/duplicate`, { body: { new_title: newTitle } });
+
+    return response
+      ? {
+          groupId: response.groupId ?? response.group_id ?? response.id!,
+          supervisorAgentId: response.supervisorAgentId ?? response.supervisor_agent_id ?? '',
+        }
+      : null;
   };
 }
 

@@ -1,35 +1,19 @@
 import {
-  AgentBuilderInterventions,
-  AgentBuilderManifest,
-} from '@lobechat/builtin-tool-agent-builder/client';
-import {
-  AgentMarketplaceInterventions,
-  AgentMarketplaceManifest,
-} from '@lobechat/builtin-tool-agent-marketplace/client';
-import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
-import { CloudSandboxInterventions } from '@lobechat/builtin-tool-cloud-sandbox/client';
-import {
-  GroupManagementInterventions,
-  GroupManagementManifest,
-} from '@lobechat/builtin-tool-group-management/client';
-import { GTDInterventions, GTDManifest } from '@lobechat/builtin-tool-gtd/client';
-import {
   LocalSystemIdentifier,
   LocalSystemInterventions,
 } from '@lobechat/builtin-tool-local-system/client';
-import { MemoryInterventions, MemoryManifest } from '@lobechat/builtin-tool-memory/client';
-import { MessageInterventions, MessageManifest } from '@lobechat/builtin-tool-message/client';
-import { NotebookManifest } from '@lobechat/builtin-tool-notebook';
-import { NotebookInterventions } from '@lobechat/builtin-tool-notebook/client';
-import {
-  UserInteractionIdentifier,
-  UserInteractionInterventions,
-} from '@lobechat/builtin-tool-user-interaction/client';
-import {
-  WebOnboardingInterventions,
-  WebOnboardingManifest,
-} from '@lobechat/builtin-tool-web-onboarding/client';
 import { type BuiltinIntervention } from '@lobechat/types';
+
+import { AgentBuilderInterventions, AgentBuilderManifest } from './agentBuilder/client';
+import { AgentMarketplaceInterventions, AgentMarketplaceManifest } from './agentMarketplace/client';
+import { CloudSandboxInterventions, CloudSandboxManifest } from './cloudSandbox/client';
+import { GroupManagementInterventions, GroupManagementManifest } from './groupManagement/client';
+import { GTDInterventions, GTDManifest } from './gtd/client';
+import { MemoryInterventions, MemoryManifest } from './memory/client';
+import { MessageInterventions, MessageManifest } from './message/client';
+import { NotebookInterventions, NotebookManifest } from './notebook/client';
+import { UserInteractionIdentifier, UserInteractionInterventions } from './userInteraction/client';
+import { WebOnboardingInterventions, WebOnboardingManifest } from './webOnboarding/client';
 
 /**
  * Builtin tools interventions registry

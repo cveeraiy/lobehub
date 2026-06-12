@@ -2,14 +2,14 @@
 name: cli-backend-testing
 description: >
   CLI + Backend integration testing workflow. Use when verifying backend API changes
-  (TRPC routers, services, models) via the LobeHub CLI against a local dev server.
+  (TRPC routers, services, models) via the Ethos CLI against a local dev server.
   Triggers on 'cli test', 'test with cli', 'verify with cli', 'local cli test',
   'backend test with cli', or when needing to validate server-side changes end-to-end.
 ---
 
 # CLI + Backend Integration Testing
 
-Standard workflow for verifying backend changes using the LobeHub CLI (`lh`) against a local dev server.
+Standard workflow for verifying backend changes using the Ethos CLI (`lh`) against a local dev server.
 
 ## When to Use
 

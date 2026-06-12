@@ -2,7 +2,7 @@
 
 ## Global Search (`lh search`)
 
-Search across all LobeHub resource types.
+Search across all Ethos resource types.
 
 **Source**: `apps/cli/src/commands/search.ts`
 

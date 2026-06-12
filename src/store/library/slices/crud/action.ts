@@ -1,13 +1,23 @@
-import { type SWRResponse } from 'swr';
+import type { SWRResponse } from 'swr';
 
 import { mutate, useClientDataSWR } from '@/libs/swr';
 import { knowledgeBaseService } from '@/services/knowledgeBase';
-import { type KnowledgeBaseStore } from '@/store/library/store';
-import { type StoreSetter } from '@/store/types';
-import { type CreateKnowledgeBaseParams, type KnowledgeBaseItem } from '@/types/knowledgeBase';
+import type { KnowledgeBaseStore } from '@/store/library/store';
+import type { StoreSetter } from '@/store/types';
+import { AsyncTaskStatus } from '@/types/asyncTask';
+import type { CreateKnowledgeBaseParams, KnowledgeBaseItem } from '@/types/knowledgeBase';
 
 const FETCH_KNOWLEDGE_BASE_LIST_KEY = 'FETCH_KNOWLEDGE_BASE';
 const FETCH_KNOWLEDGE_BASE_ITEM_KEY = 'FETCH_KNOWLEDGE_BASE_ITEM';
+const KNOWLEDGE_BASE_STATUS_REFRESH_INTERVAL = 5000;
+
+const isProcessingStatus = (status?: AsyncTaskStatus | null) =>
+  status === AsyncTaskStatus.Pending || status === AsyncTaskStatus.Processing;
+
+const hasActiveProcessing = (item?: KnowledgeBaseItem) =>
+  Boolean(
+    item && (isProcessingStatus(item.chunkingStatus) || isProcessingStatus(item.embeddingStatus)),
+  );
 
 type Setter = StoreSetter<KnowledgeBaseStore>;
 export const createCrudSlice = (set: Setter, get: () => KnowledgeBaseStore, _api?: unknown) =>
@@ -76,6 +86,8 @@ export class KnowledgeBaseCrudActionImpl {
             },
           });
         },
+        refreshInterval: (item) =>
+          hasActiveProcessing(item) ? KNOWLEDGE_BASE_STATUS_REFRESH_INTERVAL : 0,
       },
     );
   };
@@ -88,10 +100,25 @@ export class KnowledgeBaseCrudActionImpl {
       () => knowledgeBaseService.getKnowledgeBaseList(),
       {
         fallbackData: [],
-        onSuccess: () => {
+        onSuccess: (items) => {
           if (!this.#get().initKnowledgeBaseList)
             this.#set({ initKnowledgeBaseList: true }, false, 'useFetchKnowledgeBaseList/init');
+
+          if (items?.length) {
+            this.#set(
+              {
+                activeKnowledgeBaseItems: {
+                  ...this.#get().activeKnowledgeBaseItems,
+                  ...Object.fromEntries(items.map((item) => [item.id, item])),
+                },
+              },
+              false,
+              'useFetchKnowledgeBaseList/syncItems',
+            );
+          }
         },
+        refreshInterval: (items) =>
+          items?.some(hasActiveProcessing) ? KNOWLEDGE_BASE_STATUS_REFRESH_INTERVAL : 0,
         suspense: params.suspense,
       },
     );

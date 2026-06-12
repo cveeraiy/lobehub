@@ -1,14 +1,14 @@
 ---
 name: cli
-description: LobeHub CLI (@lobehub/cli) development guide. Use when working on CLI commands, adding new subcommands, fixing CLI bugs, or understanding CLI architecture. Triggers on CLI development, command implementation, or `lh` command questions.
+description: Ethos CLI (@lobehub/cli) development guide. Use when working on CLI commands, adding new subcommands, fixing CLI bugs, or understanding CLI architecture. Triggers on CLI development, command implementation, or `lh` command questions.
 disable-model-invocation: true
 ---
 
-# LobeHub CLI Development Guide
+# Ethos CLI Development Guide
 
 ## Overview
 
-LobeHub CLI (`@lobehub/cli`) is a command-line tool for managing and interacting with LobeHub services. Built with Commander.js + TypeScript.
+Ethos CLI (`@lobehub/cli`) is a command-line tool for managing and interacting with Ethos services. Built with Commander.js + TypeScript.
 
 - **Package**: `apps/cli/`
 - **Entry**: `apps/cli/src/index.ts`

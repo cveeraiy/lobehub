@@ -169,6 +169,73 @@ describe('call_llm executor', () => {
       );
     });
 
+    it('should filter assistant placeholder messages before calling the model', async () => {
+      const mockStore = createMockStore();
+      const context = createTestContext();
+      const userMsg = createUserMessage({ content: 'Hello' });
+      const loadingAssistant = createAssistantMessage({ content: LOADING_FLAT });
+      const emptyAssistant = createAssistantMessage({ content: '' });
+      const validAssistant = createAssistantMessage({ content: 'Previous answer' });
+      const instruction = createCallLLMInstruction({
+        model: 'gpt-4',
+        provider: 'openai',
+        messages: [userMsg, loadingAssistant, emptyAssistant, validAssistant],
+      });
+      const state = createInitialState();
+
+      mockStreamResponse({ content: 'AI response' });
+      mockStore.dbMessagesMap[context.messageKey] = [];
+
+      await executeWithMockContext({
+        executor: 'call_llm',
+        instruction,
+        state,
+        mockStore,
+        context,
+      });
+
+      expect(chatService.createAssistantMessageStream).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: expect.objectContaining({
+            messages: [userMsg, validAssistant],
+          }),
+        }),
+      );
+    });
+
+    it('should persist finish content when stream chunks are not delivered', async () => {
+      const mockStore = createMockStore();
+      const context = createTestContext();
+      const instruction = createCallLLMInstruction({
+        model: 'gpt-4',
+        provider: 'openai',
+        messages: [createUserMessage({ content: 'Hello' })],
+      });
+      const state = createInitialState();
+
+      vi.mocked(chatService.createAssistantMessageStream).mockImplementation(
+        async (params: any) => {
+          await params.onFinish?.('AI response from finish', { type: 'stop' });
+        },
+      );
+      mockStore.dbMessagesMap[context.messageKey] = [];
+
+      await executeWithMockContext({
+        executor: 'call_llm',
+        instruction,
+        state,
+        mockStore,
+        context,
+      });
+
+      expect(mockStore.optimisticUpdateMessageContent).toHaveBeenCalledWith(
+        expect.any(String),
+        'AI response from finish',
+        expect.any(Object),
+        expect.objectContaining({ operationId: expect.any(String) }),
+      );
+    });
+
     it('should merge activated tools even when selectedTools are provided', async () => {
       const mockStore = createMockStore();
       const context = createTestContext();

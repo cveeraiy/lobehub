@@ -1,4 +1,4 @@
-import { TopicReferenceIdentifier } from '@lobechat/builtin-tool-topic-reference';
+import { TopicReferenceIdentifier } from '@lobechat/builtin-tools';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type ToolExecutionContext } from '../../types';

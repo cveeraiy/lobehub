@@ -1,4 +1,3 @@
-import { isDesktop } from '@lobechat/const';
 import { HotkeyEnum, KeyEnum } from '@lobechat/const/hotkeys';
 import { HETEROGENEOUS_TYPE_LABELS } from '@lobechat/heterogeneous-agents';
 import { chainInputCompletion, escapeXmlAttr } from '@lobechat/prompts';
@@ -37,10 +36,13 @@ import type { MentionMenuState } from './MentionMenu/types';
 import Placeholder, { type PlaceholderVariant } from './Placeholder';
 import { CHAT_INPUT_EMBED_PLUGINS, createChatInputRichPlugins } from './plugins';
 import { INSERT_REFER_TOPIC_COMMAND } from './ReferTopic';
-import { useLocalFileMention } from './useLocalFileMention';
 import { useMentionCategories } from './useMentionCategories';
 
 const className = cx(css`
+  [contenteditable='true'] {
+    display: block;
+  }
+
   p {
     margin-block-end: 0;
   }
@@ -94,8 +96,6 @@ const InputEditor = memo<{
     (s) => agentByIdSelectors.getAgencyConfigById(agentId)(s)?.heterogeneousProvider?.type,
   );
 
-  const { enableLocalFileMention, searchLocalFiles } = useLocalFileMention();
-
   const allMentionItems = useMemo(() => categories.flatMap((c) => c.items), [categories]);
 
   const fuse = useMemo(
@@ -114,7 +114,7 @@ const InputEditor = memo<{
       if (search?.matchingString) {
         stateRef.current = { isSearch: true, matchingString: search.matchingString };
         const [localFileItems, mentionItems] = await Promise.all([
-          searchLocalFiles(search.matchingString),
+          Promise.resolve([] as typeof allMentionItems),
           Promise.resolve(fuse.search(search.matchingString).map((r) => r.item)),
         ]);
 
@@ -123,12 +123,12 @@ const InputEditor = memo<{
       stateRef.current = { isSearch: false, matchingString: '' };
       return [...allMentionItems];
     },
-    [allMentionItems, fuse, searchLocalFiles],
+    [allMentionItems, fuse],
   );
 
   const MentionMenuComp = useMemo(() => createMentionMenu(stateRef, categoriesRef), []);
 
-  const enableMention = !disableMention && (allMentionItems.length > 0 || enableLocalFileMention);
+  const enableMention = !disableMention && allMentionItems.length > 0;
   const heterogeneousName = heterogeneousType
     ? (HETEROGENEOUS_TYPE_LABELS[heterogeneousType] ?? heterogeneousType)
     : undefined;
@@ -360,18 +360,6 @@ const InputEditor = memo<{
             KEY_ESCAPE_COMMAND,
             new KeyboardEvent('keydown', { key: 'Escape' }),
           );
-        }
-      }}
-      onContextMenu={async ({ event: e, editor }) => {
-        if (isDesktop) {
-          e.preventDefault();
-          const { electronSystemService } = await import('@/services/electron/system');
-
-          const selectionText = editor.getSelectionDocument('markdown') as unknown as string;
-
-          await electronSystemService.showContextMenu('editor', {
-            selectionText: selectionText || undefined,
-          });
         }
       }}
       onFocus={() => {

@@ -240,6 +240,12 @@ describe('parseToolCalls', () => {
     ]);
   });
 
+  it('should ignore non-object chunks', () => {
+    const result = parseToolCalls([], ['tool_calls'] as any);
+
+    expect(result).toEqual([]);
+  });
+
   it('should throw error if incomplete tool calls data', () => {
     const origin = [
       {

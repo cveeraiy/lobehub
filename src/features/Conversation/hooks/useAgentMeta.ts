@@ -6,13 +6,13 @@ import { agentSelectors } from '@/store/agent/selectors';
 
 import { contextSelectors, useConversationStore } from '../store';
 
-const LOBE_AI_TITLE = 'Lobe AI';
+const LOBE_AI_TITLE = 'Ethos AI';
 
 /**
  * Hook to get agent meta data for a specific agent or the current conversation.
  * Handles special cases for builtin agents (inbox, page agent, agent builder)
- * by showing Lobe AI title instead of the agent's own meta.
- * Avatar is now returned from the backend (merged from builtin-agents package).
+ * by showing Ethos AI title instead of the agent's own meta.
+ * Avatar is now returned from the backend after built-in agent defaults are merged.
  *
  * @param messageAgentId - Optional agent ID from the message. If provided, uses this agent's meta.
  *                         Falls back to the current conversation's agent if not provided.
@@ -30,7 +30,7 @@ export const useAgentMeta = (messageAgentId?: string | null): MetaData => {
     const isBuiltinAgent = builtinAgentIds.includes(agentId);
 
     if (isBuiltinAgent) {
-      // Use DB-stored title if customized (e.g. via onboarding), otherwise fallback to Lobe AI
+      // Use DB-stored title if customized (e.g. via onboarding), otherwise fallback to Ethos AI
       return { ...agentMeta, title: agentMeta.title || LOBE_AI_TITLE };
     }
 

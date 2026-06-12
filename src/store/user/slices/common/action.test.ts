@@ -112,6 +112,37 @@ describe('createCommonSlice', () => {
       expect(successCallback).toHaveBeenCalledWith(mockUserState);
     });
 
+    it('should hydrate enterprise AI policy from user state', async () => {
+      const mockEnterprisePolicy = {
+        defaultAgent: { model: 'gpt-4o', provider: 'openai' },
+        managedSettings: { model: true, provider: true, skills: true },
+        models: { allow: ['gpt-4o'] },
+        providers: { openai: { enabled: true } },
+        restrictions: { denyModels: ['gpt-3.5-turbo'] },
+        skills: { allow: ['web-search'] },
+        sourcePolicyIds: ['policy-1'],
+      };
+      const mockUserState: UserInitializationState = {
+        userId: 'user-id',
+        enterpriseAiPolicy: mockEnterprisePolicy,
+        isOnboard: true,
+        preference: {
+          telemetry: true,
+        },
+        settings: {},
+      };
+
+      vi.spyOn(userService, 'getUserState').mockResolvedValueOnce(mockUserState);
+
+      const { result } = renderHook(() => useUserStore().useInitUserState(true, mockServerConfig), {
+        wrapper: withSWR,
+      });
+
+      await waitFor(() => expect(result.current.data).toEqual(mockUserState));
+
+      expect(useUserStore.getState().enterpriseAiPolicy).toEqual(mockEnterprisePolicy);
+    });
+
     it('should call switch language when language is auto', async () => {
       const mockUserState: UserInitializationState = {
         userId: 'user-id',

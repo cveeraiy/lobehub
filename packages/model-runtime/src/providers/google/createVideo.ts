@@ -8,7 +8,7 @@ import { AgentRuntimeError } from '../../utils/createError';
 import { parseGoogleErrorMessage } from '../../utils/googleErrorParser';
 import { parseDataUri } from '../../utils/uriParser';
 
-const log = debug('lobe-video:google');
+const log = debug('ethos-video:google');
 
 /**
  * Convert image URL to Google Image format

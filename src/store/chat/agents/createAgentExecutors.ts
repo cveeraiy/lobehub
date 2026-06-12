@@ -19,13 +19,11 @@ import type {
   TasksBatchResultPayload,
 } from '@lobechat/agent-runtime';
 import { calculateMessageTokens, UsageCounter } from '@lobechat/agent-runtime';
-import { isDesktop } from '@lobechat/const';
 import type { ToolsEngine } from '@lobechat/context-engine';
 import { chainCompressContext } from '@lobechat/prompts';
 import {
   type ChatMessageError,
   type ChatToolPayload,
-  type ConversationContext,
   type CreateMessageParams,
   type MessageToolCall,
   type ModelUsage,
@@ -41,18 +39,15 @@ import { aiAgentService } from '@/services/aiAgent';
 import { chatService } from '@/services/chat';
 import { type ResolvedAgentConfig } from '@/services/chat/mecha';
 import { messageService } from '@/services/message';
-import { agentByIdSelectors } from '@/store/agent/selectors';
-import { getAgentStoreState } from '@/store/agent/store';
 import { type ChatStore } from '@/store/chat/store';
 import { getCompressionCandidateMessageIds } from '@/store/chat/utils/compression';
-import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { getFileStoreState } from '@/store/file/store';
 import { sleep } from '@/utils/sleep';
 
 import { StreamingHandler } from './StreamingHandler';
 import { type StreamChunk } from './types/streaming';
 
-const log = debug('lobe-store:agent-executors');
+const log = debug('ethos-store:agent-executors');
 
 // Tool pricing configuration (USD per call)
 const TOOL_PRICING: Record<string, number> = {
@@ -131,6 +126,20 @@ const localizeError = (error: ChatMessageError): ChatMessageError => {
   }
 
   return error;
+};
+
+const isAssistantPlaceholderMessage = (message: {
+  content?: unknown;
+  role?: string;
+  tools?: unknown;
+}) => {
+  if (message.role !== 'assistant' || message.tools) return false;
+
+  return (
+    typeof message.content !== 'string' ||
+    !message.content.trim() ||
+    message.content === LOADING_FLAT
+  );
 };
 
 /**
@@ -409,8 +418,9 @@ export const createAgentExecutors = (context: {
         },
       );
 
-      const messages = llmPayload.messages.filter((message) => message.id !== assistantMessageId);
-
+      const messages = llmPayload.messages.filter(
+        (message) => message.id !== assistantMessageId && !isAssistantPlaceholderMessage(message),
+      );
       // Expand dynamically activated tools (from lobe-activator activateTools API)
       // and merge them into the agent config for this LLM call
       const activatedToolIds = runtimeContext?.stepContext?.activatedToolIds;
@@ -502,6 +512,7 @@ export const createAgentExecutors = (context: {
           }
 
           const result = await handler.handleFinish({
+            content,
             traceId,
             observationId,
             toolCalls,
@@ -1994,347 +2005,31 @@ export const createAgentExecutors = (context: {
      * 6. Return task_result phase with result
      */
     exec_client_task: async (instruction, state) => {
-      const { parentMessageId, task } = (instruction as AgentInstructionExecClientTask).payload;
+      const { parentMessageId } = (instruction as AgentInstructionExecClientTask).payload;
 
-      const events: AgentEvent[] = [];
-      const sessionLogId = `${state.operationId}:${state.stepCount}`;
-
-      log(
-        '[%s][exec_client_task] Starting client-side execution of task: %s',
-        sessionLogId,
-        task.description,
-      );
-
-      // Check if we're on desktop - if not, this executor shouldn't have been called
-      if (!isDesktop) {
-        log(
-          '[%s][exec_client_task] ERROR: Not on desktop, cannot execute client-side task',
-          sessionLogId,
-        );
-        return {
-          events,
-          newState: state,
-          nextContext: {
-            payload: {
-              parentMessageId,
-              result: {
-                error: 'Client-side task execution is only available on desktop',
-                success: false,
-                taskMessageId: '',
-                threadId: '',
-              },
-            } as TaskResultPayload,
-            phase: 'task_result',
-            session: {
-              messageCount: state.messages.length,
-              sessionId: state.operationId,
-              status: 'running',
-              stepCount: state.stepCount + 1,
+      // Client-side task execution is only available on desktop — always return error in web
+      return {
+        events: [],
+        newState: state,
+        nextContext: {
+          payload: {
+            parentMessageId,
+            result: {
+              error: 'Client-side task execution is only available on desktop',
+              success: false,
+              taskMessageId: '',
+              threadId: '',
             },
-          } as AgentRuntimeContext,
-        };
-      }
-
-      // Get context from operation
-      const opContext = getOperationContext();
-      const { agentId, topicId } = opContext;
-
-      if (!agentId || !topicId) {
-        log('[%s][exec_client_task] No valid context, cannot execute task', sessionLogId);
-        return {
-          events,
-          newState: state,
-          nextContext: {
-            payload: {
-              parentMessageId,
-              result: {
-                error: 'No valid context available',
-                success: false,
-                taskMessageId: '',
-                threadId: '',
-              },
-            } as TaskResultPayload,
-            phase: 'task_result',
-            session: {
-              messageCount: state.messages.length,
-              sessionId: state.operationId,
-              status: 'running',
-              stepCount: state.stepCount + 1,
-            },
-          } as AgentRuntimeContext,
-        };
-      }
-
-      const taskLogId = `${sessionLogId}:client-task`;
-
-      // Get agent's model and provider configuration
-      const agentState = getAgentStoreState();
-      const taskModel = agentByIdSelectors.getAgentModelById(agentId)(agentState);
-      const taskProvider = agentByIdSelectors.getAgentModelProviderById(agentId)(agentState);
-
-      try {
-        // 1. Create task message as placeholder with model/provider
-        const taskMessageResult = await context.get().optimisticCreateMessage(
-          {
-            agentId,
-            content: '',
-            metadata: { instruction: task.instruction, taskTitle: task.description },
-            model: taskModel,
-            parentId: parentMessageId,
-            provider: taskProvider,
-            role: 'task',
-            topicId,
+          } as TaskResultPayload,
+          phase: 'task_result',
+          session: {
+            messageCount: state.messages.length,
+            sessionId: state.operationId,
+            status: 'running',
+            stepCount: state.stepCount + 1,
           },
-          { operationId: state.operationId },
-        );
-
-        if (!taskMessageResult) {
-          log('[%s] Failed to create task message', taskLogId);
-          return {
-            events,
-            newState: state,
-            nextContext: {
-              payload: {
-                parentMessageId,
-                result: {
-                  error: 'Failed to create task message',
-                  success: false,
-                  taskMessageId: '',
-                  threadId: '',
-                },
-              } as TaskResultPayload,
-              phase: 'task_result',
-              session: {
-                messageCount: state.messages.length,
-                sessionId: state.operationId,
-                status: 'running',
-                stepCount: state.stepCount + 1,
-              },
-            } as AgentRuntimeContext,
-          };
-        }
-
-        const taskMessageId = taskMessageResult.id;
-        log('[%s][exec_client_task] Created task message: %s', taskLogId, taskMessageId);
-
-        // 2. Create Thread via API first (to get threadId for operation context)
-        const threadResult = await aiAgentService.createClientTaskThread({
-          agentId,
-          instruction: task.instruction,
-          parentMessageId: taskMessageId,
-          title: task.description,
-          topicId,
-        });
-
-        if (!threadResult.success) {
-          log('[%s][exec_client_task] Failed to create client task thread', taskLogId);
-          await context
-            .get()
-            .optimisticUpdateMessageContent(
-              taskMessageId,
-              'Failed to create task thread',
-              undefined,
-              { operationId: state.operationId },
-            );
-          return {
-            events,
-            newState: state,
-            nextContext: {
-              payload: {
-                parentMessageId,
-                result: {
-                  error: 'Failed to create client task thread',
-                  success: false,
-                  taskMessageId,
-                  threadId: '',
-                },
-              } as TaskResultPayload,
-              phase: 'task_result',
-              session: {
-                messageCount: state.messages.length,
-                sessionId: state.operationId,
-                status: 'running',
-                stepCount: state.stepCount + 1,
-              },
-            } as AgentRuntimeContext,
-          };
-        }
-
-        const { threadId, userMessageId, threadMessages, messages } = threadResult;
-
-        // 3. Build sub-task ConversationContext (uses threadId for isolation)
-        const subContext: ConversationContext = {
-          agentId,
-          topicId,
-          threadId,
-          scope: 'thread',
-        };
-
-        // 4. Create a child operation for task execution (now with threadId)
-        const { operationId: taskOperationId } = context.get().startOperation({
-          type: 'execClientTask',
-          context: subContext,
-          parentOperationId: state.operationId,
-          metadata: {
-            startTime: Date.now(),
-            taskDescription: task.description,
-            taskMessageId,
-            executionMode: 'client',
-          },
-        });
-        log(
-          '[%s][exec_client_task] Created thread: %s, userMessageId: %s, threadMessages: %d',
-          taskLogId,
-          threadId,
-          userMessageId,
-          threadMessages.length,
-        );
-
-        // 5. Sync messages to store
-        // Update main chat messages with latest taskDetail status
-        context.get().replaceMessages(messages, { operationId: state.operationId });
-        // Update thread messages
-        context.get().replaceMessages(threadMessages, { context: subContext });
-
-        // 6. Use server-returned thread messages (already persisted)
-        let subMessages = [...threadMessages];
-
-        // Optionally inherit messages from parent conversation
-        if (task.inheritMessages) {
-          const parentMessages = state.messages.filter((m) => m.role !== 'task');
-          subMessages = [...parentMessages, ...subMessages];
-          // Re-sync with inherited messages
-          context.get().replaceMessages(subMessages, { context: subContext });
-        }
-
-        // 7. Execute using internal_execAgentRuntime (client-side with local tools access)
-        log('[%s][exec_client_task] Starting client-side AgentRuntime execution', taskLogId);
-
-        const runtimeResult = await context.get().internal_execAgentRuntime({
-          context: subContext,
-          messages: subMessages,
-          parentMessageId: userMessageId, // Use server-returned userMessageId
-          parentMessageType: 'user',
-          operationId: taskOperationId,
-          parentOperationId: state.operationId,
-          isSubTask: true, // Disable lobe-gtd tools to prevent nested sub-tasks
-        });
-
-        log('[%s][exec_client_task] Client-side AgentRuntime execution completed', taskLogId);
-
-        // 8. Get execution result from sub-task messages
-        const subMessageKey = messageMapKey(subContext);
-        const subTaskMessages = context.get().dbMessagesMap[subMessageKey] || [];
-        const lastAssistant = subTaskMessages.findLast((m) => m.role === 'assistant');
-        const resultContent = lastAssistant?.content || 'Task completed';
-
-        log(
-          '[%s][exec_client_task] Got result from sub-task: %d chars',
-          taskLogId,
-          resultContent.length,
-        );
-
-        // Count tool calls
-        const totalToolCalls = subTaskMessages.filter((m) => m.role === 'tool').length;
-
-        // Get usage data from runtime result
-        const { usage, cost } = runtimeResult || {};
-
-        log(
-          '[%s][exec_client_task] Runtime usage: tokens=%d, cost=%s, model=%s',
-          taskLogId,
-          usage?.llm?.tokens?.total,
-          cost?.total,
-          taskModel,
-        );
-
-        // 9. Update task message with result and usage (model/provider already set at creation)
-        await context.get().optimisticUpdateMessageContent(
-          taskMessageId,
-          resultContent,
-          {
-            metadata: {
-              cost: cost?.total,
-              duration: usage?.llm?.processingTimeMs,
-              totalInputTokens: usage?.llm?.tokens?.input,
-              totalOutputTokens: usage?.llm?.tokens?.output,
-              totalTokens: usage?.llm?.tokens?.total,
-            },
-          },
-          { operationId: state.operationId },
-        );
-
-        // 10. Update Thread status via API with metadata
-        await aiAgentService.updateClientTaskThreadStatus({
-          threadId,
-          completionReason: 'done',
-          resultContent,
-          metadata: {
-            totalCost: cost?.total,
-            totalMessages: subTaskMessages.length,
-            totalTokens: usage?.llm?.tokens?.total,
-            totalToolCalls,
-          },
-        });
-
-        // 11. Complete operation
-        context.get().completeOperation(taskOperationId);
-
-        // 12. Return success result
-        const updatedMessages = context.get().dbMessagesMap[context.messageKey] || [];
-        return {
-          events,
-          newState: { ...state, messages: updatedMessages },
-          nextContext: {
-            payload: {
-              // Use taskMessageId as parent so subsequent messages are created after the task
-              parentMessageId: taskMessageId,
-              result: {
-                result: resultContent,
-                success: true,
-                taskMessageId,
-                threadId,
-              },
-            } as TaskResultPayload,
-            phase: 'task_result',
-            session: {
-              messageCount: updatedMessages.length,
-              sessionId: state.operationId,
-              status: 'running',
-              stepCount: state.stepCount + 1,
-            },
-          } as AgentRuntimeContext,
-        };
-      } catch (error) {
-        log('[%s][exec_client_task] Error executing client task: %O', taskLogId, error);
-
-        // Update task message with error
-        // Note: taskMessageId may not exist if error occurred before message creation
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-        return {
-          events,
-          newState: state,
-          nextContext: {
-            payload: {
-              parentMessageId,
-              result: {
-                error: errorMessage,
-                success: false,
-                taskMessageId: '',
-                threadId: '',
-              },
-            } as TaskResultPayload,
-            phase: 'task_result',
-            session: {
-              messageCount: state.messages.length,
-              sessionId: state.operationId,
-              status: 'running',
-              stepCount: state.stepCount + 1,
-            },
-          } as AgentRuntimeContext,
-        };
-      }
+        } as AgentRuntimeContext,
+      };
     },
 
     /**
@@ -2353,265 +2048,23 @@ export const createAgentExecutors = (context: {
     exec_client_tasks: async (instruction, state) => {
       const { parentMessageId, tasks } = (instruction as AgentInstructionExecClientTasks).payload;
 
-      const events: AgentEvent[] = [];
-      const sessionLogId = `${state.operationId}:${state.stepCount}`;
-
-      log(
-        '[%s][exec_client_tasks] Starting client-side execution of %d tasks',
-        sessionLogId,
-        tasks.length,
-      );
-
-      // Check if we're on desktop - if not, this executor shouldn't have been called
-      if (!isDesktop) {
-        log(
-          '[%s][exec_client_tasks] ERROR: Not on desktop, cannot execute client-side tasks',
-          sessionLogId,
-        );
-        return {
-          events,
-          newState: state,
-          nextContext: {
-            payload: {
-              parentMessageId,
-              results: tasks.map(() => ({
-                error: 'Client-side task execution is only available on desktop',
-                success: false,
-                taskMessageId: '',
-                threadId: '',
-              })),
-            } as TasksBatchResultPayload,
-            phase: 'tasks_batch_result',
-            session: {
-              messageCount: state.messages.length,
-              sessionId: state.operationId,
-              status: 'running',
-              stepCount: state.stepCount + 1,
-            },
-          } as AgentRuntimeContext,
-        };
-      }
-
-      // Get context from operation
-      const opContext = getOperationContext();
-      const { agentId, topicId } = opContext;
-
-      if (!agentId || !topicId) {
-        log('[%s][exec_client_tasks] No valid context, cannot execute tasks', sessionLogId);
-        return {
-          events,
-          newState: state,
-          nextContext: {
-            payload: {
-              parentMessageId,
-              results: tasks.map(() => ({
-                error: 'No valid context available',
-                success: false,
-                taskMessageId: '',
-                threadId: '',
-              })),
-            } as TasksBatchResultPayload,
-            phase: 'tasks_batch_result',
-            session: {
-              messageCount: state.messages.length,
-              sessionId: state.operationId,
-              status: 'running',
-              stepCount: state.stepCount + 1,
-            },
-          } as AgentRuntimeContext,
-        };
-      }
-
-      // Execute all tasks in parallel
-      const results = await pMap(
-        tasks,
-        async (task, taskIndex) => {
-          const taskLogId = `${sessionLogId}:client-task-${taskIndex}`;
-          log('[%s] Starting client task: %s', taskLogId, task.description);
-
-          try {
-            // 1. Create task message as placeholder
-            const taskMessageResult = await context.get().optimisticCreateMessage(
-              {
-                agentId,
-                content: '',
-                createdAt: Date.now() + taskIndex,
-                metadata: { instruction: task.instruction, taskTitle: task.description },
-                parentId: parentMessageId,
-                role: 'task',
-                topicId,
-              },
-              { operationId: state.operationId },
-            );
-
-            if (!taskMessageResult) {
-              log('[%s] Failed to create task message', taskLogId);
-              return {
-                error: 'Failed to create task message',
-                success: false,
-                taskMessageId: '',
-                threadId: '',
-              };
-            }
-
-            const taskMessageId = taskMessageResult.id;
-            log('[%s] Created task message: %s', taskLogId, taskMessageId);
-
-            // 2. Create Thread via API first (to get threadId for operation context)
-            const threadResult = await aiAgentService.createClientTaskThread({
-              agentId,
-              instruction: task.instruction,
-              parentMessageId: taskMessageId,
-              title: task.description,
-              topicId,
-            });
-
-            if (!threadResult.success) {
-              log('[%s] Failed to create client task thread', taskLogId);
-              await context
-                .get()
-                .optimisticUpdateMessageContent(
-                  taskMessageId,
-                  'Failed to create task thread',
-                  undefined,
-                  { operationId: state.operationId },
-                );
-              return {
-                error: 'Failed to create client task thread',
-                success: false,
-                taskMessageId,
-                threadId: '',
-              };
-            }
-
-            const { threadId, userMessageId, threadMessages, messages } = threadResult;
-            log(
-              '[%s] Created thread: %s, userMessageId: %s, threadMessages: %d',
-              taskLogId,
-              threadId,
-              userMessageId,
-              threadMessages.length,
-            );
-
-            // 3. Build sub-task ConversationContext (uses threadId for isolation)
-            const subContext: ConversationContext = {
-              agentId,
-              topicId,
-              threadId,
-              scope: 'thread',
-            };
-
-            // 4. Create a child operation for task execution (now with threadId)
-            const { operationId: taskOperationId } = context.get().startOperation({
-              type: 'execClientTask',
-              context: subContext,
-              parentOperationId: state.operationId,
-              metadata: {
-                startTime: Date.now(),
-                taskDescription: task.description,
-                taskIndex,
-                taskMessageId,
-                executionMode: 'client',
-              },
-            });
-
-            // 5. Sync messages to store
-            // Update main chat messages with latest taskDetail status
-            context.get().replaceMessages(messages, { operationId: state.operationId });
-            // Update thread messages
-            context.get().replaceMessages(threadMessages, { context: subContext });
-
-            // 6. Use server-returned thread messages (already persisted)
-            let subMessages = [...threadMessages];
-
-            // Optionally inherit messages from parent conversation
-            if (task.inheritMessages) {
-              const parentMessages = state.messages.filter((m) => m.role !== 'task');
-              subMessages = [...parentMessages, ...subMessages];
-              // Re-sync with inherited messages
-              context.get().replaceMessages(subMessages, { context: subContext });
-            }
-
-            // 7. Execute using internal_execAgentRuntime (client-side with local tools access)
-            log('[%s] Starting client-side AgentRuntime execution', taskLogId);
-
-            await context.get().internal_execAgentRuntime({
-              context: subContext,
-              messages: subMessages,
-              parentMessageId: userMessageId, // Use server-returned userMessageId
-              parentMessageType: 'user',
-              operationId: taskOperationId,
-              parentOperationId: state.operationId,
-              isSubTask: true, // Disable lobe-gtd tools to prevent nested sub-tasks
-            });
-
-            log('[%s] Client-side AgentRuntime execution completed', taskLogId);
-
-            // 7. Get execution result from sub-task messages
-            const subMessageKey = messageMapKey(subContext);
-            const subTaskMessages = context.get().dbMessagesMap[subMessageKey] || [];
-            const lastAssistant = subTaskMessages.findLast((m) => m.role === 'assistant');
-            const resultContent = lastAssistant?.content || 'Task completed';
-
-            log('[%s] Got result from sub-task: %d chars', taskLogId, resultContent.length);
-
-            // 8. Update task message with result
-            await context
-              .get()
-              .optimisticUpdateMessageContent(taskMessageId, resultContent, undefined, {
-                operationId: state.operationId,
-              });
-
-            // 9. Update Thread status via API
-            await aiAgentService.updateClientTaskThreadStatus({
-              threadId,
-              completionReason: 'done',
-              resultContent,
-            });
-
-            // 10. Complete operation
-            context.get().completeOperation(taskOperationId);
-
-            return {
-              result: resultContent,
-              success: true,
-              taskMessageId,
-              threadId,
-            };
-          } catch (error) {
-            log('[%s] Error executing client task: %O', taskLogId, error);
-            return {
-              error: error instanceof Error ? error.message : 'Unknown error',
+      // Client-side task execution is only available on desktop — always return error in web
+      return {
+        events: [],
+        newState: state,
+        nextContext: {
+          payload: {
+            parentMessageId,
+            results: tasks.map(() => ({
+              error: 'Client-side task execution is only available on desktop',
               success: false,
               taskMessageId: '',
               threadId: '',
-            };
-          }
-        },
-        { concurrency: 15 },
-      );
-
-      log('[%s][exec_client_tasks] All tasks completed, results: %O', sessionLogId, results);
-
-      // Get latest messages from store
-      const updatedMessages = context.get().dbMessagesMap[context.messageKey] || [];
-      const newState = { ...state, messages: updatedMessages };
-
-      // Use the last successful task's message ID as parent for subsequent messages
-      const lastSuccessfulTaskId = results.findLast((r) => r.success)?.taskMessageId;
-
-      return {
-        events,
-        newState,
-        nextContext: {
-          payload: {
-            // Use last task message as parent so subsequent messages are created after the tasks
-            parentMessageId: lastSuccessfulTaskId || parentMessageId,
-            results,
+            })),
           } as TasksBatchResultPayload,
           phase: 'tasks_batch_result',
           session: {
-            messageCount: newState.messages.length,
+            messageCount: state.messages.length,
             sessionId: state.operationId,
             status: 'running',
             stepCount: state.stepCount + 1,

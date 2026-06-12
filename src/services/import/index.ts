@@ -1,13 +1,43 @@
-import { type DefaultErrorShape } from '@trpc/server/unstable-core-do-not-import';
-
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { uploadService } from '@/services/upload';
 import { useUserStore } from '@/store/user';
 import { type ImportPgDataStructure } from '@/types/export';
-import { type ImporterEntryData, type OnImportCallbacks } from '@/types/importer';
+import {
+  type ErrorShape,
+  type ImporterEntryData,
+  type ImportResults,
+  type OnImportCallbacks,
+} from '@/types/importer';
 import { ImportStage } from '@/types/importer';
 import { type UserSettings } from '@/types/user/settings';
 import { uuid } from '@/utils/uuid';
+
+interface ImportResponse {
+  results: ImportResults;
+}
+
+interface RestLikeError {
+  code?: string;
+  data?: {
+    code?: string;
+    httpStatus?: number;
+    path?: string;
+  };
+  message?: string;
+  path?: string;
+  status?: number;
+}
+
+const toImportError = (error: unknown): ErrorShape => {
+  const restError = error as RestLikeError;
+
+  return {
+    code: restError.code ?? restError.data?.code ?? 'INTERNAL_SERVER_ERROR',
+    httpStatus: restError.status ?? restError.data?.httpStatus ?? 500,
+    message: restError.message ?? 'Import failed',
+    path: restError.path ?? restError.data?.path,
+  };
+};
 
 class ImportService {
   importSettings = async (settings: UserSettings): Promise<void> => {
@@ -15,16 +45,9 @@ class ImportService {
   };
 
   importData = async (data: ImporterEntryData, callbacks?: OnImportCallbacks): Promise<void> => {
-    const handleError = (e: unknown) => {
+    const handleError = (error: unknown) => {
       callbacks?.onStageChange?.(ImportStage.Error);
-      const error = e as DefaultErrorShape;
-
-      callbacks?.onError?.({
-        code: error.data.code,
-        httpStatus: error.data.httpStatus,
-        message: error.message,
-        path: error.data.path,
-      });
+      callbacks?.onError?.(toImportError(error));
     };
 
     const totalLength =
@@ -37,13 +60,13 @@ class ImportService {
       callbacks?.onStageChange?.(ImportStage.Importing);
       const time = Date.now();
       try {
-        const result = await lambdaClient.importer.importByPost.mutate({ data });
+        const result = await restClient.post<ImportResponse>('/import', { body: { data } });
         const duration = Date.now() - time;
 
         callbacks?.onStageChange?.(ImportStage.Success);
         callbacks?.onSuccess?.(result.results, duration);
-      } catch (e) {
-        handleError(e);
+      } catch (error) {
+        handleError(error);
       }
 
       return;
@@ -61,16 +84,9 @@ class ImportService {
   ): Promise<void> => {
     const { callbacks } = options || {};
 
-    const handleError = (e: unknown) => {
+    const handleError = (error: unknown) => {
       callbacks?.onStageChange?.(ImportStage.Error);
-      const error = e as DefaultErrorShape;
-
-      callbacks?.onError?.({
-        code: error.data.code,
-        httpStatus: error.data.httpStatus,
-        message: error.message,
-        path: error.data.path,
-      });
+      callbacks?.onError?.(toImportError(error));
     };
 
     const totalLength = Object.values(data.data)
@@ -81,13 +97,13 @@ class ImportService {
       callbacks?.onStageChange?.(ImportStage.Importing);
       const time = Date.now();
       try {
-        const result = await lambdaClient.importer.importPgByPost.mutate(data);
+        const result = await restClient.post<ImportResponse>('/import/pg', { body: data });
         const duration = Date.now() - time;
 
         callbacks?.onStageChange?.(ImportStage.Success);
         callbacks?.onSuccess?.(result.results, duration);
-      } catch (e) {
-        handleError(e);
+      } catch (error) {
+        handleError(error);
       }
 
       return;
@@ -98,9 +114,11 @@ class ImportService {
 
   private uploadData = async (
     data: object,
-    { callbacks, handleError }: { callbacks?: OnImportCallbacks; handleError: (e: unknown) => any },
+    {
+      callbacks,
+      handleError,
+    }: { callbacks?: OnImportCallbacks; handleError: (error: unknown) => void },
   ) => {
-    // if the data is too large, upload it to S3 and upload by file
     const filename = `${uuid()}.json`;
 
     let pathname;
@@ -121,12 +139,14 @@ class ImportService {
     callbacks?.onStageChange?.(ImportStage.Importing);
     const time = Date.now();
     try {
-      const result = await lambdaClient.importer.importByFile.mutate({ pathname });
+      const result = await restClient.post<ImportResponse>('/import/file', {
+        body: { pathname },
+      });
       const duration = Date.now() - time;
       callbacks?.onStageChange?.(ImportStage.Success);
       callbacks?.onSuccess?.(result.results, duration);
-    } catch (e) {
-      handleError(e);
+    } catch (error) {
+      handleError(error);
     }
   };
 }

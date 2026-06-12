@@ -2,13 +2,13 @@ import { DEFAULT_SYSTEM_AGENT_CONFIG } from '@lobechat/const';
 import type { FollowUpChip, FollowUpExtractInput, FollowUpExtractResult } from '@lobechat/types';
 import debug from 'debug';
 
-import { type LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { buildSuggestionPrompt } from './prompts';
 import { RawResponseSchema, SUGGESTION_RESPONSE_JSON_SCHEMA } from './schema';
 
-const log = debug('lobe-server:follow-up-action-service');
+const log = debug('ethos-server:follow-up-action-service');
 
 const EMPTY_RESULT = (messageId: string): FollowUpExtractResult => ({ chips: [], messageId });
 
@@ -26,8 +26,8 @@ export class FollowUpActionService {
     // Tool-call-only messages have empty content and must be skipped.
     const row = await this.db.query.messages.findFirst({
       columns: { content: true, id: true },
-      orderBy: (m, { desc }) => desc(m.createdAt),
-      where: (m, { and, eq, isNotNull, ne }) =>
+      orderBy: (m: any, { desc }: any) => desc(m.createdAt),
+      where: (m: any, { and, eq, isNotNull, ne }: any) =>
         and(
           eq(m.userId, this.userId),
           eq(m.topicId, topicId),

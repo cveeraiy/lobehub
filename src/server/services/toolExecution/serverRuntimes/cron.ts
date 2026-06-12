@@ -4,14 +4,14 @@ import {
   type CronJobSummary,
   type CronStats,
   type ICronService,
-} from '@lobechat/builtin-tool-cron';
+} from '@lobechat/builtin-tools';
 import debug from 'debug';
 
 import { AgentCronJobModel } from '@/database/models/agentCronJob';
 
 import { type ServerRuntimeRegistration } from './types';
 
-const log = debug('lobe-server:cron-runtime');
+const log = debug('ethos-server:cron-runtime');
 
 /**
  * Server-side Cron Service implementation

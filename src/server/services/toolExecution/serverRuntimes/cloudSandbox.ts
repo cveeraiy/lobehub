@@ -1,7 +1,4 @@
-import {
-  CloudSandboxExecutionRuntime,
-  CloudSandboxIdentifier,
-} from '@lobechat/builtin-tool-cloud-sandbox';
+import { CloudSandboxExecutionRuntime, CloudSandboxIdentifier } from '@lobechat/builtin-tools';
 
 import { FileService } from '@/server/services/file';
 import { MarketService } from '@/server/services/market';

@@ -1,7 +1,5 @@
 'use client';
 
-import { isDesktop } from '@lobechat/const';
-import { TITLE_BAR_HEIGHT } from '@lobechat/desktop-bridge';
 import { type SkillResourceTreeNode } from '@lobechat/types';
 import { Button, Drawer, Flexbox } from '@lobehub/ui';
 import { Alert, App, Form as AForm, Popconfirm, Skeleton } from 'antd';
@@ -140,7 +138,7 @@ const AgentSkillEdit = memo<AgentSkillEditProps>(({ skillId, open, onClose }) =>
       destroyOnHidden
       containerMaxWidth={'auto'}
       footer={footer}
-      height={isDesktop ? `calc(100vh - ${TITLE_BAR_HEIGHT}px)` : '100vh'}
+      height={'100vh'}
       open={open}
       placement={'bottom'}
       push={false}

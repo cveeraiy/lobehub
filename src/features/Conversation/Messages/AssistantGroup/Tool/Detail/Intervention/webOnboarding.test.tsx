@@ -40,8 +40,8 @@ vi.mock('react-i18next', () => ({
 describe('web onboarding intervention registry', () => {
   it('renders the custom agent identity approval card for saveUserQuestion', async () => {
     const { WebOnboardingInterventions } =
-      await import('@lobechat/builtin-tool-web-onboarding/client');
-    const { WebOnboardingApiName } = await import('@lobechat/builtin-tool-web-onboarding');
+      await import('@lobechat/builtin-tools/webOnboardingClient');
+    const { WebOnboardingApiName } = await import('@lobechat/builtin-tools');
 
     const Component = WebOnboardingInterventions[WebOnboardingApiName.saveUserQuestion];
 

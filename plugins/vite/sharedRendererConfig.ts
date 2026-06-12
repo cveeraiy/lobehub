@@ -127,7 +127,7 @@ export const createSharedRolldownOutput = (options: SharedRolldownOutputOptions 
   },
 });
 
-type Platform = 'web' | 'mobile' | 'desktop';
+type Platform = 'web' | 'mobile';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -161,7 +161,7 @@ export function sharedRendererPlugins(options: SharedRendererOptions) {
   ];
 }
 
-export function sharedRendererDefine(options: { isElectron: boolean; isMobile: boolean }) {
+export function sharedRendererDefine(options: { isMobile: boolean }) {
   const nextPublicDefine = Object.fromEntries(
     Object.entries(process.env)
       .filter(([key]) => key.toUpperCase().startsWith('NEXT_PUBLIC_'))
@@ -171,7 +171,6 @@ export function sharedRendererDefine(options: { isElectron: boolean; isMobile: b
   return {
     '__CI__': process.env.CI === 'true' ? 'true' : 'false',
     '__DEV__': process.env.NODE_ENV !== 'production' ? 'true' : 'false',
-    '__ELECTRON__': JSON.stringify(options.isElectron),
     '__MOBILE__': JSON.stringify(options.isMobile),
     ...nextPublicDefine,
     // Keep a safe fallback so generic `process.env` access won't crash in browser runtime.
@@ -188,6 +187,13 @@ export const sharedOptimizeDeps = {
     'antd',
     '@ant-design/icons',
     '@lobehub/ui',
+    '@lobehub/ui/awesome',
+    '@lobehub/ui/base-ui',
+    '@lobehub/ui/brand',
+    '@lobehub/ui/chat',
+    '@lobehub/ui/icons',
+    '@lobehub/ui/mdx',
+    '@lobehub/ui/mobile',
     '@lobehub/ui > @emotion/react',
     'antd-style',
     'zustand',

@@ -1,12 +1,16 @@
 /**
  * Tools Engineering - Unified tools processing using ToolsEngine
  */
-import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
-import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
-import { MemoryManifest } from '@lobechat/builtin-tool-memory';
-import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { alwaysOnToolIds, defaultToolIds } from '@lobechat/builtin-tools';
+import {
+  alwaysOnToolIds,
+  builtinTools,
+  CloudSandboxManifest,
+  defaultToolIds,
+  KnowledgeBaseManifest,
+  MemoryManifest,
+  WebBrowsingManifest,
+} from '@lobechat/builtin-tools';
 import { createEnableChecker, type PluginEnableChecker } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
 import { type ChatCompletionTool, type ToolManifest, type WorkingModel } from '@lobechat/types';
@@ -42,7 +46,7 @@ export interface ToolsEngineConfig {
  * A manifest is usable by ToolsEngine only if it has a non-empty `api` array.
  * ToolsEngine.convertManifestsToTools calls `manifest.api.map(...)` unconditionally,
  * so any entry with `api` missing / non-array will crash the whole tools build.
- * Sources that populate manifests (installed plugins, Klavis, LobeHub skills, MCP)
+ * Sources that populate manifests (installed plugins, Klavis, Ethos skills, MCP)
  * have no shared schema validation, so we guard defensively at the merge point.
  */
 const isValidToolManifest = (m: ToolManifest | undefined): m is ToolManifest =>
@@ -87,13 +91,15 @@ export const createToolsEngine = (config: ToolsEngineConfig = {}): ToolsEngine =
   const pluginManifests = pluginSelectors.installedPluginManifestList(toolStoreState);
 
   // Get all builtin tool manifests
-  const builtinManifests = toolStoreState.builtinTools.map((tool) => tool.manifest as ToolManifest);
+  const builtinManifests = (toolStoreState.builtinTools || builtinTools).map(
+    (tool) => tool.manifest as ToolManifest,
+  );
 
   // Get Klavis tool manifests
   const klavisTools = klavisStoreSelectors.klavisAsLobeTools(toolStoreState);
   const klavisManifests = klavisTools.map((tool) => tool.manifest as ToolManifest).filter(Boolean);
 
-  // Get LobeHub Skill tool manifests
+  // Get Ethos Skill tool manifests
   const lobehubSkillTools = lobehubSkillStoreSelectors.lobehubSkillAsLobeTools(toolStoreState);
   const lobehubSkillManifests = lobehubSkillTools
     .map((tool) => tool.manifest as ToolManifest)
@@ -121,10 +127,11 @@ export const createAgentToolsEngine = (
   workingModel: WorkingModel,
   /** Runtime-resolved plugin IDs (from agentConfigResolver), may include tools beyond the active agent */
   pluginIds?: string[],
+  agentId?: string,
 ) => {
-  const searchConfig = getSearchConfig(workingModel.model, workingModel.provider);
+  const searchConfig = getSearchConfig(workingModel.model, workingModel.provider, agentId);
   const agentState = getAgentStoreState();
-  const userPlugins = agentSelectors.currentAgentPlugins(agentState);
+  const userPlugins = agentSelectors.currentAgentPlugins(agentState) || [];
 
   return createToolsEngine({
     defaultToolIds,
@@ -136,7 +143,9 @@ export const createAgentToolsEngine = (
 
         if (
           !isToolAvailableInCurrentEnv(pluginId, {
-            installedPlugins: installedPlugin ? [installedPlugin] : toolStoreState.installedPlugins,
+            installedPlugins: installedPlugin
+              ? [installedPlugin]
+              : toolStoreState.installedPlugins || [],
           })
         ) {
           return false;

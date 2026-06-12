@@ -198,10 +198,13 @@ describe('AiModelAction', () => {
     it('should fetch remote models and batch update', async () => {
       const mockRemoteModels = [
         {
+          abilities: {
+            functionCall: true,
+            reasoning: true,
+          },
           displayName: 'Remote Model 1',
           enabled: true,
           files: true,
-          functionCall: true,
           id: 'remote-1',
           type: 'chat',
           vision: false,
@@ -245,6 +248,7 @@ describe('AiModelAction', () => {
         abilities: {
           files: true,
           functionCall: true,
+          reasoning: true,
           vision: false,
         },
         displayName: 'Remote Model 1',

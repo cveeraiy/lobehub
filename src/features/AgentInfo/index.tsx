@@ -59,7 +59,9 @@ const AgentInfo = memo<AgentInfoProps>(({ systemRole, style, meta, onAvatarClick
       {systemRole && (
         <>
           <Divider style={{ margin: '8px 0' }} />
-          <Markdown variant={'chat'}>{systemRole}</Markdown>
+          <Markdown enableImageGallery={false} variant={'chat'}>
+            {systemRole}
+          </Markdown>
         </>
       )}
     </Center>

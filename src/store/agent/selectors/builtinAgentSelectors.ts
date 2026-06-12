@@ -1,5 +1,4 @@
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
-import { INBOX_SESSION_ID } from '@lobechat/const';
+import { BUILTIN_AGENT_SLUGS, INBOX_SESSION_ID } from '@lobechat/const';
 
 import { type AgentStoreState } from '@/store/agent/initialState';
 

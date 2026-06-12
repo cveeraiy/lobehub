@@ -1,11 +1,11 @@
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import {
   type CheckFileHashResult,
   type FileItem,
   type FileListItem,
   type KnowledgeItemStatus,
+  type PaginatedFileList,
   type QueryFileListParams,
-  type QueryFileListSchemaType,
   type UploadFileParams,
 } from '@/types/files';
 
@@ -15,16 +15,68 @@ interface CreateFileParams extends Omit<UploadFileParams, 'url'> {
   url: string;
 }
 
+const compactQueryParams = (params: QueryFileListParams): QueryFileListParams =>
+  Object.fromEntries(
+    Object.entries(params).filter(
+      ([, value]) => value !== undefined && value !== null && value !== 'undefined',
+    ),
+  );
+
+const toRestQueryParams = (params: QueryFileListParams) => {
+  const {
+    fileType,
+    knowledgeBaseId,
+    parentId,
+    showFilesInKnowledgeBase: _showFiles,
+    sortType,
+    ...rest
+  } = compactQueryParams(params) as QueryFileListParams & { fileType?: string };
+
+  return {
+    ...rest,
+    ...(fileType ? { file_type: fileType } : {}),
+    ...(knowledgeBaseId ? { knowledge_base_id: knowledgeBaseId } : {}),
+    ...(parentId ? { parent_id: parentId } : {}),
+    ...(sortType ? { sort_type: sortType } : {}),
+  };
+};
+
+const toDate = (value: unknown): Date => (value ? new Date(value as string) : new Date());
+
+const toFileListItem = (item: any): FileListItem => ({
+  chunkCount: item.chunkCount ?? item.chunk_count ?? null,
+  chunkingError: item.chunkingError ?? item.chunking_error ?? null,
+  chunkingStatus: item.chunkingStatus ?? item.chunking_status ?? null,
+  content: item.content,
+  createdAt: toDate(item.createdAt ?? item.created_at),
+  editorData: item.editorData ?? item.editor_data,
+  embeddingError: item.embeddingError ?? item.embedding_error ?? null,
+  embeddingStatus: item.embeddingStatus ?? item.embedding_status ?? null,
+  fileType: item.fileType ?? item.file_type ?? 'application/octet-stream',
+  finishEmbedding: item.finishEmbedding ?? item.finish_embedding ?? false,
+  id: item.id,
+  metadata: item.metadata ?? null,
+  name: item.name ?? item.title ?? 'Untitled',
+  parentId: item.parentId ?? item.parent_id ?? null,
+  size: item.size ?? 0,
+  slug: item.slug ?? null,
+  sourceType: item.sourceType ?? item.source_type ?? 'file',
+  updatedAt: toDate(item.updatedAt ?? item.updated_at),
+  url: item.url ?? '',
+});
+
 export class FileService {
   createFile = async (
     params: UploadFileParams & { parentId?: string },
     knowledgeBaseId?: string,
   ): Promise<{ id: string; url: string }> => {
-    return lambdaClient.file.createFile.mutate({ ...params, knowledgeBaseId } as CreateFileParams);
+    return restClient.post<{ id: string; url: string }>('/files', {
+      body: { ...params, knowledgeBaseId } as CreateFileParams,
+    });
   };
 
   getFile = async (id: string): Promise<FileItem> => {
-    const item = await lambdaClient.file.findById.query({ id });
+    const item = await restClient.get<any>(`/files/${id}`);
 
     if (!item) {
       throw new Error('file not found');
@@ -43,44 +95,54 @@ export class FileService {
   };
 
   removeFile = async (id: string): Promise<void> => {
-    await lambdaClient.file.removeFile.mutate({ id });
+    await restClient.delete(`/files/${id}`);
   };
 
   removeFiles = async (ids: string[]): Promise<void> => {
-    await lambdaClient.file.removeFiles.mutate({ ids });
+    await restClient.post('/files/batch-delete', { body: { ids } });
   };
 
   removeAllFiles = async () => {
-    await lambdaClient.file.removeAllFiles.mutate();
+    await restClient.delete('/files');
   };
 
-  // V2.0 Migrate from getFiles to getKnowledgeItems
-  getKnowledgeItems = async (params: QueryFileListParams) => {
-    return lambdaClient.file.getKnowledgeItems.query(params as QueryFileListSchemaType);
+  getKnowledgeItems = async (params: QueryFileListParams): Promise<PaginatedFileList> => {
+    const response = await restClient.get<any>('/files/knowledge-items', {
+      params: toRestQueryParams(params) as any,
+    });
+
+    return {
+      hasMore: response.hasMore ?? response.has_more ?? false,
+      items: (response.items ?? []).map(toFileListItem),
+      total: response.total,
+    };
   };
 
   getKnowledgeItemStatusesByIds = async (ids: string[]): Promise<KnowledgeItemStatus[]> => {
-    return lambdaClient.file.getKnowledgeItemStatusesByIds.query({ ids });
+    return restClient.post<KnowledgeItemStatus[]>('/files/knowledge-item-statuses', {
+      body: { ids },
+    });
   };
 
-  resolveKnowledgeItemIds = async (params: QueryFileListParams) => {
-    return lambdaClient.file.resolveKnowledgeItemIds.query(params as QueryFileListSchemaType);
+  resolveKnowledgeItemIds = async (
+    params: QueryFileListParams,
+  ): Promise<{ ids: string[]; total: number }> => {
+    return restClient.get<{ ids: string[]; total: number }>('/files/knowledge-item-ids', {
+      params: toRestQueryParams(params) as any,
+    });
   };
 
-  deleteKnowledgeItemsByQuery = async (params: QueryFileListParams) => {
-    return lambdaClient.file.deleteKnowledgeItemsByQuery.mutate(params as QueryFileListSchemaType);
+  deleteKnowledgeItemsByQuery = async (params: QueryFileListParams): Promise<{ count: number }> => {
+    return restClient.post<{ count: number }>('/files/knowledge-items/delete', {
+      body: toRestQueryParams(params),
+    });
   };
 
-  // V2.0 Migrate from getFileItem to getKnowledgeItem
-  // This method handles both files (file_ prefix) and documents (docs_ prefix)
-  getKnowledgeItem = async (id: string) => {
-    // Detect type based on ID prefix
+  getKnowledgeItem = async (id: string): Promise<FileListItem | null> => {
     if (id.startsWith('docs_')) {
-      // Document (including folders) - use document endpoint
-      const doc = await lambdaClient.document.getDocumentById.query({ id });
+      const doc = await restClient.get<any>(`/documents/${id}`);
       if (!doc) return null;
 
-      // Convert document to FileListItem format
       return {
         chunkCount: null,
         chunkingError: null,
@@ -103,21 +165,25 @@ export class FileService {
         url: doc.source || '',
       } as FileListItem;
     } else {
-      // File - use dedicated file endpoint
-      return lambdaClient.file.getFileItemById.query({ id });
+      const item = await restClient.get<any>(`/files/${id}/item`);
+      return toFileListItem(item);
     }
   };
 
-  getFolderBreadcrumb = async (slug: string) => {
-    return lambdaClient.document.getFolderBreadcrumb.query({ slug });
+  getFolderBreadcrumb = async (
+    slug: string,
+  ): Promise<Array<{ id: string; name: string; slug: string }>> => {
+    return restClient.get<Array<{ id: string; name: string; slug: string }>>(
+      `/documents/breadcrumb/${slug}`,
+    );
   };
 
   checkFileHash = async (hash: string): Promise<CheckFileHashResult> => {
-    return lambdaClient.file.checkFileHash.mutate({ hash });
+    return restClient.post<CheckFileHashResult>('/files/check-hash', { body: { hash } });
   };
 
   removeFileAsyncTask = async (id: string, type: 'embedding' | 'chunk') => {
-    return lambdaClient.file.removeFileAsyncTask.mutate({ id, type });
+    return restClient.delete(`/files/${id}/async-task`, { params: { type } });
   };
 
   updateFile = async (
@@ -127,16 +193,20 @@ export class FileService {
       name?: string;
       parentId?: string | null;
     },
-  ) => {
-    return lambdaClient.file.updateFile.mutate({ id, ...data });
+  ): Promise<void> => {
+    await restClient.put(`/files/${id}`, { body: data });
   };
 
   getRecentFiles = async (limit?: number) => {
-    return lambdaClient.file.recentFiles.query({ limit });
+    return restClient.get<FileListItem[]>('/files/recent', {
+      params: limit ? { limit } : undefined,
+    });
   };
 
   getRecentPages = async (limit?: number) => {
-    return lambdaClient.file.recentPages.query({ limit });
+    return restClient.get<FileListItem[]>('/files/recent-pages', {
+      params: limit ? { limit } : undefined,
+    });
   };
 }
 

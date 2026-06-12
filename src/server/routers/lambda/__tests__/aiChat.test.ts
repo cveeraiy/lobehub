@@ -18,7 +18,7 @@ vi.mock('@/server/services/aiChat');
 vi.mock('@/server/services/file', () => ({
   FileService: vi.fn(),
 }));
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 
@@ -794,7 +794,7 @@ describe('aiChatRouter', () => {
 
   describe('outputJSON', () => {
     it('should successfully generate structured output', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('@/server/services/pythonModelRuntime');
 
       const mockResult = { object: { name: 'John', age: 30 } };
       const mockGenerateObject = vi.fn().mockResolvedValue(mockResult);
@@ -834,7 +834,7 @@ describe('aiChatRouter', () => {
     });
 
     it('should handle tools parameter when provided', async () => {
-      const { initModelRuntimeFromDB } = await import('@/server/modules/ModelRuntime');
+      const { initModelRuntimeFromDB } = await import('@/server/services/pythonModelRuntime');
 
       const mockTools = [
         {

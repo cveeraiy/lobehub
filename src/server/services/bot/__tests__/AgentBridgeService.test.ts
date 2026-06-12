@@ -25,8 +25,8 @@ vi.mock('@/envs/app', () => ({
   },
 }));
 
-vi.mock('@/server/services/aiAgent', () => ({
-  AiAgentService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
   })),
 }));

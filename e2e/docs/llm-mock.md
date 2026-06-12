@@ -6,7 +6,7 @@ LLM Mock 通过 Playwright 的 `page.route()` 拦截对 `/webapi/chat/openai` �
 
 ## SSE 响应格式
 
-LobeHub 使用特定的 SSE 格式，必须严格匹配：
+Ethos 使用特定的 SSE 格式，必须严格匹配：
 
 ```
 // 1. 初始 data 事件

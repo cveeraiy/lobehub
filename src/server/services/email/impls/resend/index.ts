@@ -7,7 +7,7 @@ import { emailEnv } from '@/envs/email';
 
 import { type EmailPayload, type EmailResponse, type EmailServiceImpl } from '../type';
 
-const log = debug('lobe-email:Resend');
+const log = debug('ethos-email:Resend');
 
 /**
  * Resend implementation of the email service

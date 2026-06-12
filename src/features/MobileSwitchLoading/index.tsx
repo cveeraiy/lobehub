@@ -1,10 +1,10 @@
 import { Center, Flexbox, Icon } from '@lobehub/ui';
 import { Loader2 } from 'lucide-react';
-import { type DynamicOptions } from 'next/dist/shared/lib/dynamic';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ProductLogo } from '@/components/Branding';
+import { type DynamicOptions } from '@/libs/next/dynamic';
 
 const MobileSwitchLoading: DynamicOptions['loading'] = memo(() => {
   const { t } = useTranslation('common');

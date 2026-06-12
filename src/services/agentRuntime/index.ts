@@ -2,7 +2,7 @@ import type { AgentContextDocument } from '@lobechat/context-engine';
 import { type UIChatMessage } from '@lobechat/types';
 
 import { createAgentToolsEngine } from '@/helpers/toolEngineering';
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { type HumanInterventionRequest } from '@/services/agentRuntime/type';
 import { contextEngineering } from '@/services/chat/mecha';
 import { getAgentStoreState } from '@/store/agent';
@@ -50,12 +50,10 @@ class AgentRuntimeService {
       toolIds: agentConfig.plugins,
     });
 
-    // Apply context engineering with preprocessing configuration
     const llmMessages = await contextEngineering({
       agentDocuments,
       agentId: agentStoreState.activeAgentId,
       enableHistoryCount: agentChatConfigSelectors.enableHistoryCount(agentStoreState),
-      // historyCount is number of history messages; add 1 for current user message
       historyCount: agentChatConfigSelectors.historyCount(agentStoreState) + 1,
       inputTemplate: chatConfig.inputTemplate,
       messages: data.messages as any,
@@ -69,39 +67,41 @@ class AgentRuntimeService {
       toolsEngine.getEnabledPluginManifests(enabledToolIds).entries(),
     );
 
-    return await lambdaClient.aiAgent.createOperation.mutate({
-      ...data,
-      agentConfig: {
-        enableSearch: agentChatConfigSelectors.isAgentEnableSearch(agentStoreState),
-        maxSteps: 50,
-        // costLimit: agentChatConfig.costLimit,
-        // enableRAG: false,
-        // humanApprovalRequired: agentChatConfig.humanApprovalRequired || false,
+    return await restClient.post('/ai-agent/create-operation', {
+      body: {
+        agent_config: {
+          enableSearch: agentChatConfigSelectors.isAgentEnableSearch(agentStoreState),
+          maxSteps: 50,
+        },
+        agent_id: agentStoreState.activeAgentId || undefined,
+        app_session_id: data.appSessionId,
+        auto_start: data.autoStart,
+        messages: llmMessages,
+        model_runtime_config: modelRuntimeConfig,
+        thread_id: data.threadId,
+        tool_manifest_map: toolManifestMap,
+        tools,
+        topic_id: data.topicId,
+        user_message_id: data.userMessageId,
       },
-      messages: llmMessages,
-      modelRuntimeConfig,
-      toolManifestMap,
-      tools,
     });
   };
 
-  /**
-   * Get operation status
-   */
   async getOperationStatus(operationId: string, includeHistory = false): Promise<any> {
-    return await lambdaClient.aiAgent.getOperationStatus.query({ includeHistory, operationId });
+    return await restClient.get('/ai-agent/operation-status', {
+      params: { includeHistory, operationId },
+    });
   }
 
-  /**
-   * Handle human intervention
-   */
   async handleHumanIntervention(request: HumanInterventionRequest): Promise<any> {
-    return await lambdaClient.aiAgent.processHumanIntervention.mutate({
-      action: request.action,
-      data: request.data,
-      operationId: request.operationId,
-      reason: request.reason,
-      stepIndex: 0, // Default to 0 since it's not provided in the request type
+    return await restClient.post('/ai-agent/process-human-intervention', {
+      body: {
+        action: request.action,
+        data: request.data,
+        operation_id: request.operationId,
+        reason: request.reason,
+        step_index: 0,
+      },
     });
   }
 }

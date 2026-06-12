@@ -38,7 +38,7 @@ const AgentTaskCardList = memo(() => {
       <Divider style={{ margin: 0 }} />
       <Flexbox gap={2} padding={2}>
         {displayTasks.map((task, index) => (
-          <Fragment key={task.identifier}>
+          <Fragment key={task.identifier || task.id}>
             <AgentTaskItem task={task} />
             {index !== displayTasks.length - 1 && <Divider dashed style={{ margin: 0 }} />}
           </Fragment>

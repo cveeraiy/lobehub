@@ -8,7 +8,7 @@ import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import TextArea from '@/components/TextArea';
-import { lambdaClient } from '@/libs/trpc/client';
+import { marketApiService } from '@/services/marketApi';
 import { useFileStore } from '@/store/file';
 import { userProfileSelectors } from '@/store/user/selectors';
 import { useUserStore } from '@/store/user/store';
@@ -75,7 +75,7 @@ const FeedbackModal = memo<FeedbackModalProps>(({ initialValues, onClose, open }
       const values = await form.validateFields();
       setLoading(true);
 
-      await lambdaClient.market.submitFeedback.mutate({
+      await marketApiService.submitFeedback({
         clientInfo: {
           language: navigator.language,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,

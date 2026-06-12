@@ -20,7 +20,6 @@ describe('getAnalyticsConfig', () => {
     process.env.POSTHOG_KEY = 'posthog_key';
     process.env.UMAMI_WEBSITE_ID = 'umami_id';
     process.env.CLARITY_PROJECT_ID = 'clarity_id';
-    process.env.ENABLE_VERCEL_ANALYTICS = '1';
     process.env.GOOGLE_ANALYTICS_MEASUREMENT_ID = 'ga_id';
     process.env.X_ADS_PIXEL_ID = 'tw-pixel_id';
     process.env.X_ADS_LOGIN_OR_SIGNUP_CLICKED_EVENT_ID = 'tw-pixel_id-login_or_signup_clicked';
@@ -42,8 +41,6 @@ describe('getAnalyticsConfig', () => {
       UMAMI_WEBSITE_ID: 'umami_id',
       ENABLED_CLARITY_ANALYTICS: true,
       CLARITY_PROJECT_ID: 'clarity_id',
-      ENABLE_VERCEL_ANALYTICS: true,
-      DEBUG_VERCEL_ANALYTICS: false,
       ENABLE_GOOGLE_ANALYTICS: true,
       GOOGLE_ANALYTICS_MEASUREMENT_ID: 'ga_id',
       ENABLED_X_ADS: true,

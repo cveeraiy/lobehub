@@ -13,7 +13,7 @@ import { type ModelResolverService } from '@/server/services/comfyui/core/modelR
 import { WorkflowError } from '@/server/services/comfyui/errors';
 import { type WorkflowDetectionResult } from '@/server/services/comfyui/utils/workflowDetector';
 
-const log = debug('lobe-image:comfyui:workflow-builder');
+const log = debug('ethos-image:comfyui:workflow-builder');
 
 /**
  * Workflow context for builders

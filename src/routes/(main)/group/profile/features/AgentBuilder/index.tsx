@@ -1,4 +1,4 @@
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
+import { BUILTIN_AGENT_SLUGS } from '@lobechat/const';
 import { DraggablePanel } from '@lobehub/ui';
 import { cssVar } from 'antd-style';
 import { memo } from 'react';

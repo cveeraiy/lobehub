@@ -20,7 +20,7 @@ import {
   type StreamingResult,
 } from './types/streaming';
 
-const log = debug('lobe-store:streaming-handler');
+const log = debug('ethos-store:streaming-handler');
 
 /**
  * Streaming message handler
@@ -475,7 +475,7 @@ export class StreamingHandler {
     // Determine final content
     const finalContent = hasContentImages
       ? serializePartsForStorage(this.contentParts)
-      : this.output;
+      : this.output || finishData.content || '';
 
     // Determine final reasoning content
     const finalDuration =

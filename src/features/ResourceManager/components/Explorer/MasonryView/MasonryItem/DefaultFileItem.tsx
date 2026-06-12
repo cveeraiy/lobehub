@@ -76,6 +76,11 @@ const DefaultFileItem = memo<DefaultFileItemProps>(
 
     const isFolder = fileType === 'custom/folder';
     const isSupportedForChunking = !isChunkingUnsupported(fileType || '');
+    const handleChunking = () => {
+      if (!isCreatingFileParseTask) {
+        parseFiles([id]);
+      }
+    };
 
     return (
       <>
@@ -132,9 +137,7 @@ const DefaultFileItem = memo<DefaultFileItemProps>(
                   style={{ cursor: 'pointer' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (!isCreatingFileParseTask) {
-                      parseFiles([id]);
-                    }
+                    handleChunking();
                   }}
                 >
                   <Button
@@ -142,6 +145,10 @@ const DefaultFileItem = memo<DefaultFileItemProps>(
                     loading={isCreatingFileParseTask}
                     size={'small'}
                     type={'text'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleChunking();
+                    }}
                   />
                 </div>
               </Tooltip>

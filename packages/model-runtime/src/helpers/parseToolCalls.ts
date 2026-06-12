@@ -17,16 +17,23 @@ const normalizeChunkForParse = <T extends Omit<MessageToolCallChunk, 'index'>>(c
   return chunk;
 };
 
-export const parseToolCalls = (origin: MessageToolCall[], value: MessageToolCallChunk[]) =>
+const isToolCallChunk = (chunk: unknown): chunk is MessageToolCallChunk =>
+  !!chunk && typeof chunk === 'object' && !Array.isArray(chunk);
+
+export const parseToolCalls = (origin: MessageToolCall[], value: unknown[]) =>
   produce(origin, (draft) => {
+    const chunks = value.filter(isToolCallChunk);
+
     // if there is no origin, we should parse all the value and set it to draft
     if (draft.length === 0) {
-      draft.push(...value.map((item) => MessageToolCallSchema.parse(normalizeChunkForParse(item))));
+      draft.push(
+        ...chunks.map((item) => MessageToolCallSchema.parse(normalizeChunkForParse(item))),
+      );
       return;
     }
 
     // if there is origin, we should merge the value to the origin
-    value.forEach(({ index, ...item }) => {
+    chunks.forEach(({ index, ...item }) => {
       // First, try to find existing tool call by id (more reliable than index for parallel tool calls)
       const existingByIdIndex = item.id ? draft.findIndex((d) => d.id === item.id) : -1;
 

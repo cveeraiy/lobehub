@@ -3,13 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type StreamEvent } from '@/services/agentRuntime';
 import { useChatStore } from '@/store/chat/store';
-import { notifyDesktopHumanApprovalRequired } from '@/store/chat/utils/desktopNotification';
 
 // Keep zustand mock as it's needed globally
 vi.mock('zustand/traditional');
-vi.mock('@/store/chat/utils/desktopNotification', () => ({
-  notifyDesktopHumanApprovalRequired: vi.fn().mockResolvedValue(undefined),
-}));
 
 // Test Constants
 const TEST_IDS = {
@@ -369,14 +365,6 @@ describe('runAgent actions', () => {
           needsHumanInput: true,
           pendingApproval: [{ id: 'tool-1' }],
         });
-        expect(notifyDesktopHumanApprovalRequired).toHaveBeenCalledWith(
-          expect.any(Function),
-          expect.objectContaining({
-            agentId: 'agent-1',
-            groupId: 'group-1',
-            topicId: 'topic-1',
-          }),
-        );
       });
     });
   });

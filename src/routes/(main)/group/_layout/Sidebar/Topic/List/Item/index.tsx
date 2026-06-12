@@ -7,14 +7,11 @@ import { memo, Suspense, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import DotsLoading from '@/components/DotsLoading';
-import { isDesktop } from '@/const/version';
-import { pluginRegistry } from '@/features/Electron/titlebar/RecentlyViewed/plugins';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { useFocusTopicPopup } from '@/features/TopicPopupGuard/useTopicPopupsRegistry';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { useChatStore } from '@/store/chat';
 import { operationSelectors } from '@/store/chat/selectors';
-import { useElectronStore } from '@/store/electron';
 import { useGlobalStore } from '@/store/global';
 
 import ThreadList from '../../TopicListContent/ThreadList';
@@ -58,18 +55,6 @@ const styles = createStaticStyles(({ css }) => ({
   `,
 }));
 
-// Module-scoped so a click on any topic cancels a pending click on another.
-// Per-item refs can't do that, which lets rapid clicks across items all
-// fire — each racing to write activeTopicId (see LOBE-7785).
-let pendingSingleClickTimer: ReturnType<typeof setTimeout> | null = null;
-
-const cancelPendingSingleClick = () => {
-  if (pendingSingleClickTimer) {
-    clearTimeout(pendingSingleClickTimer);
-    pendingSingleClickTimer = null;
-  }
-};
-
 interface TopicItemProps {
   active?: boolean;
   fav?: boolean;
@@ -83,7 +68,6 @@ const TopicItem = memo<TopicItemProps>(({ id, title, fav, active, threadId, stat
   const { t } = useTranslation('topic');
   const toggleMobileTopic = useGlobalStore((s) => s.toggleMobileTopic);
   const [activeGroupId, switchTopic] = useAgentGroupStore((s) => [s.activeGroupId, s.switchTopic]);
-  const addTab = useElectronStore((s) => s.addTab);
   const focusTopicPopup = useFocusTopicPopup({ groupId: activeGroupId });
 
   // Construct href for cmd+click support
@@ -110,40 +94,12 @@ const TopicItem = memo<TopicItemProps>(({ id, title, fav, active, threadId, stat
 
   const handleClick = useCallback(() => {
     if (editing) return;
-    if (isDesktop) {
-      cancelPendingSingleClick();
-      pendingSingleClickTimer = setTimeout(() => {
-        pendingSingleClickTimer = null;
-        void (async () => {
-          await focusTopicPopup(id);
-          switchTopic(id);
-          toggleMobileTopic(false);
-        })();
-      }, 250);
-    } else {
-      void (async () => {
-        await focusTopicPopup(id);
-        switchTopic(id);
-        toggleMobileTopic(false);
-      })();
-    }
+    void (async () => {
+      await focusTopicPopup(id);
+      switchTopic(id);
+      toggleMobileTopic(false);
+    })();
   }, [editing, focusTopicPopup, id, switchTopic, toggleMobileTopic]);
-
-  const handleDoubleClick = useCallback(async () => {
-    if (!id || !activeGroupId || !isDesktop) return;
-    cancelPendingSingleClick();
-    if (await focusTopicPopup(id)) {
-      switchTopic(id);
-      toggleMobileTopic(false);
-      return;
-    }
-    const reference = pluginRegistry.parseUrl(`/group/${activeGroupId}`, `topic=${id}`);
-    if (reference) {
-      addTab(reference);
-      switchTopic(id);
-      toggleMobileTopic(false);
-    }
-  }, [id, activeGroupId, addTab, focusTopicPopup, switchTopic, toggleMobileTopic]);
 
   const dropdownMenu = useTopicItemDropdownMenu({
     id,
@@ -258,7 +214,6 @@ const TopicItem = memo<TopicItemProps>(({ id, title, fav, active, threadId, stat
           iconPostfix: unreadNode,
         }}
         onClick={handleClick}
-        onDoubleClick={() => void handleDoubleClick()}
       />
       <Editing id={id} title={title} toggleEditing={toggleEditing} />
       {active && (

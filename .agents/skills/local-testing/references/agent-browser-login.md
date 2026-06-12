@@ -1,4 +1,4 @@
-# Log `agent-browser` into a local LobeHub dev server
+# Log `agent-browser` into a local Ethos dev server
 
 `agent-browser --headed` on macOS often creates the Chromium window off-screen — the user can't see or interact with it, so manual login inside the agent-browser session fails. Instead of sharing the user's real Chrome profile, copy the **better-auth session cookie** out of a request in DevTools and inject it into the agent-browser session as a Playwright-style state file.
 
@@ -103,7 +103,7 @@ agent-browser --session "$SESSION" snapshot -i | head -20
 
 ## Scope
 
-Only covers authenticating an **agent-browser** session into a **local** LobeHub dev server. It does not:
+Only covers authenticating an **agent-browser** session into a **local** Ethos dev server. It does not:
 
 - Work for production — production cookies are `Secure; HttpOnly; Domain=.lobehub.com` and must be delivered over HTTPS.
 - Replace real OAuth flows — tests that must exercise the login UI need a real Chromium with `--remote-debugging-port` or a bot account.

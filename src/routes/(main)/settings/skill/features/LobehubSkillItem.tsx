@@ -75,7 +75,7 @@ const LobehubSkillItem = memo<LobehubSkillItemProps>(({ provider, server }) => {
       try {
         await checkStatus(provider.id);
       } catch (error) {
-        console.error('[LobehubSkill] Failed to check status:', error);
+        console.error('[EthosSkill] Failed to check status:', error);
       }
     }, POLL_INTERVAL_MS);
 
@@ -102,7 +102,7 @@ const LobehubSkillItem = memo<LobehubSkillItemProps>(({ provider, server }) => {
             setIsWaitingAuth(false);
           }
         } catch {
-          console.info('[LobehubSkill] COOP blocked window.closed access, falling back to polling');
+          console.info('[EthosSkill] COOP blocked window.closed access, falling back to polling');
           if (windowCheckIntervalRef.current) {
             clearInterval(windowCheckIntervalRef.current);
             windowCheckIntervalRef.current = null;
@@ -159,7 +159,7 @@ const LobehubSkillItem = memo<LobehubSkillItemProps>(({ provider, server }) => {
       const { authorizeUrl } = await getAuthorizeUrl(provider.id, { redirectUri });
       openOAuthWindow(authorizeUrl);
     } catch (error) {
-      console.error('[LobehubSkill] Failed to get authorize URL:', error);
+      console.error('[EthosSkill] Failed to get authorize URL:', error);
     } finally {
       setIsConnecting(false);
     }

@@ -1,18 +1,23 @@
-import * as builtinAgents from '@lobechat/builtin-agents';
-import { GroupManagementIdentifier } from '@lobechat/builtin-tool-group-management';
-import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
-import { NotebookIdentifier } from '@lobechat/builtin-tool-notebook';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { TaskIdentifier } from '@lobechat/builtin-tool-task';
+import {
+  GroupManagementIdentifier,
+  GTDIdentifier,
+  NotebookIdentifier,
+  TaskIdentifier,
+} from '@lobechat/builtin-tools';
+import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as agentStore from '@/store/agent';
 import * as agentSelectors from '@/store/agent/selectors';
 import * as agentGroupStore from '@/store/agentGroup';
 import * as agentGroupSelectors from '@/store/agentGroup/selectors';
+import * as aiInfraStore from '@/store/aiInfra';
 import * as userSelectors from '@/store/user/selectors';
 
 import { resolveAgentConfig } from './agentConfigResolver';
+import * as builtinAgents from './builtinAgentDefinitionCache';
+import { resolveEnabledChatModelConfig } from './modelFallback';
 
 vi.hoisted(() => {
   const storage = new Map<string, string>();
@@ -125,6 +130,101 @@ describe('resolveAgentConfig', () => {
       expect(result.agentConfig.model).toBe(mockAgentConfig.model);
       expect(result.agentConfig.plugins).toEqual(mockAgentConfig.plugins);
       expect(result.chatConfig).toEqual(mockChatConfig);
+    });
+
+    it('should fill missing model and provider from defaults for incomplete REST configs', () => {
+      vi.spyOn(agentSelectors.agentSelectors, 'getAgentConfigById').mockReturnValue(
+        () =>
+          ({
+            ...mockAgentConfig,
+            model: null,
+            provider: null,
+          }) as any,
+      );
+
+      const result = resolveAgentConfig({ agentId: 'test-agent' });
+
+      expect(result.agentConfig.model).toBe(DEFAULT_AGENT_CONFIG.model);
+      expect(result.agentConfig.provider).toBe(DEFAULT_AGENT_CONFIG.provider);
+    });
+
+    it('should preserve model and provider when they are enabled', () => {
+      vi.spyOn(aiInfraStore, 'getAiInfraStoreState').mockReturnValue({
+        enabledAiModels: [{ id: 'gpt-4', providerId: 'openai', type: 'chat' }],
+        enabledChatModelList: [
+          { children: [{ id: 'claude-3' }], id: 'anthropic', name: 'Anthropic' },
+        ],
+      } as any);
+
+      expect(resolveEnabledChatModelConfig('gpt-4', 'openai')).toEqual({
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+    });
+
+    it('should preserve explicit non-lobehub providers that are outside the AI provider list', () => {
+      vi.spyOn(aiInfraStore, 'getAiInfraStoreState').mockReturnValue({
+        aiProviderList: [{ enabled: true, id: 'bedrock' }],
+        enabledAiModels: [
+          { id: 'global.anthropic.claude-sonnet-4-6', providerId: 'bedrock', type: 'chat' },
+        ],
+        enabledChatModelList: [
+          {
+            children: [{ id: 'global.anthropic.claude-sonnet-4-6' }],
+            id: 'bedrock',
+            name: 'AWS Bedrock',
+          },
+        ],
+      } as any);
+
+      expect(resolveEnabledChatModelConfig('codex-gpt-5', 'codex')).toEqual({
+        model: 'codex-gpt-5',
+        provider: 'codex',
+      });
+    });
+
+    it('should fall back when stored provider is a known but disabled AI provider', () => {
+      vi.spyOn(aiInfraStore, 'getAiInfraStoreState').mockReturnValue({
+        aiProviderList: [
+          { enabled: false, id: 'deepseek' },
+          { enabled: true, id: 'bedrock' },
+        ],
+        enabledAiModels: [
+          { id: 'global.anthropic.claude-sonnet-4-6', providerId: 'bedrock', type: 'chat' },
+        ],
+        enabledChatModelList: [
+          {
+            children: [{ id: 'global.anthropic.claude-sonnet-4-6' }],
+            id: 'bedrock',
+            name: 'AWS Bedrock',
+          },
+        ],
+      } as any);
+
+      expect(resolveEnabledChatModelConfig('deepseek-v4-pro', 'deepseek')).toEqual({
+        model: 'global.anthropic.claude-sonnet-4-6',
+        provider: 'bedrock',
+      });
+    });
+
+    it('should fall back to the first enabled chat model when stored config is unavailable', () => {
+      vi.spyOn(aiInfraStore, 'getAiInfraStoreState').mockReturnValue({
+        enabledAiModels: [
+          { id: 'global.anthropic.claude-sonnet-4-6', providerId: 'bedrock', type: 'chat' },
+        ],
+        enabledChatModelList: [
+          {
+            children: [{ id: 'global.anthropic.claude-sonnet-4-6' }],
+            id: 'bedrock',
+            name: 'AWS Bedrock',
+          },
+        ],
+      } as any);
+
+      expect(resolveEnabledChatModelConfig('deepseek-v4-pro', 'lobehub')).toEqual({
+        model: 'global.anthropic.claude-sonnet-4-6',
+        provider: 'bedrock',
+      });
     });
 
     describe('params adjustment based on chatConfig', () => {
@@ -511,7 +611,7 @@ describe('resolveAgentConfig', () => {
           .spyOn(builtinAgents, 'getAgentRuntimeConfig')
           .mockImplementation((slug, ctx) => ({
             // This simulates the actual INBOX runtime: [GTDIdentifier, NotebookIdentifier, ...(ctx.plugins || [])]
-            plugins: [GTDIdentifier, NotebookIdentifier, ...(ctx.plugins || [])],
+            plugins: [GTDIdentifier, NotebookIdentifier, ...(ctx?.plugins || [])],
             systemRole: 'Inbox system role',
           }));
 

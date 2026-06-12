@@ -4,7 +4,6 @@ interface FooterPromotionContext {
   classicOnboardingFinished: boolean;
   enableAgentOnboarding: boolean;
   isAgentOnboardingPromoRead: boolean;
-  isDesktop: boolean;
   isMobile: boolean;
   isProductHuntNotificationRead: boolean;
   isWithinProductHuntWindow: boolean;
@@ -32,7 +31,6 @@ const initialFooterPromotionState: FooterPromotionState = {
 
 const resolveAgentOnboardingPromotion: FooterPromotionPipelineStep = (context, state) => {
   const isAgentOnboardingPromoAvailable =
-    !context.isDesktop &&
     !context.isMobile &&
     context.serverConfigInit &&
     context.enableAgentOnboarding &&

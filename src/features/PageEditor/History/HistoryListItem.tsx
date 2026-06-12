@@ -9,7 +9,7 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useEventCallback } from '@/hooks/useEventCallback';
-import type { DocumentHistorySaveSource } from '@/server/routers/lambda/_schema/documentHistory';
+import type { DocumentHistorySaveSource } from '@/types/documentHistory';
 
 import { formatHistoryAbsoluteTime, formatHistoryRowTime } from './formatHistoryDate';
 import { historyItemSelectors, useHistoryItemsStore } from './HistoryItemsProvider';

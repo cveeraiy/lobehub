@@ -1,7 +1,7 @@
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { agentsToSessions } from '@/database/schemas';
-import { type LobeChatDatabase } from '@/database/type';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { type ConversationContextInput } from '../_schema/context';
 
@@ -101,5 +101,7 @@ export const batchResolveAgentIdFromSessions = async (
       and(eq(agentsToSessions.userId, userId), inArray(agentsToSessions.sessionId, sessionIds)),
     );
 
-  return new Map(relations.map((r) => [r.sessionId, r.agentId]));
+  return new Map(
+    relations.map((r: { agentId: string; sessionId: string }) => [r.sessionId, r.agentId]),
+  );
 };

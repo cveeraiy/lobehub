@@ -5,10 +5,8 @@ import { App } from 'antd';
 import {
   CheckCircle2,
   Circle,
-  ExternalLink,
   Link2,
   LucideCopy,
-  PanelTop,
   PencilLine,
   Share2,
   Star,
@@ -17,18 +15,13 @@ import {
 } from 'lucide-react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import { openRenameModal } from '@/components/RenameModal';
 import { SESSION_CHAT_TOPIC_URL } from '@/const/url';
-import { isDesktop } from '@/const/version';
-import { pluginRegistry } from '@/features/Electron/titlebar/RecentlyViewed/plugins';
 import { openShareModal } from '@/features/ShareModal';
 import { useAppOrigin } from '@/hooks/useAppOrigin';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
-import { useElectronStore } from '@/store/electron';
-import { useGlobalStore } from '@/store/global';
 
 interface TopicItemDropdownMenuProps {
   fav?: boolean;
@@ -45,11 +38,8 @@ export const useTopicItemDropdownMenu = ({
 }: TopicItemDropdownMenuProps) => {
   const { t } = useTranslation(['topic', 'common']);
   const { modal, message } = App.useApp();
-  const navigate = useNavigate();
 
-  const openTopicInNewWindow = useGlobalStore((s) => s.openTopicInNewWindow);
   const activeAgentId = useAgentStore((s) => s.activeAgentId);
-  const addTab = useElectronStore((s) => s.addTab);
   const appOrigin = useAppOrigin();
 
   const [
@@ -133,35 +123,6 @@ export const useTopicItemDropdownMenu = ({
       {
         type: 'divider' as const,
       },
-      ...(isDesktop
-        ? [
-            {
-              icon: <Icon icon={PanelTop} />,
-              key: 'openInNewTab',
-              label: t('actions.openInNewTab'),
-              onClick: () => {
-                if (!activeAgentId) return;
-                const url = SESSION_CHAT_TOPIC_URL(activeAgentId, id);
-                const reference = pluginRegistry.parseUrl(url, '');
-                if (reference) {
-                  addTab(reference);
-                  navigate(url);
-                }
-              },
-            },
-            {
-              icon: <Icon icon={ExternalLink} />,
-              key: 'openInNewWindow',
-              label: t('actions.openInNewWindow'),
-              onClick: () => {
-                if (activeAgentId) openTopicInNewWindow(activeAgentId, id);
-              },
-            },
-            {
-              type: 'divider' as const,
-            },
-          ]
-        : []),
       {
         icon: <Icon icon={Link2} />,
         key: 'copyLink',
@@ -224,9 +185,6 @@ export const useTopicItemDropdownMenu = ({
     unmarkTopicCompleted,
     removeTopic,
     updateTopicTitle,
-    openTopicInNewWindow,
-    addTab,
-    navigate,
     t,
     modal,
     message,

@@ -1380,5 +1380,39 @@ describe('anthropicHelpers', () => {
         },
       ]);
     });
+
+    it('should normalize stringified tool parameter schemas', () => {
+      const tools = [
+        {
+          type: 'function',
+          function: {
+            name: 'create_todos',
+            description: 'Create todos',
+            parameters: JSON.stringify({
+              properties: {
+                adds: {
+                  items: { type: 'string' },
+                  type: 'array',
+                },
+              },
+              type: 'object',
+            }),
+          },
+        },
+      ] as unknown as OpenAI.ChatCompletionTool[];
+
+      const result = buildAnthropicTools(tools);
+
+      expect(result?.[0].input_schema).toEqual({
+        properties: {
+          adds: {
+            items: { type: 'string' },
+            type: 'array',
+          },
+        },
+        required: [],
+        type: 'object',
+      });
+    });
   });
 });

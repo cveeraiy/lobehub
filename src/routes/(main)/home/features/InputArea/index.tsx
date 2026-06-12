@@ -22,7 +22,7 @@ import SkillInstallBanner, { SKILL_INSTALL_BANNER_ID } from './SkillInstallBanne
 import StarterList from './StarterList';
 import { useSend } from './useSend';
 
-const leftActions: ActionKeys[] = ['model', 'search', 'fileUpload', 'tools'];
+const leftActions: ActionKeys[] = ['model', 'search', 'fileUpload', 'tools', 'stt'];
 
 type BannerKind = 'skill' | 'botIntegration';
 
@@ -40,6 +40,9 @@ const InputArea = () => {
   );
   const chatInputRef = useRef<HTMLDivElement>(null);
 
+  const { enableAgentTask, enableBotChannels, showStarterList } =
+    useServerConfigStore(featureFlagsSelectors);
+
   // Wait for both stores to finish hydrating before drawing — server config
   // (skill flags) and the agent store (inboxAgentId) hydrate at different
   // times, and picking too early biases the draw toward whichever arrived
@@ -56,12 +59,13 @@ const InputArea = () => {
     if ((isLobehubSkillEnabled || isKlavisEnabled) && !isSkillBannerDismissed) {
       candidates.push('skill');
     }
-    if (!isBotIntegrationBannerDismissed) candidates.push('botIntegration');
+    if (enableBotChannels && !isBotIntegrationBannerDismissed) candidates.push('botIntegration');
     if (candidates.length === 0) return;
 
     hasPickedRef.current = true;
     setActiveBanner(candidates[Math.floor(Math.random() * candidates.length)]);
   }, [
+    enableBotChannels,
     inboxAgentId,
     isBotIntegrationBannerDismissed,
     isKlavisEnabled,
@@ -99,7 +103,6 @@ const InputArea = () => {
     [],
   );
 
-  const { enableAgentTask } = useServerConfigStore(featureFlagsSelectors);
   // Whitelist users get DailyBrief + an upcoming auto-generated module instead.
   const showSuggestQuestions = !enableAgentTask;
 
@@ -144,7 +147,7 @@ const InputArea = () => {
         </DragUploadZone>
       </Flexbox>
 
-      <StarterList />
+      {showStarterList && <StarterList />}
       {showSuggestQuestions && (
         <Flexbox style={{ marginTop: 24 }}>
           <SuggestQuestions />

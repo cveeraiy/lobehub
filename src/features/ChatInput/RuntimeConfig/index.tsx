@@ -1,31 +1,16 @@
-import { isDesktop } from '@lobechat/const';
 import { type RuntimeEnvMode } from '@lobechat/types';
-import { Github } from '@lobehub/icons';
 import { Flexbox, Icon, Popover, Skeleton, Tooltip } from '@lobehub/ui';
 import { createStaticStyles, cssVar, cx } from 'antd-style';
-import {
-  ChevronDownIcon,
-  CloudIcon,
-  FolderIcon,
-  GitBranchIcon,
-  LaptopIcon,
-  MonitorOffIcon,
-  SquircleDashed,
-} from 'lucide-react';
-import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
+import { ChevronDownIcon, CloudIcon, LaptopIcon, MonitorOffIcon } from 'lucide-react';
+import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
-import { useChatStore } from '@/store/chat';
-import { topicSelectors } from '@/store/chat/selectors';
 
 import { useAgentId } from '../hooks/useAgentId';
 import { useUpdateAgentConfig } from '../hooks/useUpdateAgentConfig';
 import ApprovalMode from './ApprovalMode';
-import GitStatus from './GitStatus';
-import { useRepoType } from './useRepoType';
-import WorkingDirectory from './WorkingDirectory';
 
 const MODE_ICONS: Record<RuntimeEnvMode, typeof LaptopIcon> = {
   cloud: CloudIcon,
@@ -98,10 +83,8 @@ const styles = createStaticStyles(({ css }) => ({
 
 const RuntimeConfig = memo(() => {
   const { t } = useTranslation('chat');
-  const { t: tPlugin } = useTranslation('plugin');
   const agentId = useAgentId();
   const { updateAgentChatConfig } = useUpdateAgentConfig();
-  const [dirPopoverOpen, setDirPopoverOpen] = useState(false);
   const [modePopoverOpen, setModePopoverOpen] = useState(false);
 
   const [isLoading, runtimeMode] = useAgentStore((s) => [
@@ -109,26 +92,11 @@ const RuntimeConfig = memo(() => {
     chatConfigByIdSelectors.getRuntimeModeById(agentId)(s),
   ]);
 
-  const topicWorkingDirectory = useChatStore(topicSelectors.currentTopicWorkingDirectory);
-  const agentWorkingDirectory = useAgentStore((s) =>
-    agentId ? agentByIdSelectors.getAgentWorkingDirectoryById(agentId)(s) : undefined,
-  );
-  const effectiveWorkingDirectory = topicWorkingDirectory || agentWorkingDirectory;
-
-  const repoType = useRepoType(effectiveWorkingDirectory);
-
-  const dirIconNode = useMemo((): ReactNode => {
-    if (!effectiveWorkingDirectory) return <Icon icon={SquircleDashed} size={14} />;
-    if (repoType === 'github') return <Github size={14} />;
-    if (repoType === 'git') return <Icon icon={GitBranchIcon} size={14} />;
-    return <Icon icon={FolderIcon} size={14} />;
-  }, [effectiveWorkingDirectory, repoType]);
-
   const switchMode = useCallback(
     async (mode: RuntimeEnvMode) => {
       if (mode === runtimeMode) return;
 
-      const platform = isDesktop ? 'desktop' : 'web';
+      const platform = 'web';
 
       await updateAgentChatConfig({
         runtimeEnv: { runtimeMode: { [platform]: mode } },
@@ -150,22 +118,7 @@ const RuntimeConfig = memo(() => {
   const ModeIcon = MODE_ICONS[runtimeMode];
   const modeLabel = t(`runtimeEnv.mode.${runtimeMode}`);
 
-  const displayName = effectiveWorkingDirectory
-    ? effectiveWorkingDirectory.split('/').findLast(Boolean) || effectiveWorkingDirectory
-    : tPlugin('localSystem.workingDirectory.notSet');
-
   const modes: { desc: string; icon: typeof LaptopIcon; label: string; mode: RuntimeEnvMode }[] = [
-    // Local mode is desktop-only
-    ...(isDesktop
-      ? [
-          {
-            desc: t('runtimeEnv.mode.localDesc'),
-            icon: LaptopIcon,
-            label: t('runtimeEnv.mode.local'),
-            mode: 'local' as RuntimeEnvMode,
-          },
-        ]
-      : []),
     {
       desc: t('runtimeEnv.mode.cloudDesc'),
       icon: CloudIcon,
@@ -218,52 +171,6 @@ const RuntimeConfig = memo(() => {
     </div>
   );
 
-  const dirButton = (
-    <div className={styles.button}>
-      {dirIconNode}
-      <span>{displayName}</span>
-      <Icon icon={ChevronDownIcon} size={12} />
-    </div>
-  );
-
-  const rightContent = () => {
-    if (runtimeMode === 'local') {
-      return (
-        <>
-          <Popover
-            open={dirPopoverOpen}
-            placement="bottomLeft"
-            styles={{ content: { padding: 4 } }}
-            trigger="click"
-            content={
-              <WorkingDirectory agentId={agentId} onClose={() => setDirPopoverOpen(false)} />
-            }
-            onOpenChange={setDirPopoverOpen}
-          >
-            <div>
-              {dirPopoverOpen ? (
-                dirButton
-              ) : (
-                <Tooltip
-                  title={
-                    effectiveWorkingDirectory || tPlugin('localSystem.workingDirectory.notSet')
-                  }
-                >
-                  {dirButton}
-                </Tooltip>
-              )}
-            </div>
-          </Popover>
-          {effectiveWorkingDirectory && repoType && (
-            <GitStatus isGithub={repoType === 'github'} path={effectiveWorkingDirectory} />
-          )}
-        </>
-      );
-    }
-
-    return null;
-  };
-
   return (
     <Flexbox horizontal align={'center'} className={styles.bar} justify={'space-between'}>
       {/* Left: Runtime env + working directory */}
@@ -284,7 +191,6 @@ const RuntimeConfig = memo(() => {
             )}
           </div>
         </Popover>
-        {rightContent()}
       </Flexbox>
 
       {/* Right: Permission control */}

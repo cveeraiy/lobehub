@@ -4,19 +4,17 @@ import { useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
 
-import { isDesktop } from '@/const/version';
-import { type SearchResult } from '@/database/repositories/search';
 import { useCreateNewModal } from '@/features/LibraryModal';
 import { useGroupWizard } from '@/layout/GlobalProvider/GroupWizardProvider';
-import { lambdaClient } from '@/libs/trpc/client';
 import { useCreateMenuItems } from '@/routes/(main)/home/_layout/hooks';
-import { electronSystemService } from '@/services/electron/system';
+import { commandSearchService } from '@/services/commandSearch';
 import { useAgentStore } from '@/store/agent';
 import { builtinAgentSelectors } from '@/store/agent/selectors/builtinAgentSelectors';
 import { useChatStore } from '@/store/chat';
 import { useGlobalStore } from '@/store/global';
 import { globalHelpers } from '@/store/global/helpers';
 import { useHomeStore } from '@/store/home';
+import { type SearchResult } from '@/types/search';
 
 import { useCommandMenuContext } from './CommandMenuContext';
 import { type ThemeMode } from './types';
@@ -62,7 +60,7 @@ export const useCommandMenu = () => {
     hasSearch ? ['search', searchQuery, agentId, typeFilter] : null,
     async () => {
       const locale = globalHelpers.getCurrentLanguage();
-      return lambdaClient.search.query.query({
+      return commandSearchService.query({
         agentId,
         limitPerType: typeFilter ? 50 : 5, // Show more results when filtering by type
         locale,
@@ -102,11 +100,7 @@ export const useCommandMenu = () => {
 
   const handleExternalLink = useCallback(
     async (url: string) => {
-      if (isDesktop) {
-        await electronSystemService.openExternalLink(url);
-      } else {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
+      window.open(url, '_blank', 'noopener,noreferrer');
       onClose();
     },
     [onClose],

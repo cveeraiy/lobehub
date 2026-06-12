@@ -1,13 +1,13 @@
-import { isDesktop } from '@lobechat/const';
-import { type PartialDeep } from 'type-fest';
+import type { PartialDeep } from 'type-fest';
 
-import { type VersionResponseData } from '@/app/(backend)/api/version/route';
 import { BusinessGlobalService } from '@/business/client/services/BusinessGlobalService';
-import { lambdaClient } from '@/libs/trpc/client';
-import { getElectronStoreState } from '@/store/electron';
-import { electronSyncSelectors } from '@/store/electron/selectors';
-import { type LobeAgentConfig } from '@/types/agent';
-import { type GlobalRuntimeConfig } from '@/types/serverConfig';
+import { restClient } from '@/libs/rest/client';
+import type { LobeAgentConfig } from '@/types/agent';
+import type { GlobalRuntimeConfig } from '@/types/serverConfig';
+
+interface VersionResponseData {
+  version: string;
+}
 
 const VERSION_URL = 'https://registry.npmmirror.com/@lobehub/chat/latest';
 const SERVER_VERSION_URL = '/api/version';
@@ -29,24 +29,7 @@ class GlobalService extends BusinessGlobalService {
    * @throws Error for other failures (network errors, 500s, etc.) to allow SWR retry
    */
   getServerVersion = async (): Promise<string | null> => {
-    const origin = (() => {
-      if (isDesktop) {
-        const remoteServerUrl = electronSyncSelectors.remoteServerUrl(getElectronStoreState());
-        if (!remoteServerUrl) return undefined;
-
-        try {
-          return new URL(remoteServerUrl).origin;
-        } catch {
-          // fallback: use as-is; URL construction below will throw if invalid
-          return remoteServerUrl;
-        }
-      }
-
-      return undefined;
-    })();
-
-    if (!origin) return null;
-
+    const origin = window.location.origin;
     const url = new URL(SERVER_VERSION_URL, origin).toString();
     const res = await fetch(url);
 
@@ -66,11 +49,11 @@ class GlobalService extends BusinessGlobalService {
   };
 
   getGlobalConfig = async (): Promise<GlobalRuntimeConfig> => {
-    return lambdaClient.config.getGlobalConfig.query();
+    return restClient.get<GlobalRuntimeConfig>('/config/global');
   };
 
   getDefaultAgentConfig = async (): Promise<PartialDeep<LobeAgentConfig>> => {
-    return lambdaClient.config.getDefaultAgentConfig.query();
+    return restClient.get<PartialDeep<LobeAgentConfig>>('/config/default-agent');
   };
 }
 

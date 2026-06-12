@@ -1,15 +1,15 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import { type ChatToolPayload } from '@lobechat/types';
 import { detectTruncatedJSON, safeParseJSON } from '@lobechat/utils';
 import debug from 'debug';
 
 import { KlavisService } from '@/server/services/klavis';
 import { MarketService } from '@/server/services/market';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { getServerRuntime, hasServerRuntime } from './serverRuntimes';
 import { type IToolExecutor, type ToolExecutionContext, type ToolExecutionResult } from './types';
 
-const log = debug('lobe-server:builtin-tools-executor');
+const log = debug('ethos-server:builtin-tools-executor');
 
 export class BuiltinToolsExecutor implements IToolExecutor {
   private marketService: MarketService;
@@ -66,7 +66,7 @@ export class BuiltinToolsExecutor implements IToolExecutor {
       args,
     );
 
-    // Route LobeHub Skills to MarketService
+    // Route Ethos Skills to MarketService
     if (source === 'lobehubSkill') {
       return this.marketService.executeLobehubSkill({
         args,

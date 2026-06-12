@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { callPythonBackend } from '@/server/utils/pythonBackend';
+
 import { notebookRuntime } from '../notebook';
 
-vi.mock('@/database/models/document');
-vi.mock('@/database/models/topicDocument');
+vi.mock('@/server/utils/pythonBackend');
 
 describe('notebookRuntime', () => {
   it('should have correct identifier', () => {
@@ -27,25 +28,42 @@ describe('notebookRuntime', () => {
     expect(typeof runtime.deleteDocument).toBe('function');
   });
 
-  it('should throw if userId is missing', () => {
+  it('should call Python tool execution with topic and task context', async () => {
     const context = {
-      serverDB: {} as any,
+      taskId: 'task-1',
       toolManifestMap: {},
-    };
-
-    expect(() => notebookRuntime.factory(context)).toThrow(
-      'userId and serverDB are required for Notebook execution',
-    );
-  });
-
-  it('should throw if serverDB is missing', () => {
-    const context = {
-      toolManifestMap: {},
+      topicId: 'topic-1',
       userId: 'user-1',
     };
+    vi.mocked(callPythonBackend).mockResolvedValue({
+      result: JSON.stringify({ content: 'ok', success: true }),
+    });
 
-    expect(() => notebookRuntime.factory(context)).toThrow(
-      'userId and serverDB are required for Notebook execution',
+    const runtime = notebookRuntime.factory(context);
+    const result = await runtime.createDocument({ content: 'body', title: 'Doc' });
+
+    expect(result).toEqual({ content: 'ok', success: true });
+    expect(callPythonBackend).toHaveBeenCalledWith('/api/tools/run', 'user-1', {
+      body: {
+        arguments: {
+          content: 'body',
+          taskId: 'task-1',
+          title: 'Doc',
+          topicId: 'topic-1',
+        },
+        tool_name: 'lobe-notebook__createDocument',
+      },
+    });
+  });
+
+  it('should throw at execution time if userId is missing', async () => {
+    const context = {
+      toolManifestMap: {},
+    };
+    const runtime = notebookRuntime.factory(context);
+
+    await expect(runtime.getDocument({ id: 'doc-1' })).rejects.toThrow(
+      'userId is required for Notebook execution',
     );
   });
 });

@@ -102,7 +102,7 @@ const AgentTool = memo<AgentToolProps>(
     const allKlavisServers = useToolStore(klavisStoreSelectors.getServers, isEqual);
     const isKlavisEnabledInEnv = useServerConfigStore(serverConfigSelectors.enableKlavis);
 
-    // LobeHub Skill-related state
+    // Ethos Skill-related state
     const allLobehubSkillServers = useToolStore(lobehubSkillStoreSelectors.getServers, isEqual);
     const isLobehubSkillEnabled = useServerConfigStore(serverConfigSelectors.enableLobehubSkill);
 
@@ -141,7 +141,7 @@ const AgentTool = memo<AgentToolProps>(
     // Load user's Klavis integrations via SWR (from database)
     useFetchUserKlavisServers(isKlavisEnabledInEnv);
 
-    // Load user's LobeHub Skill connections via SWR
+    // Load user's Ethos Skill connections via SWR
     useFetchLobehubSkillConnections(isLobehubSkillEnabled);
 
     // Toggle web browsing via searchMode - use byId action
@@ -289,7 +289,7 @@ const AgentTool = memo<AgentToolProps>(
       [isKlavisEnabledInEnv, allKlavisServers, effectiveAgentId, t],
     );
 
-    // LobeHub Skill Provider list items
+    // Ethos Skill Provider list items
     const lobehubSkillItems = useMemo(
       () =>
         isLobehubSkillEnabled
@@ -342,7 +342,7 @@ const AgentTool = memo<AgentToolProps>(
         }
       };
 
-    // Builtin Agent Skills list items (grouped under LobeHub)
+    // Builtin Agent Skills list items (grouped under Ethos)
     const builtinAgentSkillItems = useMemo(
       () =>
         installedBuiltinSkills.map((skill) => ({
@@ -458,7 +458,7 @@ const AgentTool = memo<AgentToolProps>(
       [userAgentSkills, isToolEnabled, handleToggleTool, t],
     );
 
-    // Merge Builtin Agent Skills, builtin tools, LobeHub Skill Providers, and Klavis servers
+    // Merge Builtin Agent Skills, builtin tools, Ethos Skill Providers, and Klavis servers
     const builtinItems = useMemo(
       () => [
         // 1. Builtin Agent Skills
@@ -505,7 +505,7 @@ const AgentTool = memo<AgentToolProps>(
             />
           ),
         })),
-        // 3. LobeHub Skill Providers
+        // 3. Ethos Skill Providers
         ...lobehubSkillItems,
         // 4. Klavis servers
         ...klavisServerItems,
@@ -601,7 +601,7 @@ const AgentTool = memo<AgentToolProps>(
     // All tab items (marketplace tab)
     const allTabItems: ItemType[] = useMemo(
       () => [
-        // LobeHub group
+        // Ethos group
         ...(builtinItems.length > 0
           ? [
               {
@@ -692,7 +692,7 @@ const AgentTool = memo<AgentToolProps>(
         plugins.includes(item.key as string),
       );
 
-      // Connected LobeHub Skill Providers
+      // Connected Ethos Skill Providers
       const connectedLobehubSkillItems = lobehubSkillItems.filter((item) =>
         plugins.includes(item.key as string),
       );
@@ -740,7 +740,7 @@ const AgentTool = memo<AgentToolProps>(
           ),
         }));
 
-      // LobeHub group (Builtin Agent Skills + builtin + LobeHub Skill + Klavis)
+      // Ethos group (Builtin Agent Skills + builtin + Ethos Skill + Klavis)
       const lobehubGroupItems = [
         ...enabledBuiltinAgentSkillItems,
         ...enabledBuiltinItems,

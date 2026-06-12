@@ -1,4 +1,4 @@
-import { createEnv } from '@t3-oss/env-nextjs';
+import { createEnv } from '@t3-oss/env-core';
 import { z } from 'zod';
 
 /**
@@ -15,6 +15,7 @@ import { z } from 'zod';
  */
 export const getKlavisConfig = () => {
   return createEnv({
+    clientPrefix: 'NEXT_PUBLIC_',
     client: {},
     runtimeEnv: {
       // Server-side API key (never exposed to client)

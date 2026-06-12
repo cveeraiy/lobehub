@@ -1,16 +1,10 @@
 // @vitest-environment node
-import { cookies } from 'next/headers';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_LANG } from '@/const/locale';
 import { normalizeLocale } from '@/locales/resources';
 
 import { getLocale, translation } from './translation';
-
-// Mock external dependencies
-vi.mock('next/headers', () => ({
-  cookies: vi.fn(),
-}));
 
 vi.mock('@/const/locale', () => ({
   DEFAULT_LANG: 'en-US',
@@ -28,15 +22,15 @@ vi.mock('@/utils/env', () => ({
 // Mock default locale modules with flat key structure (i18n keys are flat, not nested objects)
 // Keys like 'nested.key' are direct string keys, not nested property paths
 vi.mock('@/locales/default/common', () => ({
-  key1: 'Value 1',
-  key2: 'Value 2 with {{param}}',
+  'key1': 'Value 1',
+  'key2': 'Value 2 with {{param}}',
   'nested.key': 'Nested value',
-  multiParam: 'Hello {{name}}, you have {{count}} messages',
-  simpleText: 'Just a simple text',
-  withParam: 'Text with {{param}}',
+  'multiParam': 'Hello {{name}}, you have {{count}} messages',
+  'simpleText': 'Just a simple text',
+  'withParam': 'Text with {{param}}',
   'very.deeply.nested.key': 'Found the nested value',
   // Add exports for testing missing keys (will be undefined, triggering fallback)
-  nonexistent: undefined,
+  'nonexistent': undefined,
   'totally.missing.key': undefined,
 }));
 
@@ -57,13 +51,8 @@ vi.mock('@/locales/default/providers', () => ({
 }));
 
 describe('getLocale', () => {
-  const mockCookieStore = {
-    get: vi.fn(),
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    (cookies as any).mockReturnValue(mockCookieStore);
   });
 
   it('should return the provided locale if hl is specified', async () => {
@@ -72,8 +61,7 @@ describe('getLocale', () => {
     expect(normalizeLocale).toHaveBeenCalledWith('fr-FR');
   });
 
-  it('should return DEFAULT_LANG if no cookie is set', async () => {
-    mockCookieStore.get.mockReturnValue(undefined);
+  it('should return DEFAULT_LANG if no hl is provided', async () => {
     const result = await getLocale();
     expect(result).toBe(DEFAULT_LANG);
   });

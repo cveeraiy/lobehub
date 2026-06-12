@@ -1,6 +1,5 @@
 'use client';
 
-import { isDesktop } from '@lobechat/const';
 import { Flexbox } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import isEqual from 'fast-deep-equal';
@@ -87,25 +86,6 @@ const MessageItem = memo<MessageItemProps>(
         if (!role || (role !== 'user' && role !== 'assistant' && role !== 'assistantGroup')) return;
 
         if (!message) return;
-
-        if (isDesktop) {
-          const { electronSystemService } = await import('@/services/electron/system');
-
-          // Get selected text for context menu features like Look Up and Search
-          const selection = window.getSelection();
-          const selectionText = selection?.toString() || '';
-
-          electronSystemService.showContextMenu('chat', {
-            content: message.content,
-            hasError: !!message.error,
-            messageId: id,
-            // For assistantGroup, we treat it as assistant for context menu purposes
-            role: message.role === 'assistantGroup' ? 'assistant' : message.role,
-            selectionText,
-          });
-
-          return;
-        }
 
         handleContextMenu(event);
       },

@@ -40,6 +40,7 @@ const MainChatInput = memo(() => {
       'memory',
       'fileUpload',
       'tools',
+      'stt',
       'typo',
       ...(isDevMode ? (['params'] as ActionKeys[]) : []),
       'mainToken',

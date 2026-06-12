@@ -4,7 +4,7 @@ import { appEnv } from '@/envs/app';
 import { signUserJWT } from '@/libs/trpc/utils/internalJwt';
 import { isDev } from '@/utils/env';
 
-const log = debug('lobe-server:lh-command');
+const log = debug('ethos-server:lh-command');
 
 export interface PreprocessResult {
   command: string;

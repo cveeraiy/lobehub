@@ -1,9 +1,10 @@
 // @vitest-environment node
-import { type LobeChatDatabase } from '@lobechat/database';
-import { sessions, topics } from '@lobechat/database/schemas';
-import { getTestDB } from '@lobechat/database/test-utils';
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getTestDB } from '@/database/core/getTestDB';
+import { sessions, topics } from '@/database/schemas';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { topicRouter } from '../../topic';
 import { cleanupTestUser, createTestContext, createTestUser } from './setup';
@@ -152,8 +153,12 @@ describe('Topic Router Integration Tests', () => {
         .where(eq(topics.sessionId, testSessionId));
 
       expect(createdTopics).toHaveLength(2);
-      expect(createdTopics.map((t) => t.title)).toContain('Batch Topic 1');
-      expect(createdTopics.map((t) => t.title)).toContain('Batch Topic 2');
+      expect(createdTopics.map((t: { title: string | null }) => t.title)).toContain(
+        'Batch Topic 1',
+      );
+      expect(createdTopics.map((t: { title: string | null }) => t.title)).toContain(
+        'Batch Topic 2',
+      );
     });
 
     it('should batch create topics with mixed agentId and sessionId', async () => {
@@ -179,8 +184,12 @@ describe('Topic Router Integration Tests', () => {
       // Verify each topic is linked to the correct session
       const allTopics = await serverDB.select().from(topics).where(eq(topics.userId, userId));
 
-      const topicWithAgent = allTopics.find((t) => t.title === 'Topic with agentId');
-      const topicWithSession = allTopics.find((t) => t.title === 'Topic with sessionId');
+      const topicWithAgent = allTopics.find(
+        (t: { title: string | null }) => t.title === 'Topic with agentId',
+      );
+      const topicWithSession = allTopics.find(
+        (t: { title: string | null }) => t.title === 'Topic with sessionId',
+      );
 
       expect(topicWithAgent?.sessionId).toBe(testSessionId);
       expect(topicWithSession?.sessionId).toBe(anotherSession.id);

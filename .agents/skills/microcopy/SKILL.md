@@ -3,7 +3,7 @@ name: microcopy
 description: UI copy and microcopy guidelines. Use when writing UI text, buttons, error messages, empty states, onboarding, or any user-facing copy. Triggers on i18n translation, UI text writing, or copy improvement tasks. Supports both Chinese and English.
 ---
 
-# LobeHub UI Microcopy Guidelines
+# Ethos UI Microcopy Guidelines
 
 Brand: **Where Agents Collaborate** - Focus on collaborative agent system, not just "generation".
 

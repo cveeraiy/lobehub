@@ -4,7 +4,7 @@
 
 ### 富文本编辑器 (contenteditable) 输入
 
-LobeHub 使用 `@lobehub/editor` 作为聊天输入框，是一个 contenteditable 的富文本编辑器。
+Ethos 使用 `@lobehub/editor` 作为聊天输入框，是一个 contenteditable 的富文本编辑器。
 
 **关键点**:
 

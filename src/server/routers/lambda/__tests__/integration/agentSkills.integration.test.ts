@@ -1,10 +1,10 @@
 // @vitest-environment node
-import type { LobeChatDatabase } from '@lobechat/database';
-import { agentSkills } from '@lobechat/database/schemas';
-import { getTestDB } from '@lobechat/database/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getTestDB } from '@/database/core/getTestDB';
 import { AgentDocumentModel } from '@/database/models/agentDocuments';
+import { agentSkills } from '@/database/schemas';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { agentDocumentRouter } from '../../agentDocument';
 import { agentSkillsRouter } from '../../agentSkills';

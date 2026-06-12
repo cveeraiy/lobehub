@@ -4,7 +4,7 @@ import {
   type UserMemoryExtractionMetadata,
 } from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 export interface MemoryExtractionTask {
   error?: IAsyncTaskError | null;
@@ -26,13 +26,13 @@ class MemoryExtractionService {
   requestFromChatTopics = async (
     params: RequestMemoryExtractionParams,
   ): Promise<RequestMemoryExtractionResult> => {
-    return lambdaClient.userMemory.requestMemoryFromChatTopic.mutate(params);
+    return restClient.post('/user-memory/extraction/from-chat-topics', { body: params });
   };
 
   getTask = async (taskId?: string): Promise<MemoryExtractionTask | null> => {
-    return lambdaClient.userMemory.getMemoryExtractionTask.query(
-      taskId ? { taskId } : undefined,
-    ) as Promise<MemoryExtractionTask | null>;
+    return restClient.get('/user-memory/extraction/task', {
+      params: taskId ? { taskId } : undefined,
+    });
   };
 }
 

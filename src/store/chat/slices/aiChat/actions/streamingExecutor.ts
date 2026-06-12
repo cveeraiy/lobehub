@@ -6,11 +6,9 @@ import {
   type Usage,
 } from '@lobechat/agent-runtime';
 import { AgentRuntime, computeStepContext, GeneralChatAgent } from '@lobechat/agent-runtime';
-import { LobeAgentManifest } from '@lobechat/builtin-tool-lobe-agent';
 import { createPathScopeAudit } from '@lobechat/builtin-tool-local-system';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { manualModeExcludeToolIds } from '@lobechat/builtin-tools';
-import { isDesktop } from '@lobechat/const';
+import { LobeAgentManifest, manualModeExcludeToolIds } from '@lobechat/builtin-tools';
 import { type ToolsEngine } from '@lobechat/context-engine';
 import { buildTaskDetailPrompt, buildTaskListPrompt } from '@lobechat/prompts';
 import {
@@ -19,34 +17,30 @@ import {
   type UIChatMessage,
 } from '@lobechat/types';
 import debug from 'debug';
-import { t } from 'i18next';
 
 import { createAgentToolsEngine } from '@/helpers/toolEngineering';
 import { isCanUseVideo, isCanUseVision } from '@/services/chat/helper';
 import { type ResolvedAgentConfig } from '@/services/chat/mecha';
-import { composeEnabledTools, resolveAgentConfig } from '@/services/chat/mecha';
-import { localFileService } from '@/services/electron/localFileService';
+import {
+  composeEnabledTools,
+  preloadAgentConfigRuntime,
+  resolveAgentConfig,
+} from '@/services/chat/mecha';
 import { messageService } from '@/services/message';
 import { getAgentStoreState } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
 import { createAgentExecutors } from '@/store/chat/agents/createAgentExecutors';
 import { emitClientAgentSignalSourceEvent } from '@/store/chat/slices/aiChat/actions/agentSignalBridge';
 import { type ChatStore, useChatStore } from '@/store/chat/store';
-import {
-  notifyDesktopHumanApprovalRequired,
-  resolveNotificationNavigatePath,
-} from '@/store/chat/utils/desktopNotification';
 import { getServerConfigStoreState, serverConfigSelectors } from '@/store/serverConfig';
 import { getTaskStoreState } from '@/store/task';
 import { pageAgentRuntime } from '@/store/tool/slices/builtin/executors/lobe-page-agent';
 import { type StoreSetter } from '@/store/types';
 import { toolInterventionSelectors } from '@/store/user/selectors';
 import { getUserStoreState } from '@/store/user/store';
-import { markdownToTxt } from '@/utils/markdownToTxt';
 
 import { topicSelectors } from '../../../selectors';
 import { messageMapKey } from '../../../utils/messageMapKey';
-import { topicMapKey } from '../../../utils/topicMapKey';
 import {
   selectActivatedSkillsFromMessages,
   selectActivatedToolIdsFromMessages,
@@ -54,16 +48,11 @@ import {
 } from '../../message/selectors/dbMessage';
 import { mergeQueuedMessages } from '../../operation/types';
 
-const log = debug('lobe-store:streaming-executor');
+const log = debug('ethos-store:streaming-executor');
 
 const dynamicInterventionAudits = {
   pathScopeAudit: createPathScopeAudit({
-    areAllPathsSafe: async ({ paths, resolveAgainstScope }) => {
-      if (!isDesktop) return false;
-
-      const result = await localFileService.auditSafePaths({ paths, resolveAgainstScope });
-      return result.allSafe;
-    },
+    areAllPathsSafe: async () => false,
   }),
 };
 
@@ -214,17 +203,21 @@ export class StreamingExecutorActionImpl {
     const toolsEngine = createAgentToolsEngine(
       { model: agentConfigData.model, provider: agentConfigData.provider! },
       effectivePluginIds,
+      effectiveAgentId,
     );
     // When skillActivateMode is 'manual':
     // Exclude only discovery tools (activator, skill-store) so runtime-managed defaults
     // (skills, web-browsing, sandbox, memory, etc.) remain available for all agents.
     const isManualMode = agentConfig.chatConfig?.skillActivateMode === 'manual';
+    const hasExplicitTools = (mergedToolIds?.length ?? 0) > 0;
+    const shouldSkipDefaultTools =
+      disableTools || (agentConfigData.provider === 'bedrock' && !hasExplicitTools);
 
     const toolsDetailed = toolsEngine.generateToolsDetailed({
       excludeDefaultToolIds: isManualMode ? manualModeExcludeToolIds : undefined,
       model: agentConfigData.model,
       provider: agentConfigData.provider!,
-      skipDefaultTools: disableTools || undefined,
+      skipDefaultTools: shouldSkipDefaultTools || undefined,
       toolIds: mergedToolIds,
     });
 
@@ -500,6 +493,14 @@ export class StreamingExecutorActionImpl {
     // Step 1: Create Agent State (resolves config once)
     // ===========================================
     // agentConfig contains isSubTask filtering and is passed to callLLM executor
+    await preloadAgentConfigRuntime({
+      agentId: effectiveAgentId || '',
+      disableTools,
+      groupId,
+      isSubTask,
+      scope,
+    });
+
     const {
       state: initialAgentState,
       context: initialAgentContext,
@@ -676,11 +677,6 @@ export class StreamingExecutorActionImpl {
           }
 
           case 'human_approve_required': {
-            await notifyDesktopHumanApprovalRequired(this.#get, {
-              agentId,
-              groupId,
-              topicId,
-            });
             break;
           }
 
@@ -854,42 +850,6 @@ export class StreamingExecutorActionImpl {
       sourceId: `${operationId}:client:complete`,
       sourceType: 'client.runtime.complete',
     });
-
-    // Desktop notification (if not in tools calling mode)
-    if (isDesktop) {
-      try {
-        const finalMessages = this.#get().messagesMap[messageKey] || [];
-        const lastAssistant = finalMessages.findLast((m) => m.role === 'assistant');
-
-        // Only show notification if there's content and no tools
-        if (lastAssistant?.content && !lastAssistant?.tools) {
-          const { desktopNotificationService } =
-            await import('@/services/electron/desktopNotification');
-
-          // Use topic title or agent title as notification title
-          let notificationTitle = t('notification.finishChatGeneration', { ns: 'electron' });
-          if (topicId) {
-            const key = topicMapKey({ agentId, groupId });
-            const topicData = this.#get().topicDataMap[key];
-            const topic = topicData?.items?.find((item) => item.id === topicId);
-            if (topic?.title) notificationTitle = topic.title;
-          } else {
-            const agentMeta = agentSelectors.getAgentMetaById(agentId)(getAgentStoreState());
-            if (agentMeta?.title) notificationTitle = agentMeta.title;
-          }
-
-          const navigatePath = resolveNotificationNavigatePath({ agentId, groupId, topicId });
-
-          await desktopNotificationService.showNotification({
-            body: markdownToTxt(lastAssistant.content),
-            navigate: navigatePath ? { path: navigatePath } : undefined,
-            title: notificationTitle,
-          });
-        }
-      } catch (error) {
-        console.error('Desktop notification error:', error);
-      }
-    }
 
     // Return usage and cost data for caller to use
     return { cost: state.cost, usage: state.usage };

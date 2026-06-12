@@ -6,8 +6,7 @@ import { createContext, use, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mutate as globalMutate } from 'swr';
 
-import { lambdaClient } from '@/libs/trpc/client';
-import { MARKET_OIDC_ENDPOINTS } from '@/services/_url';
+import { marketAuthService } from '@/services/marketAuth';
 import { useServerConfigStore } from '@/store/serverConfig';
 import { serverConfigSelectors } from '@/store/serverConfig/selectors';
 import { useUserStore } from '@/store/user';
@@ -33,18 +32,15 @@ const MarketAuthContext = createContext<MarketAuthContextType | null>(null);
 
 interface MarketAuthProviderProps {
   children: ReactNode;
-  isDesktop: boolean;
 }
 
 /**
- * Fetch user info (via tRPC OIDC endpoint)
+ * Fetch user info via the REST OIDC endpoint.
  * @param accessToken - Optional access token; if not provided, the backend will attempt to use trustedClientToken
  */
 const fetchUserInfo = async (accessToken?: string): Promise<MarketUserInfo | null> => {
   try {
-    const userInfo = await lambdaClient.market.oidc.getUserInfo.mutate({
-      token: accessToken,
-    });
+    const userInfo = await marketAuthService.getUserInfo(accessToken);
 
     return userInfo as MarketUserInfo;
   } catch (error) {
@@ -119,7 +115,7 @@ const getRefreshToken = (): string | null => {
  */
 const checkNeedsProfileSetup = async (username: string): Promise<boolean> => {
   try {
-    const profile = await lambdaClient.market.user.getUserByUsername.query({ username });
+    const profile = await marketAuthService.getUserByUsername(username);
     // If userName is not set, user needs to complete profile setup
     return !profile.userName;
   } catch {
@@ -131,7 +127,7 @@ const checkNeedsProfileSetup = async (username: string): Promise<boolean> => {
 /**
  * Market authorization context provider
  */
-export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderProps) => {
+export const MarketAuthProvider = ({ children }: MarketAuthProviderProps) => {
   const { message } = App.useApp();
   const { t } = useTranslation('marketAuth');
 
@@ -168,22 +164,17 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const baseUrl = process.env.NEXT_PUBLIC_MARKET_BASE_URL || 'https://market.lobehub.com';
-      const desktopRedirectUri = new URL(MARKET_OIDC_ENDPOINTS.desktopCallback, baseUrl).toString();
-
-      // Desktop uses Market's manually maintained Web callback; Web uses the current domain
-      const redirectUri = isDesktop
-        ? desktopRedirectUri
-        : `${window.location.origin}/market-auth-callback`;
+      const redirectUri = `${window.location.origin}/market-auth-callback`;
 
       const oidcConfig: OIDCConfig = {
         baseUrl,
-        clientId: isDesktop ? 'lobehub-desktop' : 'lobechat-com',
+        clientId: 'lobechat-com',
         redirectUri,
         scope: 'openid profile email',
       };
       setOidcClient(new MarketOIDC(oidcConfig));
     }
-  }, [isDesktop]);
+  }, []);
 
   /**
    * Try to refresh the access token using a refresh token
@@ -191,10 +182,8 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
    */
   const tryRefreshToken = async (refreshTokenValue: string): Promise<boolean> => {
     try {
-      const clientId = isDesktop ? 'lobehub-desktop' : 'lobechat-com';
-
-      const response = await lambdaClient.market.oidc.refreshToken.mutate({
-        clientId,
+      const response = await marketAuthService.refreshToken({
+        clientId: 'lobechat-com',
         refreshToken: refreshTokenValue,
       });
 
@@ -542,7 +531,7 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
       }
 
       try {
-        const result = await lambdaClient.market.socialProfile.scanClaimableResources.query();
+        const result = await marketAuthService.scanClaimableResources();
         if (result.plugins.length > 0 || result.skills.length > 0) {
           // Store the callback for when claim succeeds
           if (onClaimSuccess) {
@@ -582,10 +571,8 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
     }
 
     try {
-      const clientId = isDesktop ? 'lobehub-desktop' : 'lobechat-com';
-
-      const response = await lambdaClient.market.oidc.refreshToken.mutate({
-        clientId,
+      const response = await marketAuthService.refreshToken({
+        clientId: 'lobechat-com',
         refreshToken: dbTokens.refreshToken,
       });
 
@@ -622,7 +609,7 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
       setStatus('unauthenticated');
       return false;
     }
-  }, [isDesktop]);
+  }, []);
 
   /**
    * Handle unauthorized (401) error from Market API
@@ -698,28 +685,17 @@ export const MarketAuthProvider = ({ children, isDesktop }: MarketAuthProviderPr
   }, [status, session?.expiresAt, enableMarketTrustedClient, refreshToken]);
 
   /**
-   * Listen for market-unauthorized events from tRPC error handler
+   * Listen for market-unauthorized events from REST error handlers.
    * Automatically attempt to recover from 401 errors
    */
   useEffect(() => {
     const unsubscribe = marketAuthEvents.on('market-unauthorized', async (event) => {
       console.info('[MarketAuth] Received unauthorized event for path:', event.path);
-      // Desktop: do not open community auth / profile modals from background API 401s.
-      // Only attempt a silent token refresh; Lobe cloud re-auth is handled separately (AuthRequiredModal).
-      if (isDesktop) {
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          console.info(
-            '[MarketAuth] Desktop: market 401 — refresh failed, skipping community sign-in UI',
-          );
-        }
-        return;
-      }
       await handleUnauthorized();
     });
 
     return unsubscribe;
-  }, [handleUnauthorized, isDesktop, refreshToken]);
+  }, [handleUnauthorized, refreshToken]);
 
   const contextValue: MarketAuthContextType = {
     checkAndShowClaimableResources,

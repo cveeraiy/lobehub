@@ -14,7 +14,7 @@ export const deepseekChatModels: AIChatModelCard[] = [
     id: 'deepseek-v4-pro',
     maxOutput: 384_000,
     pricing: {
-      // LobeHub-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
+      // Ethos-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
       units: [
         {
           name: 'textInput_cacheRead',
@@ -64,7 +64,7 @@ export const deepseekChatModels: AIChatModelCard[] = [
     id: 'deepseek-v4-flash',
     maxOutput: 384_000,
     pricing: {
-      // LobeHub-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
+      // Ethos-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
       units: [
         { name: 'textInput_cacheRead', rate: 0.00028, strategy: 'fixed', unit: 'millionTokens' },
         { name: 'textInput', rate: 0.014, strategy: 'fixed', unit: 'millionTokens' },
@@ -98,7 +98,7 @@ export const deepseekChatModels: AIChatModelCard[] = [
     legacy: true,
     maxOutput: 384_000,
     pricing: {
-      // LobeHub-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
+      // Ethos-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
       units: [
         { name: 'textInput_cacheRead', rate: 0.00028, strategy: 'fixed', unit: 'millionTokens' },
         { name: 'textInput', rate: 0.014, strategy: 'fixed', unit: 'millionTokens' },
@@ -123,7 +123,7 @@ export const deepseekChatModels: AIChatModelCard[] = [
     legacy: true,
     maxOutput: 384_000,
     pricing: {
-      // LobeHub-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
+      // Ethos-hosted discount price. Official DeepSeek API pricing stays in model-bank/deepseek.
       units: [
         { name: 'textInput_cacheRead', rate: 0.00028, strategy: 'fixed', unit: 'millionTokens' },
         { name: 'textInput', rate: 0.014, strategy: 'fixed', unit: 'millionTokens' },

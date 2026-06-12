@@ -1,22 +1,22 @@
-import { LobeActivatorIdentifier } from '@lobechat/builtin-tool-activator';
-import { AgentBuilderIdentifier } from '@lobechat/builtin-tool-agent-builder';
-import { AgentManagementIdentifier } from '@lobechat/builtin-tool-agent-management';
+import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
+import {
+  AgentBuilderIdentifier,
+  AgentManagementIdentifier,
+  GroupAgentBuilderIdentifier,
+  GTDIdentifier,
+  LobeActivatorIdentifier,
+  WebOnboardingIdentifier,
+} from '@lobechat/builtin-tools';
 import {
   CredsIdentifier,
   type CredSummary,
-  generateCredsList,
-  generateKlavisServicesList,
-  type KlavisServiceSummary,
-} from '@lobechat/builtin-tool-creds';
-import {
   CronIdentifier,
   type CronJobSummaryForContext,
+  generateCredsList,
   generateCronJobsList,
-} from '@lobechat/builtin-tool-cron';
-import { GroupAgentBuilderIdentifier } from '@lobechat/builtin-tool-group-agent-builder';
-import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
-import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
+  generateKlavisServicesList,
+  type KlavisServiceSummary,
+} from '@lobechat/builtin-tools';
 import { KLAVIS_SERVER_TYPES, LOBEHUB_SKILL_PROVIDERS } from '@lobechat/const';
 import type {
   AgentBuilderContext,
@@ -44,7 +44,9 @@ import debug from 'debug';
 
 import { isCanUseFC } from '@/helpers/isCanUseFC';
 import { VARIABLE_GENERATORS } from '@/helpers/parserPlaceholder';
-import { lambdaClient } from '@/libs/trpc/client';
+import { agentService } from '@/services/agent';
+import { agentCronJobService } from '@/services/agentCronJob';
+import { marketApiService } from '@/services/marketApi';
 import { notebookService } from '@/services/notebook';
 import { getAgentStoreState } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
@@ -247,7 +249,7 @@ export const contextEngineering = async ({
             const server = allKlavisServers.find((s) => s.identifier === klavisType.identifier);
 
             officialTools.push({
-              description: `LobeHub Mcp Server: ${klavisType.label}`,
+              description: `Ethos Mcp Server: ${klavisType.label}`,
               enabled: enabledPlugins.includes(klavisType.identifier),
               identifier: klavisType.identifier,
               installed: !!server,
@@ -269,7 +271,7 @@ export const contextEngineering = async ({
             const server = allLobehubSkillServers.find((s) => s.identifier === provider.id);
 
             officialTools.push({
-              description: `LobeHub Skill Provider: ${provider.label}`,
+              description: `Ethos Skill Provider: ${provider.label}`,
               enabled: enabledPlugins.includes(provider.id),
               identifier: provider.id,
               installed: !!server,
@@ -373,14 +375,14 @@ export const contextEngineering = async ({
 
   if (isCredsEnabled) {
     try {
-      const credsResult = await lambdaClient.market.creds.list.query();
-      const userCreds = (credsResult as any)?.data ?? [];
+      const credsResult = await marketApiService.listCreds();
+      const userCreds = (credsResult as { data?: Array<Record<string, unknown>> })?.data ?? [];
       credsList = userCreds.map(
-        (cred: any): CredSummary => ({
-          description: cred.description,
-          key: cred.key,
-          name: cred.name,
-          type: cred.type,
+        (cred): CredSummary => ({
+          description: cred.description as string | undefined,
+          key: cred.key as string,
+          name: cred.name as string,
+          type: cred.type as CredSummary['type'],
         }),
       );
       log('Creds context resolved: count=%d', credsList?.length ?? 0);
@@ -432,20 +434,24 @@ export const contextEngineering = async ({
 
   if (isCronEnabled && agentId) {
     try {
-      const cronResult = await lambdaClient.agentCronJob.list.query({ agentId, limit: 4 });
-      const jobs = (cronResult as any)?.data ?? [];
-      cronJobsTotal = (cronResult as any)?.pagination?.total ?? jobs.length;
+      const cronResult = await agentCronJobService.list({ agentId, limit: 4 });
+      const cronResponse = cronResult as {
+        data?: Array<Record<string, unknown>>;
+        pagination?: { total?: number };
+      };
+      const jobs = cronResponse.data ?? [];
+      cronJobsTotal = cronResponse.pagination?.total ?? jobs.length;
       cronJobsList = jobs.map(
-        (job: any): CronJobSummaryForContext => ({
-          cronPattern: job.cronPattern,
-          description: job.description,
-          enabled: job.enabled,
-          id: job.id,
-          lastExecutedAt: job.lastExecutedAt,
-          name: job.name,
-          remainingExecutions: job.remainingExecutions,
-          timezone: job.timezone ?? 'UTC',
-          totalExecutions: job.totalExecutions ?? 0,
+        (job): CronJobSummaryForContext => ({
+          cronPattern: (job.cronPattern ?? job.schedule) as string,
+          description: job.description as string | undefined,
+          enabled: job.enabled as boolean,
+          id: job.id as string,
+          lastExecutedAt: (job.lastExecutedAt ?? job.last_run_at) as string | undefined,
+          name: job.name as string,
+          remainingExecutions: job.remainingExecutions as number | undefined,
+          timezone: (job.timezone as string | undefined) ?? 'UTC',
+          totalExecutions: ((job.totalExecutions ?? job.total_runs) as number | undefined) ?? 0,
         }),
       );
       log(
@@ -502,7 +508,7 @@ export const contextEngineering = async ({
       // so the model has no exposure to its own id and cannot self-delegate)
       // and +1 to detect overflow for the `hasMore` flag.
       const AVAILABLE_AGENTS_LIMIT = 10;
-      const recentAgents = await lambdaClient.agent.queryAgents.query({
+      const recentAgents = await agentService.queryAgents({
         limit: AVAILABLE_AGENTS_LIMIT + 2,
       });
 
@@ -663,7 +669,7 @@ export const contextEngineering = async ({
   );
 
   // Build onboarding context if this is the web-onboarding agent.
-  // Single combined trpc call — server runs state/soul/persona DB queries in parallel.
+  // Single REST call: the backend runs state/soul/persona DB queries in parallel.
   let onboardingContext: OnboardingContext | undefined;
   const isOnboardingAgent = tools?.includes(WebOnboardingIdentifier);
   if (isOnboardingAgent) {
@@ -752,16 +758,18 @@ export const contextEngineering = async ({
     // Variable generators
     variableGenerators: {
       ...VARIABLE_GENERATORS,
-      // NOTICE: required by builtin-tool-creds/src/systemRole.ts
+      model: () => model,
+      provider: () => provider,
+      // NOTICE: required by packages/builtin-tools/src/creds/systemRole.ts
       CREDS_LIST: () => (credsList ? generateCredsList(credsList) : ''),
-      // NOTICE: required by builtin-tool-creds/src/systemRole.ts (Klavis integrations)
+      // NOTICE: required by packages/builtin-tools/src/creds/systemRole.ts (Klavis integrations)
       KLAVIS_SERVICES_LIST: () => klavisServicesList,
-      // NOTICE: required by builtin-tool-cron/src/systemRole.ts
+      // NOTICE: required by packages/builtin-tools/src/cron/systemRole.ts
       CRON_JOBS_LIST: () => (cronJobsList ? generateCronJobsList(cronJobsList, cronJobsTotal) : ''),
-      // NOTICE(@nekomeowww): required by builtin-tool-memory/src/systemRole.ts
+      // NOTICE(@nekomeowww): required by built-in memory system role rendering
       memory_effort: () => (userMemoryConfig ? (memoryContext?.effort ?? '') : ''),
-      // Current agent + topic identity — referenced by the LobeHub builtin
-      // skill (packages/builtin-skills/src/lobehub/content.ts) so the model
+      // Current agent + topic identity — referenced by the Ethos built-in
+      // skill catalog so the model
       // can run `lh agent run -a {{agent_id}}` etc without first having to
       // search for itself. Read lazily from stores so we only pay the cost
       // when the placeholder actually appears in a rendered message.

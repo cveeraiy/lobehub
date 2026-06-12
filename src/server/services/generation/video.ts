@@ -7,16 +7,16 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { promisify } from 'node:util';
 
-import { type LobeChatDatabase } from '@lobechat/database';
 import debug from 'debug';
 import { nanoid } from 'nanoid';
 import sharp from 'sharp';
 
 import { FileService } from '@/server/services/file';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { calculateThumbnailDimensions } from '@/utils/number';
 import { getYYYYmmddHHMMss } from '@/utils/time';
 
-const log = debug('lobe-video:generation-service');
+const log = debug('ethos-video:generation-service');
 const execFileAsync = promisify(execFile);
 
 let _ffmpegPath: string | null = null;

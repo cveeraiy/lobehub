@@ -1,6 +1,6 @@
-# LobeHub Development Guidelines
+# Ethos Development Guidelines
 
-Guidelines for using AI coding agents in this LobeHub repository.
+Guidelines for using AI coding agents in this Ethos repository.
 
 ## Tech Stack
 
@@ -17,7 +17,7 @@ Guidelines for using AI coding agents in this LobeHub repository.
 lobehub/
 ├── apps/
 │   ├── desktop/            # Electron desktop app
-│   ├── cli/                # LobeHub CLI
+│   ├── cli/                # Ethos CLI
 │   └── device-gateway/     # Device gateway service
 ├── packages/               # Shared packages (@lobechat/*)
 │   ├── database/           # Database schemas, models, repositories
@@ -110,7 +110,7 @@ Open this URL to develop locally against the production backend (app.lobehub.com
 bunx vitest run --silent='passed-only' '[file-path]'
 
 # Database package
-cd packages/database && bunx vitest run --silent='passed-only' '[file]'
+bunx vitest run --silent='passed-only' '[file]'
 ```
 
 - Prefer `vi.spyOn` over `vi.mock`

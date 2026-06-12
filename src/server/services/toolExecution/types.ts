@@ -1,6 +1,7 @@
 import { type LobeToolManifest } from '@lobechat/context-engine';
-import { type LobeChatDatabase } from '@lobechat/database';
 import { type ChatToolPayload } from '@lobechat/types';
+
+import type { LobeChatDatabase } from '@/server/types/database';
 
 export interface ToolExecutionContext {
   /** Target device ID for device proxy tool calls */
@@ -19,7 +20,7 @@ export interface ToolExecutionContext {
   operationId?: string;
   /** Conversation scope captured when the operation was created */
   scope?: string | null;
-  /** Server database for LobeHub Skills execution */
+  /** Server database for Ethos Skills execution */
   serverDB?: LobeChatDatabase;
   /** Task ID when executing within the Task system */
   taskId?: string;

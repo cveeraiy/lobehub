@@ -1,155 +1,103 @@
-import { describe, expect, it, vi } from 'vitest';
+import type { PartialDeep } from 'type-fest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { testService } from '~test-utils';
+import type { UserSettings } from '@/types/user/settings';
 
-import { UserService, userService } from './index';
+import { userService } from './index';
 
-const mockLambdaClient = vi.hoisted(() => ({
-  user: {
-    getUserRegistrationDuration: { query: vi.fn() },
-    getUserState: { query: vi.fn() },
-    getUserSSOProviders: { query: vi.fn() },
-    makeUserOnboarded: { mutate: vi.fn() },
-    updateAvatar: { mutate: vi.fn() },
-    updateFullName: { mutate: vi.fn() },
-    updatePreference: { mutate: vi.fn() },
-    updateGuide: { mutate: vi.fn() },
-    updateSettings: { mutate: vi.fn() },
-    resetSettings: { mutate: vi.fn() },
+const mockRestPut = vi.hoisted(() => vi.fn());
+const mockRestGet = vi.hoisted(() => vi.fn());
+const mockRestPost = vi.hoisted(() => vi.fn());
+const mockRestDelete = vi.hoisted(() => vi.fn());
+
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    delete: mockRestDelete,
+    get: mockRestGet,
+    patch: vi.fn(),
+    post: mockRestPost,
+    put: mockRestPut,
   },
 }));
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: mockLambdaClient,
-}));
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
-describe('UserService', () => {
-  testService(UserService);
+describe('UserService REST', () => {
+  it('loads user state from the REST endpoint', async () => {
+    const state = { isOnboard: true, preference: {}, settings: {}, userId: 'user-1' };
+    mockRestGet.mockResolvedValueOnce(state);
 
-  describe('getUserRegistrationDuration', () => {
-    it('should call lambdaClient.user.getUserRegistrationDuration.query', async () => {
-      const mockResult = { createdAt: '2024-01-01', duration: 100, updatedAt: '2024-01-02' };
-      mockLambdaClient.user.getUserRegistrationDuration.query.mockResolvedValueOnce(mockResult);
+    await expect(userService.getUserState()).resolves.toBe(state);
 
-      const result = await userService.getUserRegistrationDuration();
+    expect(mockRestGet).toHaveBeenCalledWith('/user/state');
+  });
 
-      expect(mockLambdaClient.user.getUserRegistrationDuration.query).toHaveBeenCalled();
-      expect(result).toEqual(mockResult);
+  it('updates avatar with the REST body shape', async () => {
+    mockRestPut.mockResolvedValueOnce({ ok: true });
+
+    await userService.updateAvatar('https://example.com/avatar.png');
+
+    expect(mockRestPut).toHaveBeenCalledWith('/user/avatar', {
+      body: { avatar: 'https://example.com/avatar.png' },
     });
   });
 
-  describe('getUserState', () => {
-    it('should call lambdaClient.user.getUserState.query', async () => {
-      const mockState = { isOnboarded: true, preference: {}, settings: {} };
-      mockLambdaClient.user.getUserState.query.mockResolvedValueOnce(mockState);
+  it('marks the user onboarded through REST', async () => {
+    mockRestPost.mockResolvedValueOnce({ ok: true });
 
-      const result = await userService.getUserState();
+    await userService.makeUserOnboarded();
 
-      expect(mockLambdaClient.user.getUserState.query).toHaveBeenCalled();
-      expect(result).toEqual(mockState);
-    });
+    expect(mockRestPost).toHaveBeenCalledWith('/user/onboarded');
   });
 
-  describe('getUserSSOProviders', () => {
-    it('should call lambdaClient.user.getUserSSOProviders.query', async () => {
-      const mockProviders = [
-        { provider: 'github', email: 'test@example.com', providerAccountId: '123' },
-      ];
-      mockLambdaClient.user.getUserSSOProviders.query.mockResolvedValueOnce(mockProviders);
+  it('resets settings through REST', async () => {
+    mockRestDelete.mockResolvedValueOnce({ ok: true });
 
-      const result = await userService.getUserSSOProviders();
+    await userService.resetUserSettings();
 
-      expect(mockLambdaClient.user.getUserSSOProviders.query).toHaveBeenCalled();
-      expect(result).toEqual(mockProviders);
-    });
-  });
-
-  describe('makeUserOnboarded', () => {
-    it('should call lambdaClient.user.makeUserOnboarded.mutate', async () => {
-      mockLambdaClient.user.makeUserOnboarded.mutate.mockResolvedValueOnce({ success: true });
-
-      await userService.makeUserOnboarded();
-
-      expect(mockLambdaClient.user.makeUserOnboarded.mutate).toHaveBeenCalled();
-    });
-  });
-
-  describe('updateAvatar', () => {
-    it('should call lambdaClient.user.updateAvatar.mutate with avatar string', async () => {
-      mockLambdaClient.user.updateAvatar.mutate.mockResolvedValueOnce({ success: true });
-
-      await userService.updateAvatar('https://example.com/avatar.png');
-
-      expect(mockLambdaClient.user.updateAvatar.mutate).toHaveBeenCalledWith(
-        'https://example.com/avatar.png',
-      );
-    });
-  });
-
-  describe('updateFullName', () => {
-    it('should call lambdaClient.user.updateFullName.mutate with fullName string', async () => {
-      mockLambdaClient.user.updateFullName.mutate.mockResolvedValueOnce({ success: true });
-
-      await userService.updateFullName('John Doe');
-
-      expect(mockLambdaClient.user.updateFullName.mutate).toHaveBeenCalledWith('John Doe');
-    });
-  });
-
-  describe('updatePreference', () => {
-    it('should call lambdaClient.user.updatePreference.mutate with preference object', async () => {
-      const preference = { hideSyncAlert: true };
-      mockLambdaClient.user.updatePreference.mutate.mockResolvedValueOnce({ success: true });
-
-      await userService.updatePreference(preference);
-
-      expect(mockLambdaClient.user.updatePreference.mutate).toHaveBeenCalledWith(preference);
-    });
-  });
-
-  describe('updateGuide', () => {
-    it('should call lambdaClient.user.updateGuide.mutate with guide object', async () => {
-      const guide = { moveSettingsToAvatar: true };
-      mockLambdaClient.user.updateGuide.mutate.mockResolvedValueOnce({ success: true });
-
-      await userService.updateGuide(guide);
-
-      expect(mockLambdaClient.user.updateGuide.mutate).toHaveBeenCalledWith(guide);
-    });
+    expect(mockRestDelete).toHaveBeenCalledWith('/user/settings');
   });
 
   describe('updateUserSettings', () => {
-    it('should call lambdaClient.user.updateSettings.mutate with settings', async () => {
-      const settings = { general: { fontSize: 14 } };
-      mockLambdaClient.user.updateSettings.mutate.mockResolvedValueOnce({ success: true });
+    it('maps frontend setting keys to the Python REST body shape', async () => {
+      const signal = new AbortController().signal;
+      mockRestPut.mockResolvedValueOnce({ ok: true });
+      const settings = {
+        defaultAgent: { config: { model: 'gpt-4o' } },
+        general: { language: 'en-US' },
+        hotkey: { search: 'mod+k' },
+        image: { autoGenerate: true },
+        keyVaults: { openai: { apiKey: 'secret' } },
+        languageModel: { openai: { enabled: true } },
+        market: { accessToken: 'market-token' },
+        memory: { enabled: true },
+        notification: { enabled: false },
+        systemAgent: { translation: { model: 'gpt-4o-mini' } },
+        tool: { uninstalledBuiltinTools: [] },
+        tts: { sttAutoStop: true },
+      } as unknown as PartialDeep<UserSettings>;
 
-      await userService.updateUserSettings(settings);
+      await userService.updateUserSettings(settings, signal);
 
-      expect(mockLambdaClient.user.updateSettings.mutate).toHaveBeenCalledWith(settings, {
-        signal: undefined,
+      expect(mockRestPut).toHaveBeenCalledWith('/user/settings', {
+        body: {
+          default_agent: { config: { model: 'gpt-4o' } },
+          general: { language: 'en-US' },
+          hotkey: { search: 'mod+k' },
+          image: { autoGenerate: true },
+          key_vaults: { openai: { apiKey: 'secret' } },
+          language_model: { openai: { enabled: true } },
+          market: { accessToken: 'market-token' },
+          memory: { enabled: true },
+          notification: { enabled: false },
+          system_agent: { translation: { model: 'gpt-4o-mini' } },
+          tool: { uninstalledBuiltinTools: [] },
+          tts: { sttAutoStop: true },
+        },
+        signal,
       });
-    });
-
-    it('should pass abort signal when provided', async () => {
-      const settings = { general: { fontSize: 16 } };
-      const abortController = new AbortController();
-      mockLambdaClient.user.updateSettings.mutate.mockResolvedValueOnce({ success: true });
-
-      await userService.updateUserSettings(settings, abortController.signal);
-
-      expect(mockLambdaClient.user.updateSettings.mutate).toHaveBeenCalledWith(settings, {
-        signal: abortController.signal,
-      });
-    });
-  });
-
-  describe('resetUserSettings', () => {
-    it('should call lambdaClient.user.resetSettings.mutate', async () => {
-      mockLambdaClient.user.resetSettings.mutate.mockResolvedValueOnce({ success: true });
-
-      await userService.resetUserSettings();
-
-      expect(mockLambdaClient.user.resetSettings.mutate).toHaveBeenCalled();
     });
   });
 });

@@ -26,6 +26,12 @@ export type Store = Action & State;
 
 type Setter = StoreSetter<Store>;
 
+const normalizeLibraryId = (libraryId?: string): string | undefined => {
+  if (!libraryId || libraryId === 'undefined' || libraryId === 'null') return undefined;
+
+  return libraryId;
+};
+
 export class ResourceManagerStoreActionImpl {
   readonly #get: () => Store;
   readonly #set: Setter;
@@ -146,7 +152,7 @@ export class ResourceManagerStoreActionImpl {
   };
 
   setLibraryId = (libraryId?: string): void => {
-    this.#set({ libraryId });
+    this.#set({ libraryId: normalizeLibraryId(libraryId) });
   };
 
   setMode = (mode: ResourceManagerMode): void => {

@@ -293,10 +293,6 @@ export const mergeQueuedMessages = (messages: QueuedMessage[]): MergedQueuedMess
   const sorted = [...messages].sort((a, b) => a.createdAt - b.createdAt);
   const metadata = sorted.reduce<MessageMetadata | undefined>((acc, message) => {
     if (!message.metadata) return acc;
-    const localSystemToolSnapshots = [
-      ...(acc?.localSystemToolSnapshots ?? []),
-      ...(message.metadata.localSystemToolSnapshots ?? []),
-    ];
     const pageSelections = [
       ...(acc?.pageSelections ?? []),
       ...(message.metadata.pageSelections ?? []),
@@ -305,7 +301,6 @@ export const mergeQueuedMessages = (messages: QueuedMessage[]): MergedQueuedMess
     return {
       ...acc,
       ...message.metadata,
-      ...(localSystemToolSnapshots.length ? { localSystemToolSnapshots } : undefined),
       ...(pageSelections.length ? { pageSelections } : undefined),
     };
   }, undefined);

@@ -8,7 +8,11 @@
 
 // Agent configuration
 export type { AgentConfigResolverContext, ResolvedAgentConfig } from './agentConfigResolver';
-export { getTargetAgentId, resolveAgentConfig } from './agentConfigResolver';
+export {
+  getTargetAgentId,
+  preloadAgentConfigRuntime,
+  resolveAgentConfig,
+} from './agentConfigResolver';
 
 // Context engineering
 export { contextEngineering } from './contextEngineering';

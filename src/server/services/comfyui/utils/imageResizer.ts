@@ -1,6 +1,6 @@
 import debug from 'debug';
 
-const log = debug('lobe-image:comfyui:resizer');
+const log = debug('ethos-image:comfyui:resizer');
 
 /**
  * Model family size limits based on official documentation

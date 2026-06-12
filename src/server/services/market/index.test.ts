@@ -370,7 +370,7 @@ describe('MarketService', () => {
         identifier: 'twitter',
         meta: {
           avatar: '🐦',
-          description: 'LobeHub Skill: X (Twitter)',
+          description: 'Ethos Skill: X (Twitter)',
           tags: ['lobehub-skill', 'twitter'],
           title: 'X (Twitter)',
         },

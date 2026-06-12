@@ -6,12 +6,12 @@ import debug from 'debug';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { TopicModel } from '@/database/models/topic';
 import { UserModel } from '@/database/models/user';
-import type { LobeChatDatabase } from '@/database/type';
-import { createAbortError, isAbortError } from '@/server/services/agentRuntime/abort';
-import { AiAgentService } from '@/server/services/aiAgent';
 import { getMessageGatewayClient } from '@/server/services/gateway/MessageGatewayClient';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 import { isQueueAgentRuntimeEnabled } from '@/server/services/queue/impls';
 import { SystemAgentService } from '@/server/services/systemAgent';
+import type { LobeChatDatabase } from '@/server/types/database';
+import { createAbortError, isAbortError } from '@/server/utils/runtimeAbort';
 
 import { formatPrompt as formatPromptUtil } from './formatPrompt';
 import type { BotReplyLocale, PlatformClient } from './platforms';
@@ -33,7 +33,7 @@ import {
   splitMessage,
 } from './replyTemplate';
 
-const log = debug('lobe-server:bot:agent-bridge');
+const log = debug('ethos-server:bot:agent-bridge');
 
 const EXECUTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -307,7 +307,7 @@ export class AgentBridgeService {
   }
 
   private async interruptTrackedOperation(threadId: string, operationId: string): Promise<void> {
-    const aiAgentService = new AiAgentService(this.db, this.userId);
+    const aiAgentService = new PythonAgentProxyService(this.userId);
     const result = await aiAgentService.interruptTask({ operationId });
     if (!result.success) {
       throw new Error(`Failed to interrupt operation ${operationId}`);
@@ -672,7 +672,7 @@ export class AgentBridgeService {
     } = opts;
 
     const queueMode = isQueueAgentRuntimeEnabled();
-    const aiAgentService = new AiAgentService(this.db, this.userId);
+    const aiAgentService = new PythonAgentProxyService(this.userId);
     const timezone = await this.loadTimezone();
 
     // When the message-gateway is configured AND the platform supports typing
@@ -819,7 +819,7 @@ export class AgentBridgeService {
   private async executeWithHooksQueueMode(
     thread: Thread<ThreadState>,
     userMessage: Message,
-    aiAgentService: AiAgentService,
+    aiAgentService: PythonAgentProxyService,
     opts: {
       agentId: string;
       botContext?: ChatTopicBotContext;
@@ -965,7 +965,7 @@ export class AgentBridgeService {
    */
   private async executeWithHooksLocalMode(
     thread: Thread<ThreadState>,
-    aiAgentService: AiAgentService,
+    aiAgentService: PythonAgentProxyService,
     opts: {
       agentId: string;
       botContext?: ChatTopicBotContext;
@@ -1044,7 +1044,7 @@ export class AgentBridgeService {
           files,
           hooks: [
             {
-              handler: async (event) => {
+              handler: async (event: any) => {
                 if (event.shouldContinue && userMessage) {
                   const desiredEmoji = getStepReactionEmoji(event.stepType, event.toolsCalling);
                   await this.setReaction(thread, userMessage, client, desiredEmoji, botContext);
@@ -1097,7 +1097,7 @@ export class AgentBridgeService {
               },
             },
             {
-              handler: async (event) => {
+              handler: async (event: any) => {
                 clearTimeout(timeout);
                 stopGatewayTyping();
 

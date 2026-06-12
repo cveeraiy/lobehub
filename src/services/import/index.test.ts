@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { uploadService } from '@/services/upload';
 import { useUserStore } from '@/store/user';
 import { ImportStage } from '@/types/importer';
@@ -8,19 +8,9 @@ import { ImportStage } from '@/types/importer';
 import { importService } from './index';
 
 // Mock dependencies
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    importer: {
-      importByFile: {
-        mutate: vi.fn(),
-      },
-      importByPost: {
-        mutate: vi.fn(),
-      },
-      importPgByPost: {
-        mutate: vi.fn(),
-      },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    post: vi.fn(),
   },
 }));
 
@@ -88,7 +78,7 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         const callbacks = {
           onStageChange: vi.fn(),
@@ -99,7 +89,7 @@ describe('ImportService', () => {
         await importService.importData(mockData as any, callbacks);
 
         expect(callbacks.onStageChange).toHaveBeenCalledWith(ImportStage.Importing);
-        expect(lambdaClient.importer.importByPost.mutate).toHaveBeenCalledWith({ data: mockData });
+        expect(restClient.post).toHaveBeenCalledWith('/import', { body: { data: mockData } });
         expect(callbacks.onStageChange).toHaveBeenCalledWith(ImportStage.Success);
         expect(callbacks.onSuccess).toHaveBeenCalledWith(mockResult.results, 0);
         expect(callbacks.onError).not.toHaveBeenCalled();
@@ -120,7 +110,7 @@ describe('ImportService', () => {
           message: 'Import failed',
         };
 
-        vi.mocked(lambdaClient.importer.importByPost.mutate).mockRejectedValue(mockError);
+        vi.mocked(restClient.post).mockRejectedValue(mockError);
 
         const callbacks = {
           onStageChange: vi.fn(),
@@ -160,7 +150,7 @@ describe('ImportService', () => {
           return callCount === 1 ? 1000000 : 1005000; // 5 second difference
         });
 
-        vi.mocked(lambdaClient.importer.importByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         const callbacks = {
           onSuccess: vi.fn(),
@@ -197,7 +187,7 @@ describe('ImportService', () => {
         };
 
         vi.mocked(uploadService.uploadDataToS3).mockResolvedValue(mockUploadResult as any);
-        vi.mocked(lambdaClient.importer.importByFile.mutate).mockResolvedValue(mockImportResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockImportResult);
 
         const callbacks = {
           onStageChange: vi.fn(),
@@ -217,8 +207,8 @@ describe('ImportService', () => {
           }),
         );
         expect(callbacks.onStageChange).toHaveBeenCalledWith(ImportStage.Importing);
-        expect(lambdaClient.importer.importByFile.mutate).toHaveBeenCalledWith({
-          pathname: 'import_config/mock-uuid-123.json',
+        expect(restClient.post).toHaveBeenCalledWith('/import/file', {
+          body: { pathname: 'import_config/mock-uuid-123.json' },
         });
         expect(callbacks.onStageChange).toHaveBeenCalledWith(ImportStage.Success);
         expect(callbacks.onSuccess).toHaveBeenCalled();
@@ -269,7 +259,7 @@ describe('ImportService', () => {
         };
 
         vi.mocked(uploadService.uploadDataToS3).mockResolvedValue(mockUploadResult as any);
-        vi.mocked(lambdaClient.importer.importByFile.mutate).mockRejectedValue(mockError);
+        vi.mocked(restClient.post).mockRejectedValue(mockError);
 
         const callbacks = {
           onStageChange: vi.fn(),
@@ -322,7 +312,7 @@ describe('ImportService', () => {
           return mockUploadResult as any;
         });
 
-        vi.mocked(lambdaClient.importer.importByFile.mutate).mockResolvedValue(mockImportResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockImportResult);
 
         const callbacks = {
           onFileUploading: vi.fn(),
@@ -353,11 +343,11 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         await importService.importData(mockData as any);
 
-        expect(lambdaClient.importer.importByPost.mutate).toHaveBeenCalled();
+        expect(restClient.post).toHaveBeenCalled();
         expect(uploadService.uploadDataToS3).not.toHaveBeenCalled();
       });
 
@@ -385,12 +375,12 @@ describe('ImportService', () => {
         };
 
         vi.mocked(uploadService.uploadDataToS3).mockResolvedValue(mockUploadResult as any);
-        vi.mocked(lambdaClient.importer.importByFile.mutate).mockResolvedValue(mockImportResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockImportResult);
 
         await importService.importData(mockData as any);
 
         expect(uploadService.uploadDataToS3).toHaveBeenCalled();
-        expect(lambdaClient.importer.importByPost.mutate).not.toHaveBeenCalled();
+        expect(restClient.post).not.toHaveBeenCalledWith('/import', expect.anything());
       });
 
       it('should handle empty data', async () => {
@@ -403,11 +393,11 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         await importService.importData(mockData as any);
 
-        expect(lambdaClient.importer.importByPost.mutate).toHaveBeenCalledWith({ data: mockData });
+        expect(restClient.post).toHaveBeenCalledWith('/import', { body: { data: mockData } });
       });
 
       it('should work without callbacks', async () => {
@@ -423,7 +413,7 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         await expect(importService.importData(mockData as any)).resolves.not.toThrow();
       });
@@ -450,7 +440,7 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importPgByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         const callbacks = {
           onStageChange: vi.fn(),
@@ -460,7 +450,7 @@ describe('ImportService', () => {
         await importService.importPgData(mockData as any, { callbacks });
 
         expect(callbacks.onStageChange).toHaveBeenCalledWith(ImportStage.Importing);
-        expect(lambdaClient.importer.importPgByPost.mutate).toHaveBeenCalledWith(mockData);
+        expect(restClient.post).toHaveBeenCalledWith('/import/pg', { body: mockData });
         expect(callbacks.onStageChange).toHaveBeenCalledWith(ImportStage.Success);
         expect(callbacks.onSuccess).toHaveBeenCalledWith(mockResult.results, 0);
       });
@@ -483,7 +473,7 @@ describe('ImportService', () => {
           message: 'PostgreSQL import failed',
         };
 
-        vi.mocked(lambdaClient.importer.importPgByPost.mutate).mockRejectedValue(mockError);
+        vi.mocked(restClient.post).mockRejectedValue(mockError);
 
         const callbacks = {
           onStageChange: vi.fn(),
@@ -530,7 +520,7 @@ describe('ImportService', () => {
         };
 
         vi.mocked(uploadService.uploadDataToS3).mockResolvedValue(mockUploadResult as any);
-        vi.mocked(lambdaClient.importer.importByFile.mutate).mockResolvedValue(mockImportResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockImportResult);
 
         const callbacks = {
           onStageChange: vi.fn(),
@@ -582,7 +572,7 @@ describe('ImportService', () => {
         };
 
         vi.mocked(uploadService.uploadDataToS3).mockResolvedValue(mockUploadResult as any);
-        vi.mocked(lambdaClient.importer.importByFile.mutate).mockResolvedValue(mockImportResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockImportResult);
 
         await importService.importPgData(mockData as any);
 
@@ -607,7 +597,7 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importPgByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         await expect(importService.importPgData(mockData as any)).resolves.not.toThrow();
       });
@@ -624,11 +614,11 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importPgByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         await importService.importPgData(mockData as any);
 
-        expect(lambdaClient.importer.importPgByPost.mutate).toHaveBeenCalledWith(mockData);
+        expect(restClient.post).toHaveBeenCalledWith('/import/pg', { body: mockData });
       });
 
       it('should calculate total length correctly across multiple tables', async () => {
@@ -647,12 +637,12 @@ describe('ImportService', () => {
           success: true as const,
         };
 
-        vi.mocked(lambdaClient.importer.importPgByPost.mutate).mockResolvedValue(mockResult);
+        vi.mocked(restClient.post).mockResolvedValue(mockResult);
 
         await importService.importPgData(mockData as any);
 
         // Total is 499, should use POST
-        expect(lambdaClient.importer.importPgByPost.mutate).toHaveBeenCalled();
+        expect(restClient.post).toHaveBeenCalled();
         expect(uploadService.uploadDataToS3).not.toHaveBeenCalled();
       });
     });

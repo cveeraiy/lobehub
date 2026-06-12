@@ -1,5 +1,5 @@
 /**
- * Document object in LobeChat
+ * Document object in Ethos
  */
 export interface LobeDocument {
   /**
@@ -86,6 +86,31 @@ export interface LobeDocument {
    * File last modified timestamp
    */
   updatedAt: Date;
+}
+
+export interface DocumentItem {
+  accessedAt?: Date | string;
+  clientId?: string | null;
+  content?: string | null;
+  createdAt: Date;
+  description?: string | null;
+  editorData?: Record<string, unknown> | null;
+  fileId?: string | null;
+  filename?: string | null;
+  fileType: string;
+  id: string;
+  knowledgeBaseId?: string | null;
+  metadata?: Record<string, unknown> | null;
+  pages?: LobeDocumentPage[] | null;
+  parentId?: string | null;
+  slug?: string | null;
+  source: string;
+  sourceType: 'api' | 'file' | 'topic' | 'web';
+  title?: string | null;
+  totalCharCount: number;
+  totalLineCount: number;
+  updatedAt: Date;
+  userId?: string;
 }
 
 /**

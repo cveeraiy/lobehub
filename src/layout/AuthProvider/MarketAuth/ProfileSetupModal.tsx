@@ -10,7 +10,7 @@ import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import EmojiPicker from '@/components/EmojiPicker';
-import { lambdaClient } from '@/libs/trpc/client';
+import { marketAuthService } from '@/services/marketAuth';
 import { useFileStore } from '@/store/file';
 import { useGlobalStore } from '@/store/global';
 import { globalGeneralSelectors } from '@/store/global/selectors';
@@ -251,7 +251,7 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
         if (bannerUrl) meta.bannerUrl = bannerUrl;
         if (Object.keys(socialLinks).length > 0) meta.socialLinks = socialLinks;
 
-        const result = await lambdaClient.market.user.updateUserProfile.mutate({
+        const result = await marketAuthService.updateUserProfile({
           avatarUrl: avatarUrl || undefined,
           displayName: values.displayName,
           meta: Object.keys(meta).length > 0 ? meta : undefined,
@@ -276,8 +276,7 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
         // Check for claimable resources after saving (if GitHub is connected)
         if (githubConnect.profile) {
           try {
-            const claimResult =
-              await lambdaClient.market.socialProfile.scanClaimableResources.query();
+            const claimResult = await marketAuthService.scanClaimableResources();
             if (claimResult.plugins.length > 0 || claimResult.skills.length > 0) {
               // Close profile modal first, then show claim modal via parent callback
               onSuccess?.(userProfile);
@@ -296,7 +295,7 @@ const ProfileSetupModal = memo<ProfileSetupModalProps>(
       } catch (error) {
         console.error('[ProfileSetupModal] Update failed:', error);
         if (error instanceof Error && error.message !== 'Validation failed') {
-          // Check for username taken error (tRPC CONFLICT code)
+          // Check for username taken conflict errors.
           const errorMessage = error.message || '';
           if (
             errorMessage.toLowerCase().includes('already taken') ||

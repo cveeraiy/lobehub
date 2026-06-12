@@ -15,14 +15,14 @@ import NavHeader from '@/features/NavHeader';
 import ToggleRightPanelButton from '@/features/RightPanel/ToggleRightPanelButton';
 import { useEventCallback } from '@/hooks/useEventCallback';
 import { useClientDataSWR } from '@/libs/swr';
+import { documentService } from '@/services/document';
+import { useDocumentStore } from '@/store/document';
+import { editorSelectors } from '@/store/document/slices/editor';
 import type {
   DocumentHistoryListItem,
   DocumentHistorySaveSource,
   ListHistoryOutput,
-} from '@/server/routers/lambda/_schema/documentHistory';
-import { documentService } from '@/services/document';
-import { useDocumentStore } from '@/store/document';
-import { editorSelectors } from '@/store/document/slices/editor';
+} from '@/types/documentHistory';
 
 import { usePageAgentPanelControl } from '../RightPanel/OverrideContext';
 import { selectors, usePageEditorStore } from '../store';

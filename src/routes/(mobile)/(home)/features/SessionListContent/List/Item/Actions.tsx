@@ -5,7 +5,6 @@ import { createStaticStyles } from 'antd-style';
 import isEqual from 'fast-deep-equal';
 import {
   Check,
-  ExternalLink,
   ListTree,
   LucideCopy,
   LucidePlus,
@@ -17,7 +16,6 @@ import {
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { isDesktop } from '@/const/index';
 import { useGlobalStore } from '@/store/global';
 import { useHomeStore } from '@/store/home';
 import { useSessionStore } from '@/store/session';
@@ -93,19 +91,6 @@ const Actions = memo<ActionProps>(({ group, id, openCreateGroupModal, parentType
               duplicateSession(id);
             },
           },
-          ...(isDesktop
-            ? [
-                {
-                  icon: <Icon icon={ExternalLink} />,
-                  key: 'openInNewWindow',
-                  label: t('openInNewWindow'),
-                  onClick: ({ domEvent }: { domEvent: Event }) => {
-                    domEvent.stopPropagation();
-                    openAgentInNewWindow(id);
-                  },
-                },
-              ]
-            : []),
           {
             type: 'divider',
           },

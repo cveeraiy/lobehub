@@ -4,7 +4,7 @@
  * Creates and exports the NotebookExecutor instance for registration.
  * Injects notebookService as dependency.
  */
-import { NotebookExecutor } from '@lobechat/builtin-tool-notebook/executor';
+import { NotebookExecutor } from '@lobechat/builtin-tools/notebookExecutor';
 
 import { notebookService } from '@/services/notebook';
 

@@ -34,7 +34,7 @@ const HIDDEN_COMPLETED_STATUS_SET = new Set<string>(HIDDEN_WHEN_COMPLETED_STATUS
 
 const renderTaskRows = (items: ReturnType<typeof taskListSelectors.taskList>, sub?: boolean) =>
   items.map((task, index) => (
-    <Fragment key={task.identifier}>
+    <Fragment key={task.identifier || task.id}>
       <AgentTaskItem task={task} />
       {!sub && index !== items.length - 1 && <Divider dashed style={{ margin: 0 }} />}
     </Fragment>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { lambdaQuery } from '@/libs/trpc/client';
+import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow';
 
 type AuthState = 'idle' | 'requesting' | 'pending_user_auth' | 'polling' | 'success' | 'error';
 type PollStatus = 'pending' | 'success' | 'expired' | 'denied' | 'slow_down';
@@ -40,9 +40,6 @@ export function useOAuthDeviceFlow({
   const expiryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deviceCodeRef = useRef<string | null>(null);
 
-  const initiateDeviceCode = lambdaQuery.oauthDeviceFlow.initiateDeviceCode.useMutation();
-  const pollAuthStatus = lambdaQuery.oauthDeviceFlow.pollAuthStatus.useMutation();
-
   const clearTimers = useCallback(() => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
@@ -68,7 +65,7 @@ export function useOAuthDeviceFlow({
 
       const poll = async () => {
         try {
-          const result = await pollAuthStatus.mutateAsync({
+          const result = await oauthDeviceFlowService.pollAuthStatus({
             deviceCode,
             providerId,
           });
@@ -117,7 +114,7 @@ export function useOAuthDeviceFlow({
       // Also poll immediately
       poll();
     },
-    [clearTimers, onSuccess, pollAuthStatus, providerId],
+    [clearTimers, onSuccess, providerId],
   );
 
   const startAuth = useCallback(async () => {
@@ -125,7 +122,7 @@ export function useOAuthDeviceFlow({
     setState('requesting');
 
     try {
-      const response = await initiateDeviceCode.mutateAsync({ providerId });
+      const response = await oauthDeviceFlowService.initiateDeviceCode(providerId);
 
       const info: DeviceCodeInfo = {
         deviceCode: response.deviceCode,
@@ -156,7 +153,7 @@ export function useOAuthDeviceFlow({
       setState('error');
       setError('authError');
     }
-  }, [clearTimers, initiateDeviceCode, providerId, startPolling]);
+  }, [clearTimers, providerId, startPolling]);
 
   // Cleanup on unmount
   useEffect(() => {

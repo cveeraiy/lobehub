@@ -29,7 +29,7 @@ export const useSkillConnect = ({ identifier, serverName, type }: UseSkillConnec
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // LobeHub skill hooks
+  // Ethos skill hooks
   const checkLobehubStatus = useToolStore((s) => s.checkLobehubSkillStatus);
   const revokeLobehubConnect = useToolStore((s) => s.revokeLobehubSkill);
   const getAuthorizeUrl = useToolStore((s) => s.getLobehubSkillAuthorizeUrl);
@@ -76,7 +76,7 @@ export const useSkillConnect = ({ identifier, serverName, type }: UseSkillConnec
     }
   }, [type, lobehubServer?.status, klavisServer?.status, isWaitingAuth, cleanup]);
 
-  // Listen for OAuth success message from popup window (for LobeHub skills)
+  // Listen for OAuth success message from popup window (for Ethos skills)
   useEffect(() => {
     if (type !== 'lobehub') return;
 
@@ -169,7 +169,7 @@ export const useSkillConnect = ({ identifier, serverName, type }: UseSkillConnec
     [cleanup, startWindowMonitor, startFallbackPolling],
   );
 
-  // Handle connect for LobeHub
+  // Handle connect for Ethos
   const handleLobehubConnect = useCallback(async () => {
     if (lobehubServer?.isConnected) return;
 

@@ -1,6 +1,5 @@
 'use client';
 
-import { isDesktop } from '@lobechat/const';
 import type { IEditor } from '@lobehub/editor';
 import {
   ReactImagePlugin,
@@ -11,7 +10,7 @@ import {
 } from '@lobehub/editor';
 import { Editor, useEditorState } from '@lobehub/editor/react';
 import isEqual from 'fast-deep-equal';
-import { memo, type RefObject, useCallback, useEffect, useMemo, useRef } from 'react';
+import { memo, type RefObject, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { createChatInputRichPlugins } from '@/features/ChatInput/InputEditor/plugins';
@@ -19,10 +18,6 @@ import { createChatInputRichPlugins } from '@/features/ChatInput/InputEditor/plu
 import { type EditorCanvasProps } from './EditorCanvas';
 import InlineToolbar from './InlineToolbar';
 import { useImageUpload } from './useImageUpload';
-
-const IMAGE_FILTERS = [
-  { extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif'], name: 'Images' },
-];
 
 /**
  * Base plugins for the editor (without image and toolbar, which need dynamic config)
@@ -99,18 +94,6 @@ const InternalEditor = memo<InternalEditorProps>(
     const editorState = useEditorState(editor);
     const handleImageUpload = useImageUpload();
 
-    const handlePickFile = useCallback(async (): Promise<File | null> => {
-      if (!isDesktop) return null;
-      const { ensureElectronIpc } = await import('@/utils/electron/ipc');
-      const ipc = ensureElectronIpc();
-      const result = await (ipc as any).localSystem.handlePickFile({
-        filters: IMAGE_FILTERS,
-      });
-      if (result.canceled || !result.file) return null;
-      const { data, mimeType, name } = result.file;
-      return new File([data], name, { type: mimeType });
-    }, []);
-
     const finalPlaceholder = placeholder || t('pageEditor.editorPlaceholder');
 
     // Build plugins array
@@ -121,7 +104,7 @@ const InternalEditor = memo<InternalEditorProps>(
       const imagePlugin = Editor.withProps(ReactImagePlugin, {
         defaultBlockImage: true,
         handleUpload: handleImageUpload,
-        onPickFile: isDesktop ? handlePickFile : undefined,
+        onPickFile: undefined,
       });
 
       // Build base plugins with optional extra plugins prepended
@@ -154,7 +137,6 @@ const InternalEditor = memo<InternalEditorProps>(
       extraPlugins,
       floatingToolbar,
       handleImageUpload,
-      handlePickFile,
       toolbarExtraItems,
     ]);
 

@@ -100,18 +100,27 @@ const openExternalBrowser = async (
 export default defineConfig({
   base: isDev ? '/' : process.env.VITE_CDN_BASE || '/_spa/',
   build: {
-    outDir: isMobile ? 'dist/mobile' : 'dist/desktop',
+    outDir: isMobile ? 'dist/mobile' : 'dist/web',
     reportCompressedSize: false,
     rolldownOptions: {
       input: path.resolve(__dirname, isMobile ? 'index.mobile.html' : 'index.html'),
       output: createSharedRolldownOutput({ strictExecutionOrder: true }),
     },
   },
-  define: sharedRendererDefine({ isMobile, isElectron: false }),
+  define: sharedRendererDefine({ isMobile }),
   experimental: {
-    bundledDev: true,
+    bundledDev: false,
   },
   resolve: {
+    alias: (() => {
+      // Resolve the real (non-symlink) path so rolldown matches it regardless
+      // of which symlink path a workspace package resolves @lobehub/ui through.
+      const uiRoot = fs.realpathSync(path.resolve(__dirname, 'node_modules/@lobehub/ui'));
+      return ['awesome', 'base-ui', 'brand', 'chat', 'icons', 'mdx', 'mobile'].map((sub) => ({
+        find: `@lobehub/ui/${sub}`,
+        replacement: path.join(uiRoot, `es/${sub}/index.mjs`),
+      }));
+    })(),
     tsconfigPaths: true,
   },
   optimizeDeps: sharedOptimizeDeps,
@@ -209,7 +218,7 @@ export default defineConfig({
                     info(
                       `  ${c.green('✅')}  Vite: compile and bundle finished (${res.status}) ${rootUrl}`,
                     );
-                    void openProxyUrl();
+                    // void openProxyUrl();
                     break;
                   } catch {
                     await new Promise((r) => setTimeout(r, interval));
@@ -274,7 +283,7 @@ export default defineConfig({
               cacheName: 'api-cache',
               expiration: { maxAgeSeconds: 60 * 5, maxEntries: 50 },
             },
-            urlPattern: /\/(api|trpc)\/.*/i,
+            urlPattern: /\/(api|webapi)\/.*/i,
           },
         ],
       },
@@ -286,56 +295,48 @@ export default defineConfig({
     host: true,
     port: 9876,
     proxy: {
-      '/api': `http://localhost:${process.env.PORT || 3010}`,
-      '/oidc': `http://localhost:${process.env.PORT || 3010}`,
-      '/trpc': `http://localhost:${process.env.PORT || 3010}`,
-      '/webapi': `http://localhost:${process.env.PORT || 3010}`,
+      '/api': `http://localhost:${process.env.PORT || 8000}`,
+      '/f': `http://localhost:${process.env.PORT || 8000}`,
+      '/oidc/clear-session': `http://localhost:${process.env.PORT || 8000}`,
+      '/webapi': `http://localhost:${process.env.PORT || 8000}`,
     },
     warmup: {
       clientFiles: [
-        // src/ business code
+        // Entry point & SPA bootstrap (critical path)
         './src/initialize.ts',
         './src/spa/**/*.tsx',
-        './src/business/**/*.{ts,tsx}',
-        './src/components/**/*.{ts,tsx}',
+        './src/utils/router.tsx',
+
+        // Root layout & providers (synchronous imports of main layout)
+        './src/layout/**/*.{ts,tsx}',
+        './src/routes/(main)/_layout/**/*.{ts,tsx}',
+        './src/routes/(main)/home/**/*.{ts,tsx}',
+
+        // Components used by the root layout shell
+        './src/components/Loading/**/*.{ts,tsx}',
+        './src/components/Error/**/*.{ts,tsx}',
+        './src/features/NavPanel/**/*.{ts,tsx}',
+        './src/features/AlertBanner/**/*.{ts,tsx}',
+        './src/features/HotkeyHelperPanel/**/*.{ts,tsx}',
+        './src/features/CommandMenu/**/*.{ts,tsx}',
+
+        // Stores used during initial render
+        './src/store/global/**/*.{ts,tsx}',
+        './src/store/serverConfig/**/*.{ts,tsx}',
+        './src/store/user/**/*.{ts,tsx}',
+
+        // Shared infrastructure needed early
         './src/config/**/*.ts',
         './src/const/**/*.ts',
         './src/envs/**/*.ts',
-        './src/features/**/*.{ts,tsx}',
-        './src/helpers/**/*.ts',
-        './src/hooks/**/*.{ts,tsx}',
-        './src/layout/**/*.{ts,tsx}',
-        './src/libs/**/*.{ts,tsx}',
-        './src/locales/**/*.ts',
-        './src/routes/**/*.{ts,tsx}',
-        './src/services/**/*.ts',
-        './src/store/**/*.{ts,tsx}',
         './src/styles/**/*.ts',
-        './src/utils/**/*.{ts,tsx}',
+        './src/locales/**/*.ts',
+        './src/business/**/*.{ts,tsx}',
 
-        // monorepo packages
-        './packages/types/src/**/*.ts',
+        // Monorepo packages used client-side at init
         './packages/const/src/**/*.ts',
+        './packages/types/src/**/*.ts',
         './packages/utils/src/**/*.ts',
-        './packages/context-engine/src/**/*.ts',
-        './packages/prompts/src/**/*.ts',
-        './packages/model-bank/src/**/*.ts',
-        './packages/model-runtime/src/**/*.ts',
-        './packages/agent-runtime/src/**/*.ts',
-        './packages/conversation-flow/src/**/*.ts',
-        './packages/electron-client-ipc/src/**/*.ts',
-        './packages/builtin-agents/src/**/*.ts',
-        './packages/builtin-skills/src/**/*.ts',
-        './packages/builtin-tool-*/src/**/*.ts',
-        './packages/builtin-tools/src/**/*.ts',
-        './packages/business/*/src/**/*.ts',
-        './packages/config/src/**/*.ts',
-        './packages/edge-config/src/**/*.ts',
-        './packages/editor-runtime/src/**/*.ts',
-        './packages/fetch-sse/src/**/*.ts',
-        './packages/desktop-bridge/src/**/*.ts',
-        './packages/python-interpreter/src/**/*.ts',
-        './packages/agent-manager-runtime/src/**/*.ts',
       ],
     },
   },

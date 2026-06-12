@@ -1,5 +1,4 @@
 import type * as businessConstModule from '@lobechat/business-const';
-import { HeterogeneousAgentSessionErrorCode } from '@lobechat/electron-client-ipc';
 import type * as modelRuntimeModule from '@lobechat/model-runtime';
 import type * as lobechatTypesModule from '@lobechat/types';
 import type * as lobehubUiModule from '@lobehub/ui';
@@ -112,7 +111,7 @@ describe('ErrorMessageExtra', () => {
           error: {
             body: {
               agentType: 'claude-code',
-              code: HeterogeneousAgentSessionErrorCode.AuthRequired,
+              code: 'auth_required',
               message: 'Failed to authenticate',
             },
             message: 'Failed to authenticate',
@@ -133,7 +132,7 @@ describe('ErrorMessageExtra', () => {
           error: {
             body: {
               agentType: 'claude-code',
-              code: HeterogeneousAgentSessionErrorCode.RateLimit,
+              code: 'rate_limit',
               message: "You've hit your limit · resets 9am (Asia/Shanghai)",
             },
             message: "You've hit your limit · resets 9am (Asia/Shanghai)",

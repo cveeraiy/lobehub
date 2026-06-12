@@ -1,23 +1,17 @@
-import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiKeyModel } from '@/database/models/apiKey';
 
 import { createContextInner, createLambdaContext } from './context';
 
-const {
-  mockExtractTraceContext,
-  mockFindByKey,
-  mockGetSession,
-  mockUpdateLastUsed,
-  mockValidateOIDCJWT,
-} = vi.hoisted(() => ({
-  mockExtractTraceContext: vi.fn(),
-  mockFindByKey: vi.fn(),
-  mockGetSession: vi.fn(),
-  mockUpdateLastUsed: vi.fn(),
-  mockValidateOIDCJWT: vi.fn(),
-}));
+const { mockExtractTraceContext, mockFindByKey, mockGetSession, mockUpdateLastUsed } = vi.hoisted(
+  () => ({
+    mockExtractTraceContext: vi.fn(),
+    mockFindByKey: vi.fn(),
+    mockGetSession: vi.fn(),
+    mockUpdateLastUsed: vi.fn(),
+  }),
+);
 
 vi.mock('@/auth', () => ({
   auth: {
@@ -44,18 +38,10 @@ vi.mock('@/database/models/apiKey', () => ({
 
 vi.mock('@/envs/auth', () => ({
   LOBE_CHAT_AUTH_HEADER: 'X-lobe-chat-auth',
-  LOBE_CHAT_OIDC_AUTH_HEADER: 'Oidc-Auth',
-  authEnv: {
-    ENABLE_OIDC: true,
-  },
 }));
 
 vi.mock('@/libs/observability/traceparent', () => ({
   extractTraceContext: mockExtractTraceContext,
-}));
-
-vi.mock('@/libs/oidc-provider/jwt', () => ({
-  validateOIDCJWT: mockValidateOIDCJWT,
 }));
 
 vi.mock('@/utils/apiKey', async (importOriginal) => {
@@ -101,26 +87,11 @@ describe('createContextInner', () => {
     expect(context.marketAccessToken).toBe('mp-token-xyz');
   });
 
-  it('should create context with OIDC auth data', async () => {
-    const oidcAuth = {
-      sub: 'oidc-user-123',
-      payload: { iss: 'https://issuer.com', aud: 'client-id' },
-    };
-
-    const context = await createContextInner({ oidcAuth });
-
-    expect(context.oidcAuth).toEqual(oidcAuth);
-  });
-
   it('should create context with all parameters combined', async () => {
     const params = {
       userId: 'user-123',
       userAgent: 'Test Agent',
       marketAccessToken: 'mp-token',
-      oidcAuth: {
-        sub: 'oidc-sub',
-        payload: { data: 'test' },
-      },
     };
 
     const context = await createContextInner(params);
@@ -129,7 +100,6 @@ describe('createContextInner', () => {
       userId: 'user-123',
       userAgent: 'Test Agent',
       marketAccessToken: 'mp-token',
-      oidcAuth: { sub: 'oidc-sub', payload: { data: 'test' } },
     });
   });
 
@@ -160,10 +130,6 @@ describe('createLambdaContext', () => {
     vi.clearAllMocks();
     mockExtractTraceContext.mockReturnValue(undefined);
     mockGetSession.mockResolvedValue({ user: { id: 'session-user' } });
-    mockValidateOIDCJWT.mockResolvedValue({
-      tokenData: { sub: 'oidc-user' },
-      userId: 'oidc-user',
-    });
     mockUpdateLastUsed.mockResolvedValue(undefined);
   });
 
@@ -184,7 +150,7 @@ describe('createLambdaContext', () => {
 
     vi.mocked(ApiKeyModel.findByKey).mockResolvedValue(apiKeyRecord);
 
-    const request = new NextRequest('https://example.com/trpc/lambda', {
+    const request = new Request('https://example.com/trpc/lambda', {
       headers: {
         'X-API-Key': 'sk-lh-aaaaaaaaaaaaaaaa',
       },
@@ -194,15 +160,13 @@ describe('createLambdaContext', () => {
 
     expect(context.userId).toBe('api-user');
     expect(mockGetSession).not.toHaveBeenCalled();
-    expect(mockValidateOIDCJWT).not.toHaveBeenCalled();
   });
 
-  it('should reject invalid API key without falling back to OIDC or session', async () => {
+  it('should reject invalid API key without falling back to session', async () => {
     vi.mocked(ApiKeyModel.findByKey).mockResolvedValue(null);
 
-    const request = new NextRequest('https://example.com/trpc/lambda', {
+    const request = new Request('https://example.com/trpc/lambda', {
       headers: {
-        'Oidc-Auth': 'oidc-token',
         'X-API-Key': 'sk-lh-bbbbbbbbbbbbbbbb',
       },
     });
@@ -210,12 +174,11 @@ describe('createLambdaContext', () => {
     const context = await createLambdaContext(request);
 
     expect(context.userId).toBeNull();
-    expect(mockValidateOIDCJWT).not.toHaveBeenCalled();
     expect(mockGetSession).not.toHaveBeenCalled();
   });
 
   it('should use session auth when no API key header is present', async () => {
-    const request = new NextRequest('https://example.com/trpc/lambda');
+    const request = new Request('https://example.com/trpc/lambda');
 
     const context = await createLambdaContext(request);
 

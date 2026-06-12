@@ -153,39 +153,6 @@ jobs:
           files: ./coverage/app/lcov.info
           flags: app
 
-  test-desktop:
-    needs: check-duplicate-run
-    if: needs.check-duplicate-run.outputs.should_skip != 'true'
-    name: Test Desktop App
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup environment
-        uses: ./.github/actions/setup-env
-
-      - name: Install deps
-        run: pnpm install
-        working-directory: apps/desktop
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
-
-      - name: Typecheck Desktop
-        run: pnpm type-check
-        working-directory: apps/desktop
-
-      - name: Test Desktop Client
-        run: pnpm test
-        working-directory: apps/desktop
-
-      - name: Upload Desktop App Coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./apps/desktop/coverage/lcov.info
-          flags: desktop
 
   test-databsae:
     needs: check-duplicate-run

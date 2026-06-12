@@ -9,7 +9,7 @@ import { type SystemDependencyCheckResult } from '@/types/plugins';
 import { type InstallationChecker } from './types';
 
 const execPromise = promisify(exec);
-const log = debug('lobe-mcp:deps-check');
+const log = debug('ethos-mcp:deps-check');
 
 // Helper function to get current platform install instructions
 const getCurrentPlatformInstructions = (installInstructions: any) => {

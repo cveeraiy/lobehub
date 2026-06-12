@@ -1,7 +1,7 @@
 import { type LobehubSkillServer } from './types';
 
 /**
- * LobeHub Skill Store state interface
+ * Ethos Skill Store state interface
  *
  * NOTE: All connection states and tool data are fetched in real-time from Market API, not stored in local database
  */
@@ -10,12 +10,12 @@ export interface LobehubSkillStoreState {
   lobehubSkillExecutingToolIds: Set<string>;
   /** Set of loading Provider IDs */
   lobehubSkillLoadingIds: Set<string>;
-  /** List of connected LobeHub Skill Servers */
+  /** List of connected Ethos Skill Servers */
   lobehubSkillServers: LobehubSkillServer[];
 }
 
 /**
- * LobeHub Skill Store initial state
+ * Ethos Skill Store initial state
  */
 export const initialLobehubSkillStoreState: LobehubSkillStoreState = {
   lobehubSkillExecutingToolIds: new Set(),

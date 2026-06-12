@@ -8,7 +8,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { useAppOrigin } from '@/hooks/useAppOrigin';
-import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
+import type { SerializedPlatformDefinition } from '@/types/botPlatform';
 
 import type { ChannelFormValues, CurrentConfig, TestResult } from './index';
 

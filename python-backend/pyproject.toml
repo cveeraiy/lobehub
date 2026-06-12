@@ -1,0 +1,74 @@
+[project]
+name = "lobehub-backend"
+version = "0.1.0"
+description = "Ethos Python Backend MVP"
+requires-python = ">=3.11"
+dependencies = [
+    # Core
+    "fastapi>=0.115.6",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10.3",
+    "pydantic-settings>=2.7.0",
+
+    # Database
+    "sqlmodel>=0.0.22",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "pgvector>=0.3.6",
+
+    # Auth
+    "python-jose[cryptography]>=3.3.0",
+    "httpx>=0.28.1",
+    "itsdangerous>=2.2.0",
+
+    # LLM
+    "litellm>=1.55.0",
+    "edge-tts>=7.0.0",
+
+    # Agent Runtime
+    "langgraph>=0.4.0",
+    "langgraph-checkpoint-postgres>=2.0.0",
+    "langchain-core>=0.3.0",
+    "langfuse>=2.50.0",
+
+    # Storage
+    "boto3>=1.35.86",
+
+    # SSE
+    "sse-starlette>=3.0.0",
+
+    # Durable workflows
+    "croniter>=6.0.0",
+    "temporalio>=1.8.0",
+
+    # Utils
+    "anyio>=4.0.0",
+    "nanoid>=2.0.0",
+    "python-multipart>=0.0.19",
+    "cryptography>=44.0.0",
+
+    # Builtin tools
+    "beautifulsoup4>=4.12.0",
+    "pint>=0.25.0",
+    "sympy>=1.14.0",
+    "pypdf>=6.12.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

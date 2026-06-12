@@ -1,16 +1,24 @@
 'use client';
 
-import Script from 'next/script';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 
 interface UmamiAnalyticsProps {
   scriptUrl: string;
   websiteId?: string;
 }
 
-const UmamiAnalytics = memo<UmamiAnalyticsProps>(
-  ({ scriptUrl, websiteId }) =>
-    websiteId && <Script defer data-website-id={websiteId} src={scriptUrl} />,
-);
+const UmamiAnalytics = memo<UmamiAnalyticsProps>(({ scriptUrl, websiteId }) => {
+  useEffect(() => {
+    if (!websiteId) return;
+
+    const script = document.createElement('script');
+    script.src = scriptUrl;
+    script.defer = true;
+    script.dataset.websiteId = websiteId;
+    document.head.appendChild(script);
+  }, [scriptUrl, websiteId]);
+
+  return null;
+});
 
 export default UmamiAnalytics;

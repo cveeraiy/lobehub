@@ -1,7 +1,7 @@
 import {
   createWebOnboardingToolResult,
   formatWebOnboardingStateMessage,
-} from '@lobechat/builtin-tool-web-onboarding/utils';
+} from '@lobechat/builtin-tools/webOnboardingUtils';
 import { describe, expect, it } from 'vitest';
 
 describe('web onboarding tool result helpers', () => {

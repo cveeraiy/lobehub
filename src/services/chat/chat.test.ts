@@ -1,5 +1,4 @@
-import { AgentBuilderIdentifier } from '@lobechat/builtin-tool-agent-builder';
-import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
+import { AgentBuilderIdentifier, WebBrowsingManifest } from '@lobechat/builtin-tools';
 import {
   ChatErrorType,
   type ChatStreamPayload,

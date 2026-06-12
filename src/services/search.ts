@@ -1,22 +1,45 @@
-import { type SearchQuery } from '@lobechat/types';
+import {
+  type CrawlUniformResult,
+  type SearchQuery,
+  type SearchServiceImpl,
+  type UniformSearchResponse,
+} from '@lobechat/types';
 
-import { toolsClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 class SearchService {
   search(query: string, optionalParams?: object) {
-    return toolsClient.search.query.query({ optionalParams, query });
+    return restClient.get('/search', {
+      params: {
+        q: query,
+        ...(optionalParams as Record<string, string | number | boolean | undefined>),
+      },
+    });
   }
 
-  crawlPage(url: string) {
-    return toolsClient.search.crawlPages.mutate({ urls: [url] });
+  crawlPage(url: string): Promise<{ results: CrawlUniformResult[] }> {
+    return this.crawlPages({ urls: [url] });
   }
 
-  crawlPages(params: { urls: string[] }) {
-    return toolsClient.search.crawlPages.mutate(params);
+  crawlPages(params: Parameters<SearchServiceImpl['crawlPages']>[0]) {
+    return restClient.post<{ results: CrawlUniformResult[] }>('/web-search/crawl', {
+      body: params,
+    });
   }
 
-  async webSearch(params: SearchQuery, options?: { signal?: AbortSignal }) {
-    return toolsClient.search.webSearch.query(params, { signal: options?.signal });
+  async webSearch(
+    params: SearchQuery,
+    options?: { signal?: AbortSignal },
+  ): Promise<UniformSearchResponse> {
+    return restClient.post<UniformSearchResponse>('/web-search', {
+      body: {
+        query: params.query,
+        search_categories: params.searchCategories,
+        search_engines: params.searchEngines,
+        search_time_range: params.searchTimeRange,
+      },
+      signal: options?.signal,
+    });
   }
 }
 

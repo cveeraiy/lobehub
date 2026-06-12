@@ -1,17 +1,16 @@
-import { CURRENT_VERSION, isDesktop } from '@lobechat/const';
+import { CURRENT_VERSION } from '@lobechat/const';
 import {
   type ChatToolPayload,
   type CheckMcpInstallResult,
   type CustomPluginMetadata,
+  type ToolManifest,
 } from '@lobechat/types';
-import { isLocalOrPrivateUrl, safeParseJSON } from '@lobechat/utils';
+import { safeParseJSON } from '@lobechat/utils';
 import { type PluginManifest } from '@lobehub/market-sdk';
 import { type CallReportRequest } from '@lobehub/market-types';
-import superjson from 'superjson';
 
 import { type MCPToolCallResult } from '@/libs/mcp';
-import { toolsClient } from '@/libs/trpc/client';
-import { ensureElectronIpc } from '@/utils/electron/ipc';
+import { restClient } from '@/libs/rest';
 
 import { discoverService } from './discover';
 
@@ -105,7 +104,7 @@ class MCPService {
     const data = {
       // For desktop IPC, always pass a record/object for tool "arguments"
       // (IPC layer will superjson serialize the whole payload).
-      args: isDesktop && isStdio ? (safeParseJSON(args) ?? {}) : args,
+      args,
       env: connection?.type === 'stdio' ? params.env : (pluginSettings ?? connection?.env),
       meta,
       params,
@@ -125,25 +124,22 @@ class MCPService {
         // Parse args
         const apiParams = safeParseJSON(args) || {};
 
-        // Call cloud gateway via tools market endpoint
-        // Server will automatically get user access token from database
-        // and format the result to MCPToolCallResult
-        // Server-side also handles telemetry reporting
-        result = await toolsClient.market.callCloudMcpEndpoint.mutate({
-          apiParams,
-          identifier,
-          meta,
-          toolName: apiName,
+        // Call cloud gateway via REST endpoint
+        result = await restClient.post<MCPToolCallResult>('/mcp/tools/call', {
+          body: {
+            apiParams,
+            identifier,
+            meta,
+            toolName: apiName,
+          },
+          signal,
         });
-      } else if (isDesktop && isStdio) {
-        // For desktop and stdio, use IPC (main process)
-        // Note: IPC doesn't support AbortSignal yet
-        const serialized = superjson.serialize(data);
-        const serializedResult = await ensureElectronIpc().mcp.callTool(serialized as any);
-        result = superjson.deserialize(serializedResult as any) as any;
       } else {
-        // For other types, use the toolsClient
-        result = await toolsClient.mcp.callTool.mutate(data, { signal });
+        // Use the REST MCP call endpoint
+        result = await restClient.post<MCPToolCallResult>('/mcp/tools/call', {
+          body: data,
+          signal,
+        });
       }
 
       success = true;
@@ -212,61 +208,39 @@ class MCPService {
       url: string;
     },
     signal?: AbortSignal,
-  ) {
-    // If in Desktop mode and URL is local address, use IPC (main process)
-    // This avoids accessing user local services through remote server in production
-    if (isDesktop && isLocalOrPrivateUrl(params.url)) {
-      // Note: IPC doesn't support AbortSignal yet
-      const serialized = superjson.serialize(params);
-      const serializedResult = await ensureElectronIpc().mcp.getStreamableMcpServerManifest(
-        serialized as any,
-      );
-      return superjson.deserialize(serializedResult as any) as any;
-    }
-
-    // Otherwise use toolsClient (via server relay)
-    return toolsClient.mcp.getStreamableMcpServerManifest.query(params, { signal });
+  ): Promise<ToolManifest> {
+    return restClient.post<ToolManifest>('/mcp/manifest/http', {
+      body: {
+        auth: params.auth,
+        headers: params.headers,
+        identifier: params.identifier,
+        metadata: params.metadata,
+        url: params.url,
+      },
+      signal,
+    });
   }
 
   async getStdioMcpServerManifest(
-    stdioParams: {
+    _stdioParams: {
       args?: string[];
       command: string;
       env?: Record<string, string>;
       name: string;
     },
-    metadata?: CustomPluginMetadata,
+    _metadata?: CustomPluginMetadata,
     _signal?: AbortSignal,
-  ) {
-    void _signal;
-    // Note: IPC doesn't support AbortSignal yet
-    const serialized = superjson.serialize({ ...stdioParams, metadata });
-    const serializedResult = await ensureElectronIpc().mcp.getStdioMcpServerManifest(
-      serialized as any,
-    );
-    return superjson.deserialize(serializedResult as any) as any;
+  ): Promise<ToolManifest> {
+    // stdio MCP requires desktop IPC — not available in web
+    throw new Error('stdio MCP servers are not supported in web builds');
   }
 
-  /**
-   * Check MCP plugin installation status
-   * @param manifest MCP plugin manifest
-   * @param signal AbortSignal for canceling request
-   * @returns Installation check result
-   */
   async checkInstallation(
-    manifest: PluginManifest,
+    _manifest: PluginManifest,
     _signal?: AbortSignal,
   ): Promise<CheckMcpInstallResult> {
-    void _signal;
-    // Pass all deployment options to main process for checking
-    // Note: IPC doesn't support AbortSignal yet
-    const serialized = superjson.serialize({
-      deploymentOptions: manifest.deploymentOptions as any,
-    });
-    const serializedResult = await ensureElectronIpc().mcp.validMcpServerInstallable(
-      serialized as any,
-    );
-    return superjson.deserialize(serializedResult as any) as any;
+    // Installation check requires desktop IPC — not available in web
+    return { installable: false, missing: [] } as any;
   }
 }
 

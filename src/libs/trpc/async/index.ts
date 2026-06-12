@@ -5,7 +5,7 @@ import { getServerDB } from '@/database/core/db-adaptor';
 import { asyncAuth } from './asyncAuth';
 import { asyncTrpc } from './init';
 
-const log = debug('lobe-async:middleware');
+const log = debug('ethos-async:middleware');
 
 export const publicProcedure = asyncTrpc.procedure;
 

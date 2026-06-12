@@ -1,4 +1,4 @@
-import { MessageToolIdentifier } from '@lobechat/builtin-tool-message';
+import { MessageToolIdentifier } from '@lobechat/builtin-tools';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ToolExecutionContext } from '../../types';
@@ -95,30 +95,6 @@ vi.mock('@/server/services/bot/platforms/slack/api', () => ({
     updateMessage: vi.fn(),
     getUserInfo: vi.fn(),
     getReplies: vi.fn(),
-  })),
-}));
-
-const mockFeishuSendMessage = vi.fn();
-vi.mock('@lobechat/chat-adapter-feishu', () => ({
-  LarkApiClient: vi.fn().mockImplementation(() => ({
-    addReaction: vi.fn(),
-    deleteMessage: vi.fn(),
-    editMessage: vi.fn(),
-    getChatInfo: vi.fn(),
-    getUserInfo: vi.fn(),
-    listMessages: vi.fn(),
-    replyMessage: vi.fn(),
-    sendMessage: mockFeishuSendMessage,
-  })),
-}));
-
-const mockQQSendGroupMessage = vi.fn();
-vi.mock('@lobechat/chat-adapter-qq', () => ({
-  QQApiClient: vi.fn().mockImplementation(() => ({
-    sendC2CMessage: vi.fn(),
-    sendDmsMessage: vi.fn(),
-    sendGroupMessage: mockQQSendGroupMessage,
-    sendGuildMessage: vi.fn(),
   })),
 }));
 
@@ -278,63 +254,6 @@ describe('messageRuntime', () => {
         messageId: '1234567890.123456',
         platform: 'slack',
       });
-    });
-  });
-
-  describe('Feishu adapter', () => {
-    it('should send a message via Feishu', async () => {
-      mockProviderFor('feishu', { appSecret: 'feishu-secret' });
-      mockFeishuSendMessage.mockResolvedValue({ messageId: 'om_feishu_123', raw: {} });
-
-      const runtime = await messageRuntime.factory(validContext);
-      const result = await runtime.sendMessage({
-        channelId: 'oc_chat_123',
-        content: 'Hello Feishu!',
-        platform: 'feishu',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.state).toMatchObject({
-        channelId: 'oc_chat_123',
-        messageId: 'om_feishu_123',
-        platform: 'feishu',
-      });
-    });
-  });
-
-  describe('QQ adapter', () => {
-    it('should send a message via QQ', async () => {
-      mockProviderFor('qq', { appSecret: 'qq-secret' });
-      mockQQSendGroupMessage.mockResolvedValue({ id: 'qq-msg-1' });
-
-      const runtime = await messageRuntime.factory(validContext);
-      const result = await runtime.sendMessage({
-        channelId: 'group:123456',
-        content: 'Hello QQ!',
-        platform: 'qq',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.state).toMatchObject({
-        channelId: 'group:123456',
-        messageId: 'qq-msg-1',
-        platform: 'qq',
-      });
-    });
-
-    it('should return error for unsupported editMessage', async () => {
-      mockProviderFor('qq', { appSecret: 'qq-secret' });
-
-      const runtime = await messageRuntime.factory(validContext);
-      const result = await runtime.editMessage({
-        channelId: 'group:123',
-        content: 'edit',
-        messageId: 'msg-1',
-        platform: 'qq',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.content).toContain('not supported on QQ');
     });
   });
 

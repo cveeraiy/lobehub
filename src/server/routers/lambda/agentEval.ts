@@ -1,4 +1,3 @@
-import { parseDataset } from '@lobechat/eval-dataset-parser';
 import { TRPCError } from '@trpc/server';
 import debug from 'debug';
 import { z } from 'zod';
@@ -50,7 +49,140 @@ const evalRunInputConfigSchema = z.object({
     .optional(),
 });
 
-const log = debug('lobe-lambda-router:agent-eval');
+const log = debug('ethos-lambda-router:agent-eval');
+
+type DatasetFormat = 'auto' | 'csv' | 'json' | 'jsonl' | 'xlsx';
+
+interface ParseDatasetOptions {
+  filename?: string;
+  format?: DatasetFormat;
+  preview?: number;
+}
+
+interface ParseDatasetResult {
+  format: Exclude<DatasetFormat, 'auto'>;
+  headers: string[];
+  rows: Record<string, unknown>[];
+  totalCount: number;
+}
+
+const detectDatasetFormat = (
+  content: string,
+  filename?: string,
+): Exclude<DatasetFormat, 'auto'> => {
+  const extension = filename?.split('.').pop()?.toLowerCase();
+  if (
+    extension === 'csv' ||
+    extension === 'json' ||
+    extension === 'jsonl' ||
+    extension === 'xlsx'
+  ) {
+    return extension;
+  }
+
+  const trimmed = content.trim();
+  if (trimmed.startsWith('[')) return 'json';
+  if (trimmed.startsWith('{')) return 'jsonl';
+  return 'csv';
+};
+
+const parseCsvRows = (content: string): string[][] => {
+  const rows: string[][] = [];
+  let cell = '';
+  let row: string[] = [];
+  let inQuotes = false;
+
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        cell += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      row.push(cell);
+      cell = '';
+      continue;
+    }
+
+    if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && next === '\n') index += 1;
+      row.push(cell);
+      if (row.some((value) => value.length > 0)) rows.push(row);
+      row = [];
+      cell = '';
+      continue;
+    }
+
+    cell += char;
+  }
+
+  row.push(cell);
+  if (row.some((value) => value.length > 0)) rows.push(row);
+  return rows;
+};
+
+const parseDataset = (content: string, options: ParseDatasetOptions = {}): ParseDatasetResult => {
+  const format =
+    options.format && options.format !== 'auto'
+      ? options.format
+      : detectDatasetFormat(content, options.filename);
+
+  if (format === 'xlsx') {
+    throw new Error('XLSX dataset parsing has moved to the Python backend');
+  }
+
+  if (format === 'json') {
+    const data = JSON.parse(content);
+    if (!Array.isArray(data)) throw new Error('JSON file must contain an array of objects');
+    const rows = options.preview ? data.slice(0, options.preview) : data;
+    return {
+      format,
+      headers: Object.keys(rows[0] ?? {}),
+      rows,
+      totalCount: data.length,
+    };
+  }
+
+  if (format === 'jsonl') {
+    const lines = content
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const rows = (options.preview ? lines.slice(0, options.preview) : lines).map((line, index) => {
+      try {
+        return JSON.parse(line);
+      } catch {
+        throw new Error(`Invalid JSON at line ${index + 1}: ${line.slice(0, 100)}`);
+      }
+    });
+    return {
+      format,
+      headers: Object.keys(rows[0] ?? {}),
+      rows,
+      totalCount: lines.length,
+    };
+  }
+
+  const [headers = [], ...dataRows] = parseCsvRows(content);
+  const mappedRows = dataRows.map((row) =>
+    Object.fromEntries(headers.map((header, index) => [header, row[index] ?? ''])),
+  );
+
+  return {
+    format: 'csv',
+    headers,
+    rows: options.preview ? mappedRows.slice(0, options.preview) : mappedRows,
+    totalCount: mappedRows.length,
+  };
+};
 
 const agentEvalProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
@@ -289,9 +421,14 @@ export const agentEvalRouter = router({
       const resolvedFilename = input.filename || input.pathname;
       const isXlsx = format === 'xlsx' || resolvedFilename?.match(/\.xlsx?$/i);
 
-      const content = isXlsx
-        ? await ctx.fileService.getFileByteArray(input.pathname)
-        : await ctx.fileService.getFileContent(input.pathname);
+      if (isXlsx) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'XLSX dataset parsing has moved to the Python backend',
+        });
+      }
+
+      const content = await ctx.fileService.getFileContent(input.pathname);
 
       try {
         const result = parseDataset(content, {
@@ -337,9 +474,14 @@ export const agentEvalRouter = router({
       const resolvedFilename = input.filename || input.pathname;
       const isXlsx = format === 'xlsx' || resolvedFilename?.match(/\.xlsx?$/i);
 
-      const content = isXlsx
-        ? await ctx.fileService.getFileByteArray(input.pathname)
-        : await ctx.fileService.getFileContent(input.pathname);
+      if (isXlsx) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'XLSX dataset parsing has moved to the Python backend',
+        });
+      }
+
+      const content = await ctx.fileService.getFileContent(input.pathname);
 
       let parsed;
       try {

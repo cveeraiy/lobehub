@@ -1,8 +1,5 @@
-import type { MessagePlatformType } from '@lobechat/builtin-tool-message';
-import type { MessageRuntimeService } from '@lobechat/builtin-tool-message/executionRuntime';
-import { LarkApiClient } from '@lobechat/chat-adapter-feishu';
-import { QQApiClient } from '@lobechat/chat-adapter-qq';
-import { WechatApiClient } from '@lobechat/chat-adapter-wechat';
+import type { MessagePlatformType } from '@lobechat/builtin-tools';
+import type { MessageRuntimeService } from '@lobechat/builtin-tools/messageExecutionRuntime';
 import {
   DEFAULT_BOT_HISTORY_LIMIT,
   MAX_BOT_HISTORY_LIMIT,
@@ -11,7 +8,6 @@ import {
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
-import type { DecryptedBotProvider } from '@/database/models/agentBotProvider';
 import { AgentBotProviderModel } from '@/database/models/agentBotProvider';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
@@ -19,13 +15,18 @@ import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
 import { mergeWithDefaults, platformRegistry } from '@/server/services/bot/platforms';
 import { DiscordApi } from '@/server/services/bot/platforms/discord/api';
 import { DiscordMessageService } from '@/server/services/bot/platforms/discord/service';
-import { FeishuMessageService } from '@/server/services/bot/platforms/feishu/service';
-import { QQMessageService } from '@/server/services/bot/platforms/qq/service';
 import { SlackApi } from '@/server/services/bot/platforms/slack/api';
 import { SlackMessageService } from '@/server/services/bot/platforms/slack/service';
 import { TelegramApi } from '@/server/services/bot/platforms/telegram/api';
 import { TelegramMessageService } from '@/server/services/bot/platforms/telegram/service';
-import { WechatMessageService } from '@/server/services/bot/platforms/wechat/service';
+
+interface DecryptedBotProvider {
+  applicationId: string;
+  credentials: Record<string, string>;
+  enabled: boolean;
+  platform: string;
+  settings?: Record<string, unknown> | null;
+}
 
 // ── Middleware ────────────────────────────────────────────
 
@@ -55,31 +56,10 @@ const createServiceForBot = (provider: DecryptedBotProvider): MessageRuntimeServ
     case 'telegram': {
       return new TelegramMessageService(new TelegramApi(credentials.botToken));
     }
-    case 'feishu': {
-      return new FeishuMessageService(
-        new LarkApiClient(applicationId, credentials.appSecret, 'feishu'),
-        'feishu',
-      );
-    }
-    case 'lark': {
-      return new FeishuMessageService(
-        new LarkApiClient(applicationId, credentials.appSecret, 'lark'),
-        'lark',
-      );
-    }
-    case 'qq': {
-      return new QQMessageService(new QQApiClient(applicationId, credentials.appSecret));
-    }
-    case 'wechat': {
-      return new WechatMessageService(
-        new WechatApiClient(credentials.botToken, credentials.botId),
-        applicationId,
-      );
-    }
     default: {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: `Unsupported platform: ${platform}`,
+        message: `Platform "${platform}" is served by the Python backend and is no longer available through the TypeScript bot message router.`,
       });
     }
   }

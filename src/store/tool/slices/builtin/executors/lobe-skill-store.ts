@@ -4,8 +4,8 @@
  * Creates and exports the SkillStoreExecutor instance for registration.
  * Handles skill search and import from market/URL.
  */
-import { SkillStoreExecutionRuntime } from '@lobechat/builtin-tool-skill-store/executionRuntime';
-import { SkillStoreExecutor } from '@lobechat/builtin-tool-skill-store/executor';
+import { SkillStoreExecutionRuntime } from '@lobechat/builtin-tools/skillStoreExecutionRuntime';
+import { SkillStoreExecutor } from '@lobechat/builtin-tools/skillStoreExecutor';
 
 import { marketApiService } from '@/services/marketApi';
 import { agentSkillService } from '@/services/skill';

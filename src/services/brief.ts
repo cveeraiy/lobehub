@@ -1,20 +1,21 @@
-import { lambdaClient } from '@/libs/trpc/client';
+import type { RestApiResponse } from '@/libs/rest';
+import { restClient } from '@/libs/rest';
 
 class BriefService {
   delete = async (id: string) => {
-    return lambdaClient.brief.delete.mutate({ id });
+    return restClient.delete(`/briefs/${id}`);
   };
 
-  listUnresolved = async () => {
-    return lambdaClient.brief.listUnresolved.query();
+  listUnresolved = async (): Promise<RestApiResponse> => {
+    return restClient.get<RestApiResponse>('/briefs/unresolved');
   };
 
   markRead = async (id: string) => {
-    return lambdaClient.brief.markRead.mutate({ id });
+    return restClient.post(`/briefs/${id}/read`);
   };
 
   resolve = async (id: string, params?: { action?: string; comment?: string }) => {
-    return lambdaClient.brief.resolve.mutate({ id, ...params });
+    return restClient.post(`/briefs/${id}/resolve`, { body: params });
   };
 }
 

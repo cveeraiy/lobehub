@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { fileEnv } from '@/envs/file';
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { API_ENDPOINTS } from '@/services/_url';
 
 import { UPLOAD_NETWORK_ERROR, uploadService } from '../upload';
@@ -14,13 +14,9 @@ vi.mock('@lobechat/utils', () => ({
   uuid: () => 'mock-uuid',
 }));
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    upload: {
-      createS3PreSignedUrl: {
-        mutate: vi.fn(),
-      },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    post: vi.fn(),
   },
 }));
 
@@ -62,8 +58,7 @@ describe('UploadService', () => {
       };
       global.XMLHttpRequest = vi.fn(() => xhrMock) as any;
 
-      // Mock createS3PreSignedUrl
-      vi.mocked(lambdaClient.upload.createS3PreSignedUrl.mutate).mockResolvedValue(mockPreSignUrl);
+      vi.mocked(restClient.post).mockResolvedValue({ url: mockPreSignUrl });
     });
 
     it('should upload to server S3 in non-desktop mode', async () => {
@@ -117,8 +112,7 @@ describe('UploadService', () => {
       };
       global.XMLHttpRequest = vi.fn(() => xhrMock) as any;
 
-      // Mock createS3PreSignedUrl
-      vi.mocked(lambdaClient.upload.createS3PreSignedUrl.mutate).mockResolvedValue(mockPreSignUrl);
+      vi.mocked(restClient.post).mockResolvedValue({ url: mockPreSignUrl });
     });
 
     it('should upload base64 data successfully', async () => {
@@ -200,8 +194,7 @@ describe('UploadService', () => {
       };
       global.XMLHttpRequest = vi.fn(() => xhrMock) as any;
 
-      // Mock createS3PreSignedUrl
-      vi.mocked(lambdaClient.upload.createS3PreSignedUrl.mutate).mockResolvedValue(mockPreSignUrl);
+      vi.mocked(restClient.post).mockResolvedValue({ url: mockPreSignUrl });
     });
 
     it('should upload JSON data successfully', async () => {
@@ -240,8 +233,7 @@ describe('UploadService', () => {
       };
       global.XMLHttpRequest = vi.fn(() => xhrMock) as any;
 
-      // Mock createS3PreSignedUrl
-      vi.mocked(lambdaClient.upload.createS3PreSignedUrl.mutate).mockResolvedValue(mockPreSignUrl);
+      vi.mocked(restClient.post).mockResolvedValue({ url: mockPreSignUrl });
     });
 
     it('should upload file successfully with progress', async () => {

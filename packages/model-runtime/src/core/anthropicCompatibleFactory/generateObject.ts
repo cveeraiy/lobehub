@@ -7,7 +7,7 @@ import { buildAnthropicMessages, buildAnthropicTools } from '../contextBuilders/
 import { buildAnthropicInitialUsage } from '../usageConverters/anthropic';
 import { withUsageCost } from '../usageConverters/utils/withUsageCost';
 
-const log = debug('lobe-model-runtime:anthropic:generate-object');
+const log = debug('ethos-model-runtime:anthropic:generate-object');
 
 /**
  * Generate structured output using Anthropic Claude API with Function Calling

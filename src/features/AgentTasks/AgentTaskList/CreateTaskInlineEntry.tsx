@@ -83,14 +83,19 @@ const CreateTaskInlineEntry = memo<CreateTaskInlineEntryProps>((props) => {
     });
 
     if (result) {
+      const resultId = 'id' in result && typeof result.id === 'string' ? result.id : undefined;
+      const taskIdentifier = result.identifier || resultId;
+
       setPriority(0);
       setAssigneeAgentId(agentId);
       setInstruction('');
       editor?.cleanDocument?.();
-      onCreated?.({
-        agentId: result.assigneeAgentId ?? undefined,
-        identifier: result.identifier,
-      });
+      if (taskIdentifier) {
+        onCreated?.({
+          agentId: result.assigneeAgentId ?? undefined,
+          identifier: taskIdentifier,
+        });
+      }
     }
   }, [
     agentId,

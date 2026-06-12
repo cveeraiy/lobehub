@@ -1,15 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 import { generationService } from '../generation';
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    generation: {
-      getGenerationStatus: { query: vi.fn() },
-      deleteGeneration: { mutate: vi.fn() },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    delete: vi.fn(),
+    get: vi.fn(),
   },
 }));
 
@@ -18,23 +16,22 @@ describe('GenerationService', () => {
     vi.clearAllMocks();
   });
 
-  it('getGenerationStatus should call lambdaClient with correct params', async () => {
+  it('getGenerationStatus should call REST with correct params', async () => {
     const generationId = 'test-generation-id';
     const asyncTaskId = 'test-async-task-id';
 
     await generationService.getGenerationStatus(generationId, asyncTaskId);
 
-    expect(lambdaClient.generation.getGenerationStatus.query).toBeCalledWith({
-      generationId,
-      asyncTaskId,
+    expect(restClient.get).toBeCalledWith(`/generations/${generationId}/status`, {
+      params: { asyncTaskId },
     });
   });
 
-  it('deleteGeneration should call lambdaClient with correct params', async () => {
+  it('deleteGeneration should call REST with correct params', async () => {
     const generationId = 'test-generation-id';
 
     await generationService.deleteGeneration(generationId);
 
-    expect(lambdaClient.generation.deleteGeneration.mutate).toBeCalledWith({ generationId });
+    expect(restClient.delete).toBeCalledWith(`/generations/${generationId}`);
   });
 });

@@ -7,7 +7,7 @@
  */
 import debug from 'debug';
 
-const log = debug('lobe-image:comfyui:cache');
+const log = debug('ethos-image:comfyui:cache');
 
 /**
  * TTL Cache Manager

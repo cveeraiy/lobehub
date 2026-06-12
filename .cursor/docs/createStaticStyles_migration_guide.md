@@ -931,7 +931,7 @@ const Component = () => {
 **已优化示例：**
 
 - `AuroraBackground`, `Select`, `Input`, `Button`, `DatePicker`, `AutoComplete`, `InputNumber`, `InputPassword`, `InputOPT`, `TextArea`, `SpotlightCardItem`, `Spotlight`, `HotkeyInput` - 只使用 `isDarkMode` → `useThemeMode()`
-- `Image`, `GradientButton`, `Empty`, `FileTypeIcon`, `FormSubmitFooter`, `CodeEditor`, `LobeChat`, `Drawer`, `Modal`, `Avatar`, `AvatarGroup`, `SkeletonAvatar`, `SkeletonButton`, `SkeletonTags`, `Callout`, `LobeHub`, `GridBackground`, `FolderIcon`, `FileIcon`, `TokenTag`, `ChatSendButton`, `AvatarUploader` - 使用 token → `cssVar`
+- `Image`, `GradientButton`, `Empty`, `FileTypeIcon`, `FormSubmitFooter`, `CodeEditor`, `Ethos`, `Drawer`, `Modal`, `Avatar`, `AvatarGroup`, `SkeletonAvatar`, `SkeletonButton`, `SkeletonTags`, `Callout`, `Ethos`, `GridBackground`, `FolderIcon`, `FileIcon`, `TokenTag`, `ChatSendButton`, `AvatarUploader` - 使用 token → `cssVar`
 
 **无法优化的文件（需要保留 `useTheme()`）：**
 

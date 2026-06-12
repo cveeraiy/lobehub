@@ -189,7 +189,7 @@ If metrics cannot be reliably computed, omit unknown numbers instead of guessing
 
 Follow this section order unless the user asks otherwise:
 
-1. `# 🚀 LobeHub Release (<YYYYMMDD>)`
+1. `# 🚀 Ethos Release (<YYYYMMDD>)`
 2. Metadata lines:
    - `Release Date`
    - `Since <Previous Version>` metrics
@@ -242,7 +242,7 @@ Use `---` separators between major blocks for long releases.
 
 Render contributors as a **single flat list** (no separate "Community" / "Core Team" subsections). Order: **community contributors first, team members after**. Within each group, sort by PR count desc. Bots (`@lobehubbot`, `renovate[bot]`) go on a separate "maintenance" line.
 
-**LobeHub team roster** — anyone in this list is a team member; anyone not in this list is a community contributor:
+**Ethos team roster** — anyone in this list is a team member; anyone not in this list is a community contributor:
 
 - @arvinxx
 - @Innei
@@ -262,7 +262,7 @@ If a new contributor appears who is not on this list, treat them as community by
 ### GitHub Release Changelog Template
 
 ```md
-# 🚀 LobeHub Release (<YYYYMMDD>)
+# 🚀 Ethos Release (<YYYYMMDD>)
 
 **Release Date:** <Month DD, YYYY>  
 **Since <Previous Version>:** <N merged PRs> · <N resolved issues> · <N contributors>

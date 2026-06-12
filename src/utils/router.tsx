@@ -1,6 +1,7 @@
 'use client';
 
-import { ThemeProvider } from '@lobehub/ui';
+import { ConfigProvider, ThemeProvider } from '@lobehub/ui';
+import * as m from 'motion/react-m';
 import { type ComponentType, type ReactElement } from 'react';
 import { lazy, memo, Suspense, useLayoutEffect } from 'react';
 import type { RouteObject } from 'react-router-dom';
@@ -105,7 +106,9 @@ export const ErrorBoundary = ({ resetPath }: ErrorBoundaryProps) => {
 
   return (
     <ThemeProvider theme={{ cssVar: { key: 'lobe-vars' } }}>
-      <ErrorCapture error={error} resetPath={resetPath} />
+      <ConfigProvider motion={m}>
+        <ErrorCapture error={error} resetPath={resetPath} />
+      </ConfigProvider>
     </ThemeProvider>
   );
 };
@@ -147,7 +150,7 @@ RouterRoot.displayName = 'RouterRoot';
  * Use with <RouterProvider router={router} />.
  *
  * @example
- * const router = createAppRouter(desktopRoutes, { basename: '/app' });
+ * const router = createAppRouter(webRoutes, { basename: '/app' });
  * createRoot(document.getElementById('root')!).render(
  *   <RouterProvider router={router} />
  * );
@@ -182,7 +185,6 @@ const prefetchedRoutes = new Set<string>();
 
 const routePrefetchMap: Record<string, () => Promise<unknown>> = {
   '/agent': () => import('@/routes/(main)/agent/_layout'),
-  '/community': () => import('@/routes/(main)/community/_layout'),
   '/group': () => import('@/routes/(main)/group/_layout'),
   '/page': () => import('@/routes/(main)/page/_layout'),
   '/resource': () => import('@/routes/(main)/resource/_layout'),

@@ -3,11 +3,9 @@ import { gt, parse, valid } from 'semver';
 import { type SWRResponse } from 'swr';
 
 import { SESSION_CHAT_TOPIC_URL } from '@/const/url';
-import { CURRENT_VERSION, isDesktop } from '@/const/version';
+import { CURRENT_VERSION } from '@/const/version';
 import { useOnlyFetchOnceSWR } from '@/libs/swr';
 import { globalService } from '@/services/global';
-import { getElectronStoreState } from '@/store/electron';
-import { electronSyncSelectors } from '@/store/electron/selectors';
 import { type SystemStatus } from '@/store/global/initialState';
 import { type StoreSetter } from '@/store/types';
 import { type LocaleMode } from '@/types/locale';
@@ -35,116 +33,42 @@ export class GlobalGeneralActionImpl {
   }
 
   openAgentInNewWindow = async (agentId: string): Promise<void> => {
-    const url = `/agent/${agentId}${isDesktop ? '?mode=single' : ''}`;
-
-    if (isDesktop) {
-      try {
-        const { ensureElectronIpc } = await import('@/utils/electron/ipc');
-        const path = `/agent/${agentId}?mode=single`;
-
-        const result = await ensureElectronIpc().windows.createMultiInstanceWindow({
-          path,
-          templateId: 'chatSingle',
-          uniqueId: `chat_${agentId}`,
-        });
-
-        if (!result.success) {
-          console.error('Failed to open agent in new window:', result.error);
-        }
-      } catch (error) {
-        console.error('Error opening agent in new window:', error);
-      }
-    } else {
-      // Open in popup window for browser
-      const width = 1200;
-      const height = 800;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
-      const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
-      window.open(url, `agent_${agentId}`, features);
-    }
+    const url = `/agent/${agentId}`;
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
+    window.open(url, `agent_${agentId}`, features);
   };
 
   openTopicInNewWindow = async (agentId: string, topicId: string): Promise<void> => {
-    const popupPath = `/popup/agent/${agentId}/${topicId}`;
     const browserUrl = SESSION_CHAT_TOPIC_URL(agentId, topicId);
-
-    if (isDesktop) {
-      try {
-        const { ensureElectronIpc } = await import('@/utils/electron/ipc');
-
-        const result = await ensureElectronIpc().windows.createMultiInstanceWindow({
-          path: popupPath,
-          templateId: 'topicPopup',
-          uniqueId: `topicPopup_agent_${agentId}_${topicId}`,
-        });
-
-        if (!result.success) {
-          console.error('Failed to open topic in new window:', result.error);
-        }
-      } catch (error) {
-        console.error('Error opening topic in new window:', error);
-      }
-    } else {
-      // Open in popup window for browser
-      const width = 1200;
-      const height = 800;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
-      const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
-      window.open(browserUrl, `agent_${agentId}_topic_${topicId}`, features);
-    }
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
+    window.open(browserUrl, `agent_${agentId}_topic_${topicId}`, features);
   };
 
   openGroupTopicInNewWindow = async (groupId: string, topicId: string): Promise<void> => {
-    const popupPath = `/popup/group/${groupId}/${topicId}`;
     const browserUrl = `/group/${groupId}?topic=${topicId}`;
-
-    if (isDesktop) {
-      try {
-        const { ensureElectronIpc } = await import('@/utils/electron/ipc');
-
-        const result = await ensureElectronIpc().windows.createMultiInstanceWindow({
-          path: popupPath,
-          templateId: 'topicPopup',
-          uniqueId: `topicPopup_group_${groupId}_${topicId}`,
-        });
-
-        if (!result.success) {
-          console.error('Failed to open group topic in new window:', result.error);
-        }
-      } catch (error) {
-        console.error('Error opening group topic in new window:', error);
-      }
-    } else {
-      const width = 1200;
-      const height = 800;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
-      const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
-      window.open(browserUrl, `group_${groupId}_topic_${topicId}`, features);
-    }
+    const width = 1200;
+    const height = 800;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=yes`;
+    window.open(browserUrl, `group_${groupId}_topic_${topicId}`, features);
   };
 
   switchLocale = (
     locale: LocaleMode,
-    { skipBroadcast }: { skipBroadcast?: boolean } = {},
+    { skipBroadcast: _skipBroadcast }: { skipBroadcast?: boolean } = {},
   ): void => {
     this.#get().updateSystemStatus({ language: locale });
 
     switchLang(locale);
-
-    if (isDesktop && !skipBroadcast) {
-      (async () => {
-        try {
-          const { ensureElectronIpc } = await import('@/utils/electron/ipc');
-
-          await ensureElectronIpc().system.updateLocale(locale);
-        } catch (error) {
-          console.error('Failed to update locale in main process:', error);
-        }
-      })();
-    }
   };
 
   updateResourceManagerColumnWidth = (column: 'name' | 'date' | 'size', width: number): void => {
@@ -206,53 +130,45 @@ export class GlobalGeneralActionImpl {
   };
 
   useCheckServerVersion = (): SWRResponse<string | null> => {
-    return useOnlyFetchOnceSWR(
-      isDesktop &&
-        // only check server version for self-hosted remote server
-        electronSyncSelectors.storageMode(getElectronStoreState()) !== 'cloud'
-        ? 'checkServerVersion'
-        : null,
-      async () => globalService.getServerVersion(),
-      {
-        onSuccess: (data: string | null) => {
-          if (data === null) {
-            this.#set({ isServerVersionOutdated: true }, false);
-            return;
-          }
+    return useOnlyFetchOnceSWR('checkServerVersion', async () => globalService.getServerVersion(), {
+      onSuccess: (data: string | null) => {
+        if (data === null) {
+          this.#set({ isServerVersionOutdated: true }, false);
+          return;
+        }
 
-          this.#set({ serverVersion: data }, false);
+        this.#set({ serverVersion: data }, false);
 
-          if (!valid(CURRENT_VERSION) || !valid(data)) return;
+        if (!valid(CURRENT_VERSION) || !valid(data)) return;
 
-          const clientVersion = parse(CURRENT_VERSION);
-          const serverVersion = parse(data);
+        const clientVersion = parse(CURRENT_VERSION);
+        const serverVersion = parse(data);
 
-          if (!clientVersion || !serverVersion) return;
+        if (!clientVersion || !serverVersion) return;
 
-          const DIFF_THRESHOLD = 5;
-          //         Version difference calculation rules
-          // ┌─────────────────┬────────┬───────────┐
-          // │ Client → Server │  Diff  │  Result   │
-          // ├─────────────────┼────────┼───────────┤
-          // │ 1.0.5 → 1.0.0   │ 5      │ ⚠️ Too old│
-          // ├─────────────────┼────────┼───────────┤
-          // │ 1.1.0 → 1.0.5   │ 5      │ ⚠️ Too old│
-          // ├─────────────────┼────────┼───────────┤
-          // │ 2.0.0 → 1.9.9   │ 91     │ ⚠️ Too old│
-          // ├─────────────────┼────────┼───────────┤
-          // │ 1.0.4 → 1.0.0   │ 4      │ ✅ Normal │
-          // └─────────────────┴────────┴───────────┘
-          const versionDiff =
-            (clientVersion.major - serverVersion.major) * 100 +
-            (clientVersion.minor - serverVersion.minor) * 10 +
-            (clientVersion.patch - serverVersion.patch);
+        const DIFF_THRESHOLD = 5;
+        //         Version difference calculation rules
+        // ┌─────────────────┬────────┬───────────┐
+        // │ Client → Server │  Diff  │  Result   │
+        // ├─────────────────┼────────┼───────────┤
+        // │ 1.0.5 → 1.0.0   │ 5      │ ⚠️ Too old│
+        // ├─────────────────┼────────┼───────────┤
+        // │ 1.1.0 → 1.0.5   │ 5      │ ⚠️ Too old│
+        // ├─────────────────┼────────┼───────────┤
+        // │ 2.0.0 → 1.9.9   │ 91     │ ⚠️ Too old│
+        // ├─────────────────┼────────┼───────────┤
+        // │ 1.0.4 → 1.0.0   │ 4      │ ✅ Normal │
+        // └─────────────────┴────────┴───────────┘
+        const versionDiff =
+          (clientVersion.major - serverVersion.major) * 100 +
+          (clientVersion.minor - serverVersion.minor) * 10 +
+          (clientVersion.patch - serverVersion.patch);
 
-          if (versionDiff >= DIFF_THRESHOLD) {
-            this.#set({ isServerVersionOutdated: true }, false);
-          }
-        },
+        if (versionDiff >= DIFF_THRESHOLD) {
+          this.#set({ isServerVersionOutdated: true }, false);
+        }
       },
-    );
+    });
   };
 
   useInitSystemStatus = (): SWRResponse => {

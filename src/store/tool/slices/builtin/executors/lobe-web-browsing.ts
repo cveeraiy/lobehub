@@ -3,11 +3,11 @@
  *
  * Handles web search and page crawling tool calls.
  */
-import { WebBrowsingApiName, WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
+import { WebBrowsingApiName, WebBrowsingManifest } from '@lobechat/builtin-tools';
 import {
   type WebBrowsingDocumentService,
   WebBrowsingExecutionRuntime,
-} from '@lobechat/builtin-tool-web-browsing/executionRuntime';
+} from '@lobechat/builtin-tools/webBrowsingExecutionRuntime';
 import {
   type BuiltinToolContext,
   type BuiltinToolResult,

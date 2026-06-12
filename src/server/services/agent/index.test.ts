@@ -174,7 +174,7 @@ describe('AgentService', () => {
       expect(result?.provider).toBe('anthropic');
     });
 
-    it('should merge avatar from builtin-agents package definition', async () => {
+    it('should merge avatar from the built-in agent runtime definition', async () => {
       const mockAgent = {
         id: 'agent-1',
         slug: 'inbox',

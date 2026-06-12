@@ -1,4 +1,4 @@
-# Gitignore for LobeHub
+# Gitignore for Ethos
 ################################################################
 
 # System files
@@ -110,6 +110,7 @@ vertex-ai-key.json
 # AI coding tools
 .local/
 .claude/
+.playwright-cli/
 .mcp.json
 CLAUDE.local.md
 .agent/

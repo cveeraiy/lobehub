@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 import { GenerationTopicModel } from '@/database/models/generationTopic';
-import { type GenerationTopicItem } from '@/database/schemas/generation';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { FileService } from '@/server/services/file';
 import { GenerationService } from '@/server/services/generation';
+import type { ImageGenerationTopic } from '@/types/generation';
 
 const generationTopicProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
@@ -76,7 +76,10 @@ export const generationTopicRouter = router({
   updateTopic: generationTopicProcedure
     .input(updateTopicSchema)
     .mutation(async ({ ctx, input }) => {
-      return ctx.generationTopicModel.update(input.id, input.value as Partial<GenerationTopicItem>);
+      return ctx.generationTopicModel.update(
+        input.id,
+        input.value as Partial<ImageGenerationTopic>,
+      );
     }),
   updateTopicCover: generationTopicProcedure
     .input(updateTopicCoverSchema)

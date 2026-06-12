@@ -1,17 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { restClient } from '@/libs/rest';
+
 import { briefService } from '../brief';
 
-const mockQuery = vi.fn();
-const mockBriefMutate = vi.fn();
-
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    brief: {
-      listUnresolved: { query: (...args: any[]) => mockQuery(...args) },
-      markRead: { mutate: (...args: any[]) => mockBriefMutate(...args) },
-      resolve: { mutate: (...args: any[]) => mockBriefMutate(...args) },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    delete: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
   },
 }));
 
@@ -21,46 +18,49 @@ beforeEach(() => {
 
 describe('BriefService', () => {
   describe('listUnresolved', () => {
-    it('should call listUnresolved query', async () => {
+    it('should call unresolved briefs endpoint', async () => {
       const mockData = { data: [{ id: 'brief-1', title: 'Test' }], success: true };
-      mockQuery.mockResolvedValueOnce(mockData);
+      vi.mocked(restClient.get).mockResolvedValueOnce(mockData);
 
       const result = await briefService.listUnresolved();
 
-      expect(mockQuery).toHaveBeenCalled();
+      expect(restClient.get).toHaveBeenCalledWith('/briefs/unresolved');
       expect(result).toEqual(mockData);
     });
   });
 
   describe('resolve', () => {
-    it('should call resolve with id and params', async () => {
-      mockBriefMutate.mockResolvedValueOnce({ data: {}, success: true });
+    it('should call resolve endpoint with params', async () => {
+      vi.mocked(restClient.post).mockResolvedValueOnce({ data: {}, success: true });
 
       await briefService.resolve('brief-1', { action: 'approve', comment: 'looks good' });
 
-      expect(mockBriefMutate).toHaveBeenCalledWith({
-        action: 'approve',
-        comment: 'looks good',
-        id: 'brief-1',
+      expect(restClient.post).toHaveBeenCalledWith('/briefs/brief-1/resolve', {
+        body: {
+          action: 'approve',
+          comment: 'looks good',
+        },
       });
     });
 
-    it('should call resolve with only id when no params', async () => {
-      mockBriefMutate.mockResolvedValueOnce({ data: {}, success: true });
+    it('should call resolve endpoint with undefined body when no params', async () => {
+      vi.mocked(restClient.post).mockResolvedValueOnce({ data: {}, success: true });
 
       await briefService.resolve('brief-1');
 
-      expect(mockBriefMutate).toHaveBeenCalledWith({ id: 'brief-1' });
+      expect(restClient.post).toHaveBeenCalledWith('/briefs/brief-1/resolve', {
+        body: undefined,
+      });
     });
   });
 
   describe('markRead', () => {
-    it('should call markRead with id', async () => {
-      mockBriefMutate.mockResolvedValueOnce({ data: {}, success: true });
+    it('should call read endpoint', async () => {
+      vi.mocked(restClient.post).mockResolvedValueOnce({ data: {}, success: true });
 
       await briefService.markRead('brief-1');
 
-      expect(mockBriefMutate).toHaveBeenCalledWith({ id: 'brief-1' });
+      expect(restClient.post).toHaveBeenCalledWith('/briefs/brief-1/read');
     });
   });
 });

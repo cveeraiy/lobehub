@@ -14,6 +14,7 @@ import {
   stopPropagation,
   Tooltip,
 } from '@lobehub/ui';
+import { useQuery } from '@tanstack/react-query';
 import { useDebounceFn } from 'ahooks';
 import { Form as AntdForm, Switch } from 'antd';
 import { createStaticStyles, cssVar, cx, responsive } from 'antd-style';
@@ -26,7 +27,7 @@ import { z } from 'zod';
 
 import { FormInput, FormPassword } from '@/components/FormInput';
 import { SkeletonInput, SkeletonSwitch } from '@/components/Skeleton';
-import { lambdaQuery } from '@/libs/trpc/client';
+import { oauthDeviceFlowService } from '@/services/oauthDeviceFlow';
 import { aiProviderSelectors, useAiInfraStore } from '@/store/aiInfra';
 import { type AiProviderDetailItem, type AiProviderSourceType } from '@/types/aiProvider';
 import { AiProviderSourceEnum } from '@/types/aiProvider';
@@ -148,10 +149,12 @@ const ProviderConfig = memo<ProviderConfigProps>(
     const isOAuthProvider = authType === 'oauthDeviceFlow';
 
     // Query OAuth authentication status (only for OAuth providers)
-    const { data: oauthStatus } = lambdaQuery.oauthDeviceFlow.getAuthStatus.useQuery(
-      { providerId: id },
-      { enabled: isOAuthProvider, refetchOnWindowFocus: true },
-    );
+    const { data: oauthStatus } = useQuery({
+      enabled: isOAuthProvider,
+      queryFn: () => oauthDeviceFlowService.getAuthStatus(id),
+      queryKey: ['oauth-device-flow-status', id],
+      refetchOnWindowFocus: true,
+    });
     const isOAuthAuthenticated = oauthStatus?.isAuthenticated ?? false;
 
     const [
@@ -251,7 +254,7 @@ const ProviderConfig = memo<ProviderConfigProps>(
     // OAuth auth change handler
     const handleOAuthChange = useCallback(async () => {
       // Only refresh provider data, don't update with form values
-      // OAuth tokens are saved directly to DB by the tRPC endpoint
+      // OAuth tokens are saved directly to DB by the backend endpoint.
       await useAiInfraStore.getState().refreshAiProviderDetail();
       await useAiInfraStore.getState().refreshAiProviderRuntimeState();
     }, []);

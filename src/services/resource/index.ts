@@ -81,6 +81,19 @@ const mapStatusToResourceItem = (item: KnowledgeItemStatus): ResourceStatusItem 
   };
 };
 
+const normalizeLibraryId = (libraryId?: string): string | undefined => {
+  if (!libraryId || libraryId === 'undefined' || libraryId === 'null') return undefined;
+
+  return libraryId;
+};
+
+const toBackendQueryParams = (params: ResourceQueryParams) => {
+  const { libraryId, ...rest } = params;
+  const knowledgeBaseId = normalizeLibraryId(libraryId);
+
+  return knowledgeBaseId ? { ...rest, knowledgeBaseId } : rest;
+};
+
 /**
  * ResourceService - Unified service for both files and documents
  * Provides a thin wrapper over FileService and DocumentService
@@ -96,14 +109,7 @@ export class ResourceService {
     items: ResourceItem[];
     total?: number;
   }> {
-    // Map frontend parameter names to backend parameter names
-    const backendParams = {
-      ...params,
-      knowledgeBaseId: params.libraryId, // Map libraryId to knowledgeBaseId
-      libraryId: undefined, // Remove the frontend-specific parameter
-    };
-
-    const response = await fileService.getKnowledgeItems(backendParams);
+    const response = await fileService.getKnowledgeItems(toBackendQueryParams(params));
 
     return {
       hasMore: response.hasMore,
@@ -115,23 +121,11 @@ export class ResourceService {
   async resolveSelectionIds(
     params: ResourceQueryParams,
   ): Promise<{ ids: string[]; total: number }> {
-    const backendParams = {
-      ...params,
-      knowledgeBaseId: params.libraryId,
-      libraryId: undefined,
-    };
-
-    return fileService.resolveKnowledgeItemIds(backendParams);
+    return fileService.resolveKnowledgeItemIds(toBackendQueryParams(params));
   }
 
   async deleteResourcesByQuery(params: ResourceQueryParams): Promise<{ count: number }> {
-    const backendParams = {
-      ...params,
-      knowledgeBaseId: params.libraryId,
-      libraryId: undefined,
-    };
-
-    return fileService.deleteKnowledgeItemsByQuery(backendParams);
+    return fileService.deleteKnowledgeItemsByQuery(toBackendQueryParams(params));
   }
 
   /**

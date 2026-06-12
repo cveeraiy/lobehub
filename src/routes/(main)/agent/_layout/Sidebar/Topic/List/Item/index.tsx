@@ -8,14 +8,11 @@ import { useTranslation } from 'react-i18next';
 import DotsLoading from '@/components/DotsLoading';
 import RingLoadingIcon from '@/components/RingLoading';
 import { SESSION_CHAT_TOPIC_URL } from '@/const/url';
-import { isDesktop } from '@/const/version';
-import { pluginRegistry } from '@/features/Electron/titlebar/RecentlyViewed/plugins';
 import NavItem from '@/features/NavPanel/components/NavItem';
 import { getPlatformIcon } from '@/routes/(main)/agent/channel/const';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
 import { operationSelectors } from '@/store/chat/selectors';
-import { useElectronStore } from '@/store/electron';
 
 import { useTopicNavigation } from '../../hooks/useTopicNavigation';
 import ThreadList from '../../TopicListContent/ThreadList';
@@ -71,18 +68,6 @@ const styles = createStaticStyles(({ css }) => ({
   `,
 }));
 
-// Module-scoped so a click on any topic cancels a pending click on another.
-// Per-item refs can't do that, which lets rapid clicks across items all
-// fire — each racing to write activeTopicId (see LOBE-7785).
-let pendingSingleClickTimer: ReturnType<typeof setTimeout> | null = null;
-
-const cancelPendingSingleClick = () => {
-  if (pendingSingleClickTimer) {
-    clearTimeout(pendingSingleClickTimer);
-    pendingSingleClickTimer = null;
-  }
-};
-
 interface TopicItemProps {
   active?: boolean;
   fav?: boolean;
@@ -97,7 +82,6 @@ const TopicItem = memo<TopicItemProps>(({ id, title, fav, active, threadId, meta
   const { t } = useTranslation('topic');
   const { isDarkMode } = useTheme();
   const activeAgentId = useAgentStore((s) => s.activeAgentId);
-  const addTab = useElectronStore((s) => s.addTab);
 
   const loadingRingColor = isDarkMode
     ? cssVar.colorWarningBorder
@@ -118,14 +102,8 @@ const TopicItem = memo<TopicItemProps>(({ id, title, fav, active, threadId, meta
     id ? operationSelectors.isTopicUnreadCompleted(id) : () => false,
   );
 
-  const {
-    focusTopicPopup,
-    navigateToTopic,
-    isInAgentSubRoute,
-    isInTopicContextRoute,
-    routeTopicId,
-    urlTopicId,
-  } = useTopicNavigation();
+  const { navigateToTopic, isInAgentSubRoute, isInTopicContextRoute, routeTopicId, urlTopicId } =
+    useTopicNavigation();
   const isRouteTopicActive = Boolean(id && routeTopicId === id && isInTopicContextRoute);
   const isTopicActive = Boolean(
     (active || isRouteTopicActive) && !threadId && (!isInAgentSubRoute || isRouteTopicActive),
@@ -142,31 +120,8 @@ const TopicItem = memo<TopicItemProps>(({ id, title, fav, active, threadId, meta
 
   const handleClick = useCallback(() => {
     if (editing) return;
-    if (isDesktop) {
-      cancelPendingSingleClick();
-      pendingSingleClickTimer = setTimeout(() => {
-        pendingSingleClickTimer = null;
-        void navigateToTopic(id);
-      }, 250);
-    } else {
-      void navigateToTopic(id);
-    }
+    void navigateToTopic(id);
   }, [editing, id, navigateToTopic]);
-
-  const handleDoubleClick = useCallback(async () => {
-    if (!id || !activeAgentId || !isDesktop) return;
-    cancelPendingSingleClick();
-    if (await focusTopicPopup(id)) {
-      void navigateToTopic(id, { skipPopupFocus: true });
-      return;
-    }
-    const url = SESSION_CHAT_TOPIC_URL(activeAgentId, id);
-    const reference = pluginRegistry.parseUrl(url, '');
-    if (reference) {
-      addTab(reference);
-      void navigateToTopic(id);
-    }
-  }, [id, activeAgentId, addTab, focusTopicPopup, navigateToTopic]);
 
   const { dropdownMenu } = useTopicItemDropdownMenu({
     fav,
@@ -260,7 +215,6 @@ const TopicItem = memo<TopicItemProps>(({ id, title, fav, active, threadId, meta
           );
         })()}
         onClick={handleClick}
-        onDoubleClick={() => void handleDoubleClick()}
       />
       <Editing id={id} title={title} toggleEditing={toggleEditing} />
       {shouldShowThreadList && (

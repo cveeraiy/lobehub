@@ -5,11 +5,11 @@ import { PencilLineIcon, Trash } from 'lucide-react';
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { type RecentItem } from '@/server/routers/lambda/recent';
 import { documentService } from '@/services/document';
 import { taskService } from '@/services/task';
 import { topicService } from '@/services/topic';
 import { useHomeStore } from '@/store/home';
+import type { RecentItem } from '@/types/recent';
 
 export const useRecentItemDropdownMenu = (
   item: RecentItem,

@@ -3,7 +3,7 @@ import type {
   AgentSignalSourceType,
 } from '@lobechat/agent-signal/source';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 type ClientGatewaySourceType = Extract<AgentSignalSourceType, `client.${string}`>;
 
@@ -12,7 +12,7 @@ type ClientGatewaySourceEventInput<TSourceType extends ClientGatewaySourceType> 
 
 class AgentSignalService {
   emitSourceEvent = async (payload: ClientGatewaySourceEventInput<ClientGatewaySourceType>) => {
-    return lambdaClient.agentSignal.emitSourceEvent.mutate(payload);
+    return restClient.post('/agent-signal/emit', { body: payload });
   };
 
   emitClientGatewaySourceEvent = async <TSourceType extends ClientGatewaySourceType>(

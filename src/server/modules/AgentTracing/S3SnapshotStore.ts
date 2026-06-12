@@ -3,7 +3,7 @@ import debug from 'debug';
 
 import { FileS3 } from '@/server/modules/S3';
 
-const log = debug('lobe-server:agent-tracing:s3');
+const log = debug('ethos-server:agent-tracing:s3');
 
 const TRACE_PREFIX = 'agent-traces';
 

@@ -1,5 +1,4 @@
-import { type DocumentType } from '@lobechat/builtin-tool-notebook';
-import { type DocumentItem } from '@lobechat/database/schemas';
+import { type DocumentType } from '@lobechat/builtin-tools';
 import { type NotebookDocument } from '@lobechat/types';
 import isEqual from 'fast-deep-equal';
 import { type SWRResponse } from 'swr';
@@ -51,7 +50,7 @@ export class NotebookActionImpl {
     this.#get = get;
   }
 
-  createDocument = async (params: CreateDocumentParams): Promise<DocumentItem> => {
+  createDocument = async (params: CreateDocumentParams): Promise<NotebookDocument> => {
     const document = await notebookService.createDocument(params);
 
     await invalidateDocumentMutation({
@@ -83,7 +82,7 @@ export class NotebookActionImpl {
   updateDocument = async (
     params: UpdateDocumentParams,
     topicId: string,
-  ): Promise<DocumentItem | undefined> => {
+  ): Promise<NotebookDocument | undefined> => {
     const document = await notebookService.updateDocument(params);
 
     await invalidateDocumentMutation({ cause: 'notebook', documentId: params.id, topicId });

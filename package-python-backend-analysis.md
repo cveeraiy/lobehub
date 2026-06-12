@@ -1,0 +1,223 @@
+# Packages vs Python Backend Analysis
+
+Generated: 2026-05-19
+
+This report classifies each top-level package under `packages/` and compares it with the in-repo FastAPI backend under `python-backend/`.
+
+## Executive Summary
+
+`packages/` is not a frontend-only or backend-only tree. It is a shared monorepo package layer:
+
+- **Backend/server packages**: own database schemas/models, API/runtime logic, model provider calls, observability, OpenAPI/Hono services, and Node/Electron execution support.
+- **Frontend/client packages**: render built-in tool UIs, inspector panes, portals, shared React components, and browser clients.
+- **Shared/isomorphic packages**: contain constants, types, prompts, manifests, pure utilities, parsers, and protocol contracts used by both frontend and backend.
+
+The Python backend is now a parallel backend implementation. Its strongest overlap is with:
+
+- `src/database`: legacy TypeScript Drizzle schemas/models mirror Python SQLModel tables while
+  remaining TS server callers are retired.
+- `packages/agent-runtime`, `packages/agent-signal`, `packages/tool-runtime`, many `packages/builtin-tool-*`: Python has service/tool equivalents.
+- `packages/model-runtime`, `packages/model-bank`, `packages/openapi`, `packages/fetch-sse`: Python has LLM, chat, webapi, and streaming equivalents.
+- `packages/memory-user-memory` and `packages/file-loaders` have been removed. Memory request schemas now live in `@lobechat/types`; Python owns memory routers/services/workflows. File loader helpers moved into `@lobechat/local-file-shell` for local desktop parsing while Python owns REST file/chunk/RAG parsing paths.
+
+The key architectural rule is now: **Python SQLModel is the canonical database owner; the remaining
+TypeScript Drizzle code under `src/database` is a temporary compatibility island until the legacy TS
+server callers are deleted.**
+
+## Classification Legend
+
+| Class    | Meaning                                                                                                    |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
+| Backend  | Server/runtime/database/API code. Should be compared carefully with `python-backend`.                      |
+| Frontend | React UI, render components, client display logic. Usually not ported to Python.                           |
+| Shared   | Pure contracts, constants, manifests, data, utilities, or protocol code used across layers.                |
+| Mixed    | Has both frontend UI and execution/runtime/server pieces. Python may need only the execution/runtime part. |
+| Tool     | Built-in agent tool package. Often includes manifest + executor + optional client UI.                      |
+
+## Package Inventory
+
+| Package                            | Class                      | What It Contains                                                                                                                | Python Backend Comparison                                                                                                                                               |
+| ---------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agent-gateway-client`             | Shared/client              | Browser-compatible WebSocket client for Agent Gateway.                                                                          | Python exposes agent execution/stream endpoints, but this package is a client/protocol helper, not backend logic.                                                       |
+| `agent-manager-runtime`            | Removed                    | Package removed; remaining TS agent manager helper moved into `@lobechat/builtin-tools`.                                        | Backend behavior is backed by agent/AI-agent service flows; the remaining helper is a TS executor adapter.                                                              |
+| `agent-runtime`                    | Backend                    | Core TS agent execution, orchestration, intervention, audit, group orchestration.                                               | Direct overlap with `app/services/agent_runtime`, `agent_runtime_hooks`, `ai_agent`, and `app/routers/ai_agent.py`.                                                     |
+| `agent-signal`                     | Backend/shared             | Agent Signal contracts and producer helpers.                                                                                    | Direct overlap with `app/services/agent_signal` and `app/routers/agent_signal.py`.                                                                                      |
+| `agent-templates`                  | Shared                     | Built-in template data.                                                                                                         | Python may consume equivalent defaults, but no backend behavior to port.                                                                                                |
+| `agent-tracing`                    | Backend/tooling            | Trace recorder/store/viewer/CLI types.                                                                                          | Python has Langfuse/runtime tracing hooks; compare only if trace parity is required.                                                                                    |
+| `builtin-agents`                   | Shared/tool data           | Built-in agent definitions and tool bindings.                                                                                   | Python has `app/services/system_agent` and built-in skill/tool registries; keep identifiers and defaults aligned.                                                       |
+| `builtin-skills`                   | Shared/tool data           | Built-in skills/resources.                                                                                                      | Python has `app/skills/builtin.py`; compare skill identifiers and resource payload expectations.                                                                        |
+| `builtin-tool-activator`           | Removed                    | Package removed; remaining TS manifest/render/executor/runtime contract moved into `@lobechat/builtin-tools`.                   | Python owns skill activation execution through `app/tools/activator.py`; tool-manifest activation remains context-local TS orchestration.                               |
+| `builtin-tool-agent-builder`       | Removed                    | Package removed; remaining TS manifest/client/executor contract moved into `@lobechat/builtin-tools`.                           | Backend behavior is backed by agent and AI-agent service flows.                                                                                                         |
+| `builtin-tool-agent-documents`     | Removed                    | Package removed; remaining TS manifest/render/executor contract moved into `@lobechat/builtin-tools`.                           | Python owns `lobe-agent-documents` runtime execution through `app/tools/agent_documents_tool.py` and `/api/tools/run`.                                                  |
+| `builtin-tool-agent-management`    | Removed                    | Package removed; remaining TS manifest/render/executor contract moved into `@lobechat/builtin-tools`.                           | Agent and AI-agent backend behavior is covered by Python agent services and routers.                                                                                    |
+| `builtin-tool-agent-marketplace`   | Removed                    | Package removed; remaining TS picker/intervention/runtime contract moved into `@lobechat/builtin-tools`.                        | Marketplace data remains REST-backed through `app/routers/market.py` and `market_discover.py`.                                                                          |
+| `builtin-tool-brief`               | Removed                    | Package removed; remaining TS manifest/identifier contract moved into `@lobechat/builtin-tools`.                                | Python has `app/routers/briefs.py`, `app/services/brief`, and `app/tools/brief_tool.py`.                                                                                |
+| `builtin-tool-calculator`          | Removed                    | Package removed; remaining TS manifest and REST-backed executor contract moved into `@lobechat/builtin-tools`.                  | Python `app/tools/calculator.py` owns calculator execution via SymPy/Pint.                                                                                              |
+| `builtin-tool-claude-code`         | Frontend tool              | Claude Code tool render/client components.                                                                                      | Mostly UI. Execution is likely external/heterogeneous agent side, not Python business API.                                                                              |
+| `builtin-tool-cloud-sandbox`       | Removed                    | Package removed; remaining TS manifest/render/executor/runtime contract moved into `@lobechat/builtin-tools`.                   | Python cloud sandbox router/service overlap remains the backend ownership target.                                                                                       |
+| `builtin-tool-creds`               | Removed                    | Package removed; remaining TS manifest/context/executor/runtime contract moved into `@lobechat/builtin-tools`.                  | Python key vault and Klavis service integration provide backend parity paths.                                                                                           |
+| `builtin-tool-cron`                | Removed                    | Package removed; remaining TS manifest/runtime/executor contract moved into `@lobechat/builtin-tools`.                          | Python owns `app/routers/agent_cron_jobs.py` and task scheduler services.                                                                                               |
+| `builtin-tool-group-agent-builder` | Removed                    | Package removed; remaining TS group-agent-builder manifest/client/executor contract moved into `@lobechat/builtin-tools`.       | Backend behavior is backed by chat group and AI-agent service flows.                                                                                                    |
+| `builtin-tool-group-management`    | Removed                    | Package removed; remaining TS manifest/render/executor contract moved into `@lobechat/builtin-tools`.                           | Python chat group and task services overlap the backend orchestration surface.                                                                                          |
+| `builtin-tool-gtd`                 | Removed                    | Package removed; remaining TS manifest/render/executor/runtime contract moved into `@lobechat/builtin-tools`.                   | Python task services and `gtd_tool.py` provide backend parity paths.                                                                                                    |
+| `builtin-tool-knowledge-base`      | Removed                    | Package removed; remaining TS manifest/render/executor/runtime contract moved into `@lobechat/builtin-tools`.                   | Python knowledge/files/chunks routers and services provide the backend surface for knowledge-base actions.                                                              |
+| `builtin-tool-lobe-agent`          | Removed                    | Package removed; remaining TS visual-media manifest/runtime/executor contract moved into `@lobechat/builtin-tools`.             | Python owns `app/tools/lobe_agent_tool.py` and `ai_agent` service.                                                                                                      |
+| `builtin-tool-local-system`        | Mixed desktop tool         | Local desktop/system executor, IPC client UI, audit helpers.                                                                    | Python backend does not own Electron local execution; only compare tool result contracts if routed through Python.                                                      |
+| `builtin-tool-memory`              | Removed                    | Package removed; remaining TS manifest/render/executor contract moved into `@lobechat/builtin-tools`.                           | Python owns `lobe-user-memory` runtime execution through `app/tools/memory_tool.py` and `/api/tools/run`, including TS-parity search XML and time-intent normalization. |
+| `builtin-tool-message`             | Removed                    | Package removed; remaining TS manifest/render/executor/runtime contract moved into `@lobechat/builtin-tools`.                   | Bot/message execution is backed by existing bot/message services; Python parity remains in the bot platform migration track.                                            |
+| `builtin-tool-notebook`            | Removed                    | Package removed; remaining TS manifest/render/executor contract moved into `@lobechat/builtin-tools`.                           | Python owns legacy `lobe-notebook` document runtime execution through `app/tools/notebook_tool.py` and `/api/tools/run`.                                                |
+| `builtin-tool-page-agent`          | Mixed tool                 | Page-agent editor/runtime integration.                                                                                          | Compare with agent document/page agent APIs if Python handles execution; UI remains TS.                                                                                 |
+| `builtin-tool-remote-device`       | Removed                    | Package removed; remaining TS remote-device manifest/runtime contract moved into `@lobechat/builtin-tools`.                     | Device execution remains TS/device-owned unless a later Python/device-gateway ownership pass is planned.                                                                |
+| `builtin-tool-skill-maintainer`    | Removed                    | Package and hidden TS built-in tool registration removed.                                                                       | Python owns `/api/skill-maintainer/*` router coverage.                                                                                                                  |
+| `builtin-tool-skill-store`         | Removed                    | Package removed; remaining TS manifest/render/inspector wrapper moved into `@lobechat/builtin-tools`.                           | Python owns skill marketplace/import execution via `app/tools/skill_store.py`.                                                                                          |
+| `builtin-tool-skills`              | Removed                    | Package removed; remaining TS manifest/render/inspector and thin REST executor moved into `@lobechat/builtin-tools`.            | Python owns core skill execution handlers via `app/tools/skills.py`, including activation, resources, command/script execution, and file export responses.              |
+| `builtin-tool-task`                | Removed                    | Package removed; remaining TS task manifest/list/executor contract moved into `@lobechat/builtin-tools`.                        | Python owns `app/routers/tasks.py`, `app/services/task`, and `app/tools/task_tool.py`.                                                                                  |
+| `builtin-tool-topic-reference`     | Removed                    | Package removed; remaining TS manifest/identifier/executor wrapper moved into `@lobechat/builtin-tools`.                        | Python has topic and message routers plus `app/tools/topic_reference.py`.                                                                                               |
+| `builtin-tool-user-interaction`    | Removed                    | Package removed; remaining TS human-interaction manifest/client/executor/runtime contract moved into `@lobechat/builtin-tools`. | Python AI-agent intervention flows provide the backend overlap; UI remains TS.                                                                                          |
+| `builtin-tool-web-browsing`        | Removed                    | Package removed; remaining TS web-browsing manifest/client/runtime contract moved into `@lobechat/builtin-tools`.               | Python web search/crawler services provide the backend overlap; portal/render behavior remains TS.                                                                      |
+| `builtin-tool-web-onboarding`      | Removed                    | Package removed; remaining TS manifest/runtime utility/intervention contract moved into `@lobechat/builtin-tools`.              | Python owns onboarding REST/service document patch semantics and onboarding state endpoints.                                                                            |
+| `builtin-tools`                    | Frontend/shared aggregator | Aggregates built-in tool renders, inspectors, portals, identifiers.                                                             | Mostly frontend registry. Python needs equivalent registry only for server-side tool execution.                                                                         |
+| `chat-adapter-feishu`              | Backend/shared adapter     | Feishu/Lark chat SDK adapter.                                                                                                   | Python has bot services/webhooks; compare platform payload conversion if porting bot runtime.                                                                           |
+| `chat-adapter-line`                | Backend/shared adapter     | LINE chat SDK adapter.                                                                                                          | Compare with Python bot platform support if porting.                                                                                                                    |
+| `chat-adapter-qq`                  | Backend/shared adapter     | QQ chat SDK adapter.                                                                                                            | Compare with Python bot platform support if porting.                                                                                                                    |
+| `chat-adapter-wechat`              | Backend/shared adapter     | WeChat chat SDK adapter.                                                                                                        | Compare with Python bot inbound/bridge services if porting.                                                                                                             |
+| `config`                           | Shared                     | App config aggregation.                                                                                                         | Python has `app/config.py`; compare env names/defaults only.                                                                                                            |
+| `const`                            | Shared                     | Constants: protocol, messages, files, layout, hotkeys, RBAC, bot, etc.                                                          | Python should align enum/string constants used on API boundaries, especially task, thread, bot, RBAC, and file values.                                                  |
+| `context-engine`                   | Backend/shared             | Context pipeline engine and processors.                                                                                         | Python has context compression and agent runtime message handling; compare prompt/context assembly behavior.                                                            |
+| `conversation-flow`                | Shared/frontend            | Conversation transformation/rendering engine and types.                                                                         | Mostly UI/domain transformation. Python may need only persisted message/thread shape parity.                                                                            |
+| `database`                         | Backend                    | Drizzle schemas, models, repositories, DB utilities.                                                                            | Highest-priority comparison. Python models in `app/models` must mirror Drizzle schemas.                                                                                 |
+| `device-gateway-client`            | Shared/client              | WebSocket client for device gateway.                                                                                            | Python does not appear to own device gateway server logic in this repo.                                                                                                 |
+| `edge-config`                      | Backend/shared             | Edge/business config access.                                                                                                    | Compare with Python config/feature flags only where REST responses expose config.                                                                                       |
+| `editor-runtime`                   | Shared/backend             | Editor runtime and prompts.                                                                                                     | Compare only if Python executes page/document editing operations.                                                                                                       |
+| `eval-dataset-parser`              | Backend/shared             | Parses CSV/XLSX/JSON/JSONL eval datasets.                                                                                       | Strong overlap with `app/routers/agent_eval.py` and `rag_eval.py` dataset import/parse endpoints.                                                                       |
+| `eval-rubric`                      | Backend/shared             | Rubric evaluator for agent eval benchmarks.                                                                                     | Compare with Python agent evaluation services.                                                                                                                          |
+| `fetch-sse`                        | Shared/client              | SSE fetch utilities and error parsing.                                                                                          | Python must emit compatible streaming/event/error shapes for SPA clients.                                                                                               |
+| `file-loaders`                     | Removed                    | Package removed; remaining local desktop parser helper moved into `@lobechat/local-file-shell`.                                 | Python file/chunk/RAG parse services own REST parsing paths; legacy TS document fallback still uses the local helper until old TRPC paths are retired.                  |
+| `heterogeneous-agents`             | Shared/client              | External agent adapter registry/config/client labels.                                                                           | Compare with Python `agent_runtime` only if Python executes heterogeneous agents.                                                                                       |
+| `local-file-shell`                 | Backend/desktop            | Local file/shell helpers built on file loaders.                                                                                 | Mostly desktop/local. Python backend should not duplicate unless it owns local shell execution.                                                                         |
+| `markdown-patch`                   | Removed                    | Package removed; remaining hunk request type moved into `@lobechat/builtin-tools`.                                              | Python onboarding PATCH owns markdown patch application semantics.                                                                                                      |
+| `memory-user-memory`               | Removed                    | Package removed; remaining memory tool request schemas moved into `@lobechat/types`.                                            | Python memory routers/services/workflows own memory execution and extraction behavior.                                                                                  |
+| `model-bank`                       | Shared/backend             | Provider/model catalog and standard parameter definitions.                                                                      | Strong overlap with `app/services/model_catalog`, `ai_infra_service`, and model/provider REST responses.                                                                |
+| `model-runtime`                    | Backend                    | Provider runtime layer for LLM calls and errors.                                                                                | Strong overlap with `app/services/llm_service`, `provider_runtime.py`, `webapi.py`, image/video generation routes.                                                      |
+| `observability-otel`               | Backend                    | OpenTelemetry helpers for node/trpc/gen-ai/modules.                                                                             | Python has Langfuse/runtime tracing; compare trace attributes only if cross-language observability must match.                                                          |
+| `openapi`                          | Backend                    | Hono/OpenAPI controllers, routes, middleware, services.                                                                         | Directly comparable with Python REST routers. Use for API parity checks.                                                                                                |
+| `prompts`                          | Shared/backend             | Agent, chain, context, and tool prompts.                                                                                        | Python services/tools should reuse or mirror prompt behavior where they replace TS execution.                                                                           |
+| `python-interpreter`               | Shared/client/runtime      | Pyodide-based interpreter package.                                                                                              | Distinct from FastAPI backend; compare only for code-interpreter tool output contracts.                                                                                 |
+| `shared-tool-ui`                   | Frontend                   | Shared React UI for tool renders/inspectors.                                                                                    | No Python port.                                                                                                                                                         |
+| `ssrf-safe-fetch`                  | Backend/shared             | SSRF-safe fetch with browser/node conditional exports.                                                                          | Python URL fetch/crawler/search code must enforce equivalent SSRF safety.                                                                                               |
+| `tool-runtime`                     | Backend/shared             | Runtime abstractions for computer/tool execution.                                                                               | Strong overlap with Python `app/services/tool_execution` and `app/tools/*`.                                                                                             |
+| `types`                            | Shared                     | Central TypeScript API/domain types.                                                                                            | Python Pydantic request/response models must map to these contracts, with snake_case on REST boundary and camelCase in TS services.                                     |
+| `utils`                            | Shared/mixed               | Shared pure utilities plus `client` and `server` subexports.                                                                    | Python should mirror only behavior that affects API contracts, IDs, parsing, serialization, pricing, cron, and safety.                                                  |
+| `web-crawler`                      | Removed                    | Package removed; remaining crawler response shapes moved into `@lobechat/types`.                                                | Python `url_crawler.py`, `web_search.py`, and web search routes own crawler behavior.                                                                                   |
+
+## Python Backend Surface
+
+The Python backend has:
+
+- **Routers**: admin, agents, ai-agent, auth, bot, chat, chunks, config, files, generations, knowledge, market, memory, messages, notebook, sessions, skills, tasks, topics, usage, webapi, web-search, and other domain routers.
+- **Services**: agent runtime, agent runtime hooks/types, agent signal, ai agent, bot, chat, context compression, file, knowledge, LLM, memory, model catalog/fallback, search, skill engine, task, tool execution.
+- **Models**: SQLModel definitions for agents, messages, sessions, topics, files, documents, knowledge/RAG, eval, task, memory, AI infra, RBAC, users, notifications, generation, and agent ops.
+
+## High-Priority Comparison Areas
+
+### 1. Database Schema Parity
+
+Compare `src/database/schemas/*` and `src/database/models/*` against `python-backend/app/models/*`.
+
+Priority tables already mirrored in Python include:
+
+- agents, agent files, agent knowledge bases
+- agent bot providers, agent cron jobs, agent documents
+- messages, message plugins/files/queries/chunks/groups/tts/translates
+- sessions, session groups, topics, topic documents/shares, threads
+- files, global files, documents, document histories
+- knowledge bases, knowledge base files, chunks, embeddings, document chunks
+- tasks, task dependencies/documents/topics/comments, briefs
+- user memories, contexts, preferences, activities, identities, experiences
+- agent eval and RAG eval tables
+- users, user settings, accounts, installed plugins
+- ai providers/models, API keys, async tasks, notifications, RBAC
+
+Risk: schema drift causes Python 500s, FK failures, timestamp/type mismatches, or silent data shape bugs. Treat Drizzle as source of truth.
+
+### 2. Runtime and Tool Execution Parity
+
+Compare:
+
+- TS: `agent-runtime`, `tool-runtime`, `builtin-tool-*`, `context-engine`, `prompts`
+- Python: `app/services/agent_runtime`, `app/services/tool_execution`, `app/tools/*`, `app/services/context_compressor`
+
+Important parity points:
+
+- tool identifiers and manifest names
+- input/output JSON schemas
+- human-intervention semantics
+- streaming event format
+- task/thread status transitions
+- prompt templates and system-role text
+- error taxonomy and retry/interruption behavior
+
+### 3. REST/OpenAPI Parity
+
+Compare:
+
+- TS: `packages/openapi`, `src/server/routers`, `src/app/(backend)/webapi`
+- Python: `app/routers/*`
+
+Important parity points:
+
+- endpoint path and method
+- request/response field casing
+- auth dependency and service-token behavior
+- pagination/list response shape
+- SuperJSON wrapping for TRPC compatibility routes
+- streaming and file upload behavior
+
+### 4. Model Provider and Catalog Parity
+
+Compare:
+
+- TS: `model-runtime`, `model-bank`, `fetch-sse`
+- Python: `llm_service`, `provider_runtime.py`, `model_catalog`, `model_fallback`, `webapi.py`
+
+Important parity points:
+
+- provider IDs and model IDs
+- standard parameters and capability flags
+- error mapping
+- chat/image/video/TTS/STT routes
+- SSE event format consumed by the SPA
+
+### 5. Memory, RAG, Files, Search
+
+Compare:
+
+- TS: `eval-dataset-parser`, `eval-rubric`
+- Python: `memory_service`, `file_service`, `knowledge_service`, `search`, `web_search`, `agent_eval`, `rag_eval`
+
+Important parity points:
+
+- extraction prompts and taxonomy values
+- file parsing/chunking behavior
+- vector/semantic search payloads
+- evaluation dataset import behavior
+- search provider result shape
+
+## Backend vs Frontend Guidance
+
+When deciding whether a `packages/*` package is backend or frontend, use these checks:
+
+- If it imports React, antd, `@lobehub/ui`, or has `src/client`, it has frontend surface.
+- If it has `executor`, `ExecutionRuntime`, provider calls, repositories, Drizzle, Hono, OpenTelemetry, or Node-only dependencies, it has backend/runtime surface.
+- If it only exports constants, manifests, schemas, prompts, or types, treat it as shared and compare only boundary contracts.
+- For mixed built-in tool packages, Python only needs parity for **executor/runtime/tool contract** behavior. The client render/inspector UI stays TypeScript.
+
+## Suggested Next Audit
+
+For a deeper parity report, generate three machine-readable matrices:
+
+1. Drizzle table/column list vs SQLModel class/field list.
+2. TS route/procedure/OpenAPI list vs Python router method/path list.
+3. Built-in tool manifest/executor list vs Python `app/tools` registry list.
+
+Those would reveal exact missing endpoints, schema drift, and tool contract drift beyond this package-level classification.

@@ -4,12 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentEvalRunModel, AgentEvalRunTopicModel } from '@/database/models/agentEval';
 import { topics } from '@/database/schemas';
 import { AgentEvalRunService } from '@/server/services/agentEvalRun';
-import { AgentRuntimeService } from '@/server/services/agentRuntime/AgentRuntimeService';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 
 import { cleanupDB, serverDB, setupEvalChain, setupMultiCaseRun, userId } from './_setup';
 
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
-  AgentRuntimeService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
 }));
@@ -205,7 +205,7 @@ describe('AgentEvalRunService', () => {
         status: 'running',
       });
 
-      vi.mocked(AgentRuntimeService).mockClear();
+      vi.mocked(PythonAgentProxyService).mockClear();
 
       const service = new AgentEvalRunService(serverDB, userId);
       await service.abortRun(run.id);
@@ -215,7 +215,7 @@ describe('AgentEvalRunService', () => {
       expect(updatedRun?.status).toBe('aborted');
 
       // Verify interruptOperation called for both operations
-      const mockInstance = vi.mocked(AgentRuntimeService).mock.results[0].value;
+      const mockInstance = vi.mocked(PythonAgentProxyService).mock.results[0].value;
       expect(mockInstance.interruptOperation).toHaveBeenCalledTimes(2);
       expect(mockInstance.interruptOperation).toHaveBeenCalledWith('op-111');
       expect(mockInstance.interruptOperation).toHaveBeenCalledWith('op-222');
@@ -232,7 +232,7 @@ describe('AgentEvalRunService', () => {
       const rt = await runTopicModel.findByRunAndTestCase(run.id, cases[0].testCase.id);
       await runTopicModel.updateByRunAndTopic(rt!.runId, rt!.topicId, { status: 'running' });
 
-      vi.mocked(AgentRuntimeService).mockClear();
+      vi.mocked(PythonAgentProxyService).mockClear();
 
       const service = new AgentEvalRunService(serverDB, userId);
       await service.abortRun(run.id);
@@ -241,7 +241,7 @@ describe('AgentEvalRunService', () => {
       expect(updatedRun?.status).toBe('aborted');
 
       // interruptOperation should not be called (no operationId)
-      const mockInstance = vi.mocked(AgentRuntimeService).mock.results[0].value;
+      const mockInstance = vi.mocked(PythonAgentProxyService).mock.results[0].value;
       expect(mockInstance.interruptOperation).not.toHaveBeenCalled();
     });
 
@@ -270,12 +270,12 @@ describe('AgentEvalRunService', () => {
         status: 'running',
       });
 
-      vi.mocked(AgentRuntimeService).mockClear();
+      vi.mocked(PythonAgentProxyService).mockClear();
 
       await service.abortRun(run.id);
 
       // Only the running topic's operation should be interrupted
-      const mockInstance = vi.mocked(AgentRuntimeService).mock.results[0].value;
+      const mockInstance = vi.mocked(PythonAgentProxyService).mock.results[0].value;
       expect(mockInstance.interruptOperation).toHaveBeenCalledTimes(1);
       expect(mockInstance.interruptOperation).toHaveBeenCalledWith('op-only-running');
     });

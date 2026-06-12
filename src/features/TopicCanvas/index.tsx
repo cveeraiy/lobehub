@@ -17,7 +17,7 @@ import { StyleSheet } from '@/utils/styles';
 
 import TitleSection, { type TitleSectionProps } from './TitleSection';
 
-const log = debug('lobe-client:topic-canvas');
+const log = debug('ethos-client:topic-canvas');
 
 const styles = StyleSheet.create({
   contentWrapper: {

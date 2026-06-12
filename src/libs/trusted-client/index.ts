@@ -53,9 +53,11 @@ export const generateTrustedClientToken = (userInfo: TrustedClientUserInfo): str
  *
  * @returns Encrypted token string or undefined if not configured or user not authenticated
  */
-export const getTrustedClientTokenForSession = async (): Promise<string | undefined> => {
+export const getTrustedClientTokenForSession = async (
+  request: Request,
+): Promise<string | undefined> => {
   const { getSessionUser } = await import('./getSessionUser');
-  const userInfo = await getSessionUser();
+  const userInfo = await getSessionUser(request);
 
   if (!userInfo) {
     return undefined;

@@ -1,8 +1,8 @@
 import { type MCPToolCallResult } from '@/libs/mcp';
-import { truncateToolResult } from '@/server/utils/truncateToolResult';
 import { useToolStore } from '@/store/tool';
 import { type ChatToolPayload } from '@/types/message';
 import { safeParseJSON } from '@/utils/safeParseJSON';
+import { truncateToolResult } from '@/utils/truncateToolResult';
 
 /**
  * Context for remote tool execution, derived from the invoking message
@@ -81,7 +81,7 @@ export const lobehubSkillExecutor: RemoteToolExecutor = async (p, context) => {
   // Parse arguments
   const args = safeParseJSON(p.arguments) || {};
 
-  // Call LobeHub Skill tool via store action
+  // Call Ethos Skill tool via store action
   // topicId comes from message context, not global active state
   const result = await useToolStore.getState().callLobehubSkillTool({
     args,
@@ -92,7 +92,7 @@ export const lobehubSkillExecutor: RemoteToolExecutor = async (p, context) => {
 
   if (!result.success) {
     return createFailedResult(
-      result.error || `LobeHub Skill tool ${provider} ${p.apiName} execution failed`,
+      result.error || `Ethos Skill tool ${provider} ${p.apiName} execution failed`,
     );
   }
 

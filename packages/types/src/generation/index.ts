@@ -8,6 +8,25 @@ export interface ImageGenerationTopic {
   updatedAt: Date;
 }
 
+export interface GenerationTopicItem {
+  accessedAt?: Date | string | null;
+  coverUrl?: string | null;
+  createdAt: Date | string;
+  id: string;
+  title?: string | null;
+  type: string;
+  updatedAt: Date | string;
+  userId: string;
+}
+
+export interface NewGenerationTopic {
+  coverUrl?: string | null;
+  id?: string;
+  title?: string | null;
+  type?: string;
+  userId: string;
+}
+
 export interface BaseGenerationAsset {
   type: string;
 }
@@ -91,4 +110,42 @@ export interface GenerationBatch {
   prompt: string;
   provider: string;
   width?: number | null;
+}
+
+export interface GenerationBatchItem {
+  config?: Record<string, unknown> | null;
+  createdAt: Date | string;
+  generationTopicId?: string | null;
+  height?: number | null;
+  id: string;
+  model: string;
+  prompt: string;
+  provider: string;
+  ratio?: string | null;
+  updatedAt: Date | string;
+  userId: string;
+  width?: number | null;
+}
+
+export interface NewGenerationBatch {
+  config?: Record<string, unknown> | null;
+  generationTopicId: string;
+  height?: number | null;
+  id?: string;
+  model: string;
+  prompt: string;
+  provider: string;
+  ratio?: string | null;
+  userId: string;
+  width?: number | null;
+}
+
+export interface NewGeneration {
+  asset?: GenerationAsset | null;
+  asyncTaskId?: string | null;
+  fileId?: string | null;
+  generationBatchId: string;
+  id?: string;
+  seed?: number | null;
+  userId: string;
 }

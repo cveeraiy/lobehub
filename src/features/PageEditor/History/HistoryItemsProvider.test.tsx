@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { DocumentHistoryListItem } from '@/server/routers/lambda/_schema/documentHistory';
+import type { DocumentHistoryListItem } from '@/types/documentHistory';
 
 import { createStore } from './HistoryItemsProvider';
 

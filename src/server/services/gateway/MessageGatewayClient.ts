@@ -2,7 +2,7 @@ import debug from 'debug';
 
 import { gatewayEnv } from '@/envs/gateway';
 
-const log = debug('lobe-server:message-gateway-client');
+const log = debug('ethos-server:message-gateway-client');
 
 // ─── Types ───
 
@@ -46,8 +46,8 @@ export interface MessageGatewayStats {
  *
  * The gateway is a pure connection proxy — it only manages persistent
  * connections (WebSocket/long-polling) and forwards inbound events to
- * LobeHub's webhook. Outbound messaging is NOT routed through the gateway;
- * LobeHub calls platform REST APIs directly.
+ * Ethos's webhook. Outbound messaging is NOT routed through the gateway;
+ * Ethos calls platform REST APIs directly.
  */
 export class MessageGatewayClient {
   private baseUrl: string;

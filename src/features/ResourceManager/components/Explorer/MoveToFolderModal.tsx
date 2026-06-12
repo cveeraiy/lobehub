@@ -25,8 +25,8 @@ const MoveToFolderModal = memo<MoveToFolderModalProps>(
     const [folders, setFolders] = useState<FolderTreeItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-    const [loadedFolders, setLoadedFolders] = useState<Set<string>>(new Set());
+    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
+    const [loadedFolders, setLoadedFolders] = useState<Set<string>>(() => new Set());
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
     const createFolder = useFileStore((s) => s.createFolder);

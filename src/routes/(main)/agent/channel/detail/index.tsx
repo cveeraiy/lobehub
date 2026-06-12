@@ -5,9 +5,9 @@ import { createStaticStyles } from 'antd-style';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { SerializedPlatformDefinition } from '@/server/services/bot/platforms/types';
 import { agentBotProviderService } from '@/services/agentBotProvider';
 import { useAgentStore } from '@/store/agent';
+import type { SerializedPlatformDefinition } from '@/types/botPlatform';
 
 import {
   BOT_RUNTIME_STATUSES,

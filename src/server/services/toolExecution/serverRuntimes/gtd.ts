@@ -1,13 +1,13 @@
-import { GTDIdentifier } from '@lobechat/builtin-tool-gtd';
+import { GTDIdentifier } from '@lobechat/builtin-tools';
 import {
   GTDExecutionRuntime,
   type GTDRuntimeService,
   type PlanDocument,
-} from '@lobechat/builtin-tool-gtd/executionRuntime';
-import { type LobeChatDatabase } from '@lobechat/database';
+} from '@lobechat/builtin-tools/gtdExecutionRuntime';
 
 import { DocumentModel } from '@/database/models/document';
 import { TopicDocumentModel } from '@/database/models/topicDocument';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { type ServerRuntimeRegistration } from './types';
 

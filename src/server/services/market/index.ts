@@ -1,12 +1,11 @@
 import { type LobeToolManifest } from '@lobechat/context-engine';
 import { MarketSDK } from '@lobehub/market-sdk';
 import debug from 'debug';
-import { type NextRequest } from 'next/server';
 
 import { type TrustedClientUserInfo } from '@/libs/trusted-client';
 import { generateTrustedClientToken, getTrustedClientTokenForSession } from '@/libs/trusted-client';
 
-const log = debug('lobe-server:market-service');
+const log = debug('ethos-server:market-service');
 
 const MARKET_BASE_URL = process.env.MARKET_BASE_URL || 'https://market.lobehub.com';
 
@@ -15,7 +14,7 @@ const MARKET_BASE_URL = process.env.MARKET_BASE_URL || 'https://market.lobehub.c
 /**
  * Extract access token from Authorization header
  */
-export function extractAccessToken(req: NextRequest): string | undefined {
+export function extractAccessToken(req: Request): string | undefined {
   const authHeader = req.headers.get('authorization');
   if (authHeader?.startsWith('Bearer ')) {
     return authHeader.slice(7);
@@ -107,12 +106,12 @@ export class MarketService {
   // ============================== Factory Methods ==============================
 
   /**
-   * Create MarketService from Next.js request (server-side only)
+   * Create MarketService from request (server-side only)
    * Extracts accessToken from Authorization header and trustedClientToken from session
    */
-  static async createFromRequest(req: NextRequest): Promise<MarketService> {
+  static async createFromRequest(req: Request): Promise<MarketService> {
     const accessToken = extractAccessToken(req);
-    const trustedClientToken = await getTrustedClientTokenForSession();
+    const trustedClientToken = await getTrustedClientTokenForSession(req);
 
     return new MarketService({
       accessToken,
@@ -123,7 +122,7 @@ export class MarketService {
   // ============================== Feedback Methods ==============================
 
   /**
-   * Submit feedback to LobeHub
+   * Submit feedback to Ethos
    */
   async submitFeedback(params: {
     clientInfo?: {
@@ -391,7 +390,7 @@ export class MarketService {
   // ============================== Skills Methods (using SDK) ==============================
 
   /**
-   * Search for skills in the LobeHub Market
+   * Search for skills in the Ethos Market
    */
   async searchSkill(params: {
     category?: string;
@@ -458,7 +457,7 @@ export class MarketService {
   }
 
   /**
-   * Execute a LobeHub Skill tool
+   * Execute an Ethos Skill tool
    * @param params - The skill execution parameters (provider, toolName, args)
    * @returns Execution result with content and success status
    */
@@ -483,7 +482,7 @@ export class MarketService {
       };
     } catch (error) {
       const err = error as Error;
-      console.error('MarketService.executeLobehubSkill error %s/%s: %O', provider, toolName, err);
+      console.error('MarketService.executeEthosSkill error %s/%s: %O', provider, toolName, err);
 
       // MarketAPIError carries the full error response body from the API,
       // including structured details (command, exitCode, stdout, stderr).
@@ -504,7 +503,7 @@ export class MarketService {
   }
 
   /**
-   * Fetch LobeHub Skills manifests from Market API
+   * Fetch Ethos Skills manifests from Market API
    * Gets user's connected skills and builds tool manifests for agent execution
    *
    * @returns Array of tool manifests for connected skills
@@ -559,7 +558,7 @@ export class MarketService {
             identifier: providerId,
             meta: {
               avatar: icon || '🔗',
-              description: `LobeHub Skill: ${providerLabel}`,
+              description: `Ethos Skill: ${providerLabel}`,
               tags: ['lobehub-skill', providerId],
               title: providerLabel,
             },

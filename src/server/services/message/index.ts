@@ -1,5 +1,3 @@
-import { type LobeChatDatabase } from '@lobechat/database';
-import { CompressionRepository } from '@lobechat/database';
 import {
   type CreateMessageParams,
   type UIChatMessage,
@@ -7,8 +5,10 @@ import {
 } from '@lobechat/types';
 
 import { MessageModel } from '@/database/models/message';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { FileService } from '../file';
+import { CompressionRepository } from './compressionRepository';
 
 interface QueryOptions {
   agentId?: string | null;

@@ -13,7 +13,7 @@ import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
 import { UserModel } from '@/database/models/user';
-import type { LobeChatDatabase } from '@/database/type';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { BriefService } from '../brief';
 

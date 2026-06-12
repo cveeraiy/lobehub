@@ -1,4 +1,4 @@
-import type { FieldSchema } from '@/server/services/bot/platforms/types';
+import type { FieldSchema } from '@/types/botPlatform';
 
 interface ChannelConfigFormState {
   applicationId?: string;

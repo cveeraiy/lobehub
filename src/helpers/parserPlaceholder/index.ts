@@ -1,11 +1,8 @@
-import { isDesktop } from '@lobechat/const';
 import { uuid } from '@lobechat/utils';
 import { template } from 'es-toolkit/compat';
 
 import { useAgentStore } from '@/store/agent';
 import { agentSelectors } from '@/store/agent/selectors';
-import { useChatStore } from '@/store/chat';
-import { topicSelectors } from '@/store/chat/selectors';
 import { useUserStore } from '@/store/user';
 import { userProfileSelectors } from '@/store/user/selectors';
 
@@ -57,7 +54,7 @@ export const VARIABLE_GENERATORS = {
    * |-------|---------|
    * | `{{email}}` | demo@lobehub.com |
    * | `{{nickname}}` | Community User |
-   * | `{{username}}` | LobeChat |
+   * | `{{username}}` | Ethos |
    *
    */
   email: () => userProfileSelectors.email(useUserStore.getState()) ?? '',
@@ -141,7 +138,7 @@ export const VARIABLE_GENERATORS = {
    * | `{{musicPath}}` | /Users/username/Music |
    * | `{{picturesPath}}` | /Users/username/Pictures |
    * | `{{videosPath}}` | /Users/username/Videos |
-   * | `{{userDataPath}}` | /Users/username/Library/Application Support/LobeChat |
+   * | `{{userDataPath}}` | /Users/username/Library/Application Support/Ethos |
    * | `{{workingDirectory}}` | /Users/username/Projects/my-project |
    *
    */
@@ -157,13 +154,7 @@ export const VARIABLE_GENERATORS = {
    * Working directory: topic-level override takes priority over agent-level value
    */
   workingDirectory: () => {
-    if (!isDesktop) return '';
-
-    const topicWorkingDir = topicSelectors.currentTopicWorkingDirectory(useChatStore.getState());
-    if (topicWorkingDir) return topicWorkingDir;
-
-    const agentWorkingDir = agentSelectors.currentAgentWorkingDirectory(useAgentStore.getState());
-    return agentWorkingDir ?? '(not specified, use user Home directory as default)';
+    return '';
   },
 } as Record<string, () => string>;
 

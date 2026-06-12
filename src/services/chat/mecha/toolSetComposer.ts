@@ -6,7 +6,7 @@ import debug from 'debug';
 type UniformToolArray = NonNullable<ToolsGenerationResult['tools']>;
 type UniformTool = UniformToolArray[number];
 
-const log = debug('lobe-mecha:tool-set-composer');
+const log = debug('ethos-mecha:tool-set-composer');
 
 export interface ToolSetComposerContext {
   isPageEditorReady?: boolean;

@@ -36,6 +36,14 @@ export const FeatureFlagsSchema = z.object({
   // Cloud feature flag. Keep here until cloud owns a separate runtime flag domain.
   auth_captcha: FeatureFlagValue.optional(),
   cloud_promotion: FeatureFlagValue.optional(),
+  bot_channels: FeatureFlagValue.optional(),
+  resources: FeatureFlagValue.optional(),
+  starter_list: FeatureFlagValue.optional(),
+  admin_panel: FeatureFlagValue.optional(),
+
+  // Enterprise mode: when enabled, disables consumer features
+  // (marketplace, image/video gen, public sharing, user-managed API keys, etc.)
+  enterprise_mode: FeatureFlagValue.optional(),
 
   // the flags below can only be used with commercial license
   // if you want to use it in the commercial usage
@@ -72,7 +80,7 @@ export const DEFAULT_FEATURE_FLAGS: IFeatureFlags = {
   api_key_manage: false,
   edit_agent: true,
 
-  ai_image: true,
+  ai_image: false,
 
   check_updates: true,
   welcome_suggest: true,
@@ -87,9 +95,15 @@ export const DEFAULT_FEATURE_FLAGS: IFeatureFlags = {
   auth_captcha: true,
   cloud_promotion: false,
 
-  market: true,
+  market: false,
   speech_to_text: true,
   changelog: true,
+  bot_channels: false,
+  resources: false,
+  starter_list: false,
+  admin_panel: isDev,
+
+  enterprise_mode: false,
 
   // the flags below can only be used with commercial license
   // if you want to use it in the commercial usage
@@ -99,34 +113,42 @@ export const DEFAULT_FEATURE_FLAGS: IFeatureFlags = {
 };
 
 export const mapFeatureFlagsEnvToState = (config: IFeatureFlags, userId?: string) => {
+  const isEnterprise = evaluateFeatureFlag(config.enterprise_mode, userId);
+
   return {
     isAgentEditable: evaluateFeatureFlag(config.edit_agent, userId),
-    showProvider: evaluateFeatureFlag(config.provider_settings, userId),
+    isEnterprise,
+    showProvider: isEnterprise ? false : evaluateFeatureFlag(config.provider_settings, userId),
 
-    showOpenAIApiKey: evaluateFeatureFlag(config.openai_api_key, userId),
-    showOpenAIProxyUrl: evaluateFeatureFlag(config.openai_proxy_url, userId),
+    showOpenAIApiKey: isEnterprise ? false : evaluateFeatureFlag(config.openai_api_key, userId),
+    showOpenAIProxyUrl: isEnterprise ? false : evaluateFeatureFlag(config.openai_proxy_url, userId),
 
     showApiKeyManage: evaluateFeatureFlag(config.api_key_manage, userId),
 
-    showAiImage: evaluateFeatureFlag(config.ai_image, userId),
-    showChangelog: evaluateFeatureFlag(config.changelog, userId),
+    showAiImage: isEnterprise ? false : evaluateFeatureFlag(config.ai_image, userId),
+    showChangelog: isEnterprise ? false : evaluateFeatureFlag(config.changelog, userId),
 
-    enableCheckUpdates: evaluateFeatureFlag(config.check_updates, userId),
+    enableCheckUpdates: isEnterprise ? false : evaluateFeatureFlag(config.check_updates, userId),
     showWelcomeSuggest: evaluateFeatureFlag(config.welcome_suggest, userId),
 
     enableKnowledgeBase: evaluateFeatureFlag(config.knowledge_base, userId),
-    enableRAGEval: evaluateFeatureFlag(config.rag_eval, userId),
+    enableRAGEval: isEnterprise ? false : evaluateFeatureFlag(config.rag_eval, userId),
     enableAgentSelfIteration: evaluateFeatureFlag(config.agent_self_iteration, userId),
     enableAgentOnboarding: evaluateFeatureFlag(config.agent_onboarding, userId),
     enableAgentTask: evaluateFeatureFlag(config.agent_task, userId),
     enableAuthCaptcha: evaluateFeatureFlag(config.auth_captcha, userId),
 
-    showCloudPromotion: evaluateFeatureFlag(config.cloud_promotion, userId),
+    showCloudPromotion: isEnterprise ? false : evaluateFeatureFlag(config.cloud_promotion, userId),
 
-    showMarket: evaluateFeatureFlag(config.market, userId),
+    showMarket: isEnterprise ? false : evaluateFeatureFlag(config.market, userId),
     enableSTT: evaluateFeatureFlag(config.speech_to_text, userId),
 
-    hideGitHub: evaluateFeatureFlag(config.commercial_hide_github, userId),
+    enableBotChannels: evaluateFeatureFlag(config.bot_channels, userId),
+    enableResources: evaluateFeatureFlag(config.resources, userId),
+    showStarterList: evaluateFeatureFlag(config.starter_list, userId),
+    showAdminPanel: evaluateFeatureFlag(config.admin_panel, userId),
+
+    hideGitHub: isEnterprise ? true : evaluateFeatureFlag(config.commercial_hide_github, userId),
     hideDocs: evaluateFeatureFlag(config.commercial_hide_docs, userId),
   };
 };

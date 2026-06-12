@@ -9,33 +9,34 @@
  * because the activated state is persisted in message pluginState and accumulated
  * by selectActivatedToolIdsFromMessages at each agentic loop step.
  */
-import { builtinSkills } from '@lobechat/builtin-skills';
+import { builtinTools, SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
 import {
   ActivatorExecutionRuntime,
   type ActivatorRuntimeService,
   type ToolManifestInfo,
-} from '@lobechat/builtin-tool-activator/executionRuntime';
-import { ActivatorExecutor } from '@lobechat/builtin-tool-activator/executor';
-import { SkillsExecutionRuntime } from '@lobechat/builtin-tool-skills/executionRuntime';
+} from '@lobechat/builtin-tools/activatorExecutionRuntime';
+import { ActivatorExecutor } from '@lobechat/builtin-tools/activatorExecutor';
 
-import { filterBuiltinSkills } from '@/helpers/skillFilters';
-import { agentSkillService } from '@/services/skill';
+import { restClient } from '@/libs/rest';
 import { getToolStoreState } from '@/store/tool';
 import { toolSelectors } from '@/store/tool/selectors/tool';
 import { LobehubSkillStatus } from '@/store/tool/slices/lobehubSkillStore';
 
-const skillsRuntime = new SkillsExecutionRuntime({
-  builtinSkills: filterBuiltinSkills(builtinSkills),
-  service: {
-    findAll: () => agentSkillService.list(),
-    findById: (id) => agentSkillService.getById(id),
-    findByName: (name) => agentSkillService.getByName(name),
-    readResource: (id, path) => agentSkillService.readResource(id, path),
-  },
-});
+interface PythonToolRunResponse {
+  result: string;
+}
 
 const service: ActivatorRuntimeService = {
-  activateSkill: (args) => skillsRuntime.activateSkill(args),
+  activateSkill: async (args) => {
+    const response = await restClient.post<PythonToolRunResponse>('/tools/run', {
+      body: {
+        arguments: args,
+        tool_name: `${SkillsIdentifier}__${SkillsApiName.activateSkill}`,
+      },
+    });
+
+    return JSON.parse(response.result);
+  },
   getActivatedToolIds: () => [],
   getToolManifests: async (identifiers: string[]): Promise<ToolManifestInfo[]> => {
     const s = getToolStoreState();
@@ -51,7 +52,7 @@ const service: ActivatorRuntimeService = {
 
     for (const id of allowedIds) {
       // Search builtin tools
-      const builtin = s.builtinTools.find((t) => t.identifier === id);
+      const builtin = (s.builtinTools || builtinTools).find((t) => t.identifier === id);
       if (builtin) {
         results.push({
           apiDescriptions: builtin.manifest.api.map((a) => ({
@@ -67,7 +68,7 @@ const service: ActivatorRuntimeService = {
       }
 
       // Search installed plugins
-      const plugin = s.installedPlugins.find((p) => p.identifier === id);
+      const plugin = (s.installedPlugins || []).find((p) => p.identifier === id);
       if (plugin?.manifest) {
         results.push({
           apiDescriptions: (plugin.manifest.api || []).map((a) => ({
@@ -82,7 +83,7 @@ const service: ActivatorRuntimeService = {
         continue;
       }
 
-      // Search LobeHub Skill servers
+      // Search Ethos Skill servers
       const lobehubSkillServer = s.lobehubSkillServers?.find(
         (server) => server.identifier === id && server.status === LobehubSkillStatus.CONNECTED,
       );

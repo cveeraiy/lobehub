@@ -34,7 +34,7 @@ import type {
   SendMessageState,
   UnpinMessageParams,
   UnpinMessageState,
-} from '@lobechat/builtin-tool-message/executionRuntime';
+} from '@lobechat/builtin-tools/messageExecutionRuntime';
 import { DEFAULT_BOT_HISTORY_LIMIT } from '@lobechat/const';
 
 import type { MessageRuntimeService } from '@/server/services/toolExecution/serverRuntimes/message/adapters/types';

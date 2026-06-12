@@ -1,7 +1,6 @@
-import { type BuiltinAgentSlug } from '@lobechat/builtin-agents';
-import { BUILTIN_AGENT_SLUGS, getAgentRuntimeConfig } from '@lobechat/builtin-agents';
 import { PageAgentIdentifier } from '@lobechat/builtin-tool-page-agent';
-import { TaskIdentifier } from '@lobechat/builtin-tool-task';
+import { TaskIdentifier } from '@lobechat/builtin-tools';
+import { BUILTIN_AGENT_SLUGS, type BuiltinAgentSlug } from '@lobechat/const';
 import { type LobeToolManifest } from '@lobechat/context-engine';
 import {
   type ChatCompletionTool,
@@ -12,6 +11,7 @@ import {
 import debug from 'debug';
 import { produce } from 'immer';
 
+import { DEFAULT_AGENT_CONFIG } from '@/const/settings';
 import { getAgentStoreState } from '@/store/agent';
 import { agentSelectors, chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { getChatGroupStoreState } from '@/store/agentGroup';
@@ -19,6 +19,12 @@ import { agentGroupByIdSelectors, agentGroupSelectors } from '@/store/agentGroup
 import { useUserStore } from '@/store/user';
 import { userGeneralSettingsSelectors } from '@/store/user/selectors';
 import { isDev } from '@/utils/env';
+
+import {
+  getCachedBuiltinAgentRuntimeConfig,
+  preloadBuiltinAgentRuntimeConfig,
+} from './builtinAgentDefinitionCache';
+import { resolveEnabledChatModelConfig } from './modelFallback';
 
 const log = debug('mecha:agentConfigResolver');
 
@@ -32,6 +38,68 @@ const VALID_BUILTIN_SLUGS = new Set<string>(Object.values(BUILTIN_AGENT_SLUGS));
  */
 const isBuiltinAgentSlug = (slug: string): slug is BuiltinAgentSlug => {
   return VALID_BUILTIN_SLUGS.has(slug);
+};
+
+export const preloadAgentConfigRuntime = async (ctx: AgentConfigResolverContext): Promise<void> => {
+  const agentStoreState = getAgentStoreState();
+  const storedAgentConfig = agentSelectors.getAgentConfigById(ctx.agentId)(agentStoreState);
+  const basePlugins = storedAgentConfig?.plugins ?? DEFAULT_AGENT_CONFIG.plugins ?? [];
+  const runtimePlugins = ctx.plugins || basePlugins;
+  const userLocale = userGeneralSettingsSelectors.currentResponseLanguage(useUserStore.getState());
+  const preloadTasks: Array<Promise<unknown>> = [];
+
+  let slug: BuiltinAgentSlug | undefined;
+  let groupSupervisorContext:
+    | {
+        availableAgents: Array<{ id: string; title?: string | null }>;
+        groupId: string;
+        groupTitle: string;
+        systemPrompt?: string;
+      }
+    | undefined;
+
+  if (ctx.groupId && ctx.scope === 'group') {
+    const groupStoreState = getChatGroupStoreState();
+    const group = agentGroupByIdSelectors.groupById(ctx.groupId)(groupStoreState);
+
+    if (group?.supervisorAgentId === ctx.agentId) {
+      slug = BUILTIN_AGENT_SLUGS.groupSupervisor;
+      const groupMembers = agentGroupSelectors.getGroupMembers(group.id)(groupStoreState);
+      groupSupervisorContext = {
+        availableAgents: groupMembers.map((agent) => ({ id: agent.id, title: agent.title })),
+        groupId: group.id,
+        groupTitle: group.title || 'Group Chat',
+        systemPrompt: storedAgentConfig?.systemRole,
+      };
+    }
+  }
+
+  if (!slug) {
+    const storeSlug = agentSelectors.getAgentSlugById(ctx.agentId)(agentStoreState) ?? undefined;
+    if (storeSlug && isBuiltinAgentSlug(storeSlug)) slug = storeSlug;
+  }
+
+  if (slug) {
+    preloadTasks.push(
+      preloadBuiltinAgentRuntimeConfig(slug, {
+        groupSupervisorContext,
+        isDev,
+        plugins: runtimePlugins,
+        targetAgentConfig: ctx.targetAgentConfig,
+        userLocale,
+      }),
+    );
+  }
+
+  if (ctx.scope === 'page' && slug !== BUILTIN_AGENT_SLUGS.pageAgent) {
+    preloadTasks.push(preloadBuiltinAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.pageAgent, {}));
+  }
+
+  if (ctx.scope === 'task' && slug !== BUILTIN_AGENT_SLUGS.taskAgent) {
+    preloadTasks.push(preloadBuiltinAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.taskAgent, {}));
+  }
+
+  await Promise.all(preloadTasks);
 };
 
 /**
@@ -137,14 +205,13 @@ export interface ResolvedAgentConfig {
  *
  * For builtin agents (identified by slug), this will:
  * 1. Get the base config from the agent store
- * 2. Get the runtime config from @lobechat/builtin-agents
+ * 2. Get the runtime config from the Python built-in agent catalog
  * 3. Merge the runtime systemRole into the agent config
  *
  * For regular agents, this simply returns the config from the store.
  */
 export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAgentConfig => {
-  const { agentId, model, documentContent, plugins, targetAgentConfig, isSubTask, disableTools } =
-    ctx;
+  const { agentId, plugins, targetAgentConfig, isSubTask, disableTools } = ctx;
 
   log(
     'resolveAgentConfig called with agentId: %s, scope: %s, isSubTask: %s, disableTools: %s',
@@ -175,7 +242,24 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
   const agentStoreState = getAgentStoreState();
 
   // Get base config from store
-  const agentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
+  const storedAgentConfig = agentSelectors.getAgentConfigById(agentId)(agentStoreState);
+  const agentConfig = storedAgentConfig
+    ? (() => {
+        const modelConfig = resolveEnabledChatModelConfig(
+          storedAgentConfig.model,
+          storedAgentConfig.provider,
+        );
+
+        return {
+          ...storedAgentConfig,
+          chatConfig: storedAgentConfig.chatConfig ?? DEFAULT_AGENT_CONFIG.chatConfig,
+          model: modelConfig.model,
+          plugins: storedAgentConfig.plugins ?? DEFAULT_AGENT_CONFIG.plugins,
+          provider: modelConfig.provider,
+          tts: storedAgentConfig.tts ?? DEFAULT_AGENT_CONFIG.tts,
+        } as LobeAgentConfig;
+      })()
+    : storedAgentConfig;
   const chatConfig = chatConfigByIdSelectors.getChatConfigById(agentId)(agentStoreState);
 
   // Base plugins from agent config
@@ -265,8 +349,11 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
         ? finalPlugins
         : [PageAgentIdentifier, ...finalPlugins];
 
-      // 2. Get page-agent system prompt from builtin agent runtime
-      const pageAgentRuntime = getAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.pageAgent, {});
+      // 2. Get page-agent system prompt from Python builtin agent runtime
+      const pageAgentRuntime = getCachedBuiltinAgentRuntimeConfig(
+        BUILTIN_AGENT_SLUGS.pageAgent,
+        {},
+      );
       const pageAgentSystemRole = pageAgentRuntime?.systemRole || '';
 
       // 3. Merge system roles: custom agent's role (with locale) + page-agent role
@@ -300,7 +387,10 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
       const taskAgentPlugins = finalPlugins.includes(TaskIdentifier)
         ? finalPlugins
         : [TaskIdentifier, ...finalPlugins];
-      const taskAgentRuntime = getAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.taskAgent, {});
+      const taskAgentRuntime = getCachedBuiltinAgentRuntimeConfig(
+        BUILTIN_AGENT_SLUGS.taskAgent,
+        {},
+      );
       const taskAgentSystemRole = taskAgentRuntime?.systemRole || '';
       const mergedSystemRole = taskAgentSystemRole
         ? systemRoleWithLocale
@@ -380,15 +470,14 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
   // Builtin agent - merge runtime config
   // Use basePlugins as fallback when ctx.plugins is not provided
   // This ensures builtin agents (e.g., INBOX) receive user-configured plugins for merging
-  const runtimeConfig = getAgentRuntimeConfig(slug, {
-    documentContent,
+  const runtimeContext = {
     groupSupervisorContext,
     isDev,
-    model,
     plugins: plugins || basePlugins,
     targetAgentConfig,
     userLocale: userGeneralSettingsSelectors.currentResponseLanguage(useUserStore.getState()),
-  });
+  };
+  const runtimeConfig = getCachedBuiltinAgentRuntimeConfig(slug, runtimeContext);
 
   // Merge runtime systemRole into agent config
   let resolvedSystemRole = runtimeConfig?.systemRole ?? agentConfig.systemRole;
@@ -415,7 +504,7 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
     }
 
     // 2. Get page-agent system prompt
-    const pageAgentRuntime = getAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.pageAgent, {});
+    const pageAgentRuntime = getCachedBuiltinAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.pageAgent, {});
     const pageAgentSystemRole = pageAgentRuntime?.systemRole || '';
 
     // 3. Merge system roles: builtin agent's role + page-agent role
@@ -437,7 +526,7 @@ export const resolveAgentConfig = (ctx: AgentConfigResolverContext): ResolvedAge
       finalPlugins = [TaskIdentifier, ...finalPlugins];
     }
 
-    const taskAgentRuntime = getAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.taskAgent, {});
+    const taskAgentRuntime = getCachedBuiltinAgentRuntimeConfig(BUILTIN_AGENT_SLUGS.taskAgent, {});
     const taskAgentSystemRole = taskAgentRuntime?.systemRole || '';
 
     if (taskAgentSystemRole) {

@@ -1,7 +1,10 @@
-import { type MarkdownPatchHunk } from '@lobechat/markdown-patch';
+/**
+ * User service backed by the Python REST API.
+ */
+import { type MarkdownPatchHunk } from '@lobechat/builtin-tools';
 import { type PartialDeep } from 'type-fest';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import {
   type SaveUserQuestionInput,
   type SSOProvider,
@@ -14,22 +17,53 @@ import {
 } from '@/types/user';
 import { type UserSettings } from '@/types/user/settings';
 
+interface WebOnboardingToolActionResult {
+  content?: string;
+  error?: {
+    message?: string;
+    type?: string;
+  };
+  ignoredFields?: string[];
+  savedFields?: string[];
+  success: boolean;
+  unchangedFields?: string[];
+}
+
+const BASE = '/user';
+
+const toRestSettingsBody = (value: PartialDeep<UserSettings>) => ({
+  default_agent: value.defaultAgent,
+  general: value.general,
+  hotkey: value.hotkey,
+  image: value.image,
+  key_vaults: value.keyVaults,
+  language_model: value.languageModel,
+  market: value.market,
+  memory: value.memory,
+  notification: value.notification,
+  system_agent: value.systemAgent,
+  tool: value.tool,
+  tts: value.tts,
+});
+
 export class UserService {
   getUserRegistrationDuration = async (): Promise<{
     createdAt: string;
     duration: number;
     updatedAt: string;
   }> => {
-    return lambdaClient.user.getUserRegistrationDuration.query();
+    return restClient.get(`${BASE}/registration-duration`);
   };
 
   getUserState = async (): Promise<UserInitializationState> => {
-    return lambdaClient.user.getUserState.query();
+    return restClient.get(`${BASE}/state`);
   };
 
   getUserSSOProviders = async (): Promise<SSOProvider[]> => {
-    return lambdaClient.user.getUserSSOProviders.query();
+    return restClient.get(`${BASE}/sso-providers`);
   };
+
+  // ── Onboarding (agent-driven flow) ────────────────────────────────
 
   getOrCreateOnboardingState = async (): Promise<{
     agentId: string;
@@ -38,7 +72,7 @@ export class UserService {
     feedbackSubmitted: boolean;
     topicId: string;
   }> => {
-    return lambdaClient.user.getOrCreateOnboardingState.query();
+    return restClient.get(`${BASE}/onboarding/state`);
   };
 
   getOnboardingAgentContext = async (): Promise<{
@@ -46,77 +80,93 @@ export class UserService {
     phaseGuidance: string;
     soulContent: string | null;
   }> => {
-    return lambdaClient.user.getOnboardingAgentContext.query();
+    return restClient.get(`${BASE}/onboarding/agent-context`);
   };
 
-  saveUserQuestion = async (params: SaveUserQuestionInput) => {
-    return lambdaClient.user.saveUserQuestion.mutate(
-      params as Parameters<typeof lambdaClient.user.saveUserQuestion.mutate>[0],
-    );
+  saveUserQuestion = async (
+    params: SaveUserQuestionInput,
+  ): Promise<WebOnboardingToolActionResult> => {
+    return restClient.post<WebOnboardingToolActionResult>(`${BASE}/onboarding/save-question`, {
+      body: params,
+    });
   };
 
-  finishOnboarding = async () => {
-    return lambdaClient.user.finishOnboarding.mutate({});
+  finishOnboarding = async (): Promise<WebOnboardingToolActionResult> => {
+    return restClient.post<WebOnboardingToolActionResult>(`${BASE}/onboarding/finish`);
   };
 
   readOnboardingDocument = async (type: 'soul' | 'persona') => {
-    return lambdaClient.user.readOnboardingDocument.query({ type });
+    return restClient.get<{ content: string; id: string | null; type: 'soul' | 'persona' }>(
+      `${BASE}/onboarding/document`,
+      { params: { type } },
+    );
   };
 
   updateOnboardingDocument = async (type: 'soul' | 'persona', content: string) => {
-    return lambdaClient.user.updateOnboardingDocument.mutate({ content, type });
+    return restClient.put<{ id: string; type: 'soul' | 'persona' }>(`${BASE}/onboarding/document`, {
+      body: { content, type },
+    });
   };
 
   patchOnboardingDocument = async (type: 'soul' | 'persona', hunks: MarkdownPatchHunk[]) => {
-    return lambdaClient.user.patchOnboardingDocument.mutate({ hunks, type });
+    return restClient.patch<{ applied: number; id: string; type: 'soul' | 'persona' }>(
+      `${BASE}/onboarding/document`,
+      { body: { hunks, type } },
+    );
   };
 
   makeUserOnboarded = async () => {
-    return lambdaClient.user.makeUserOnboarded.mutate();
+    return restClient.post(`${BASE}/onboarded`);
   };
 
   resetAgentOnboarding = async () => {
-    return lambdaClient.user.resetAgentOnboarding.mutate();
+    return restClient.post<UserAgentOnboarding>(`${BASE}/agent-onboarding/reset`);
   };
 
   updateAgentOnboarding = async (agentOnboarding: UserAgentOnboarding) => {
-    return lambdaClient.user.updateAgentOnboarding.mutate(agentOnboarding);
+    return restClient.put(`${BASE}/agent-onboarding`, { body: agentOnboarding });
   };
 
   updateOnboarding = async (onboarding: UserOnboarding) => {
-    return lambdaClient.user.updateOnboarding.mutate(onboarding);
+    return restClient.put(`${BASE}/onboarding`, { body: onboarding });
   };
 
+  // ── Profile ───────────────────────────────────────────────────────
+
   updateAvatar = async (avatar: string) => {
-    return lambdaClient.user.updateAvatar.mutate(avatar);
+    return restClient.put(`${BASE}/avatar`, { body: { avatar } });
   };
 
   updateInterests = async (interests: string[]) => {
-    return lambdaClient.user.updateInterests.mutate(interests);
+    return restClient.put(`${BASE}/interests`, { body: { interests } });
   };
 
   updateFullName = async (fullName: string) => {
-    return lambdaClient.user.updateFullName.mutate(fullName);
+    return restClient.put(`${BASE}/fullname`, { body: { fullName } });
   };
 
   updateUsername = async (username: string) => {
-    return lambdaClient.user.updateUsername.mutate(username);
+    return restClient.put(`${BASE}/username`, { body: { username } });
   };
 
+  // ── Preference & Guide ────────────────────────────────────────────
+
   updatePreference = async (preference: Partial<UserPreference>) => {
-    return lambdaClient.user.updatePreference.mutate(preference);
+    return restClient.put(`${BASE}/preference`, { body: preference });
   };
 
   updateGuide = async (guide: Partial<UserGuide>) => {
-    return lambdaClient.user.updateGuide.mutate(guide);
+    return restClient.put(`${BASE}/guide`, { body: guide });
   };
 
+  // ── Settings ──────────────────────────────────────────────────────
+
   updateUserSettings = async (value: PartialDeep<UserSettings>, signal?: AbortSignal) => {
-    return lambdaClient.user.updateSettings.mutate(value, { signal });
+    return restClient.put(`${BASE}/settings`, { body: toRestSettingsBody(value), signal });
   };
 
   resetUserSettings = async () => {
-    return lambdaClient.user.resetSettings.mutate();
+    return restClient.delete(`${BASE}/settings`);
   };
 }
 

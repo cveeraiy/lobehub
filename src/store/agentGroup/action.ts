@@ -3,7 +3,6 @@ import isEqual from 'fast-deep-equal';
 import { produce } from 'immer';
 import { type StateCreator } from 'zustand/vanilla';
 
-import { type ChatGroupItem } from '@/database/schemas/chatGroup';
 import { mutate, useClientDataSWRWithSync } from '@/libs/swr';
 import { chatGroupService } from '@/services/chatGroup';
 import { getAgentStoreState } from '@/store/agent';
@@ -12,6 +11,7 @@ import { useChatStore } from '@/store/chat';
 import { type StoreSetter } from '@/store/types';
 import { flattenActions } from '@/store/utils/flattenActions';
 import { type ResetableStore } from '@/store/utils/resetableStore';
+import { type ChatGroupItem } from '@/types/chatGroup';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type ChatGroupState, initialChatGroupState } from './initialState';

@@ -1,0 +1,138 @@
+{
+  "column_mismatches": {},
+  "constraint_mismatches": {},
+  "decisions_file": "python-backend/scripts/database_parity_decisions.json",
+  "drizzle_snapshot": "src/database/migrations/meta/0101_snapshot.json",
+  "migration_journal_drift": {
+    "journal_missing_sql": [],
+    "sql_missing_from_journal": [
+      "0050_add_user_organization",
+      "0065_add_document_fields",
+      "0101_add_settings_permissions"
+    ]
+  },
+  "python_extra_tables": ["agent_skill_shares"],
+  "python_missing_table_decisions": {
+    "counts": {
+      "retire": 17,
+      "retire_candidate": 1,
+      "retire_with_migration": 1
+    },
+    "items": {
+      "retire": [
+        {
+          "reason": "Better Auth account persistence is retired because Keycloak is the only auth provider.",
+          "table": "accounts"
+        },
+        {
+          "reason": "Better Auth DB sessions are retired; Python owns Keycloak-backed session handling.",
+          "table": "auth_sessions"
+        },
+        {
+          "reason": "Legacy NextAuth/WebAuthn persistence is retired.",
+          "table": "nextauth_authenticators"
+        },
+        {
+          "reason": "Legacy NextAuth DB sessions are retired.",
+          "table": "nextauth_sessions"
+        },
+        {
+          "reason": "Legacy NextAuth verification tokens are retired.",
+          "table": "nextauth_verificationtokens"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider persistence is retired.",
+          "table": "oidc_access_tokens"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider persistence is retired.",
+          "table": "oidc_authorization_codes"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider clients are retired; market OIDC is separate.",
+          "table": "oidc_clients"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider consent persistence is retired.",
+          "table": "oidc_consents"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider device flow persistence is retired.",
+          "table": "oidc_device_codes"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider persistence is retired.",
+          "table": "oidc_grants"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider interaction persistence is retired.",
+          "table": "oidc_interactions"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider persistence is retired.",
+          "table": "oidc_refresh_tokens"
+        },
+        {
+          "reason": "Legacy internal TS OIDC provider sessions are retired.",
+          "table": "oidc_sessions"
+        },
+        {
+          "reason": "Better Auth passkeys are retired because Keycloak is the only auth provider.",
+          "table": "passkey"
+        },
+        {
+          "reason": "Better Auth two-factor persistence is retired because Keycloak owns MFA.",
+          "table": "two_factor"
+        },
+        {
+          "reason": "Better Auth verification persistence is retired because Keycloak owns auth verification flows.",
+          "table": "verifications"
+        }
+      ],
+      "retire_candidate": [
+        {
+          "reason": "Internal OAuth credential handoff should be retired with the TS OIDC provider unless a desktop/mobile Keycloak callback flow still requires it.",
+          "table": "oauth_handoffs"
+        }
+      ],
+      "retire_with_migration": [
+        {
+          "reason": "Python canonical schema uses sessions.agent_id for the single active session agent. Existing join rows are backfilled into sessions.agent_id before the TS join table is retired.",
+          "table": "agents_to_sessions"
+        }
+      ]
+    }
+  },
+  "python_missing_tables": [
+    "accounts",
+    "agents_to_sessions",
+    "auth_sessions",
+    "nextauth_authenticators",
+    "nextauth_sessions",
+    "nextauth_verificationtokens",
+    "oauth_handoffs",
+    "oidc_access_tokens",
+    "oidc_authorization_codes",
+    "oidc_clients",
+    "oidc_consents",
+    "oidc_device_codes",
+    "oidc_grants",
+    "oidc_interactions",
+    "oidc_refresh_tokens",
+    "oidc_sessions",
+    "passkey",
+    "two_factor",
+    "verifications"
+  ],
+  "table_counts": {
+    "matched": 76,
+    "python": 77,
+    "python_extra": 1,
+    "python_missing": 19,
+    "typescript": 95
+  },
+  "table_mismatch_decisions": {
+    "counts": {},
+    "items": {}
+  }
+}

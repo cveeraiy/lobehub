@@ -4,13 +4,12 @@ import { type ChatInputProps } from '@lobehub/editor/react';
 import { ChatInput, ChatInputActionBar } from '@lobehub/editor/react';
 import { Center, Flexbox, Text } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
-import { type ReactNode, use } from 'react';
+import { type ReactNode, useRef } from 'react';
 import { memo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { useChatInputStore } from '@/features/ChatInput/store';
-import { LayoutContainerContext } from '@/routes/(main)/_layout/DesktopLayoutContainer/LayoutContainerContext';
 import { useChatStore } from '@/store/chat';
 import { chatSelectors } from '@/store/chat/selectors';
 import { fileChatSelectors, useFileStore } from '@/store/file';
@@ -30,6 +29,10 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   container: css`
     .show-on-hover {
       opacity: 0;
+    }
+
+    div:has(> [contenteditable='true']) {
+      display: block !important;
     }
 
     &:hover {
@@ -92,7 +95,7 @@ const DesktopChatInput = memo<DesktopChatInputProps>(
     sendAreaPrefix,
   }) => {
     const { t } = useTranslation('chat');
-    const layoutContainerRef = use(LayoutContainerContext);
+    const layoutContainerRef = useRef<HTMLElement>(null);
     const [chatInputHeight, updateSystemStatus] = useGlobalStore((s) => [
       systemStatusSelectors.chatInputHeight(s),
       s.updateSystemStatus,

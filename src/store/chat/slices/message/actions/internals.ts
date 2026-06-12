@@ -12,7 +12,7 @@ import { messageMapKey } from '../../../utils/messageMapKey';
 import { type MessageDispatch } from '../reducer';
 import { messagesReducer } from '../reducer';
 
-const log = debug('lobe-store:message-internals');
+const log = debug('ethos-store:message-internals');
 
 /**
  * Internal core methods that serve as building blocks for other actions

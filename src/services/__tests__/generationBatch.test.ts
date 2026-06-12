@@ -1,15 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 import { generationBatchService } from '../generationBatch';
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    generationBatch: {
-      getGenerationBatches: { query: vi.fn() },
-      deleteGenerationBatch: { mutate: vi.fn() },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    delete: vi.fn(),
+    get: vi.fn(),
   },
 }));
 
@@ -18,19 +16,19 @@ describe('GenerationBatchService', () => {
     vi.clearAllMocks();
   });
 
-  it('getGenerationBatches should call lambdaClient with correct params', async () => {
+  it('getGenerationBatches should call REST with correct params', async () => {
     const topicId = 'test-topic-id';
 
     await generationBatchService.getGenerationBatches(topicId);
 
-    expect(lambdaClient.generationBatch.getGenerationBatches.query).toBeCalledWith({ topicId });
+    expect(restClient.get).toBeCalledWith('/generation-batches', { params: { topicId } });
   });
 
-  it('deleteGenerationBatch should call lambdaClient with correct params', async () => {
+  it('deleteGenerationBatch should call REST with correct params', async () => {
     const batchId = 'test-batch-id';
 
     await generationBatchService.deleteGenerationBatch(batchId);
 
-    expect(lambdaClient.generationBatch.deleteGenerationBatch.mutate).toBeCalledWith({ batchId });
+    expect(restClient.delete).toBeCalledWith(`/generation-batches/${batchId}`);
   });
 });

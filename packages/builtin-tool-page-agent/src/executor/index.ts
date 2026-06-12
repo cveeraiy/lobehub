@@ -19,7 +19,7 @@ import type {
 } from '../types';
 import { PageAgentIdentifier } from '../types';
 
-const log = debug('lobe-page-agent:executor');
+const log = debug('ethos-page-agent:executor');
 
 /**
  * API enum for Page Agent executor

@@ -2,8 +2,6 @@ import { Flexbox } from '@lobehub/ui';
 import { type FC } from 'react';
 import { Outlet } from 'react-router-dom';
 
-import { isDesktop } from '@/const/version';
-import ProtocolUrlHandler from '@/features/ProtocolUrlHandler';
 import { useInitGroupConfig } from '@/hooks/useInitGroupConfig';
 
 import GroupIdSync from './GroupIdSync';
@@ -21,7 +19,6 @@ const Layout: FC = () => {
         <Outlet />
       </Flexbox>
       <RegisterHotkeys />
-      {isDesktop && <ProtocolUrlHandler />}
       <GroupIdSync />
     </>
   );

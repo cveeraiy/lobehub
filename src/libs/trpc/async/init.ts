@@ -4,7 +4,7 @@ import superjson from 'superjson';
 
 import { type AsyncContext } from './context';
 
-const log = debug('lobe-async:init');
+const log = debug('ethos-async:init');
 
 log('Initializing async tRPC with context and superjson transformer');
 

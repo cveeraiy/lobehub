@@ -10,7 +10,6 @@ import { TRPCError } from '@trpc/server';
 import debug from 'debug';
 import { and, eq } from 'drizzle-orm';
 import { isLobeHubModelAvailable } from 'model-bank/lobehub';
-import { after } from 'next/server';
 import { z } from 'zod';
 
 import { getProviderContentPolicyErrorMessage } from '@/business/server/getProviderContentPolicyErrorMessage';
@@ -18,25 +17,21 @@ import { chargeAfterGenerate } from '@/business/server/video-generation/chargeAf
 import { chargeBeforeGenerate } from '@/business/server/video-generation/chargeBeforeGenerate';
 import { getVideoFreeQuota } from '@/business/server/video-generation/getVideoFreeQuota';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
-import {
-  asyncTasks,
-  generationBatches,
-  generations,
-  type NewGeneration,
-  type NewGenerationBatch,
-} from '@/database/schemas';
+import { asyncTasks, generationBatches, generations } from '@/database/schemas';
 import { getServerDB } from '@/database/server';
 import { appEnv } from '@/envs/app';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { FileService } from '@/server/services/file';
 import { processBackgroundVideoPolling } from '@/server/services/generation/videoBackgroundPolling';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
+import { afterResponse } from '@/server/utils/afterResponse';
 import { AsyncTaskStatus, AsyncTaskType } from '@/types/asyncTask';
+import type { NewGeneration, NewGenerationBatch } from '@/types/generation';
 
 import { createVideoTaskSubmitError } from './error';
 
-const log = debug('lobe-video:lambda');
+const log = debug('ethos-video:lambda');
 
 const videoProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
@@ -266,8 +261,8 @@ export const videoRouter = router({
           status: AsyncTaskStatus.Processing,
         });
 
-        after(async () => {
-          log('After() hook executing background video polling for task: %s', asyncTaskId);
+        afterResponse(async () => {
+          log('afterResponse() executing background video polling for task: %s', asyncTaskId);
 
           try {
             const db = await getServerDB();

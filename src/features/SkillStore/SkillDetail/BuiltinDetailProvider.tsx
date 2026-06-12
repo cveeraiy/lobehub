@@ -1,5 +1,6 @@
 'use client';
 
+import { builtinTools as defaultBuiltinTools } from '@lobechat/builtin-tools';
 import isEqual from 'fast-deep-equal';
 import { type ReactNode } from 'react';
 import { useMemo } from 'react';
@@ -28,7 +29,7 @@ export const BuiltinDetailProvider = ({ children, identifier }: BuiltinDetailPro
   );
 
   // Get the full builtin tool data to access API definitions
-  const builtinToolsData = useToolStore((s) => s.builtinTools, isEqual);
+  const builtinToolsData = useToolStore((s) => s.builtinTools || defaultBuiltinTools, isEqual);
   const toolData = useMemo(
     () => builtinToolsData.find((tool) => tool.identifier === identifier),
     [identifier, builtinToolsData],
@@ -57,7 +58,7 @@ export const BuiltinDetailProvider = ({ children, identifier }: BuiltinDetailPro
   });
 
   const value: DetailContextValue = {
-    author: 'LobeHub',
+    author: 'Ethos',
     authorUrl: 'https://lobehub.com',
     config: null as any, // Builtin tools don't have provider config
     description: meta?.description || '',

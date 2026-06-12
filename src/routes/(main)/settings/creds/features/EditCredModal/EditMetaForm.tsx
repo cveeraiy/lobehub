@@ -8,7 +8,7 @@ import { createStaticStyles } from 'antd-style';
 import { type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds';
 
 const styles = createStaticStyles(({ css }) => ({
   footer: css`
@@ -36,9 +36,8 @@ const EditMetaForm: FC<EditMetaFormProps> = ({ cred, onCancel, onSuccess }) => {
 
   const updateMutation = useMutation({
     mutationFn: (values: FormValues) => {
-      return lambdaClient.market.creds.update.mutate({
+      return credsService.update(cred.id, {
         description: values.description,
-        id: cred.id,
         name: values.name,
       });
     },

@@ -1,20 +1,18 @@
 import { LOBE_CHAT_CLOUD, UTM_SOURCE } from '@lobechat/business-const';
-import { DOWNLOAD_URL, isDesktop } from '@lobechat/const';
-import { Flexbox, Hotkey, Icon, Tag } from '@lobehub/ui';
+import { Flexbox, Icon, Tag } from '@lobehub/ui';
 import { type ItemType } from 'antd/es/menu/interface';
-import { BrainCircuit, Cloudy, Download, HardDriveDownload, LogOut, Settings2 } from 'lucide-react';
+import { BrainCircuit, Cloudy, HardDriveDownload, LogOut, Settings2 } from 'lucide-react';
 import { type PropsWithChildren } from 'react';
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
 import useBusinessMenuItems from '@/business/client/features/User/useBusinessMenuItems';
 import { type MenuProps } from '@/components/Menu';
-import { DEFAULT_DESKTOP_HOTKEY_CONFIG } from '@/const/desktop';
 import { OFFICIAL_URL } from '@/const/url';
 import DataImporter from '@/features/DataImporter';
 import { useNavLayout } from '@/hooks/useNavLayout';
-import { usePlatform } from '@/hooks/usePlatform';
+import { useSession } from '@/libs/better-auth/auth-client';
 import { featureFlagsSelectors, useServerConfigStore } from '@/store/serverConfig';
 import { useUserStore } from '@/store/user';
 import { authSelectors } from '@/store/user/selectors';
@@ -55,21 +53,12 @@ export const useMenu = () => {
   ]);
   const { userPanel } = useNavLayout();
   const businessMenuItems = useBusinessMenuItems(isLogin);
-  const { isIOS, isAndroid } = usePlatform();
-
-  const downloadUrl = useMemo(() => {
-    if (isIOS) return DOWNLOAD_URL.ios;
-    if (isAndroid) return DOWNLOAD_URL.android;
-    return DOWNLOAD_URL.default;
-  }, [isIOS, isAndroid]);
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin' || session?.user?.role === 'super_admin';
 
   const settings: MenuProps['items'] = [
     {
-      extra: isDesktop ? (
-        <div>
-          <Hotkey keys={DEFAULT_DESKTOP_HOTKEY_CONFIG.openSettings} />
-        </div>
-      ) : undefined,
+      extra: undefined,
       icon: <Icon icon={Settings2} />,
       key: 'setting',
       label: (
@@ -78,7 +67,7 @@ export const useMenu = () => {
         </Link>
       ),
     },
-    ...(userPanel.showMemory
+    ...(isAdmin && userPanel.showMemory
       ? [
           {
             icon: <Icon icon={BrainCircuit} />,
@@ -87,18 +76,6 @@ export const useMenu = () => {
           },
         ]
       : []),
-  ];
-
-  const getDesktopApp: MenuProps['items'] = [
-    {
-      icon: <Icon icon={Download} />,
-      key: 'get-desktop-app',
-      label: (
-        <a href={downloadUrl} rel="noopener noreferrer" target="_blank">
-          {t('getDesktopApp')}
-        </a>
-      ),
-    },
   ];
 
   const helps: MenuProps['items'] = [
@@ -123,9 +100,8 @@ export const useMenu = () => {
     },
 
     ...(isLogin ? settings : []),
-    ...businessMenuItems,
-    ...(!isDesktop ? [{ type: 'divider' as const }, ...getDesktopApp] : []),
-    ...(userPanel.showDataImporter && isLogin
+    ...(isAdmin ? businessMenuItems : []),
+    ...(isAdmin && userPanel.showDataImporter && isLogin
       ? [
           {
             icon: <Icon icon={HardDriveDownload} />,
@@ -137,7 +113,7 @@ export const useMenu = () => {
           },
         ]
       : []),
-    ...(!hideDocs ? helps : []),
+    ...(isAdmin && !hideDocs ? helps : []),
   ]
     .filter(Boolean)
     // Remove consecutive dividers to prevent double divider lines

@@ -32,7 +32,7 @@ export interface ServerAgentToolsEngineConfig {
  * Parameters for createServerAgentToolsEngine
  */
 export interface ServerCreateAgentToolsEngineParams {
-  /** Additional manifests to include (e.g., LobeHub Skills) */
+  /** Additional manifests to include (e.g., Ethos Skills) */
   additionalManifests?: LobeToolManifest[];
   /** Agent configuration containing plugins array */
   agentConfig: {

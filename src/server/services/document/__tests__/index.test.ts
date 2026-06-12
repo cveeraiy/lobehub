@@ -1,8 +1,8 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DocumentModel } from '@/database/models/document';
 import { FileModel } from '@/database/models/file';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { FileService } from '../../file';
 import { DocumentHistoryService } from '../history';
@@ -12,14 +12,14 @@ vi.mock('@/database/models/document');
 vi.mock('@/database/models/file');
 vi.mock('../../file');
 vi.mock('../history');
-vi.mock('@lobechat/file-loaders', () => ({
+vi.mock('@lobechat/local-file-shell', () => ({
   loadFile: vi.fn(),
 }));
 vi.mock('debug', () => ({
   default: () => vi.fn(),
 }));
 
-const { loadFile } = await import('@lobechat/file-loaders');
+const { loadFile } = await import('@lobechat/local-file-shell');
 
 const createEditorDataWithDiffNode = () => ({
   root: {

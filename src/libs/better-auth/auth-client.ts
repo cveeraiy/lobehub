@@ -9,6 +9,7 @@ import { createAuthClient } from 'better-auth/react';
 import { type auth } from '@/auth';
 
 export const {
+  admin,
   changeEmail,
   linkSocial,
   oauth2,

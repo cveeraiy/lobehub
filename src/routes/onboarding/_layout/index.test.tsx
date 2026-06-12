@@ -52,7 +52,7 @@ describe('OnBoardingContainer', () => {
     expect(screen.getByText('Theme Button')).toBeInTheDocument();
     expect(screen.getByText('Onboarding Content')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'agent.skipOnboarding' })).not.toBeInTheDocument();
-    expect(screen.queryByText('© 2026 LobeHub. All rights reserved.')).not.toBeInTheDocument();
+    expect(screen.queryByText('© 2026 Ethos. All rights reserved.')).not.toBeInTheDocument();
   });
 
   it('shows skip onboarding on agent onboarding route', () => {

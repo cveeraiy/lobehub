@@ -1,6 +1,5 @@
-import { type GenerationBatchItem } from '@/database/schemas';
-import { lambdaClient } from '@/libs/trpc/client';
-import { type Generation, type GenerationBatch } from '@/types/generation';
+import { restClient } from '@/libs/rest';
+import type { Generation, GenerationBatch, GenerationBatchItem } from '@/types/generation';
 
 type GenerationBatchWithAsyncTaskId = GenerationBatch & {
   generations: (Generation & { asyncTaskId?: string | null })[];
@@ -14,14 +13,16 @@ class GenerationBatchService {
     topicId: string,
     type?: 'image' | 'video',
   ): Promise<GenerationBatchWithAsyncTaskId[]> {
-    return lambdaClient.generationBatch.getGenerationBatches.query({ topicId, type });
+    return restClient.get('/generation-batches', {
+      params: { topicId, type },
+    });
   }
 
   /**
    * Delete a generation batch
    */
   async deleteGenerationBatch(batchId: string): Promise<GenerationBatchItem | undefined> {
-    return lambdaClient.generationBatch.deleteGenerationBatch.mutate({ batchId });
+    return restClient.delete(`/generation-batches/${batchId}`);
   }
 }
 

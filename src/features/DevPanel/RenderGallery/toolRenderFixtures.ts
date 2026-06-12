@@ -400,7 +400,7 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
       query: 'browser',
       tools: [
         {
-          author: 'LobeHub',
+          author: 'Ethos',
           description: 'Search and crawl web pages with configurable engines.',
           icon: '🌐',
           identifier: 'lobe-web-browsing',
@@ -409,7 +409,7 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
           tags: ['search', 'crawl'],
         },
         {
-          author: 'LobeHub',
+          author: 'Ethos',
           description: 'Run code and inspect local files inside a sandbox.',
           icon: '🧪',
           identifier: 'lobe-cloud-sandbox',
@@ -931,7 +931,7 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
       title: 'Preview workflow preference',
       withPreference: {
         appContext: {
-          app: 'LobeHub Desktop',
+          app: 'Ethos Desktop',
           feature: 'Builtin tool rendering',
           surface: '/devtools',
         },
@@ -1069,9 +1069,9 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
         {
           crawler: 'firecrawl',
           data: {
-            content: 'LobeHub ships desktop and web experiences for AI collaboration.',
+            content: 'Ethos ships desktop and web experiences for AI collaboration.',
             description: 'Product homepage',
-            title: 'LobeHub',
+            title: 'Ethos',
             url: 'https://lobehub.com',
           },
           originalUrl: 'https://lobehub.com',
@@ -1081,7 +1081,7 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
           data: {
             content: 'Developer documentation for routing, tooling, and local testing.',
             description: 'Docs homepage',
-            title: 'LobeHub Docs',
+            title: 'Ethos Docs',
             url: 'https://docs.lobehub.com',
           },
           originalUrl: 'https://docs.lobehub.com',
@@ -1098,7 +1098,7 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
           data: {
             content: 'Recent product updates and engineering notes.',
             description: 'Blog landing page',
-            title: 'LobeHub Blog',
+            title: 'Ethos Blog',
             url: 'https://lobehub.com/blog',
           },
           originalUrl: 'https://lobehub.com/blog',
@@ -1108,11 +1108,11 @@ const toolRenderFixtures: Record<string, ToolRenderFixture> = {
   },
   [keyOf('lobe-web-browsing', 'search')]: {
     args: {
-      query: 'LobeHub devtools preview route',
+      query: 'Ethos devtools preview route',
       searchEngines: ['google', 'bing'],
     },
     pluginState: {
-      query: 'LobeHub devtools preview route',
+      query: 'Ethos devtools preview route',
       results: [
         {
           content: 'Documentation and implementation notes about local preview tooling.',

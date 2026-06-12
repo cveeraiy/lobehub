@@ -1,7 +1,7 @@
 ---
-title: Connect LobeHub to Telegram
+title: Connect Ethos to Telegram
 description: >-
-  Learn how to create a Telegram bot and connect it to your LobeHub agent as a
+  Learn how to create a Telegram bot and connect it to your Ethos agent as a
   message channel, enabling your AI assistant to chat with users in Telegram
   private and group conversations.
 tags:
@@ -11,13 +11,13 @@ tags:
   - Integration
 ---
 
-# Connect LobeHub to Telegram
+# Connect Ethos to Telegram
 
-By connecting a Telegram channel to your LobeHub agent, users can interact with the AI assistant through Telegram private chats and group conversations.
+By connecting a Telegram channel to your Ethos agent, users can interact with the AI assistant through Telegram private chats and group conversations.
 
 ## Prerequisites
 
-- A LobeHub account with an active subscription
+- An Ethos account with an active subscription
 - A Telegram account
 
 ## Step 1: Create a Telegram Bot
@@ -33,7 +33,7 @@ By connecting a Telegram channel to your LobeHub agent, users can interact with 
 
   BotFather will ask you to:
 
-  1. Choose a **display name** for your bot (e.g., "LobeHub Assistant")
+  1. Choose a **display name** for your bot (e.g., "Ethos Assistant")
   2. Choose a **username** — it must end with `bot` (e.g., `lobehub_assistant_bot`)
 
   ![](/blog/assetsa95ea7fad4727559d3f8d84a96947d5e.webp)
@@ -47,12 +47,12 @@ By connecting a Telegram channel to your LobeHub agent, users can interact with 
   > **Important:** Your bot token is a secret credential. Never share it publicly.
 </Steps>
 
-## Step 2: Configure Telegram in LobeHub
+## Step 2: Configure Telegram in Ethos
 
 <Steps>
   ### Open Channel Settings
 
-  In LobeHub, navigate to your agent's settings, then select the **Channels** tab. Click **Telegram** from the platform list.
+  In Ethos, navigate to your agent's settings, then select the **Channels** tab. Click **Telegram** from the platform list.
 
   ### Enter the Bot Token
 
@@ -68,14 +68,14 @@ By connecting a Telegram channel to your LobeHub agent, users can interact with 
 
   ### Save Configuration
 
-  Click **Save Configuration**. LobeHub will automatically register the webhook URL with Telegram — no manual URL copying is required.
+  Click **Save Configuration**. Ethos will automatically register the webhook URL with Telegram — no manual URL copying is required.
 
   Your token will be encrypted and stored securely.
 </Steps>
 
 ## Step 3: Test the Connection
 
-Click **Test Connection** in LobeHub's channel settings to verify the integration. Then open Telegram, find your bot by searching its username, and send a message. The bot should respond through your LobeHub agent.
+Click **Test Connection** in Ethos's channel settings to verify the integration. Then open Telegram, find your bot by searching its username, and send a message. The bot should respond through your Ethos agent.
 
 ![](/blog/assets5dd8b54083201bff2494404b66e37df0.webp)
 
@@ -91,7 +91,7 @@ This is your own Telegram numeric user ID, used by:
 - **AI tools push** — lets the agent reach you proactively (reminders, notifications) by mapping its internal user reference to your Telegram account.
 - **Anti-lockout** — auto-trusted by **Allowed Users**, so scoping the bot to friends won't accidentally lock you out.
 
-To get it: open Telegram, message [@userinfobot](https://t.me/userinfobot), and it will reply with your numeric user ID. Paste it into **Your Platform User ID** in LobeHub's Advanced Settings.
+To get it: open Telegram, message [@userinfobot](https://t.me/userinfobot), and it will reply with your numeric user ID. Paste it into **Your Platform User ID** in Ethos's Advanced Settings.
 
 > Telegram doesn't have a "default server" concept (each chat is its own surface), so the **Default Server** field is not exposed for Telegram channels.
 
@@ -150,5 +150,5 @@ See the [Channels overview](/docs/usage/channels/overview#direct-message-policy)
 
 - **Bot not responding:** Verify the bot token is correct and the configuration is saved. Click **Test Connection** to diagnose.
 - **Bot ignores DMs:** Open **Advanced Settings** and check **DM Policy**. If it is `Disabled`, switch to `Open` or `Allowlist`. If it is `Allowlist`, confirm the sender's Telegram user ID (from [@userinfobot](https://t.me/userinfobot)) is listed in **Allowed User IDs**.
-- **Webhook registration failed:** Ensure your LobeHub subscription is active. Telegram requires HTTPS endpoints for webhooks, which LobeHub provides automatically.
+- **Webhook registration failed:** Ensure your Ethos subscription is active. Telegram requires HTTPS endpoints for webhooks, which Ethos provides automatically.
 - **Group chat issues:** Make sure the bot has been added to the group and has permission to read messages. Mention the bot with `@username` to trigger a response. If the bot doesn't respond in a group, try removing the bot from the group and re-adding it — Telegram's privacy mode changes require re-joining the group to take effect.

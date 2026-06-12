@@ -3,7 +3,7 @@ import { importJWK, jwtVerify, SignJWT } from 'jose';
 
 import { authEnv } from '@/envs/auth';
 
-const log = debug('lobe-internal-jwt');
+const log = debug('ethos-internal-jwt');
 
 const INTERNAL_JWT_PURPOSE = 'lobe-internal-call';
 

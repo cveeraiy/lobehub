@@ -4,6 +4,12 @@ import { type EnabledProviderWithModels } from '@/types/aiProvider';
 
 import { type GroupMode, type ListItem, type ModelWithProviders } from '../types';
 
+const dedupeProviderModels = (enabledList: EnabledProviderWithModels[]) =>
+  enabledList.map((provider) => ({
+    ...provider,
+    children: Array.from(new Map(provider.children.map((model) => [model.id, model])).values()),
+  }));
+
 export const useBuildListItems = (
   enabledList: EnabledProviderWithModels[],
   groupMode: GroupMode,
@@ -21,7 +27,7 @@ export const useBuildListItems = (
     };
 
     // lobehub first, then others
-    const sortedProviders = [...enabledList].sort((a, b) => {
+    const sortedProviders = dedupeProviderModels(enabledList).sort((a, b) => {
       const aIsLobehub = a.id === 'lobehub';
       const bIsLobehub = b.id === 'lobehub';
       if (aIsLobehub && !bIsLobehub) return -1;

@@ -10,7 +10,7 @@ describe('chat helper', () => {
     useAiInfraStore.setState({ enabledAiModels: [] });
   });
 
-  it('should resolve LobeHub routed model abilities by model id fallback', () => {
+  it('should resolve Ethos routed model abilities by model id fallback', () => {
     useAiInfraStore.setState({
       enabledAiModels: [
         {
@@ -26,7 +26,7 @@ describe('chat helper', () => {
     expect(isCanUseVideo('gemini-3.1-flash-lite-preview', ModelProvider.LobeHub)).toBe(true);
   });
 
-  it('should not fallback across non-LobeHub providers', () => {
+  it('should not fallback across non-Ethos providers', () => {
     useAiInfraStore.setState({
       enabledAiModels: [
         {

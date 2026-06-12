@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { message } from '@/components/AntdStaticMethods';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { lambdaClient } from '@/libs/trpc/client';
+import { marketApiService } from '@/services/marketApi';
 import { useAgentGroupStore } from '@/store/agentGroup';
 import { agentGroupSelectors } from '@/store/agentGroup/selectors';
 import { useGlobalStore } from '@/store/global';
@@ -55,7 +55,7 @@ export const useMarketGroupPublish = ({ action, onSuccess }: UseMarketGroupPubli
 
     try {
       setIsCheckingOwnership(true);
-      const result = await lambdaClient.market.agentGroup.checkOwnership.query({ identifier });
+      const result = await marketApiService.checkAgentGroupOwnership(identifier);
 
       // If group doesn't exist or user is owner, no confirmation needed
       if (!result.exists || result.isOwner) {
@@ -130,8 +130,8 @@ export const useMarketGroupPublish = ({ action, onSuccess }: UseMarketGroupPubli
         url: `https://api.lobehub.com/a2a/agents/${agent.id}`,
       }));
 
-      // Use tRPC publishOrCreate
-      const result = await lambdaClient.market.agentGroup.publishOrCreate.mutate({
+      // Use REST publishOrCreate
+      const result = await marketApiService.publishOrCreateAgentGroup({
         // Only include avatar if it's not null/undefined
         ...(currentGroupMeta.avatar ? { avatar: currentGroupMeta.avatar } : {}),
         // Only include backgroundColor if it's not null/undefined

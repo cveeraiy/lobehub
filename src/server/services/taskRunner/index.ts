@@ -1,5 +1,5 @@
-import { TaskIdentifier as TaskSkillIdentifier } from '@lobechat/builtin-skills';
-import { BriefIdentifier } from '@lobechat/builtin-tool-brief';
+import { BriefIdentifier } from '@lobechat/builtin-tools';
+import { TaskSkillIdentifier } from '@lobechat/const';
 import type { ExecAgentResult } from '@lobechat/types';
 import { TRPCError } from '@trpc/server';
 import debug from 'debug';
@@ -8,9 +8,9 @@ import { TopicTrigger } from '@/const/topic';
 import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
 import { TaskTopicModel } from '@/database/models/taskTopic';
-import type { LobeChatDatabase } from '@/database/type';
-import { AiAgentService } from '@/server/services/aiAgent';
+import { PythonAgentProxyService } from '@/server/services/pythonAgentProxy';
 import { TaskLifecycleService } from '@/server/services/taskLifecycle';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { buildTaskPrompt } from './buildTaskPrompt';
 
@@ -124,7 +124,7 @@ export class TaskRunnerService {
       const agentRef = task.assigneeAgentId!;
       const isSlug = !agentRef.startsWith('agt_');
 
-      const aiAgentService = new AiAgentService(this.db, this.userId);
+      const aiAgentService = new PythonAgentProxyService(this.userId);
       const taskId = task.id;
       const taskIdentifier = task.identifier;
       const taskLifecycle = this.taskLifecycle;
@@ -159,7 +159,7 @@ export class TaskRunnerService {
         ...(typeof taskConfig.provider === 'string' && { provider: taskConfig.provider }),
         hooks: [
           {
-            handler: async (event) => {
+            handler: async (event: any) => {
               await taskLifecycle.onTopicComplete({
                 errorMessage: event.errorMessage,
                 lastAssistantContent: event.lastAssistantContent,

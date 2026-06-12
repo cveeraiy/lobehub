@@ -13,7 +13,7 @@ import {
 } from './types';
 import { buildIORedisSetArgs, normalizeMsetValues } from './utils';
 
-const log = debug('lobe:redis');
+const log = debug('ethos:redis');
 
 export class IoRedisRedisProvider implements BaseRedisProvider {
   private client: Redis | null = null;

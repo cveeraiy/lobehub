@@ -3,11 +3,11 @@ name: project-overview
 description: Complete project architecture and structure guide. Use when exploring the codebase, understanding project organization, finding files, or needing comprehensive architectural context. Triggers on architecture questions, directory navigation, or project overview needs.
 ---
 
-# LobeHub Project Overview
+# Ethos Project Overview
 
 ## Project Description
 
-Open-source, modern-design AI Agent Workspace: **LobeHub** (previously LobeChat).
+Open-source, modern-design AI Agent Workspace: **Ethos** (previously Ethos).
 
 **Supported platforms:**
 

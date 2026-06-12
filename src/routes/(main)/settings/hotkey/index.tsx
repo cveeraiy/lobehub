@@ -1,10 +1,8 @@
 import { useTranslation } from 'react-i18next';
 
-import { isDesktop } from '@/const/version';
 import SettingHeader from '@/routes/(main)/settings/features/SettingHeader';
 
 import Conversation from './features/Conversation';
-import Desktop from './features/Desktop';
 import Essential from './features/Essential';
 
 const Page = () => {
@@ -12,7 +10,6 @@ const Page = () => {
   return (
     <>
       <SettingHeader title={t('tab.hotkey')} />
-      {isDesktop && <Desktop />}
       <Essential />
       <Conversation />
     </>

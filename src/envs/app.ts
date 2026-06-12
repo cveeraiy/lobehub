@@ -50,8 +50,6 @@ export const getAppConfig = () => {
 
       APP_URL: z.string(),
       INTERNAL_APP_URL: z.string().optional(),
-      VERCEL_EDGE_CONFIG: z.string().optional(),
-      MIDDLEWARE_REWRITE_THROUGH_LOCAL: z.boolean().optional(),
 
       CDN_USE_GLOBAL: z.boolean().optional(),
       CUSTOM_FONT_FAMILY: z.string().optional(),
@@ -77,6 +75,7 @@ export const getAppConfig = () => {
 
       AGENT_GATEWAY_SERVICE_TOKEN: z.string().optional(),
       AGENT_GATEWAY_URL: z.string().url().optional(),
+      VERCEL_EDGE_CONFIG: z.string().optional(),
       /**
        * Enable Queue-based Agent Runtime
        * When true, use QStash for async agent execution (production)
@@ -103,11 +102,8 @@ export const getAppConfig = () => {
 
       PLUGIN_SETTINGS: process.env.PLUGIN_SETTINGS,
 
-      VERCEL_EDGE_CONFIG: process.env.VERCEL_EDGE_CONFIG,
-
       APP_URL,
       INTERNAL_APP_URL,
-      MIDDLEWARE_REWRITE_THROUGH_LOCAL: process.env.MIDDLEWARE_REWRITE_THROUGH_LOCAL === '1',
 
       CUSTOM_FONT_FAMILY: process.env.CUSTOM_FONT_FAMILY,
       CUSTOM_FONT_URL: process.env.CUSTOM_FONT_URL,
@@ -122,6 +118,7 @@ export const getAppConfig = () => {
 
       AGENT_GATEWAY_SERVICE_TOKEN: process.env.AGENT_GATEWAY_SERVICE_TOKEN,
       AGENT_GATEWAY_URL: process.env.AGENT_GATEWAY_URL,
+      VERCEL_EDGE_CONFIG: process.env.VERCEL_EDGE_CONFIG,
       enableQueueAgentRuntime: process.env.AGENT_RUNTIME_MODE === 'queue',
       TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED === '1',
     },

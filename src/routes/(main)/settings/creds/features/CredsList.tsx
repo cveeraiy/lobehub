@@ -2,7 +2,7 @@
 
 import { type UserCredSummary } from '@lobechat/types';
 import { Button, Flexbox } from '@lobehub/ui';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Empty, Spin } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import { LogIn } from 'lucide-react';
@@ -10,7 +10,7 @@ import { type FC, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { lambdaClient, lambdaQuery } from '@/libs/trpc/client';
+import { credsService } from '@/services/creds';
 
 import CredItem from './CredItem';
 import EditCredModal from './EditCredModal';
@@ -43,12 +43,14 @@ const CredsList: FC = () => {
   const [viewingCred, setViewingCred] = useState<UserCredSummary | null>(null);
   const { isAuthenticated, isLoading: isAuthLoading, signIn } = useMarketAuth();
 
-  const { data, isLoading, refetch } = lambdaQuery.market.creds.list.useQuery(undefined, {
+  const { data, isLoading, refetch } = useQuery({
     enabled: isAuthenticated,
+    queryFn: () => credsService.list(),
+    queryKey: ['market-creds'],
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => lambdaClient.market.creds.delete.mutate({ id }),
+    mutationFn: (id: number) => credsService.delete(id),
     onSuccess: () => {
       refetch();
     },

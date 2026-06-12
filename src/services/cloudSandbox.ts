@@ -1,10 +1,26 @@
-import { toolsClient } from '@/libs/trpc/client';
-import {
-  type CallToolResult,
-  type ExecInSandboxInput,
-  type ExportAndUploadFileInput,
-  type ExportAndUploadFileResult,
-} from '@/server/routers/tools/market';
+import { restClient } from '@/libs/rest';
+
+interface CallToolResult {
+  error?: { message: string; name?: string };
+  result: {
+    exitCode?: number;
+    output?: string;
+    stderr?: string;
+    stdout?: string;
+  } | null;
+  sessionExpiredAndRecreated?: boolean;
+  success: boolean;
+}
+
+interface ExportAndUploadFileResult {
+  error?: { message: string };
+  fileId?: string;
+  filename: string;
+  mimeType?: string;
+  size?: number;
+  success: boolean;
+  url?: string;
+}
 
 class CloudSandboxService {
   /**
@@ -18,14 +34,14 @@ class CloudSandboxService {
     params: Record<string, any>,
     context: { topicId: string; userId?: string },
   ): Promise<CallToolResult> {
-    const input: ExecInSandboxInput = {
-      params,
-      toolName,
-      topicId: context.topicId,
-      userId: context.userId,
-    };
-
-    return toolsClient.market.execInSandbox.mutate(input);
+    return restClient.post<CallToolResult>('/cloud-sandbox/exec', {
+      body: {
+        params,
+        toolName,
+        topicId: context.topicId,
+        userId: context.userId,
+      },
+    });
   }
 
   /**
@@ -41,13 +57,13 @@ class CloudSandboxService {
     filename: string,
     topicId: string,
   ): Promise<ExportAndUploadFileResult> {
-    const input: ExportAndUploadFileInput = {
-      filename,
-      path,
-      topicId,
-    };
-
-    return toolsClient.market.exportAndUploadFile.mutate(input);
+    return restClient.post<ExportAndUploadFileResult>('/cloud-sandbox/export-and-upload', {
+      body: {
+        filename,
+        path,
+        topicId,
+      },
+    });
   }
 }
 

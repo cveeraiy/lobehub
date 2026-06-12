@@ -1,21 +1,22 @@
-import { builtinSkills } from '@lobechat/builtin-skills';
-import { LobeActivatorIdentifier } from '@lobechat/builtin-tool-activator';
+import { LobeActivatorIdentifier, SkillsApiName, SkillsIdentifier } from '@lobechat/builtin-tools';
 import {
   ActivatorExecutionRuntime,
   type ActivatorRuntimeService,
   type ToolManifestInfo,
-} from '@lobechat/builtin-tool-activator/executionRuntime';
-import { SkillsExecutionRuntime } from '@lobechat/builtin-tool-skills/executionRuntime';
+} from '@lobechat/builtin-tools/activatorExecutionRuntime';
 
-import { AgentSkillModel } from '@/database/models/agentSkill';
-import { filterBuiltinSkills } from '@/helpers/skillFilters';
 import {
   emitToolOutcomeSafely,
+  redisPolicyStateStore,
   resolveToolOutcomeScope,
-} from '@/server/services/agentSignal/procedure';
-import { redisPolicyStateStore } from '@/server/services/agentSignal/store/adapters/redis/policyStateStore';
+} from '@/server/services/toolOutcomeProxy';
+import { callPythonBackend } from '@/server/utils/pythonBackend';
 
-import { type ServerRuntimeRegistration } from './types';
+import type { ServerRuntimeRegistration } from './types';
+
+interface PythonToolRunResponse {
+  result: string;
+}
 
 /**
  * Tools Activator Server Runtime
@@ -64,33 +65,32 @@ export const activatorRuntime: ServerRuntimeRegistration = {
       });
     };
 
-    // Create SkillsExecutionRuntime for activateSkill delegation
-    let skillsRuntime: SkillsExecutionRuntime | undefined;
-    if (context.serverDB && context.userId) {
-      const skillModel = new AgentSkillModel(context.serverDB, context.userId);
-      skillsRuntime = new SkillsExecutionRuntime({
-        builtinSkills: filterBuiltinSkills(builtinSkills),
-        service: {
-          findAll: () => skillModel.findAll(),
-          findById: (id) => skillModel.findById(id),
-          findByName: (name) => skillModel.findByName(name),
-          readResource: async () => {
-            throw new Error('readResource not available in tools runtime');
-          },
-        },
-      });
-    }
-
     const service: ActivatorRuntimeService = {
-      activateSkill: skillsRuntime
+      activateSkill: context.userId
         ? async (args) => {
             try {
-              const result = await skillsRuntime!.activateSkill(args);
+              const response = await callPythonBackend<PythonToolRunResponse>(
+                '/api/tools/run',
+                context.userId!,
+                {
+                  body: {
+                    arguments: args,
+                    tool_name: `${SkillsIdentifier}__${SkillsApiName.activateSkill}`,
+                  },
+                },
+              );
+              const result = JSON.parse(response.result);
+
               await emitActivationOutcome({
+                errorReason: result.success === false ? result.content : undefined,
                 identifiers: [args.name],
-                status: 'succeeded',
-                summary: 'Activator selected a skill.',
+                status: result.success === false ? 'failed' : 'succeeded',
+                summary:
+                  result.success === false
+                    ? 'Activator failed to select a skill.'
+                    : 'Activator selected a skill.',
               });
+
               return result;
             } catch (error) {
               await emitActivationOutcome({

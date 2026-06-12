@@ -9,12 +9,12 @@ import { ThreadModel } from '@/database/models/thread';
 import { TopicModel } from '@/database/models/topic';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { resolveContext } from '@/server/routers/lambda/_helpers/resolveContext';
 import { AiChatService } from '@/server/services/aiChat';
 import { FileService } from '@/server/services/file';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 
-const log = debug('lobe-lambda-router:ai-chat');
+const log = debug('ethos-lambda-router:ai-chat');
 
 const aiChatProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

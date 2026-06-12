@@ -1,26 +1,20 @@
-import type { ExecAgentAppContext, ExecAgentResult } from '@lobechat/types';
+import type {
+  ChatTopic,
+  ExecAgentAppContext,
+  ExecAgentResult,
+  ExecSubAgentTaskResult,
+  TaskStatusResult,
+  UIChatMessage,
+} from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 
 export type { ExecAgentResult };
 
-/**
- * Resume instruction for an operation that hit `human_approve_required`. When
- * present, the new op acts as the "continue" step: server reads the target tool
- * message, writes the user's decision, and either re-dispatches the tool
- * (approved) or feeds the rejection back to the LLM as user feedback
- * (rejected / rejected_continue).
- *
- * Kept as a top-level field (not folded into `appContext`) so the server schema
- * can validate it independently.
- */
 export interface ResumeApprovalParam {
   decision: 'approved' | 'rejected' | 'rejected_continue';
-  /** ID of the pending `role='tool'` message this decision targets. */
   parentMessageId: string;
-  /** Optional user-supplied rejection reason (only meaningful for rejected variants). */
   rejectionReason?: string;
-  /** tool_call_id of the pending tool call being approved/rejected. */
   toolCallId: string;
 }
 
@@ -28,38 +22,50 @@ export interface ExecAgentTaskParams {
   agentId?: string;
   appContext?: ExecAgentAppContext;
   autoStart?: boolean;
-  /**
-   * Runtime of the client initiating this request. When 'desktop', server
-   * enables `executor: 'client'` tools (local-system, stdio MCP) and
-   * dispatches them over the Agent Gateway WS back to this client.
-   */
   clientRuntime?: 'desktop' | 'web';
   deviceId?: string;
   existingMessageIds?: string[];
-  /** File IDs of already-uploaded attachments to attach to the new user message */
   fileIds?: string[];
-  /** Parent message ID for regeneration/continue (skip user message creation, branch from this message) */
   parentMessageId?: string;
   prompt: string;
-  /** Resume a previous op paused on `human_approve_required` instead of starting from a fresh user prompt. */
   resumeApproval?: ResumeApprovalParam;
   slug?: string;
 }
 
-/**
- * Parameters for execSubAgentTask
- * Supports both Group mode (with groupId) and Single Agent mode (without groupId)
- */
+export interface ExecGroupAgentParams {
+  agentId: string;
+  files?: string[];
+  groupId: string;
+  message: string;
+  newTopic?: {
+    title?: string;
+    topicMessageIds?: string[];
+  };
+  topicId?: string | null;
+}
+
+export interface ExecGroupAgentResult {
+  assistantMessageId: string;
+  error?: string | null;
+  isCreateNewTopic?: boolean;
+  messages?: UIChatMessage[];
+  operationId: string;
+  success: boolean;
+  topicId?: string | null;
+  topics?: {
+    items: ChatTopic[];
+    total: number;
+  };
+  userMessageId: string;
+}
+
 export interface ExecSubAgentTaskParams {
   agentId: string;
-  /** Optional for Single Agent mode, required for Group mode */
   groupId?: string;
   instruction: string;
   parentMessageId: string;
-  /** Parent operation ID for dispatching callAgent hooks */
   parentOperationId?: string;
   timeout?: number;
-  /** Task title (shown in UI, used as thread title) */
   title?: string;
   topicId: string;
 }
@@ -73,40 +79,24 @@ export interface InterruptTaskParams {
   threadId?: string;
 }
 
-/**
- * Parameters for createClientTaskThread
- * Creates a Thread for client-side task execution (desktop only, single agent mode)
- */
 export interface CreateClientTaskThreadParams {
   agentId: string;
   groupId?: string;
-  /** Initial user message content (task instruction) */
   instruction: string;
   parentMessageId: string;
   title?: string;
   topicId: string;
 }
 
-/**
- * Parameters for createClientGroupAgentTaskThread
- * Creates a Thread for client-side task execution in Group mode
- */
 export interface CreateClientGroupAgentTaskThreadParams {
-  /** The Group ID (required for Group mode) */
   groupId: string;
-  /** Initial user message content (task instruction) */
   instruction: string;
   parentMessageId: string;
-  /** The Sub-Agent ID that will execute the task (worker agent in group) */
   subAgentId: string;
   title?: string;
   topicId: string;
 }
 
-/**
- * Parameters for updateClientTaskThreadStatus
- * Updates Thread status after client-side execution completes
- */
 export interface UpdateClientTaskThreadStatusParams {
   completionReason: 'done' | 'error' | 'interrupted';
   error?: string;
@@ -121,75 +111,194 @@ export interface UpdateClientTaskThreadStatusParams {
   threadId: string;
 }
 
+export interface CreateClientTaskThreadResult {
+  messages: UIChatMessage[];
+  startedAt: string;
+  success: boolean;
+  threadId: string;
+  threadMessages: UIChatMessage[];
+  userMessageId: string;
+}
+
+const appContextBody = (appContext: ExecAgentTaskParams['appContext']) =>
+  appContext && {
+    default_task_assignee_agent_id: appContext.defaultTaskAssigneeAgentId,
+    document_id: appContext.documentId,
+    group_id: appContext.groupId,
+    scope: appContext.scope,
+    session_id: appContext.sessionId,
+    task_id: appContext.taskId,
+    thread_id: appContext.threadId,
+    topic_id: appContext.topicId,
+  };
+
+const resumeApprovalBody = (resumeApproval: ExecAgentTaskParams['resumeApproval']) =>
+  resumeApproval && {
+    decision: resumeApproval.decision,
+    parent_message_id: resumeApproval.parentMessageId,
+    rejection_reason: resumeApproval.rejectionReason,
+    tool_call_id: resumeApproval.toolCallId,
+  };
+
+const execAgentBody = (params: ExecAgentTaskParams) => ({
+  agent_id: params.agentId,
+  app_context: appContextBody(params.appContext),
+  auto_start: params.autoStart,
+  client_runtime: params.clientRuntime,
+  device_id: params.deviceId,
+  existing_message_ids: params.existingMessageIds,
+  file_ids: params.fileIds,
+  parent_message_id: params.parentMessageId,
+  prompt: params.prompt,
+  resume_approval: resumeApprovalBody(params.resumeApproval),
+  slug: params.slug,
+});
+
+const normalizeExecAgentResult = (result: Record<string, any>): ExecAgentResult =>
+  ({
+    assistantMessageId: result.assistantMessageId ?? result.assistant_message_id,
+    autoStarted: result.autoStarted ?? result.auto_started,
+    error: result.error,
+    isCreateNewTopic: result.isCreateNewTopic ?? result.is_create_new_topic,
+    message: result.message,
+    operationId: result.operationId ?? result.operation_id,
+    status: result.status,
+    success: result.success,
+    timestamp: result.timestamp,
+    topicId: result.topicId ?? result.topic_id,
+    userMessageId: result.userMessageId ?? result.user_message_id,
+  }) as unknown as ExecAgentResult;
+
+const execGroupBody = (params: ExecGroupAgentParams) => ({
+  agent_id: params.agentId,
+  file_ids: params.files,
+  group_id: params.groupId,
+  message: params.message,
+  new_topic: params.newTopic && {
+    title: params.newTopic.title,
+    topic_message_ids: params.newTopic.topicMessageIds,
+  },
+  topic_id: params.topicId ?? undefined,
+});
+
+const normalizeExecGroupResult = (result: Record<string, any>): ExecGroupAgentResult => ({
+  assistantMessageId: result.assistantMessageId ?? result.assistant_message_id,
+  error: result.error,
+  isCreateNewTopic: result.isCreateNewTopic ?? result.is_create_new_topic,
+  messages: result.messages,
+  operationId: result.operationId ?? result.operation_id,
+  success: result.success,
+  topicId: result.topicId ?? result.topic_id,
+  topics: result.topics,
+  userMessageId: result.userMessageId ?? result.user_message_id,
+});
+
+const subAgentBody = (params: ExecSubAgentTaskParams) => ({
+  agent_id: params.agentId,
+  group_id: params.groupId,
+  instruction: params.instruction,
+  parent_message_id: params.parentMessageId,
+  parent_operation_id: params.parentOperationId,
+  title: params.title,
+  topic_id: params.topicId,
+});
+
+const clientTaskBody = (params: CreateClientTaskThreadParams) => ({
+  agent_id: params.agentId,
+  group_id: params.groupId,
+  instruction: params.instruction,
+  parent_message_id: params.parentMessageId,
+  title: params.title,
+  topic_id: params.topicId,
+});
+
+const clientGroupTaskBody = (params: CreateClientGroupAgentTaskThreadParams) => ({
+  group_id: params.groupId,
+  instruction: params.instruction,
+  parent_message_id: params.parentMessageId,
+  sub_agent_id: params.subAgentId,
+  title: params.title,
+  topic_id: params.topicId,
+});
+
+const updateThreadStatusBody = (params: UpdateClientTaskThreadStatusParams) => ({
+  completion_reason: params.completionReason,
+  error: params.error,
+  metadata: params.metadata,
+  result_content: params.resultContent,
+  thread_id: params.threadId,
+});
+
 class AiAgentService {
-  /**
-   * Execute a single Agent task.
-   * Returns the operationId needed to connect to the Agent Gateway.
-   */
   async execAgentTask(params: ExecAgentTaskParams): Promise<ExecAgentResult> {
-    return await lambdaClient.aiAgent.execAgent.mutate(params);
+    const result = await restClient.post<Record<string, any>>('/ai-agent/exec', {
+      body: execAgentBody(params),
+    });
+    return normalizeExecAgentResult(result);
   }
 
-  /**
-   * Execute a sub-agent task (supports both Group and Single Agent mode)
-   *
-   * - Group mode: pass groupId, Thread will be associated with the Group
-   * - Single Agent mode: omit groupId, Thread will only be associated with the Agent
-   */
-  /**
-   * Get a fresh JWT token for Gateway WebSocket reconnection.
-   */
+  async execGroupAgent(
+    params: ExecGroupAgentParams,
+    signal?: AbortSignal,
+  ): Promise<ExecGroupAgentResult> {
+    const result = await restClient.post<Record<string, any>>('/ai-agent/exec-group', {
+      body: execGroupBody(params),
+      signal,
+    });
+    return normalizeExecGroupResult(result);
+  }
+
   async refreshGatewayToken(topicId: string): Promise<{ token: string }> {
-    return await lambdaClient.aiAgent.refreshGatewayToken.query({ topicId });
+    return restClient.get<{ token: string }>('/ai-agent/refresh-gateway-token', {
+      params: { topicId },
+    });
   }
 
-  async execSubAgentTask(params: ExecSubAgentTaskParams) {
-    return await lambdaClient.aiAgent.execSubAgentTask.mutate(params);
+  async execSubAgentTask(params: ExecSubAgentTaskParams): Promise<ExecSubAgentTaskResult> {
+    return restClient.post<ExecSubAgentTaskResult>('/ai-agent/exec-sub-agent', {
+      body: subAgentBody(params),
+    });
   }
 
-  /**
-   * Get SubAgent task status by threadId
-   * Works for both Group and Single Agent mode tasks
-   */
-  async getSubAgentTaskStatus(params: GetSubAgentTaskStatusParams) {
-    return await lambdaClient.aiAgent.getSubAgentTaskStatus.query(params);
+  async getSubAgentTaskStatus(params: GetSubAgentTaskStatusParams): Promise<TaskStatusResult> {
+    return restClient.get<TaskStatusResult>('/ai-agent/sub-agent-task-status', {
+      params: { threadId: params.threadId },
+    });
   }
 
-  /**
-   * Interrupt a running task
-   */
-  async interruptTask(params: InterruptTaskParams) {
-    return await lambdaClient.aiAgent.interruptTask.mutate(params);
+  async interruptTask(
+    params: InterruptTaskParams,
+  ): Promise<{ operationId?: string; success: boolean }> {
+    return restClient.post<{ operationId?: string; success: boolean }>('/ai-agent/interrupt', {
+      body: { operation_id: params.operationId, thread_id: params.threadId },
+    });
   }
 
-  /**
-   * Create Thread for client-side task execution (desktop only, single agent mode)
-   *
-   * This method is called when runInClient=true on desktop client.
-   * It creates the Thread but does NOT execute the task - execution happens locally.
-   */
-  async createClientTaskThread(params: CreateClientTaskThreadParams) {
-    return await lambdaClient.aiAgent.createClientTaskThread.mutate(params);
+  async createClientTaskThread(
+    params: CreateClientTaskThreadParams,
+  ): Promise<CreateClientTaskThreadResult> {
+    return restClient.post<CreateClientTaskThreadResult>('/ai-agent/create-client-task-thread', {
+      body: clientTaskBody(params),
+    });
   }
 
-  /**
-   * Create Thread for client-side task execution in Group mode
-   *
-   * This method is specifically for Group Chat scenarios where:
-   * - Messages may have different agentIds (supervisor, workers)
-   * - Thread messages query should not filter by agentId
-   */
-  async createClientGroupAgentTaskThread(params: CreateClientGroupAgentTaskThreadParams) {
-    return await lambdaClient.aiAgent.createClientGroupAgentTaskThread.mutate(params);
+  async createClientGroupAgentTaskThread(
+    params: CreateClientGroupAgentTaskThreadParams,
+  ): Promise<CreateClientTaskThreadResult> {
+    return restClient.post<CreateClientTaskThreadResult>(
+      '/ai-agent/create-client-group-agent-task-thread',
+      {
+        body: clientGroupTaskBody(params),
+      },
+    );
   }
 
-  /**
-   * Update Thread status after client-side task execution completes
-   *
-   * This method is called by desktop client after task execution finishes.
-   */
-  async updateClientTaskThreadStatus(params: UpdateClientTaskThreadStatusParams) {
-    return await lambdaClient.aiAgent.updateClientTaskThreadStatus.mutate(params);
+  async updateClientTaskThreadStatus(
+    params: UpdateClientTaskThreadStatusParams,
+  ): Promise<{ success: boolean }> {
+    return restClient.post<{ success: boolean }>('/ai-agent/update-client-task-thread-status', {
+      body: updateThreadStatusBody(params),
+    });
   }
 }
 

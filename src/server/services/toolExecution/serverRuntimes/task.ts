@@ -1,4 +1,4 @@
-import { normalizeListTasksParams, TaskIdentifier } from '@lobechat/builtin-tool-task';
+import { normalizeListTasksParams, TaskIdentifier } from '@lobechat/builtin-tools';
 import {
   formatDependencyAdded,
   formatDependencyRemoved,

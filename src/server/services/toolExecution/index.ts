@@ -4,10 +4,7 @@ import debug from 'debug';
 
 import { type CloudMCPParams, type ToolCallContent } from '@/libs/mcp';
 import { contentBlocksToString } from '@/server/services/mcp/contentProcessor';
-import {
-  DEFAULT_TOOL_RESULT_MAX_LENGTH,
-  truncateToolResult,
-} from '@/server/utils/truncateToolResult';
+import { DEFAULT_TOOL_RESULT_MAX_LENGTH, truncateToolResult } from '@/utils/truncateToolResult';
 
 import { DiscoverService } from '../discover';
 import { type MCPService } from '../mcp';
@@ -19,7 +16,7 @@ import {
   type ToolExecutionResultResponse,
 } from './types';
 
-const log = debug('lobe-server:tool-execution-service');
+const log = debug('ethos-server:tool-execution-service');
 
 interface ToolExecutionServiceDeps {
   builtinToolsExecutor: BuiltinToolsExecutor;

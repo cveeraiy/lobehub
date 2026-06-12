@@ -1,4 +1,3 @@
-import { type DocumentItem } from '@lobechat/database/schemas';
 import { type SWRResponse } from 'swr';
 
 import { useClientDataSWRWithSync } from '@/libs/swr';
@@ -6,7 +5,7 @@ import { documentService } from '@/services/document';
 import { documentSWRKeys } from '@/services/document/swrKeys';
 import { useGlobalStore } from '@/store/global';
 import { type StoreSetter } from '@/store/types';
-import { DocumentSourceType, type LobeDocument } from '@/types/document';
+import { type DocumentItem, DocumentSourceType, type LobeDocument } from '@/types/document';
 import { setNamespace } from '@/utils/storeDebug';
 
 import { type PageStore } from '../../store';

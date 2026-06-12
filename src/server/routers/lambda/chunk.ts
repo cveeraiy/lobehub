@@ -16,9 +16,9 @@ import { knowledgeBaseFiles } from '@/database/schemas';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
 import { getServerDefaultFilesConfig } from '@/server/globalConfig';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { ChunkService } from '@/server/services/chunk';
 import { DocumentService } from '@/server/services/document';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
 
 const chunkProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

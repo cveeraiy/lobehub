@@ -242,7 +242,7 @@ Next steps:
 
 // Main function
 async function main(): Promise<void> {
-  consola.info('🚀 LobeChat Release Script\n');
+  consola.info('🚀 Ethos Release Script\n');
 
   // 1. Check Git repository
   checkGitRepo();

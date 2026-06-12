@@ -1,0 +1,56 @@
+map $http_user_agent $spa_root {
+  default /usr/share/nginx/html/web;
+  "~*(Android|iPhone|iPad|iPod|Mobile)" /usr/share/nginx/html/mobile;
+}
+
+server {
+  listen 3210;
+  server_name _;
+
+  root $spa_root;
+  index index.html;
+
+  gzip on;
+  gzip_types text/plain text/css application/javascript application/json image/svg+xml;
+
+  location ~* ^/_spa/.*\.(?:js|css|png|jpg|jpeg|gif|svg|webp|avif|ico|woff2?)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+
+  location ~* \.(?:js|css|png|jpg|jpeg|gif|svg|webp|avif|ico|woff2?)$ {
+    expires 1y;
+    add_header Cache-Control "public, immutable";
+    try_files $uri =404;
+  }
+
+  location ~ ^/(api|webapi)/ {
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass ${PYTHON_BACKEND_URL};
+  }
+
+  location = /oidc/clear-session {
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_set_header Connection "";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_pass ${PYTHON_BACKEND_URL};
+  }
+
+  location / {
+    add_header Cache-Control "no-cache";
+    try_files $uri $uri/ /index.html;
+  }
+}

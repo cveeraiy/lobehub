@@ -16,21 +16,12 @@ vi.mock('@/libs/swr', () => ({
   mutate: vi.fn(),
 }));
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    agentDocument: {
-      copyDocument: { mutate: queryMock },
-      createDocument: { mutate: queryMock },
-      getDocuments: { query: queryMock },
-      getTemplates: { query: queryMock },
-      initializeFromTemplate: { mutate: queryMock },
-      listDocuments: { query: queryMock },
-      readDocument: { query: queryMock },
-      removeDocument: { mutate: queryMock },
-      renameDocument: { mutate: queryMock },
-      replaceDocumentContent: { mutate: queryMock },
-      updateLoadRule: { mutate: queryMock },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    delete: queryMock,
+    get: queryMock,
+    post: queryMock,
+    put: queryMock,
   },
 }));
 
@@ -143,7 +134,9 @@ describe('AgentDocumentService', () => {
       },
     ]);
 
-    expect(queryMock).toHaveBeenCalledWith({ agentId: 'target-agent' });
+    expect(queryMock).toHaveBeenCalledWith('/agent-documents', {
+      params: { agent_id: 'target-agent' },
+    });
   });
 
   it('should reuse cached agent documents without refetching', async () => {

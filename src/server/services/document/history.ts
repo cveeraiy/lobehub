@@ -1,12 +1,12 @@
-import type { DocumentItem } from '@lobechat/database/schemas';
-import { documentHistories, documents } from '@lobechat/database/schemas';
 import { and, desc, eq, gte, inArray, lt, or } from 'drizzle-orm';
 
 import {
   DOCUMENT_HISTORY_QUERY_LIST_LIMIT,
   DOCUMENT_HISTORY_SOURCE_LIMITS,
 } from '@/const/documentHistory';
+import { documentHistories, documents } from '@/database/schemas';
 import { isValidEditorData } from '@/libs/editor/isValidEditorData';
+import type { DocumentItem } from '@/types/document';
 
 import type {
   CompareDocumentHistoryItemsParams,
@@ -178,7 +178,7 @@ export class DocumentHistoryService {
       });
     }
 
-    const historyItems = historyRows.map((row) => ({
+    const historyItems = historyRows.map((row: any) => ({
       id: row.id,
       isCurrent: false,
       saveSource: row.saveSource as DocumentHistorySaveSource,
@@ -246,7 +246,7 @@ export class DocumentHistoryService {
         eq(documentHistories.saveSource, saveSource),
         inArray(
           documentHistories.id,
-          rowsToDelete.map((r) => r.id),
+          rowsToDelete.map((r: { id: string }) => r.id),
         ),
       ),
     );

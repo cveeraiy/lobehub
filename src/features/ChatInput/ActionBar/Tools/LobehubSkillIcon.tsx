@@ -6,7 +6,7 @@ import { memo } from 'react';
 export const SKILL_ICON_SIZE = 20;
 
 /**
- * LobeHub Skill Provider icon component
+ * Ethos Skill Provider icon component
  */
 const LobehubSkillIcon = memo<Pick<LobehubSkillProviderType, 'icon' | 'label'> & { size: number }>(
   ({ icon, label, size = SKILL_ICON_SIZE }) => {

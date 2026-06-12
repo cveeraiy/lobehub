@@ -11,7 +11,6 @@ import { AgentRuntimeErrorType } from '@lobechat/types';
 import { messageService } from '@/services/message';
 import { emitClientAgentSignalSourceEvent } from '@/store/chat/slices/aiChat/actions/agentSignalBridge';
 import type { ChatStore } from '@/store/chat/store';
-import { notifyDesktopHumanApprovalRequired } from '@/store/chat/utils/desktopNotification';
 
 /**
  * Fetch messages from DB and replace them in the chat store's dbMessagesMap.
@@ -210,16 +209,6 @@ export const createGatewayEventHandler = (
       }
 
       case 'step_start': {
-        const data = event.data as {
-          pendingToolsCalling?: unknown[];
-          phase?: string;
-          requiresApproval?: boolean;
-        };
-
-        if (data?.phase === 'human_approval' && data.requiresApproval && data.pendingToolsCalling) {
-          void notifyDesktopHumanApprovalRequired(get, context);
-        }
-
         break;
       }
 

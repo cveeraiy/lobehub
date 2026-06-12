@@ -1,6 +1,6 @@
 import type { Chat, Message } from 'chat';
 
-import type { AttachmentSource } from '@/server/services/aiAgent/ingestAttachment';
+import type { AttachmentSource } from '@/types/attachmentSource';
 
 // ============================================================================
 // Bot Platform Core Types
@@ -82,7 +82,7 @@ export interface FieldSchema {
 // --------------- Platform Messenger ---------------
 
 /**
- * LobeHub-specific outbound capabilities used by callback and bridge services.
+ * Ethos-specific outbound capabilities used by callback and bridge services.
  */
 export interface PlatformMessenger {
   /**
@@ -313,7 +313,7 @@ export interface ValidationResult {
 export interface PlatformDocumentation {
   /** URL to the platform's developer portal / open platform console */
   portalUrl?: string;
-  /** URL to the usage documentation (e.g. LobeHub docs for this platform) */
+  /** URL to the usage documentation (e.g. Ethos docs for this platform) */
   setupGuideUrl?: string;
 }
 

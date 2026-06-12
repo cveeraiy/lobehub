@@ -9,7 +9,6 @@ import { z } from 'zod';
 
 import { chargeBeforeGenerate } from '@/business/server/image-generation/chargeBeforeGenerate';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
-import { type NewGeneration, type NewGenerationBatch } from '@/database/schemas';
 import { asyncTasks, generationBatches, generations } from '@/database/schemas';
 import { authedProcedure, router } from '@/libs/trpc/lambda';
 import { serverDatabase } from '@/libs/trpc/lambda/middleware';
@@ -21,11 +20,12 @@ import {
   AsyncTaskStatus,
   AsyncTaskType,
 } from '@/types/asyncTask';
+import type { NewGeneration, NewGenerationBatch } from '@/types/generation';
 import { generateUniqueSeeds } from '@/utils/number';
 
 import { validateNoUrlsInConfig } from './utils';
 
-const log = debug('lobe-image:lambda');
+const log = debug('ethos-image:lambda');
 
 const imageProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;

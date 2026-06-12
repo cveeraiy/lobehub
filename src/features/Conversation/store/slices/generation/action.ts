@@ -1,4 +1,4 @@
-import { AgentManagementIdentifier } from '@lobechat/builtin-tool-agent-management';
+import { AgentManagementIdentifier } from '@lobechat/builtin-tools';
 import { type StateCreator } from 'zustand';
 
 import { MESSAGE_CANCEL_FLAT } from '@/const/index';

@@ -2,14 +2,14 @@ import {
   CredsExecutionRuntime,
   CredsIdentifier,
   type ICredsService,
-} from '@lobechat/builtin-tool-creds';
+} from '@lobechat/builtin-tools';
 import debug from 'debug';
 
 import { MarketService } from '@/server/services/market';
 
 import { type ServerRuntimeRegistration } from './types';
 
-const log = debug('lobe-server:creds-runtime');
+const log = debug('ethos-server:creds-runtime');
 
 /**
  * Server-side Creds Service implementation

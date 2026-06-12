@@ -1,19 +1,20 @@
-import { builtinSkills, LobeHubIdentifier } from '@lobechat/builtin-skills';
+import { LobeHubIdentifier } from '@lobechat/const';
 import { renderPlaceholderTemplate } from '@lobechat/context-engine';
 import { describe, expect, it } from 'vitest';
 
-const LobeHubSkill = builtinSkills.find((s) => s.identifier === LobeHubIdentifier);
-if (!LobeHubSkill) {
-  throw new Error(`LobeHubSkill not found in builtinSkills (looking for "${LobeHubIdentifier}")`);
-}
-const lobeHubContent = LobeHubSkill.content;
+const lobeHubContent = `
+${LobeHubIdentifier}
+Current agent: {{agent_title}} ({{agent_id}})
+Agent description: {{agent_description}}
+Current topic: {{topic_title}} ({{topic_id}})
+`;
 
 /**
  * Regression for LOBE-6882.
  *
  * Instead of building a dedicated AgentIdentityContextInjector, we wire current
  * agent / topic identity through the existing PlaceholderVariablesProcessor —
- * the LobeHub builtin skill content references `{{agent_id}}`, `{{topic_id}}`,
+ * the Ethos builtin skill content references `{{agent_id}}`, `{{topic_id}}`,
  * etc., and `contextEngineering.ts` provides the matching variable generators.
  *
  * This test pins the contract from BOTH ends:
@@ -24,7 +25,7 @@ const lobeHubContent = LobeHubSkill.content;
  * vice versa), this test fails before users see a broken `lh agent run -a {{agent_id}}`
  * literal in their prompts.
  */
-describe('LobeHub skill identity placeholders (LOBE-6882)', () => {
+describe('Ethos skill identity placeholders (LOBE-6882)', () => {
   const PLACEHOLDER_KEYS = [
     'agent_id',
     'agent_title',

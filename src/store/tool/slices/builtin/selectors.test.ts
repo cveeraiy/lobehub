@@ -16,6 +16,18 @@ const mockBuiltinSkill = {
 
 describe('builtinToolSelectors', () => {
   describe('metaList', () => {
+    it('should tolerate persisted state missing builtin tool fields', () => {
+      const state = {
+        ...initialState,
+        builtinSkills: undefined,
+        builtinTools: undefined,
+        uninstalledBuiltinTools: undefined,
+      } as unknown as ToolStoreState;
+
+      expect(() => builtinToolSelectors.metaList(state)).not.toThrow();
+      expect(() => builtinToolSelectors.installedBuiltinSkills(state)).not.toThrow();
+    });
+
     it('should return meta list with builtin tools and skills', () => {
       const state = {
         ...initialState,
@@ -32,12 +44,12 @@ describe('builtinToolSelectors', () => {
       const result = builtinToolSelectors.metaList(state);
       expect(result).toEqual([
         {
-          author: 'LobeHub',
+          author: 'Ethos',
           identifier: 'test-skill',
           meta: { avatar: '🧪', description: 'A test skill', title: 'Test Skill' },
           type: 'builtin',
         },
-        { author: 'LobeHub', identifier: 'tool-1', meta: { title: 'Tool 1' }, type: 'builtin' },
+        { author: 'Ethos', identifier: 'tool-1', meta: { title: 'Tool 1' }, type: 'builtin' },
       ]);
     });
 
@@ -58,7 +70,7 @@ describe('builtinToolSelectors', () => {
       // Should only contain skill, hidden tool is filtered out
       expect(result).toEqual([
         {
-          author: 'LobeHub',
+          author: 'Ethos',
           identifier: 'test-skill',
           meta: { avatar: '🧪', description: 'A test skill', title: 'Test Skill' },
           type: 'builtin',

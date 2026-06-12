@@ -1,45 +1,20 @@
-import { AgentBrowserIdentifier } from '@lobechat/builtin-skills';
-import { isDesktop } from '@lobechat/const';
+import { AgentBrowserIdentifier } from '@lobechat/const';
 import { type BuiltinSkill } from '@lobechat/types';
-
-export interface BuiltinSkillFilterContext {
-  isDesktop: boolean;
-}
 
 const DESKTOP_ONLY_BUILTIN_SKILLS = new Set([AgentBrowserIdentifier]);
 const USER_HIDDEN_BUILTIN_SKILLS = new Set(['task']);
 
-const DEFAULT_CONTEXT: BuiltinSkillFilterContext = {
-  isDesktop,
-};
-
-const resolveBuiltinSkillFilterContext = (
-  context: BuiltinSkillFilterContext = DEFAULT_CONTEXT,
-): BuiltinSkillFilterContext => ({
-  isDesktop: context.isDesktop ?? DEFAULT_CONTEXT.isDesktop,
-});
-
-export const shouldEnableBuiltinSkill = (
-  skillId: string,
-  context: BuiltinSkillFilterContext = DEFAULT_CONTEXT,
-): boolean => {
-  const resolvedContext = resolveBuiltinSkillFilterContext(context);
-
+export const shouldEnableBuiltinSkill = (skillId: string): boolean => {
   if (USER_HIDDEN_BUILTIN_SKILLS.has(skillId)) return false;
 
-  if (DESKTOP_ONLY_BUILTIN_SKILLS.has(skillId)) {
-    if (!resolvedContext.isDesktop) return false;
-    return true;
-  }
+  // Desktop-only skills are always disabled in web
+  if (DESKTOP_ONLY_BUILTIN_SKILLS.has(skillId)) return false;
 
   return true;
 };
 
-export const filterBuiltinSkills = (
-  skills: BuiltinSkill[],
-  context: BuiltinSkillFilterContext = DEFAULT_CONTEXT,
-): BuiltinSkill[] => {
-  return skills.filter((skill) => shouldEnableBuiltinSkill(skill.identifier, context));
+export const filterBuiltinSkills = (skills: BuiltinSkill[]): BuiltinSkill[] => {
+  return skills.filter((skill) => shouldEnableBuiltinSkill(skill.identifier));
 };
 
 export { USER_HIDDEN_BUILTIN_SKILLS };

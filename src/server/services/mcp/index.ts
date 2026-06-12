@@ -25,7 +25,7 @@ import { type ProcessContentBlocksFn } from './contentProcessor';
 import { contentBlocksToString } from './contentProcessor';
 import { mcpSystemDepsCheckService } from './deps';
 
-const log = debug('lobe-mcp:service');
+const log = debug('ethos-mcp:service');
 
 /**
  * MCP Tool call raw result type

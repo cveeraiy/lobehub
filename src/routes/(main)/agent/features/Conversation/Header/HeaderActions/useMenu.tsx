@@ -3,51 +3,31 @@
 import { type DropdownItem, Icon } from '@lobehub/ui';
 import { confirmModal, type ModalInstance } from '@lobehub/ui/base-ui';
 import { App } from 'antd';
-import {
-  Clock3Icon,
-  Copy,
-  ExternalLink,
-  Hash,
-  Maximize2,
-  PencilLine,
-  Star,
-  Trash,
-  Wand2,
-} from 'lucide-react';
+import { Clock3Icon, Hash, Maximize2, PencilLine, Star, Trash, Wand2 } from 'lucide-react';
 import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import { openRenameModal } from '@/components/RenameModal';
 import { DOCUMENT_HISTORY_QUERY_LIST_LIMIT } from '@/const/documentHistory';
-import { isDesktop } from '@/const/version';
 import { openDocumentCompareModal } from '@/features/PageEditor/History/CompareModal';
 import { formatHistoryAbsoluteTime } from '@/features/PageEditor/History/formatHistoryDate';
-import type {
-  DocumentHistoryListItem,
-  DocumentHistorySaveSource,
-} from '@/server/routers/lambda/_schema/documentHistory';
 import { documentService } from '@/services/document';
 import { useChatStore } from '@/store/chat';
 import { topicSelectors } from '@/store/chat/selectors';
 import { useDocumentStore } from '@/store/document';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
+import type { DocumentHistoryListItem, DocumentHistorySaveSource } from '@/types/documentHistory';
 
 export const useMenu = (): { menuItems: DropdownItem[] } => {
   const { t } = useTranslation(['chat', 'topic', 'common', 'file']);
   const { modal, message } = App.useApp();
-  const { pathname } = useLocation();
-
   const [wideScreen, toggleWideScreen] = useGlobalStore((s) => [
     systemStatusSelectors.wideScreen(s),
     s.toggleWideScreen,
   ]);
-  const openTopicInNewWindow = useGlobalStore((s) => s.openTopicInNewWindow);
-
-  const activeAgentId = useChatStore((s) => s.activeAgentId);
   const activeTopic = useChatStore(topicSelectors.currentActiveTopic);
-  const workingDirectory = useChatStore(topicSelectors.currentTopicWorkingDirectory);
   const [autoRenameTopicTitle, favoriteTopic, removeTopic, updateTopicTitle] = useChatStore((s) => [
     s.autoRenameTopicTitle,
     s.favoriteTopic,
@@ -191,29 +171,6 @@ export const useMenu = (): { menuItems: DropdownItem[] } => {
         { type: 'divider' as const },
       );
 
-      if (isDesktop && workingDirectory) {
-        items.push({
-          icon: <Icon icon={Copy} />,
-          key: 'copyWorkingDirectory',
-          label: t('actions.copyWorkingDirectory', { ns: 'topic' }),
-          onClick: () => {
-            void navigator.clipboard.writeText(workingDirectory);
-            message.success(t('actions.copyWorkingDirectorySuccess', { ns: 'topic' }));
-          },
-        });
-      }
-
-      if (isDesktop && activeAgentId && !pathname.startsWith('/popup')) {
-        items.push({
-          icon: <Icon icon={ExternalLink} />,
-          key: 'openInPopupWindow',
-          label: t('inPopup.title', { ns: 'topic' }),
-          onClick: () => {
-            openTopicInNewWindow(activeAgentId, topicId);
-          },
-        });
-      }
-
       items.push(
         {
           icon: <Icon icon={Hash} />,
@@ -278,14 +235,10 @@ export const useMenu = (): { menuItems: DropdownItem[] } => {
     topicId,
     topicTitle,
     isFavorite,
-    activeAgentId,
-    pathname,
-    workingDirectory,
     wideScreen,
     docId,
     autoRenameTopicTitle,
     favoriteTopic,
-    openTopicInNewWindow,
     removeTopic,
     updateTopicTitle,
     toggleWideScreen,

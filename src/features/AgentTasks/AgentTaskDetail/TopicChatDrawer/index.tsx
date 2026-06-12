@@ -5,7 +5,6 @@ import type { DropdownItem } from '@lobehub/ui';
 import { ActionIcon, copyToClipboard, Drawer, DropdownMenu, Flexbox, Text } from '@lobehub/ui';
 import { cssVar } from 'antd-style';
 import { Copy, MoreHorizontal, Share2 } from 'lucide-react';
-import dynamic from 'next/dynamic';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,6 +13,7 @@ import { TaskCardScopeProvider } from '@/features/Conversation/Markdown/plugins/
 import { useShareModal } from '@/features/ShareModal';
 import { useGatewayReconnect } from '@/hooks/useGatewayReconnect';
 import { useOperationState } from '@/hooks/useOperationState';
+import dynamic from '@/libs/next/dynamic';
 import { useAgentStore } from '@/store/agent';
 import { useChatStore } from '@/store/chat';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';

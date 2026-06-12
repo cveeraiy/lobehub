@@ -58,9 +58,10 @@ const optimisticMoveTask = (
   task: TaskListItem,
   targetColumnKey: string,
 ): TaskGroupItem[] => {
+  const taskKey = task.identifier || task.id;
   return taskGroups.map((group) => {
     const filtered = (group.tasks as TaskListItem[]).filter(
-      (t) => t.identifier !== task.identifier,
+      (t) => (t.identifier || t.id) !== taskKey,
     );
     const removed = filtered.length < (group.tasks as TaskListItem[]).length;
 
@@ -120,7 +121,7 @@ const KanbanBoard = memo(() => {
       useTaskStore.setState({ taskGroups: nextGroups }, false, 'kanban/optimisticMove');
 
       try {
-        await updateTaskStatus(task.identifier, column.targetStatus);
+        await updateTaskStatus(task.identifier || task.id, column.targetStatus);
       } catch {
         useTaskStore.setState({ taskGroups: prevGroups }, false, 'kanban/revertMove');
       }

@@ -39,11 +39,15 @@ const AgentTaskItem = memo<TaskItemProps>(({ task, variant = 'default' }) => {
   const { t } = useTranslation('discover');
   const { t: tChat } = useTranslation('chat');
   const useFetchTaskDetail = useTaskStore((s) => s.useFetchTaskDetail);
-  useFetchTaskDetail(task.identifier);
+  const taskKey = task.identifier || task.id;
+  useFetchTaskDetail(taskKey);
 
-  const taskDetail = useTaskStore((s) => s.taskDetailMap[task.identifier]);
-  const { items: contextMenuItems, onContextMenu: handleContextMenuOpen } =
-    useTaskItemContextMenu(task);
+  const taskDetail = useTaskStore((s) => s.taskDetailMap[taskKey]);
+  const { items: contextMenuItems, onContextMenu: handleContextMenuOpen } = useTaskItemContextMenu({
+    ...task,
+    identifier: task.identifier || '',
+    id: task.id,
+  });
   const navigate = useNavigate();
 
   const time = formatTaskItemDate(task.updatedAt || task.createdAt, {
@@ -54,8 +58,8 @@ const AgentTaskItem = memo<TaskItemProps>(({ task, variant = 'default' }) => {
   const hasName = Boolean(task.name?.trim());
 
   const handleClick = useCallback(() => {
-    navigate(`/task/${task.identifier}`);
-  }, [navigate, task.identifier]);
+    navigate(`/task/${taskKey}`);
+  }, [navigate, taskKey]);
 
   const handleSubtaskClick = useCallback(
     (identifier: string) => {
@@ -83,12 +87,12 @@ const AgentTaskItem = memo<TaskItemProps>(({ task, variant = 'default' }) => {
 
   const titleRow = (
     <Flexbox horizontal align={'center'} gap={8} style={{ minWidth: 0 }}>
-      <TaskPriorityTag priority={task.priority} taskIdentifier={task.identifier} />
-      <TaskStatusTag status={status} taskIdentifier={task.identifier} />
+      <TaskPriorityTag priority={task.priority} taskIdentifier={taskKey} />
+      <TaskStatusTag status={status} taskIdentifier={taskKey} />
       {hasName ? (
         <>
           <Text style={{ flex: 'none' }} type={'secondary'}>
-            {task.identifier}
+            {taskKey}
           </Text>
           <Text ellipsis style={{ minWidth: 0 }} weight={500}>
             {task.name}
@@ -96,12 +100,12 @@ const AgentTaskItem = memo<TaskItemProps>(({ task, variant = 'default' }) => {
         </>
       ) : (
         <Text ellipsis style={{ minWidth: 0 }} weight={500}>
-          {task.identifier}
+          {taskKey}
         </Text>
       )}
       {scheduledBadge}
       <TaskSubtaskProgressTag
-        currentIdentifier={task.identifier}
+        currentIdentifier={taskKey}
         subtasks={taskDetail?.subtasks}
         onSubtaskClick={handleSubtaskClick}
       />
@@ -112,7 +116,7 @@ const AgentTaskItem = memo<TaskItemProps>(({ task, variant = 'default' }) => {
     <AssigneeAgentSelector
       currentAgentId={task.assigneeAgentId}
       disabled={status === 'running'}
-      taskIdentifier={task.identifier}
+      taskIdentifier={taskKey}
     >
       <AssigneeAvatar agentId={task.assigneeAgentId} />
     </AssigneeAgentSelector>
@@ -144,25 +148,25 @@ const AgentTaskItem = memo<TaskItemProps>(({ task, variant = 'default' }) => {
         <Block clickable gap={8} padding={12} variant={'borderless'} onClick={handleClick}>
           <Flexbox horizontal align={'center'} gap={8} justify={'space-between'}>
             <Text fontSize={12} style={{ flex: 'none' }} type={'secondary'}>
-              {task.identifier}
+              {taskKey}
             </Text>
             {assigneeNode}
           </Flexbox>
           <Flexbox horizontal align={'center'} gap={8} style={{ minWidth: 0 }}>
-            <TaskStatusTag status={status} taskIdentifier={task.identifier} />
+            <TaskStatusTag status={status} taskIdentifier={taskKey} />
             <Text ellipsis style={{ minWidth: 0 }} weight={500}>
-              {hasName ? task.name : task.identifier}
+              {hasName ? task.name : taskKey}
             </Text>
             {scheduledBadge}
             <TaskSubtaskProgressTag
-              currentIdentifier={task.identifier}
+              currentIdentifier={taskKey}
               subtasks={taskDetail?.subtasks}
               onSubtaskClick={handleSubtaskClick}
             />
           </Flexbox>
           <TaskLatestActivity activities={taskDetail?.activities} />
           <Flexbox horizontal align={'center'} gap={8}>
-            <TaskPriorityTag priority={task.priority} taskIdentifier={task.identifier} />
+            <TaskPriorityTag priority={task.priority} taskIdentifier={taskKey} />
             {scheduleNode}
             {timeNode}
           </Flexbox>

@@ -7,64 +7,72 @@ import {
   type RAGEvalEvaluationItem,
 } from '@lobechat/types';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { uploadService } from '@/services/upload';
+
+const getCreatedId = (result: string | { id?: string } | undefined): string | undefined =>
+  typeof result === 'string' ? result : result?.id;
 
 class RAGEvalService {
   // Dataset
   createDataset = async (params: CreateNewEvalDatasets): Promise<string | undefined> => {
-    return lambdaClient.ragEval.createDataset.mutate(params);
+    const result = await restClient.post<string | { id?: string }>('/rag-eval/datasets', {
+      body: params,
+    });
+    return getCreatedId(result);
   };
 
   getDatasets = async (knowledgeBaseId: string): Promise<RAGEvalDataSetItem[]> => {
-    return lambdaClient.ragEval.getDatasets.query({ knowledgeBaseId });
+    return restClient.get('/rag-eval/datasets', { params: { knowledgeBaseId } });
   };
 
   removeDataset = async (id: string): Promise<void> => {
-    await lambdaClient.ragEval.removeDataset.mutate({ id });
+    await restClient.delete(`/rag-eval/datasets/${id}`);
   };
 
   updateDataset = async (
     id: string,
     value: Partial<typeof insertEvalDatasetsSchema>,
   ): Promise<void> => {
-    await lambdaClient.ragEval.updateDataset.mutate({ id, value });
+    await restClient.put(`/rag-eval/datasets/${id}`, { body: value });
   };
 
   // Dataset Records
   getDatasetRecords = async (datasetId: string): Promise<EvalDatasetRecord[]> => {
-    return lambdaClient.ragEval.getDatasetRecords.query({ datasetId });
+    return restClient.get(`/rag-eval/datasets/${datasetId}/records`);
   };
 
   removeDatasetRecord = async (id: string): Promise<void> => {
-    await lambdaClient.ragEval.removeDatasetRecords.mutate({ id });
+    await restClient.delete(`/rag-eval/dataset-records/${id}`);
   };
 
   importDatasetRecords = async (datasetId: string, file: File): Promise<void> => {
     const { path } = await uploadService.uploadToServerS3(file, { directory: 'ragEval' });
-
-    await lambdaClient.ragEval.importDatasetRecords.mutate({ datasetId, pathname: path });
+    await restClient.post(`/rag-eval/datasets/${datasetId}/import`, { body: { pathname: path } });
   };
 
   // Evaluation
   createEvaluation = async (params: CreateNewEvalEvaluation): Promise<string | undefined> => {
-    return lambdaClient.ragEval.createEvaluation.mutate(params);
+    const result = await restClient.post<string | { id?: string }>('/rag-eval/evaluations', {
+      body: params,
+    });
+    return getCreatedId(result);
   };
 
   getEvaluationList = async (knowledgeBaseId: string): Promise<RAGEvalEvaluationItem[]> => {
-    return lambdaClient.ragEval.getEvaluationList.query({ knowledgeBaseId });
+    return restClient.get('/rag-eval/evaluations', { params: { knowledgeBaseId } });
   };
 
   startEvaluationTask = async (id: string) => {
-    return lambdaClient.ragEval.startEvaluationTask.mutate({ id });
+    return restClient.post(`/rag-eval/evaluations/${id}/start`);
   };
 
   removeEvaluation = async (id: string): Promise<void> => {
-    await lambdaClient.ragEval.removeEvaluation.mutate({ id });
+    await restClient.delete(`/rag-eval/evaluations/${id}`);
   };
 
   checkEvaluationStatus = async (id: string): Promise<{ success: boolean }> => {
-    return lambdaClient.ragEval.checkEvaluationStatus.query({ id });
+    return restClient.get(`/rag-eval/evaluations/${id}/status`);
   };
 }
 

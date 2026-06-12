@@ -6,7 +6,7 @@ import { RouterProvider } from 'react-router-dom';
 import BootErrorBoundary from '@/components/BootErrorBoundary';
 import { createAppRouter } from '@/utils/router';
 
-import { desktopRoutes } from './router/desktopRouter.config';
+import { webRoutes } from './router/webRouter.config';
 
 const debugProxyBase = '/_dangerous_local_dev_proxy';
 const basename =
@@ -14,7 +14,7 @@ const basename =
     ? debugProxyBase
     : undefined;
 
-const router = createAppRouter(desktopRoutes, { basename });
+const router = createAppRouter(webRoutes, { basename });
 
 createRoot(document.getElementById('root')!).render(
   <BootErrorBoundary>

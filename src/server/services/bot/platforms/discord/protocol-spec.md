@@ -1275,7 +1275,7 @@ curl 'https://discord.com/api/v10/channels/123456789012345678/polls/987654321098
 
 ### 15.1 测试环境
 
-- **Guild**: LobeHub (ID: `1127171173982154893`)
+- **Guild**: Ethos (ID: `1127171173982154893`)
 - **测试频道**: #system (ID: `1127182445373042728`)
 - **SDK**: `@discordjs/rest`
 - **测试日期**: 2026-03-26

@@ -139,6 +139,11 @@ const ImageFileItem = memo<ImageFileItemProps>(
     ]);
 
     const isSupportedForChunking = !isChunkingUnsupported(fileType || '');
+    const handleChunking = () => {
+      if (!isCreatingFileParseTask) {
+        parseFiles([id]);
+      }
+    };
 
     return (
       <>
@@ -223,9 +228,7 @@ const ImageFileItem = memo<ImageFileItemProps>(
                 style={{ cursor: 'pointer' }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!isCreatingFileParseTask) {
-                    parseFiles([id]);
-                  }
+                  handleChunking();
                 }}
               >
                 <Button
@@ -233,6 +236,10 @@ const ImageFileItem = memo<ImageFileItemProps>(
                   loading={isCreatingFileParseTask}
                   size={'small'}
                   type={'text'}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChunking();
+                  }}
                 />
               </div>
             </Tooltip>

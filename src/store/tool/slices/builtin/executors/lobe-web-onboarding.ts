@@ -1,16 +1,17 @@
-import { BUILTIN_AGENT_SLUGS } from '@lobechat/builtin-agents';
 import {
   type UpdateDocumentArgs,
   WebOnboardingApiName,
   WebOnboardingIdentifier,
-} from '@lobechat/builtin-tool-web-onboarding';
+} from '@lobechat/builtin-tools';
 import {
   createDocumentReadResult,
   createWebOnboardingToolResult,
-} from '@lobechat/builtin-tool-web-onboarding/utils';
+} from '@lobechat/builtin-tools/webOnboardingUtils';
+import { BUILTIN_AGENT_SLUGS } from '@lobechat/const';
 import { type BuiltinToolContext, type BuiltinToolResult } from '@lobechat/types';
 import { BaseExecutor } from '@lobechat/types';
 
+import { RestClientError } from '@/libs/rest';
 import { userService } from '@/services/user';
 import { useAgentStore } from '@/store/agent';
 import { useUserStore } from '@/store/user';
@@ -21,6 +22,25 @@ const syncUserOnboardingState = async () => {
   } catch (error) {
     console.error(error);
   }
+};
+
+const getStructuredPatchError = (error: unknown) => {
+  if (!(error instanceof RestClientError)) return;
+
+  const detail = error.meta?.detail;
+  if (!detail || typeof detail !== 'object' || !('error' in detail)) return;
+
+  const patchError = (detail as { error?: unknown }).error;
+  if (!patchError || typeof patchError !== 'object') return;
+
+  const detailContent = (detail as { content?: unknown }).content;
+  const content = typeof detailContent === 'string' ? detailContent : error.message;
+  const type =
+    typeof (patchError as { code?: unknown }).code === 'string'
+      ? (patchError as { code: string }).code
+      : error.code || 'MarkdownPatchError';
+
+  return { content, patchError, type };
 };
 
 class WebOnboardingExecutor extends BaseExecutor<typeof WebOnboardingApiName> {
@@ -88,6 +108,20 @@ class WebOnboardingExecutor extends BaseExecutor<typeof WebOnboardingApiName> {
         success: true,
       };
     } catch (error) {
+      const structuredError = getStructuredPatchError(error);
+      if (structuredError) {
+        return {
+          content: structuredError.content,
+          error: {
+            body: structuredError.patchError,
+            message: structuredError.content,
+            type: structuredError.type,
+          },
+          state: { error: structuredError.patchError, type: params.type },
+          success: false,
+        };
+      }
+
       const message = error instanceof Error ? error.message : String(error);
       return {
         content: message,

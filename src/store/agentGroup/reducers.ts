@@ -1,7 +1,7 @@
 import { type AgentGroupDetail } from '@lobechat/types';
 import { produce } from 'immer';
 
-import { type ChatGroupItem } from '@/database/schemas/chatGroup';
+import { type ChatGroupItem } from '@/types/chatGroup';
 
 import { type ChatGroupState } from './initialState';
 

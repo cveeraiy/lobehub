@@ -5,7 +5,7 @@ export const historySummaryPrompt = (historySummary: string) => `<chat_history_s
 `;
 
 /**
- * Lobe Chat will inject some system instructions here
+ * Ethos will inject some system instructions here
  */
 export const BuiltinSystemRolePrompts = ({
   welcome,

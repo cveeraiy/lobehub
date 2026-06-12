@@ -3,8 +3,8 @@ import type { TaskStatus } from '@lobechat/types';
 import { AgentModel } from '@/database/models/agent';
 import { BriefModel } from '@/database/models/brief';
 import { TaskModel } from '@/database/models/task';
-import type { BriefItem } from '@/database/schemas';
-import type { LobeChatDatabase } from '@/database/type';
+import type { LobeChatDatabase } from '@/server/types/database';
+import type { BriefItem } from '@/types/brief';
 
 export interface AgentAvatarInfo {
   avatar: string | null;

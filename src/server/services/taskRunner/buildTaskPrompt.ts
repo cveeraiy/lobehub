@@ -1,14 +1,29 @@
 import { buildTaskRunPrompt } from '@lobechat/prompts';
 import type { TaskItem, TaskTopicHandoff, WorkspaceData } from '@lobechat/types';
 
-import type { BriefModel } from '@/database/models/brief';
-import type { TaskModel } from '@/database/models/task';
-import type { TaskTopicModel } from '@/database/models/taskTopic';
+interface BuildTaskPromptBriefModel {
+  findByTaskId: (taskId: string) => Promise<any[]>;
+}
+
+interface BuildTaskPromptTaskModel {
+  findById: (id: string) => Promise<any | null | undefined>;
+  findByIds: (ids: string[]) => Promise<any[]>;
+  findSubtasks: (taskId: string) => Promise<any[]>;
+  getComments: (taskId: string) => Promise<any[]>;
+  getDependencies: (taskId: string) => Promise<any[]>;
+  getDependenciesByTaskIds: (taskIds: string[]) => Promise<any[]>;
+  getReviewConfig: (task: TaskItem) => unknown;
+  getTreePinnedDocuments: (taskId: string) => Promise<WorkspaceData>;
+}
+
+interface BuildTaskPromptTaskTopicModel {
+  findWithHandoff: (taskId: string, limit: number) => Promise<any[]>;
+}
 
 export interface BuildTaskPromptDeps {
-  briefModel: BriefModel;
-  taskModel: TaskModel;
-  taskTopicModel: TaskTopicModel;
+  briefModel: BuildTaskPromptBriefModel;
+  taskModel: BuildTaskPromptTaskModel;
+  taskTopicModel: BuildTaskPromptTaskTopicModel;
 }
 
 /**

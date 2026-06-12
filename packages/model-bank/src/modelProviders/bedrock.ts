@@ -5,7 +5,7 @@ import type { ModelProviderCard } from '@/types/llm';
 // ref :https://us-west-2.console.aws.amazon.com/bedrock/home?region=us-west-2#/models
 const Bedrock: ModelProviderCard = {
   chatModels: [],
-  checkModel: 'anthropic.claude-instant-v1',
+  checkModel: 'global.anthropic.claude-haiku-4-5-20251001-v1:0',
   description:
     'Amazon Bedrock provides enterprises with advanced language and vision models, including Anthropic Claude and Meta Llama 3.1, spanning lightweight to high-performance options for text, chat, and image tasks.',
   id: 'bedrock',

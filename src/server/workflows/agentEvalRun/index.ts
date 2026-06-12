@@ -1,10 +1,10 @@
 import debug from 'debug';
 
 import { AgentEvalRunTopicModel } from '@/database/models/agentEval';
-import type { LobeChatDatabase } from '@/database/type';
 import { workflowClient } from '@/libs/qstash';
+import type { LobeChatDatabase } from '@/server/types/database';
 
-const log = debug('lobe-server:workflows:agent-eval-run');
+const log = debug('ethos-server:workflows:agent-eval-run');
 
 // Workflow paths
 const WORKFLOW_PATHS = {

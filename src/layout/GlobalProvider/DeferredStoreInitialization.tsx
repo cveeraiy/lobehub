@@ -3,8 +3,7 @@
 import { memo } from 'react';
 
 import { useAiInfraStore } from '@/store/aiInfra';
-import { useElectronStore } from '@/store/electron';
-import { electronSyncSelectors } from '@/store/electron/selectors';
+import { useToolStore } from '@/store/tool';
 import { useUserMemoryStore } from '@/store/userMemory';
 
 interface DeferredStoreInitializationProps {
@@ -13,10 +12,11 @@ interface DeferredStoreInitializationProps {
 
 const DeferredStoreInitialization = memo<DeferredStoreInitializationProps>(({ isLogin }) => {
   const useInitAiProviderKeyVaults = useAiInfraStore((s) => s.useFetchAiProviderRuntimeState);
+  const useFetchBuiltinSkills = useToolStore((s) => s.useFetchBuiltinSkills);
   const useFetchPersona = useUserMemoryStore((s) => s.useFetchPersona);
-  const isSyncActive = useElectronStore((s) => electronSyncSelectors.isSyncActive(s));
 
-  useInitAiProviderKeyVaults(isLogin, isSyncActive);
+  useInitAiProviderKeyVaults(isLogin, false);
+  useFetchBuiltinSkills();
   useFetchPersona(isLogin);
 
   return null;

@@ -3,7 +3,7 @@ import debug from 'debug';
 import { type HealthCheckResult, type QueueMessage, type QueueStats } from '../types';
 import { type QueueServiceImpl } from './type';
 
-const log = debug('lobe-server:service:queue:qstash');
+const log = debug('ethos-server:service:queue:qstash');
 
 /**
  * QStash queue service implementation

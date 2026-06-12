@@ -1,3 +1,14 @@
+# Ensure node/npx are on PATH (needed for GUI git clients like GitHub Desktop)
+export PATH="$PATH:/usr/local/bin:/opt/homebrew/bin"
+
+# Load nvm and use the project's pinned Node version from .nvmrc
+export NVM_DIR="$HOME/.nvm"
+# shellcheck disable=SC1091
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --no-use
+if [ -f "$(git rev-parse --show-toplevel)/.nvmrc" ]; then
+  nvm use --silent 2>/dev/null || true
+fi
+
 BRANCH=$(git branch --show-current)
 if [ "$BRANCH" = "dev" ] || [ "$BRANCH" = "main" ]; then
   npm run type-check

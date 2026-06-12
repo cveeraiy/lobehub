@@ -1,8 +1,6 @@
 import { expo } from '@better-auth/expo';
 import { passkey } from '@better-auth/passkey';
 import { ENABLE_BUSINESS_FEATURES } from '@lobechat/business-const';
-import { createNanoId, idGenerator, serverDB } from '@lobechat/database';
-import * as schema from '@lobechat/database/schemas';
 import bcrypt from 'bcryptjs';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { verifyPassword as defaultVerifyPassword } from 'better-auth/crypto';
@@ -15,6 +13,9 @@ import { validateEmail } from 'better-auth-harmony/email';
 import { ProxyAgent, setGlobalDispatcher } from 'undici';
 
 import { businessEmailValidator } from '@/business/server/better-auth';
+import * as schema from '@/database/schemas';
+import { serverDB } from '@/database/server';
+import { createNanoId, idGenerator } from '@/database/utils/idGenerator';
 import { appEnv } from '@/envs/app';
 import { authEnv } from '@/envs/auth';
 import {
@@ -215,6 +216,56 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
           },
         },
       },
+      session: {
+        create: {
+          after: async (session) => {
+            // Sync role and organization from Keycloak on every login.
+            // Reads the idToken from the linked Keycloak account, decodes the
+            // JWT payload, and updates:
+            //   - users.role from realm_access.roles (super_admin > admin > user > viewer)
+            //   - users.organization from groups[0]
+            try {
+              const { account: accountTable, users: usersTable } = schema;
+              const { eq, and, desc } = await import('drizzle-orm');
+
+              const linkedAccount = await serverDB
+                .select({ idToken: accountTable.idToken, providerId: accountTable.providerId })
+                .from(accountTable)
+                .where(
+                  and(
+                    eq(accountTable.userId, session.userId),
+                    eq(accountTable.providerId, 'keycloak'),
+                  ),
+                )
+                .orderBy(desc(accountTable.createdAt))
+                .then((rows: any[]) => rows[0]);
+
+              if (!linkedAccount?.idToken) return;
+
+              // Decode the JWT payload (base64url) without crypto verification
+              const payload = JSON.parse(
+                Buffer.from(linkedAccount.idToken.split('.')[1], 'base64url').toString(),
+              );
+
+              // Resolve role: pick the highest-privilege role present
+              const roles: string[] = payload?.realm_access?.roles ?? [];
+              const rolePriority = ['super_admin', 'admin', 'user', 'viewer'] as const;
+              const newRole = rolePriority.find((r) => roles.includes(r)) ?? 'user';
+
+              // Resolve organization from group membership (first group)
+              const groups: string[] = payload?.groups ?? [];
+              const organization = groups[0] ?? null;
+
+              await serverDB
+                .update(usersTable)
+                .set({ role: newRole, organization })
+                .where(eq(usersTable.id, session.userId));
+            } catch {
+              // Non-fatal: role sync failure should not block login
+            }
+          },
+        },
+      },
     },
     user: {
       changeEmail: {
@@ -290,7 +341,7 @@ export function defineConfig(customOptions: CustomBetterAuthOptions) {
         },
       }),
       passkey({
-        rpName: 'LobeHub',
+        rpName: 'Ethos',
         // Extract rpID from auth URL (e.g., 'lobehub.com' from 'https://lobehub.com')
         // Returns undefined if AUTH_URL is not set (e.g., in e2e tests)
         rpID: getPasskeyRpID(),

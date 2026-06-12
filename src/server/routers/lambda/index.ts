@@ -1,5 +1,5 @@
 /**
- * This file contains the root router of Lobe Chat tRPC-backend
+ * This file contains the root router of Ethos tRPC-backend
  */
 import { accountDeletionRouter } from '@/business/server/lambda-routers/accountDeletion';
 import { referralRouter } from '@/business/server/lambda-routers/referral';
@@ -9,6 +9,7 @@ import { taskTemplateRouter } from '@/business/server/lambda-routers/taskTemplat
 import { topUpRouter } from '@/business/server/lambda-routers/topUp';
 import { publicProcedure, router } from '@/libs/trpc/lambda';
 
+import { adminRouter } from './admin';
 import { agentRouter } from './agent';
 import { agentBotProviderRouter } from './agentBotProvider';
 import { agentCronJobRouter } from './agentCronJob';
@@ -17,9 +18,7 @@ import { agentEvalRouter } from './agentEval';
 import { agentEvalExternalRouter } from './agentEvalExternal';
 import { agentGroupRouter } from './agentGroup';
 import { agentNotifyRouter } from './agentNotify';
-import { agentSignalRouter } from './agentSignal';
 import { agentSkillsRouter } from './agentSkills';
-import { aiAgentRouter } from './aiAgent';
 import { aiChatRouter } from './aiChat';
 import { aiModelRouter } from './aiModel';
 import { aiProviderRouter } from './aiProvider';
@@ -45,13 +44,10 @@ import { knowledgeRouter } from './knowledge';
 import { knowledgeBaseRouter } from './knowledgeBase';
 import { marketRouter } from './market';
 import { messageRouter } from './message';
-import { notebookRouter } from './notebook';
 import { notificationRouter } from './notification';
-import { oauthDeviceFlowRouter } from './oauthDeviceFlow';
 import { pluginRouter } from './plugin';
 import { ragEvalRouter } from './ragEval';
 import { recentRouter } from './recent';
-import { searchRouter } from './search';
 import { sessionRouter } from './session';
 import { sessionGroupRouter } from './sessionGroup';
 import { shareRouter } from './share';
@@ -61,11 +57,10 @@ import { topicRouter } from './topic';
 import { uploadRouter } from './upload';
 import { usageRouter } from './usage';
 import { userRouter } from './user';
-import { userMemoriesRouter } from './userMemories';
-import { userMemoryRouter } from './userMemory';
 import { videoRouter } from './video';
 
 export const lambdaRouter = router({
+  admin: adminRouter,
   agent: agentRouter,
   agentBotProvider: agentBotProviderRouter,
   agentNotify: agentNotifyRouter,
@@ -75,10 +70,8 @@ export const lambdaRouter = router({
   agentEval: agentEvalRouter,
   agentEvalExternal: agentEvalExternalRouter,
   agentSkills: agentSkillsRouter,
-  agentSignal: agentSignalRouter,
   task: taskRouter,
   brief: briefRouter,
-  aiAgent: aiAgentRouter,
   aiChat: aiChatRouter,
   aiModel: aiModelRouter,
   aiProvider: aiProviderRouter,
@@ -104,13 +97,10 @@ export const lambdaRouter = router({
   knowledgeBase: knowledgeBaseRouter,
   market: marketRouter,
   message: messageRouter,
-  notebook: notebookRouter,
   notification: notificationRouter,
-  oauthDeviceFlow: oauthDeviceFlowRouter,
   plugin: pluginRouter,
   ragEval: ragEvalRouter,
   recent: recentRouter,
-  search: searchRouter,
   session: sessionRouter,
   sessionGroup: sessionGroupRouter,
   share: shareRouter,
@@ -119,8 +109,6 @@ export const lambdaRouter = router({
   upload: uploadRouter,
   usage: usageRouter,
   user: userRouter,
-  userMemories: userMemoriesRouter,
-  userMemory: userMemoryRouter,
   video: videoRouter,
   accountDeletion: accountDeletionRouter,
   referral: referralRouter,

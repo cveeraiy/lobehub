@@ -1,7 +1,6 @@
 'use client';
 
 import { SOCIAL_URL } from '@lobechat/business-const';
-import { isDesktop } from '@lobechat/const';
 import { useAnalytics } from '@lobehub/analytics/react';
 import { type MenuProps } from '@lobehub/ui';
 import { ActionIcon, DropdownMenu, Flexbox, Icon } from '@lobehub/ui';
@@ -10,8 +9,6 @@ import {
   Book,
   CircleHelp,
   Feather,
-  FileClockIcon,
-  FlaskConical,
   MessageCircle,
   Rocket,
   Settings2,
@@ -22,11 +19,8 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
-import ChangelogModal from '@/components/ChangelogModal';
 import HighlightNotification from '@/components/HighlightNotification';
 import { DOCUMENTS_REFER_URL, GITHUB } from '@/const/url';
-import Billboard from '@/features/Billboard';
-import { useBillboardMenuItems } from '@/features/Billboard/MenuItems';
 import ThemeButton from '@/features/User/UserPanel/ThemeButton';
 import { useFeedbackModal } from '@/hooks/useFeedbackModal';
 import { useNavLayout } from '@/hooks/useNavLayout';
@@ -66,7 +60,6 @@ const Footer = memo(() => {
   const navigate = useNavigate();
   const { analytics } = useAnalytics();
   const { footer } = useNavLayout();
-  const billboardMenuItems = useBillboardMenuItems();
   const enableAgentOnboarding = useServerConfigStore((s) => s.featureFlags.enableAgentOnboarding);
   const isMobile = useServerConfigStore((s) => !!s.isMobile);
   const serverConfigInit = useServerConfigStore((s) => s.serverConfigInit);
@@ -77,9 +70,7 @@ const Footer = memo(() => {
       !!s.onboarding?.finishedAt,
       userGeneralSettingsSelectors.config(s).isDevMode,
     ]);
-  const [shouldLoadChangelog, setShouldLoadChangelog] = useState(false);
   const [isAgentOnboardingCardOpen, setIsAgentOnboardingCardOpen] = useState(false);
-  const [isChangelogModalOpen, setIsChangelogModalOpen] = useState(false);
   const [isProductHuntCardOpen, setIsProductHuntCardOpen] = useState(false);
 
   const [isAgentOnboardingPromoRead, isProductHuntNotificationRead, updateSystemStatus] =
@@ -106,7 +97,6 @@ const Footer = memo(() => {
         classicOnboardingFinished,
         enableAgentOnboarding: !!enableAgentOnboarding,
         isAgentOnboardingPromoRead,
-        isDesktop,
         isMobile,
         isProductHuntNotificationRead,
         isWithinProductHuntWindow: isWithinTimeWindow,
@@ -168,15 +158,6 @@ const Footer = memo(() => {
   }, [isWithinTimeWindow, shouldAutoShowProductHuntCard, trackPromotionEvent]);
 
   const { open: openFeedbackModal } = useFeedbackModal();
-
-  const handleOpenChangelogModal = () => {
-    setShouldLoadChangelog(true);
-    setIsChangelogModalOpen(true);
-  };
-
-  const handleCloseChangelogModal = () => {
-    setIsChangelogModalOpen(false);
-  };
 
   const handleOpenFeedbackModal = useCallback(() => {
     openFeedbackModal();
@@ -294,15 +275,6 @@ const Footer = memo(() => {
           </a>
         ),
       },
-      {
-        type: 'divider',
-      },
-      {
-        icon: <Icon icon={FileClockIcon} />,
-        key: 'changelog',
-        label: t('changelog'),
-        onClick: handleOpenChangelogModal,
-      },
       ...(footer.layout === 'compact' && !footer.hideGitHub
         ? [
             {
@@ -316,15 +288,6 @@ const Footer = memo(() => {
             },
           ]
         : []),
-      ...(footer.showEvalEntry && footer.layout === 'compact'
-        ? [
-            {
-              icon: <Icon icon={FlaskConical} />,
-              key: 'eval',
-              label: <Link to="/eval">Evaluation Lab</Link>,
-            },
-          ]
-        : []),
       ...(shouldShowProductHuntMenuEntry
         ? [
             {
@@ -335,21 +298,16 @@ const Footer = memo(() => {
             },
           ]
         : []),
-      ...(billboardMenuItems && billboardMenuItems.length > 0
-        ? [{ type: 'divider' as const }, ...billboardMenuItems]
-        : []),
     ],
     [
       footer.showSettingsEntry,
       footer.layout,
       footer.hideGitHub,
-      footer.showEvalEntry,
       handleOpenFeedbackModal,
       handleOpenProductHuntCard,
       isDevMode,
       shouldShowProductHuntMenuEntry,
       t,
-      billboardMenuItems,
     ],
   );
 
@@ -359,21 +317,13 @@ const Footer = memo(() => {
         <Flexbox horizontal align={'center'} gap={2} justify={'space-between'} padding={8}>
           <Flexbox horizontal align={'center'} flex={1} gap={2}>
             <DropdownMenu items={helpMenuItems} placement="topLeft">
-              <ActionIcon
-                aria-label={t('userPanel.help')}
-                data-billboard-anchor=""
-                icon={CircleHelp}
-                size={16}
-              />
+              <ActionIcon aria-label={t('userPanel.help')} icon={CircleHelp} size={16} />
             </DropdownMenu>
             {!footer.hideGitHub && (
               <a aria-label={'GitHub'} href={GITHUB} rel="noopener noreferrer" target={'_blank'}>
                 <ActionIcon icon={GithubIcon} size={16} title={'GitHub'} />
               </a>
             )}
-            <Link to="/eval">
-              <ActionIcon icon={FlaskConical} size={16} title="Evaluation Lab" />
-            </Link>
           </Flexbox>
           <ThemeButton placement={'topCenter'} size={16} />
         </Flexbox>
@@ -394,11 +344,6 @@ const Footer = memo(() => {
           )}
         </Flexbox>
       )}
-      <ChangelogModal
-        open={isChangelogModalOpen}
-        shouldLoad={shouldLoadChangelog}
-        onClose={handleCloseChangelogModal}
-      />
       {activePromotion && (
         <HighlightNotification
           open
@@ -413,7 +358,6 @@ const Footer = memo(() => {
           onClose={activePromotion.onClose}
         />
       )}
-      <Billboard />
     </>
   );
 });

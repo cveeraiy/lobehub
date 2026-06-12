@@ -46,7 +46,7 @@ const defaultConfig: LLMMockConfig = {
 
 /**
  * Build SSE formatted response chunks
- * Follows LobeChat's actual streaming format
+ * Follows Ethos's actual streaming format
  */
 function buildSSEChunks(content: string, chunkSize: number): string[] {
   const chunks: string[] = [];

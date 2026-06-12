@@ -1,5 +1,10 @@
 // @vitest-environment node
-import { type LobeChatDatabase } from '@lobechat/database';
+import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
+import { MessageGroupType } from '@lobechat/types';
+import { eq } from 'drizzle-orm';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getTestDB } from '@/database/core/getTestDB';
 import {
   agents,
   agentsToSessions,
@@ -9,13 +14,8 @@ import {
   sessions,
   topics,
   users,
-} from '@lobechat/database/schemas';
-import { getTestDB } from '@lobechat/database/test-utils';
-import { HeterogeneousAgentSessionErrorCode } from '@lobechat/electron-client-ipc';
-import { AgentRuntimeErrorType } from '@lobechat/model-runtime';
-import { MessageGroupType } from '@lobechat/types';
-import { eq } from 'drizzle-orm';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+} from '@/database/schemas';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { MessageService } from '../index';
 
@@ -32,7 +32,7 @@ const userId = 'message-service-integration-test';
 const otherUserId = 'message-service-integration-test-other';
 
 beforeEach(async () => {
-  await serverDB.transaction(async (trx) => {
+  await serverDB.transaction(async (trx: any) => {
     await trx.delete(users).where(eq(users.id, userId));
     await trx.delete(users).where(eq(users.id, otherUserId));
     await trx.insert(users).values([{ id: userId }, { id: otherUserId }]);
@@ -285,7 +285,7 @@ describe('MessageService Integration Tests', () => {
       const messageError = {
         body: {
           agentType: 'claude-code',
-          code: HeterogeneousAgentSessionErrorCode.AuthRequired,
+          code: 'auth_required',
           message: 'Failed to authenticate. API Error: 401',
         },
         message: 'Failed to authenticate. API Error: 401',

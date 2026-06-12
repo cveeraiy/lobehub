@@ -37,8 +37,8 @@ A good vulnerability report should include:
 
 ### In Scope
 
-- Security issues affecting the **latest 2.x release** of LobeHub
-- Vulnerabilities in the **server-side deployment** (LobeHub Cloud or self-hosted server mode)
+- Security issues affecting the **latest 2.x release** of Ethos
+- Vulnerabilities in the **server-side deployment** (Ethos Cloud or self-hosted server mode)
 - Issues that can be exploited **without requiring admin/owner access** to the deployment
 
 ### Out of Scope (Not a Vulnerability)

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { getAgentRuntimeRedisClient } from '@/server/modules/AgentRuntime/redis';
+import { getAgentRuntimeRedisClient } from '@/server/utils/runtimeRedis';
 
 import { BotConnectQueue } from './botConnectQueue';
 
@@ -12,7 +12,7 @@ const mockRedis = {
   hdel: vi.fn(),
 };
 
-vi.mock('@/server/modules/AgentRuntime/redis', () => ({
+vi.mock('@/server/utils/runtimeRedis', () => ({
   getAgentRuntimeRedisClient: vi.fn(() => mockRedis),
 }));
 

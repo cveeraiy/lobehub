@@ -1,6 +1,7 @@
 import { Flexbox } from '@lobehub/ui';
 import { useTheme } from 'antd-style';
-import { Activity, type FC, type ReactNode, useEffect, useMemo, useState } from 'react';
+import * as React from 'react';
+import { type FC, type ReactNode, useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import { useIsDark } from '@/hooks/useIsDark';
@@ -9,6 +10,9 @@ import HomeAgentIdSync from './HomeAgentIdSync';
 import RecentHydration from './RecentHydration';
 import Sidebar from './Sidebar';
 import { styles } from './style';
+
+// Activity is a React 19 symbol — access via namespace to avoid rolldown CJS interop issues
+const Activity = React.Activity as any;
 
 interface LayoutProps {
   children?: ReactNode;

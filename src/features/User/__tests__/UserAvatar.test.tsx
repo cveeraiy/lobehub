@@ -42,7 +42,7 @@ describe('UserAvatar', () => {
     expect(screen.getByText('TE')).toBeInTheDocument();
   });
 
-  it('should show LobeChat and default avatar when the user is not logged in', () => {
+  it('should show Ethos and default avatar when the user is not logged in', () => {
     act(() => {
       useUserStore.setState({ isSignedIn: false, user: undefined });
     });

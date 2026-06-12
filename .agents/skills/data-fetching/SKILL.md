@@ -3,7 +3,7 @@ name: data-fetching
 description: Data fetching architecture guide using Service layer + Zustand Store + SWR. Use when implementing data fetching, creating services, working with store hooks, or migrating from useEffect. Triggers on data loading, API calls, service creation, or store data fetching tasks.
 ---
 
-# LobeHub Data Fetching Architecture
+# Ethos Data Fetching Architecture
 
 > **Related Skills:**
 >

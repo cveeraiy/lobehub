@@ -1,5 +1,5 @@
 import { DEFAULT_PROVIDER } from '@lobechat/business-const';
-import { DEFAULT_MODEL, DEFAUTT_AGENT_TTS_CONFIG, isDesktop } from '@lobechat/const';
+import { DEFAULT_MODEL, DEFAUTT_AGENT_TTS_CONFIG } from '@lobechat/const';
 import { type AgentBuilderContext } from '@lobechat/context-engine';
 import {
   type AgentMode,
@@ -8,10 +8,7 @@ import {
   type RuntimeEnvConfig,
 } from '@lobechat/types';
 
-import { globalAgentContextManager } from '@/helpers/GlobalAgentContextManager';
-
 import { type AgentStoreState } from '../initialState';
-import { getLocalAgentWorkingDirectory } from '../utils/localAgentWorkingDirectoryStorage';
 import { agentSelectors } from './selectors';
 
 /**
@@ -94,13 +91,9 @@ const getAgentRuntimeEnvConfigById =
  * Get working directory by agentId
  */
 const getAgentWorkingDirectoryById =
-  (agentId: string) =>
-  (_s: AgentStoreState): string | undefined => {
-    if (!isDesktop) return;
-
-    const ctx = globalAgentContextManager.getContext();
-    return getLocalAgentWorkingDirectory(agentId) ?? ctx.desktopPath ?? ctx.homePath;
-  };
+  (_agentId: string) =>
+  (_s: AgentStoreState): string | undefined =>
+    undefined;
 
 /**
  * Get agent builder context by agentId
@@ -140,9 +133,9 @@ const getAgencyConfigById =
  * (e.g. Claude Code) — by agentId.
  */
 const isAgentHeterogeneousById =
-  (agentId: string) =>
-  (s: AgentStoreState): boolean =>
-    !!getAgencyConfigById(agentId)(s)?.heterogeneousProvider;
+  (_agentId: string) =>
+  (_s: AgentStoreState): boolean =>
+    false;
 
 /**
  * Get full agent data by agentId

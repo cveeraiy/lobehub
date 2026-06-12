@@ -6,7 +6,7 @@ import { type AudioContent, type ImageContent, type ToolCallContent } from '@/li
 import { type FileService } from '@/server/services/file';
 import { nanoid } from '@/utils/uuid';
 
-const log = debug('lobe-mcp:content-processor');
+const log = debug('ethos-mcp:content-processor');
 
 export type ProcessContentBlocksFn = (blocks: ToolCallContent[]) => Promise<ToolCallContent[]>;
 

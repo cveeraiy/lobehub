@@ -3,11 +3,11 @@
 import { TooltipGroup } from '@lobehub/ui';
 import { StyleProvider } from 'antd-style';
 import { domMax, LazyMotion } from 'motion/react';
-import { lazy, memo, type PropsWithChildren, Suspense, useLayoutEffect } from 'react';
+import type { PropsWithChildren } from 'react';
+import { lazy, memo, Suspense, useEffect, useLayoutEffect, useState } from 'react';
 
 import { LobeAnalyticsProviderWrapper } from '@/components/Analytics/LobeAnalyticsProviderWrapper';
 import { DragUploadProvider } from '@/components/DragUploadZone/DragUploadProvider';
-import { isDesktop } from '@/const/version';
 import AuthProvider from '@/layout/AuthProvider';
 import AppTheme from '@/layout/GlobalProvider/AppTheme';
 import DynamicFavicon from '@/layout/GlobalProvider/DynamicFavicon';
@@ -16,7 +16,6 @@ import { GroupWizardProvider } from '@/layout/GlobalProvider/GroupWizardProvider
 import ImportSettings from '@/layout/GlobalProvider/ImportSettings';
 import NextThemeProvider from '@/layout/GlobalProvider/NextThemeProvider';
 import QueryProvider from '@/layout/GlobalProvider/Query';
-import ServerVersionOutdatedAlert from '@/layout/GlobalProvider/ServerVersionOutdatedAlert';
 import StoreInitialization from '@/layout/GlobalProvider/StoreInitialization';
 import { ServerConfigStoreProvider } from '@/store/serverConfig/Provider';
 import type { SPAServerConfig } from '@/types/spaServerConfig';
@@ -33,15 +32,40 @@ const ContextMenuHost = lazy(() =>
 );
 
 const SPAGlobalProvider = memo<PropsWithChildren>(({ children }) => {
+  const [serverConfig, setServerConfig] = useState<SPAServerConfig | undefined>(
+    () => window.__SERVER_CONFIG__,
+  );
+
   useLayoutEffect(() => {
     document.getElementById('loading-screen')?.remove();
   }, []);
 
-  const serverConfig: SPAServerConfig | undefined = window.__SERVER_CONFIG__;
+  useEffect(() => {
+    if (serverConfig) return;
+
+    const controller = new AbortController();
+
+    fetch('/api/__server_config__', {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+
+        const config = (await res.json()) as SPAServerConfig;
+        window.__SERVER_CONFIG__ = config;
+        setServerConfig(config);
+      })
+      .catch(() => {
+        // The SPA can still boot with default config while the API is unavailable.
+      });
+
+    return () => controller.abort();
+  }, [serverConfig]);
 
   const locale = document.documentElement.lang || 'en-US';
   const isMobile =
-    (serverConfig?.isMobile ?? typeof __MOBILE__ !== 'undefined') ? __MOBILE__ : false;
+    serverConfig?.isMobile ?? (typeof __MOBILE__ !== 'undefined' ? __MOBILE__ : false);
 
   return (
     <Locale defaultLang={locale}>
@@ -56,7 +80,6 @@ const SPAGlobalProvider = memo<PropsWithChildren>(({ children }) => {
               <AuthProvider>
                 <StoreInitialization />
 
-                {isDesktop && <ServerVersionOutdatedAlert />}
                 <FaviconProvider>
                   <DynamicFavicon />
                   <GroupWizardProvider>

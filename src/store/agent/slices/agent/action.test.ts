@@ -40,6 +40,24 @@ vi.mock('@/services/agentDocument', () => ({
       policyLoadFormat: undefined,
       title: doc.title,
     })),
+  resolveAgentDocumentsContext: async ({ agentId, cachedDocuments }: any) => {
+    if (cachedDocuments !== undefined) return cachedDocuments;
+    if (!agentId) return undefined;
+
+    const { agentDocumentService } = await import('@/services/agentDocument');
+    const documents = await agentDocumentService.getDocuments({ agentId });
+
+    return documents.map((doc: any) => ({
+      content: doc.content,
+      filename: doc.filename,
+      id: doc.id,
+      loadPosition: undefined,
+      loadRules: doc.loadRules,
+      policyId: doc.templateId,
+      policyLoadFormat: undefined,
+      title: doc.title,
+    }));
+  },
 }));
 
 // Mock sessionStore

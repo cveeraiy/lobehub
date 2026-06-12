@@ -4,19 +4,13 @@ import dayjs from 'dayjs';
 import { sha256 } from 'js-sha256';
 
 import { fileEnv } from '@/envs/file';
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { API_ENDPOINTS } from '@/services/_url';
 import { type FileMetadata, type UploadBase64ToS3Result } from '@/types/files';
 import { type FileUploadState, type FileUploadStatus } from '@/types/files/upload';
 
 export const UPLOAD_NETWORK_ERROR = 'NetWorkError';
 
-/**
- * Generate file storage path metadata for S3-compatible storage
- * @param originalFilename - Original filename
- * @param options - Path generation options
- * @returns Path metadata including date, dirname, filename, and pathname
- */
 const generateFilePathMetadata = (
   originalFilename: string,
   options: { directory?: string; pathname?: string } = {},
@@ -26,11 +20,9 @@ const generateFilePathMetadata = (
   filename: string;
   pathname: string;
 } => {
-  // Generate unique filename with UUID prefix and original extension
   const extension = originalFilename.split('.').at(-1);
   const filename = `${uuid()}.${extension}`;
 
-  // Generate timestamp-based directory path
   const date = (Date.now() / 1000 / 60 / 60).toFixed(0);
   const dirname = `${options.directory || fileEnv.NEXT_PUBLIC_S3_FILE_PATH}/${date}`;
   const pathname = options.pathname ?? `${dirname}/${filename}`;
@@ -54,17 +46,10 @@ interface UploadFileToS3Options {
 }
 
 class UploadService {
-  /**
-   * uniform upload method for both server and client
-   */
   uploadFileToS3 = async (
     file: File,
     { onProgress, directory, pathname, abortController }: UploadFileToS3Options,
   ): Promise<{ data: FileMetadata; success: boolean }> => {
-    // Server-side upload logic
-
-    // if is server mode, upload to server s3,
-
     const data = await this.uploadToServerS3(file, {
       abortController,
       directory,
@@ -78,18 +63,15 @@ class UploadService {
     base64Data: string,
     options: UploadFileToS3Options = {},
   ): Promise<UploadBase64ToS3Result> => {
-    // Parse base64 data
     const { base64, mimeType, type } = parseDataUri(base64Data);
 
     if (!base64 || !mimeType || type !== 'base64') {
       throw new Error('Invalid base64 data for image');
     }
 
-    // Convert base64 to Blob
     const byteCharacters = atob(base64);
     const byteArrays = [];
 
-    // Process in chunks to avoid memory issues
     for (let offset = 0; offset < byteCharacters.length; offset += 1024) {
       const slice = byteCharacters.slice(offset, offset + 1024);
 
@@ -104,14 +86,11 @@ class UploadService {
 
     const blob = new Blob(byteArrays, { type: mimeType });
 
-    // Determine file extension
     const fileExtension = mimeType.split('/')[1] || 'png';
     const fileName = `${options.filename || `image_${dayjs().format('YYYY-MM-DD-hh-mm-ss')}`}.${fileExtension}`;
 
-    // Create file object
     const file = new File([blob], fileName, { type: mimeType });
 
-    // Use unified upload method
     const { data: metadata } = await this.uploadFileToS3(file, options);
     const hash = sha256(await file.arrayBuffer());
 
@@ -148,7 +127,6 @@ class UploadService {
     const { preSignUrl, ...result } = await this.getSignedUploadUrl(file, { directory, pathname });
     const startTime = Date.now();
 
-    // Setup abort listener
     if (abortController) {
       abortController.signal.addEventListener('abort', () => {
         xhr.abort();
@@ -162,9 +140,6 @@ class UploadService {
         const speedInByte = event.loaded / ((Date.now() - startTime) / 1000);
 
         onProgress?.('uploading', {
-          // if the progress is 100, it means the file is uploaded
-          // but the server is still processing it
-          // so make it as 99.9 and let users think it's still uploading
           progress: progress === 100 ? 99.9 : progress,
           restTime: (event.total - event.loaded) / speedInByte,
           speed: speedInByte,
@@ -203,12 +178,6 @@ class UploadService {
     return result;
   };
 
-  /**
-   * get image File item with cors image URL
-   * @param url
-   * @param filename
-   * @param fileType
-   */
   getImageFileByUrlWithCORS = async (url: string, filename: string, fileType = 'image/png') => {
     const res = await fetch(API_ENDPOINTS.proxy, { body: url, method: 'POST' });
     const data = await res.arrayBuffer();
@@ -224,10 +193,16 @@ class UploadService {
       preSignUrl: string;
     }
   > => {
-    // Generate file path metadata
     const { date, dirname, filename, pathname } = generateFilePathMetadata(file.name, options);
 
-    const preSignUrl = await lambdaClient.upload.createS3PreSignedUrl.mutate({ pathname });
+    const presigned = await restClient.post<string | { url?: string }>('/upload/presigned-url', {
+      body: { pathname },
+    });
+    const preSignUrl = typeof presigned === 'string' ? presigned : presigned.url;
+
+    if (!preSignUrl) {
+      throw new Error('Missing presigned upload URL');
+    }
 
     return {
       date,

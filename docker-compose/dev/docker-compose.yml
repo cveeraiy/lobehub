@@ -7,7 +7,7 @@ services:
     ports:
       - '${RUSTFS_PORT}:9000' # RustFS API
       - '9001:9001' # RustFS Console
-      - '${LOBE_PORT}:3210' # LobeChat
+      - '${LOBE_PORT}:3210' # Ethos
     command: tail -f /dev/null
     networks:
       - lobe-network
@@ -18,9 +18,9 @@ services:
     image: paradedb/paradedb:latest-pg17
     container_name: lobe-postgres
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
-      - './data:/var/lib/postgresql/data'
+      - 'pgdata:/var/lib/postgresql/data'
     environment:
       - 'POSTGRES_DB=${LOBE_DB_NAME}'
       - 'POSTGRES_PASSWORD=${POSTGRES_PASSWORD}'
@@ -63,11 +63,22 @@ services:
     volumes:
       - rustfs-data:/data
     healthcheck:
-      test: ['CMD-SHELL', 'wget -qO- http://localhost:9000/health >/dev/null 2>&1 || exit 1']
+      test:
+        [
+          'CMD-SHELL',
+          'wget -qO- http://localhost:9000/health >/dev/null 2>&1 || exit 1',
+        ]
       interval: 5s
       timeout: 3s
       retries: 30
-    command: ['--access-key','${RUSTFS_ACCESS_KEY}','--secret-key','${RUSTFS_SECRET_KEY}','/data']
+    command:
+      [
+        '--access-key',
+        '${RUSTFS_ACCESS_KEY}',
+        '--secret-key',
+        '${RUSTFS_SECRET_KEY}',
+        '/data',
+      ]
     env_file:
       - .env
 
@@ -80,21 +91,32 @@ services:
     volumes:
       - ./bucket.config.json:/bucket.config.json:ro
     entrypoint: /bin/sh
-    command: -c '
-        set -eux;
-        echo "S3_ACCESS_KEY=${RUSTFS_ACCESS_KEY}, S3_SECRET_KEY=${RUSTFS_SECRET_KEY}";
-        mc --version;
-        mc alias set rustfs "http://network-service:9000" "${RUSTFS_ACCESS_KEY}" "${RUSTFS_SECRET_KEY}";
-        mc ls rustfs || true;
-        mc mb "rustfs/lobe" --ignore-existing;
-        mc admin info rustfs || true;
-        mc anonymous set-json "/bucket.config.json" "rustfs/lobe";
-      '
+    command: -c ' set -eux; echo "S3_ACCESS_KEY=${RUSTFS_ACCESS_KEY},
+      S3_SECRET_KEY=${RUSTFS_SECRET_KEY}"; mc --version; mc alias set rustfs
+      "http://network-service:9000" "${RUSTFS_ACCESS_KEY}"
+      "${RUSTFS_SECRET_KEY}"; mc ls rustfs || true; mc mb "rustfs/lobe"
+      --ignore-existing; mc admin info rustfs || true; mc anonymous set-json
+      "/bucket.config.json" "rustfs/lobe"; '
     restart: 'no'
     networks:
       - lobe-network
     env_file:
       - .env
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: lobe-keycloak
+    ports:
+      - '8080:8080'
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=cisco
+    command: start-dev
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    restart: always
+    networks:
+      - lobe-network
 
   searxng:
     image: searxng/searxng
@@ -110,11 +132,13 @@ services:
       - lobe-network
 
 volumes:
-  data:
+  pgdata:
     driver: local
   redis_data:
     driver: local
   rustfs-data:
+    driver: local
+  keycloak-data:
     driver: local
 
 networks:

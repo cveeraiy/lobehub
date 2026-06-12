@@ -1,3 +1,4 @@
+import { builtinTools } from '@lobechat/builtin-tools';
 import { getBuiltinRenderDisplayControl } from '@lobechat/builtin-tools/displayControls';
 import { getKlavisServerByServerIdentifier, getLobehubSkillProviderById } from '@lobechat/const';
 import { type RenderDisplayControl, type ToolManifest } from '@lobechat/types';
@@ -15,6 +16,12 @@ import { KlavisServerStatus } from '../slices/klavisStore';
 import { lobehubSkillStoreSelectors } from '../slices/lobehubSkillStore';
 import { LobehubSkillStatus } from '../slices/lobehubSkillStore/types';
 import { pluginSelectors } from '../slices/plugin/selectors';
+
+const getBuiltinTools = (s: ToolStoreState): ToolStoreState['builtinTools'] =>
+  s.builtinTools || builtinTools;
+
+const getInstalledPlugins = (s: ToolStoreState): ToolStoreState['installedPlugins'] =>
+  s.installedPlugins || [];
 
 const metaList = (s: ToolStoreState): LobeToolMeta[] => {
   const pluginList = pluginSelectors.installedPluginMetaList(s) as LobeToolMeta[];
@@ -45,14 +52,14 @@ const getManifestById =
   (s: ToolStoreState): ToolManifest | undefined =>
     pluginSelectors
       .installedPluginManifestList(s)
-      .concat(s.builtinTools.map((b) => b.manifest as ToolManifest))
+      .concat(getBuiltinTools(s).map((b) => b.manifest as ToolManifest))
       .find((i) => i.identifier === id);
 
 // Get plugin manifest loading status
 const getManifestLoadingStatus = (id: string) => (s: ToolStoreState) => {
   const manifest = getManifestById(id)(s);
 
-  if (s.pluginInstallLoading[id]) return 'loading';
+  if (s.pluginInstallLoading?.[id]) return 'loading';
 
   if (!manifest) return 'error';
 
@@ -62,7 +69,7 @@ const getManifestLoadingStatus = (id: string) => (s: ToolStoreState) => {
 const isToolHasUI = (id: string) => (s: ToolStoreState) => {
   const manifest = getManifestById(id)(s);
   if (!manifest) return false;
-  const builtinTool = s.builtinTools.find((tool) => tool.identifier === id);
+  const builtinTool = getBuiltinTools(s).find((tool) => tool.identifier === id);
 
   if (builtinTool && builtinTool.type === 'builtin') {
     return true;
@@ -81,13 +88,13 @@ const isToolHasUI = (id: string) => (s: ToolStoreState) => {
 const getRenderDisplayControl =
   (identifier: string, apiName: string) =>
   (s: ToolStoreState): RenderDisplayControl => {
-    const builtinTool = s.builtinTools.find((t) => t.identifier === identifier);
+    const builtinTool = getBuiltinTools(s).find((t) => t.identifier === identifier);
     const manifestControl = builtinTool?.manifest.api.find(
       (a) => a.name === apiName,
     )?.renderDisplayControl;
     if (manifestControl) return manifestControl;
 
-    // Fallback for packages that don't ship a LobeChat manifest (e.g. Claude Code —
+    // Fallback for packages that don't ship an Ethos manifest (e.g. Claude Code —
     // its tools come from Anthropic tool_use blocks at runtime).
     return getBuiltinRenderDisplayControl(identifier, apiName) ?? 'collapsed';
   };
@@ -104,9 +111,9 @@ export interface AvailableToolForDiscovery {
  *
  * Sources:
  * 1. Builtin tools (from s.builtinTools) — exclude non-discoverable, skills, platform-unavailable
- * 2. User-installed plugins (from s.installedPlugins) — exclude Klavis/LobeHub Skill/agent skill overlap
+ * 2. User-installed plugins (from s.installedPlugins) — exclude Klavis/Ethos Skill/agent skill overlap
  * 3. Klavis MCP servers (connected) — description from KLAVIS_SERVER_TYPES
- * 4. LobeHub Skill servers (connected) — description from LOBEHUB_SKILL_PROVIDERS
+ * 4. Ethos Skill servers (connected) — description from LOBEHUB_SKILL_PROVIDERS
  */
 const availableToolsForDiscovery = (s: ToolStoreState): AvailableToolForDiscovery[] => {
   // Build exclusion sets for deduplication
@@ -116,7 +123,7 @@ const availableToolsForDiscovery = (s: ToolStoreState): AvailableToolForDiscover
   const lobehubSkillIds = new Set((s.lobehubSkillServers || []).map((server) => server.identifier));
 
   // 1. Builtin tools — directly from s.builtinTools
-  const builtinItems = s.builtinTools
+  const builtinItems = getBuiltinTools(s)
     .filter((tool) => tool.discoverable !== false)
     .filter((tool) => !builtinSkillIds.has(tool.identifier))
     .filter((tool) => isToolAvailableInCurrentEnv(tool.identifier))
@@ -127,8 +134,8 @@ const availableToolsForDiscovery = (s: ToolStoreState): AvailableToolForDiscover
     }));
 
   // 2. User-installed plugins — directly from s.installedPlugins
-  //    Exclude Klavis, LobeHub Skill, and agent skill entries (they are handled in dedicated sources)
-  const pluginItems = s.installedPlugins
+  //    Exclude Klavis, Ethos Skill, and agent skill entries (they are handled in dedicated sources)
+  const pluginItems = getInstalledPlugins(s)
     .filter((p) => !klavisIds.has(p.identifier))
     .filter((p) => !lobehubSkillIds.has(p.identifier))
     .filter((p) => !agentSkillIds.has(p.identifier))
@@ -155,7 +162,7 @@ const availableToolsForDiscovery = (s: ToolStoreState): AvailableToolForDiscover
       };
     });
 
-  // 4. LobeHub Skill servers (connected only)
+  // 4. Ethos Skill servers (connected only)
   const lobehubSkillItems = (s.lobehubSkillServers || [])
     .filter((server) => server.status === LobehubSkillStatus.CONNECTED)
     .map((server) => {

@@ -3,4 +3,4 @@
  * Each platform service (Discord, Telegram, Slack, etc.) implements this interface.
  * Unsupported operations should throw PlatformUnsupportedError.
  */
-export type { MessageRuntimeService } from '@lobechat/builtin-tool-message/executionRuntime';
+export type { MessageRuntimeService } from '@lobechat/builtin-tools/messageExecutionRuntime';

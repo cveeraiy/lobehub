@@ -1,10 +1,10 @@
 import { type SWRResponse } from 'swr';
 
-import { type AgentCronJob } from '@/database/schemas/agentCronJob';
 import { mutate, useClientDataSWR } from '@/libs/swr';
-import { lambdaClient } from '@/libs/trpc/client/lambda';
 import { agentCronJobService } from '@/services/agentCronJob';
+import { topicService } from '@/services/topic';
 import { type StoreSetter } from '@/store/types';
+import { type AgentCronJob } from '@/types/agentCronJob';
 
 import { type AgentStore } from '../../store';
 
@@ -76,10 +76,11 @@ export class CronSliceActionImpl {
   ): SWRResponse<CronTopicGroupWithJobInfo[]> => {
     return useClientDataSWR<CronTopicGroupWithJobInfo[]>(
       enabled && agentId ? [FETCH_CRON_TOPICS_WITH_JOB_INFO_KEY, agentId] : null,
-      async ([, id]: [string, string]) => {
+      (async (key: [string, string]) => {
+        const id = key[1];
         const [cronJobsResult, cronTopicsGroups] = await Promise.all([
-          lambdaClient.agentCronJob.findByAgent.query({ agentId: id }),
-          lambdaClient.topic.getCronTopicsGroupedByCronJob.query({ agentId: id }),
+          agentCronJobService.getByAgentId(id),
+          topicService.getCronTopicsGroupedByCronJob(id),
         ]);
 
         const cronJobs = cronJobsResult.success ? cronJobsResult.data : [];
@@ -103,7 +104,7 @@ export class CronSliceActionImpl {
           }));
 
         return [...groupsWithJobs, ...orphanGroups];
-      },
+      }) as any,
       {
         fallbackData: [],
         revalidateOnFocus: false,

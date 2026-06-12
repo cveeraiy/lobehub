@@ -1,4 +1,4 @@
-import type { LobeChatDatabase, Transaction } from '@/database/type';
+import type { LobeChatDatabase, Transaction } from '@/server/types/database';
 
 export type DocumentHistorySaveSource = 'autosave' | 'manual' | 'restore' | 'system' | 'llm_call';
 

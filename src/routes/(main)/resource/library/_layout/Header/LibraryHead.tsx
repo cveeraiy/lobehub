@@ -1,6 +1,6 @@
 'use client';
 
-import { type DropdownItem } from '@lobehub/ui';
+import type { DropdownItem } from '@lobehub/ui';
 import {
   ActionIcon,
   Block,
@@ -12,10 +12,11 @@ import {
 } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import { ChevronsUpDownIcon } from 'lucide-react';
-import { type DragEvent } from 'react';
+import type { DragEvent } from 'react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import FileParsingStatus from '@/components/FileParsingStatus';
 import RepoIcon from '@/components/LibIcon';
 import { useDragActive } from '@/routes/(main)/resource/features/DndContextWrapper';
 import { useResourceManagerStore } from '@/routes/(main)/resource/features/store';
@@ -47,6 +48,8 @@ const Head = memo<{ id: string }>(({ id }) => {
 
   const useFetchKnowledgeBaseList = useKnowledgeBaseStore((s) => s.useFetchKnowledgeBaseList);
   const { data: libraries } = useFetchKnowledgeBaseList();
+  const library = useMemo(() => libraries?.find((item) => item.id === id), [libraries, id]);
+  const title = library?.name ?? name;
 
   const handleClick = useCallback(() => {
     navigate(`/resource/library/${id}`);
@@ -98,7 +101,7 @@ const Head = memo<{ id: string }>(({ id }) => {
       onClick: () => handleLibrarySwitch(library.id),
       style: library.id === id ? { backgroundColor: 'var(--ant-control-item-bg-active)' } : {},
     }));
-  }, [libraries, handleLibrarySwitch, id, styles.menuIcon]);
+  }, [libraries, handleLibrarySwitch, id]);
 
   return (
     <Block
@@ -121,7 +124,7 @@ const Head = memo<{ id: string }>(({ id }) => {
       <Center style={{ minWidth: 32 }} width={32}>
         <RepoIcon size={18} />
       </Center>
-      {!name ? (
+      {!title ? (
         <Skeleton active paragraph={false} title={{ style: { marginBottom: 0 }, width: 80 }} />
       ) : (
         <DropdownMenu items={menuItems} placement="bottomRight">
@@ -132,8 +135,11 @@ const Head = memo<{ id: string }>(({ id }) => {
             onClick={stopPropagation}
           >
             <Text ellipsis style={{ flex: 1 }} weight={500}>
-              {name}
+              {title}
             </Text>
+            {library?.chunkingStatus ? (
+              <FileParsingStatus {...library} hideEmbeddingButton />
+            ) : null}
             <ActionIcon
               icon={ChevronsUpDownIcon}
               style={{ width: 24 }}

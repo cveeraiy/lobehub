@@ -4,12 +4,12 @@ import { AgentEvalRunService } from '@/server/services/agentEvalRun';
 
 import { cleanupDB, serverDB, userId } from './_setup';
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 
-vi.mock('@/server/services/agentRuntime/AgentRuntimeService', () => ({
-  AgentRuntimeService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     interruptOperation: vi.fn().mockResolvedValue(true),
   })),
 }));

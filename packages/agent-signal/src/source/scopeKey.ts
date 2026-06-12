@@ -1,7 +1,7 @@
 import type { AgentSignalScope } from '../base/types';
 
 /**
- * Bot-thread identity used to route source events that originate outside a LobeChat topic.
+ * Bot-thread identity used to route source events that originate outside an Ethos topic.
  */
 export interface AgentSignalBotScopeKeyInput {
   /** Application identifier from the external bot platform. */
@@ -22,7 +22,7 @@ export interface AgentSignalProducerScopeInput {
   platform?: string;
   /** Optional external thread identifier for bot-originated events. */
   platformThreadId?: string;
-  /** Optional LobeChat topic identifier. Takes precedence over bot-thread metadata. */
+  /** Optional Ethos topic identifier. Takes precedence over bot-thread metadata. */
   topicId?: string;
 }
 
@@ -35,10 +35,10 @@ export interface AgentSignalTaskScopeKeyInput {
 }
 
 /**
- * Topic identity used when an AgentSignal chain is scoped to one LobeChat topic.
+ * Topic identity used when an AgentSignal chain is scoped to one Ethos topic.
  */
 export interface AgentSignalTopicScopeKeyInput {
-  /** Stable LobeChat topic identifier. */
+  /** Stable Ethos topic identifier. */
   topicId: string;
 }
 

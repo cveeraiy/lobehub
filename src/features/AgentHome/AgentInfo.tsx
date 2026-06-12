@@ -20,7 +20,7 @@ const AgentInfo = memo(() => {
   const fontSize = useUserStore(userGeneralSettingsSelectors.fontSize);
 
   const displayTitle = isInbox
-    ? meta.title || 'Lobe AI'
+    ? meta.title || 'Ethos AI'
     : meta.title || t('defaultSession', { ns: 'common' });
 
   const message = useMemo(() => {
@@ -54,7 +54,7 @@ const AgentInfo = memo(() => {
         {displayTitle}
       </Text>
       <Flexbox width={'min(100%, 640px)'}>
-        <Markdown fontSize={fontSize} variant={'chat'}>
+        <Markdown enableImageGallery={false} fontSize={fontSize} variant={'chat'}>
           {message}
         </Markdown>
       </Flexbox>

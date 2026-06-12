@@ -1,6 +1,6 @@
 import debug from 'debug';
 
-const log = debug('lobe-chat:module:github');
+const log = debug('ethos-chat:module:github');
 
 export interface GitHubRepoInfo {
   branch: string;
@@ -21,7 +21,7 @@ export class GitHub {
   private readonly userAgent: string;
 
   constructor(options?: { userAgent?: string }) {
-    this.userAgent = options?.userAgent || 'LobeHub';
+    this.userAgent = options?.userAgent || 'Ethos';
   }
 
   /**

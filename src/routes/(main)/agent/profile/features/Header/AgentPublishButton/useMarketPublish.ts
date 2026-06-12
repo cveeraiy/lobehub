@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { message } from '@/components/AntdStaticMethods';
 import { useTokenCount } from '@/hooks/useTokenCount';
 import { useMarketAuth } from '@/layout/AuthProvider/MarketAuth';
-import { lambdaClient } from '@/libs/trpc/client';
+import { marketApiService } from '@/services/marketApi';
 import { useAgentStore } from '@/store/agent';
 import { agentChatConfigSelectors, agentSelectors } from '@/store/agent/selectors';
 import { useGlobalStore } from '@/store/global';
@@ -73,7 +73,7 @@ export const useMarketPublish = ({ action, onSuccess }: UseMarketPublishOptions)
 
     try {
       setIsCheckingOwnership(true);
-      const result = await lambdaClient.market.agent.checkOwnership.query({ identifier });
+      const result = await marketApiService.checkAgentOwnership(identifier);
 
       // If agent doesn't exist or user is owner, no confirmation needed
       if (!result.exists || result.isOwner) {
@@ -100,7 +100,7 @@ export const useMarketPublish = ({ action, onSuccess }: UseMarketPublishOptions)
       return { success: false };
     }
 
-    // Check authentication state - tRPC handles trustedClient automatically
+    // Check authentication state before publishing.
     if (!isAuthenticated) {
       return { success: false };
     }
@@ -118,8 +118,8 @@ export const useMarketPublish = ({ action, onSuccess }: UseMarketPublishOptions)
       setIsPublishing(true);
       message.loading({ content: loadingMessage, key: messageKey });
 
-      // Use tRPC publishOrCreate - backend handles ownership check automatically
-      const result = await lambdaClient.market.agent.publishOrCreate.mutate({
+      // Use REST publishOrCreate - backend handles ownership check automatically.
+      const result = await marketApiService.publishOrCreateAgent({
         avatar: meta?.avatar,
         changelog,
         config: {

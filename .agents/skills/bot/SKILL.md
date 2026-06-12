@@ -7,7 +7,7 @@ description: 'Bot platform architecture (Discord, Slack, Telegram, Feishu/Lark, 
 
 > **Last updated: 2026-04-08.** Implementation evolves quickly — this doc is a map, not the source of truth. Always read the key files below to verify behavior, especially per-platform quirks. Update this doc when the architecture changes.
 
-LobeChat agents can answer inside external chat platforms. Inbound messages flow through the Chat SDK (`chat` npm package), get routed to the right agent by `(platform, applicationId)`, executed via `AiAgentService`, and replied back through a per-platform `PlatformClient`. There are **two execution modes** (in-memory vs queue/QStash) and **three connection modes** (`webhook`, `websocket`, `polling`).
+Ethos agents can answer inside external chat platforms. Inbound messages flow through the Chat SDK (`chat` npm package), get routed to the right agent by `(platform, applicationId)`, executed via `AiAgentService`, and replied back through a per-platform `PlatformClient`. There are **two execution modes** (in-memory vs queue/QStash) and **three connection modes** (`webhook`, `websocket`, `polling`).
 
 ## Supported Platforms
 

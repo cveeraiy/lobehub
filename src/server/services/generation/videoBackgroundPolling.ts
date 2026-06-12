@@ -4,15 +4,15 @@ import { getProviderContentPolicyErrorMessage } from '@/business/server/getProvi
 import { trackProviderContentPolicyViolation } from '@/business/server/trackProviderContentPolicyViolation';
 import { AsyncTaskModel } from '@/database/models/asyncTask';
 import { GenerationModel } from '@/database/models/generation';
-import type { LobeChatDatabase } from '@/database/type';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { VideoGenerationService } from '@/server/services/generation/video';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
+import type { LobeChatDatabase } from '@/server/types/database';
 import { AsyncTaskError, AsyncTaskErrorType, AsyncTaskStatus } from '@/types/asyncTask';
 import { FileSource } from '@/types/files';
 import type { VideoGenerationAsset } from '@/types/generation';
 import { sanitizeFileName } from '@/utils/sanitizeFileName';
 
-const log = debug('lobe-video:background-polling');
+const log = debug('ethos-video:background-polling');
 
 interface BackgroundPollingParams {
   asyncTaskCreatedAt: Date;
@@ -79,7 +79,7 @@ export async function processBackgroundVideoPolling(
     };
 
     const batch = await db.query.generationBatches.findFirst({
-      where: (batches, { eq }) => eq(batches.id, generationBatchId),
+      where: (batches: any, { eq }: any) => eq(batches.id, generationBatchId),
     });
 
     await generationModel.createAssetAndFile(

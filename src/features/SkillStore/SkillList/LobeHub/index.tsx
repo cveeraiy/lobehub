@@ -1,5 +1,6 @@
 'use client';
 
+import { builtinTools as defaultBuiltinTools } from '@lobechat/builtin-tools';
 import { KLAVIS_SERVER_TYPES, LOBEHUB_SKILL_PROVIDERS } from '@lobechat/const';
 import { type BuiltinSkill, type LobeToolMeta } from '@lobechat/types';
 import isEqual from 'fast-deep-equal';
@@ -31,10 +32,10 @@ interface LobeHubListProps {
 
 // Selector to get only actual builtin tools (not including Klavis)
 const getBuiltinToolsOnly = (s: ToolStoreState): LobeToolMeta[] => {
-  return s.builtinTools
+  return (s.builtinTools || defaultBuiltinTools)
     .filter((item) => !item.hidden)
     .map((t) => ({
-      author: 'LobeHub',
+      author: 'Ethos',
       identifier: t.identifier,
       meta: t.manifest.meta,
       type: 'builtin' as const,
@@ -49,7 +50,7 @@ export const LobeHubList = memo<LobeHubListProps>(({ keywords }) => {
   const allKlavisServers = useToolStore(klavisStoreSelectors.getServers, isEqual);
   // Use custom selector to get only actual builtin tools (not Klavis)
   const builtinTools = useToolStore(getBuiltinToolsOnly, isEqual);
-  const builtinSkills = useToolStore((s) => s.builtinSkills, isEqual);
+  const builtinSkills = useToolStore((s) => s.builtinSkills || [], isEqual);
 
   const [useFetchLobehubSkillConnections, useFetchUserKlavisServers] = useToolStore((s) => [
     s.useFetchLobehubSkillConnections,
@@ -91,7 +92,7 @@ export const LobeHubList = memo<LobeHubListProps>(({ keywords }) => {
       items.push({ tool, type: 'builtin' });
     }
 
-    // Add LobeHub skills
+    // Add Ethos skills
     if (isLobehubSkillEnabled) {
       for (const provider of LOBEHUB_SKILL_PROVIDERS) {
         items.push({ provider, type: 'lobehub' });

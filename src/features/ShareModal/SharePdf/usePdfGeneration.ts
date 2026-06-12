@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { lambdaQuery } from '@/libs/trpc/client/lambda';
+import { exportService } from '@/services/export';
 
 interface PdfGenerationParams {
   content: string;
@@ -21,21 +21,21 @@ export const usePdfGeneration = (): PdfGenerationState => {
   const [pdfData, setPdfData] = useState<string | null>(null);
   const [filename, setFilename] = useState<string>('chat-export.pdf');
   const [error, setError] = useState<string | null>(null);
-
-  const exportPdfMutation = lambdaQuery.exporter.exportPdf.useMutation();
+  const [loading, setLoading] = useState(false);
 
   const generatePdf = useCallback(
     async (params: PdfGenerationParams) => {
       const { content, sessionId, title, topicId } = params;
 
       // Prevent multiple simultaneous requests only; allow user to re-generate
-      if (exportPdfMutation.isPending) return;
+      if (loading) return;
 
       try {
+        setLoading(true);
         setError(null);
         setPdfData(null);
 
-        const result = await exportPdfMutation.mutateAsync({
+        const result = await exportService.exportPdf({
           content,
           sessionId,
           title,
@@ -47,9 +47,11 @@ export const usePdfGeneration = (): PdfGenerationState => {
       } catch (error) {
         console.error('Failed to generate PDF:', error);
         setError(error instanceof Error ? error.message : 'Failed to generate PDF');
+      } finally {
+        setLoading(false);
       }
     },
-    [exportPdfMutation.mutateAsync],
+    [loading],
   );
 
   const downloadPdf = useCallback(async () => {
@@ -81,9 +83,9 @@ export const usePdfGeneration = (): PdfGenerationState => {
 
   return {
     downloadPdf,
-    error: error || (exportPdfMutation.error?.message ?? null),
+    error,
     generatePdf,
-    loading: exportPdfMutation.isPending,
+    loading,
     pdfData,
   };
 };

@@ -1,16 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
-
 import { MessageService } from '../index';
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    message: {
-      updateMetadata: {
-        mutate: vi.fn(),
-      },
-    },
+const mockRestPut = vi.hoisted(() => vi.fn());
+
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    put: mockRestPut,
   },
 }));
 
@@ -29,8 +25,8 @@ describe('MessageService - Race Condition Control', () => {
       let secondRequestCompleted = false;
 
       // Mock first request (slow)
-      vi.mocked(lambdaClient.message.updateMetadata.mutate).mockImplementationOnce(
-        (_params, options) =>
+      mockRestPut.mockImplementationOnce(
+        (_path, options) =>
           new Promise((resolve, reject) => {
             const signal = options?.signal;
             if (signal) {
@@ -45,12 +41,10 @@ describe('MessageService - Race Condition Control', () => {
       );
 
       // Mock second request (fast)
-      vi.mocked(lambdaClient.message.updateMetadata.mutate).mockImplementationOnce(
-        async (_params, _options) => {
-          secondRequestCompleted = true;
-          return { success: true, messages: [] };
-        },
-      );
+      mockRestPut.mockImplementationOnce(async (_path, _options) => {
+        secondRequestCompleted = true;
+        return { success: true, messages: [] };
+      });
 
       // Start first update
       const firstPromise = messageService.updateMessageMetadata(messageId, { compare: true });
@@ -72,7 +66,7 @@ describe('MessageService - Race Condition Control', () => {
       const message1Id = 'message-1';
       const message2Id = 'message-2';
 
-      vi.mocked(lambdaClient.message.updateMetadata.mutate).mockResolvedValue({
+      mockRestPut.mockResolvedValue({
         success: true,
         messages: [],
       });
@@ -84,7 +78,7 @@ describe('MessageService - Race Condition Control', () => {
 
       expect(result1).toEqual({ success: true, messages: [] });
       expect(result2).toEqual({ success: true, messages: [] });
-      expect(lambdaClient.message.updateMetadata.mutate).toHaveBeenCalledTimes(2);
+      expect(mockRestPut).toHaveBeenCalledTimes(2);
     });
 
     it('should handle rapid successive updates correctly', async () => {
@@ -94,30 +88,28 @@ describe('MessageService - Race Condition Control', () => {
 
       // All but the last request should be aborted
       let callIndex = 0;
-      vi.mocked(lambdaClient.message.updateMetadata.mutate).mockImplementation(
-        (_params, options) => {
-          const currentIndex = callIndex++;
-          return new Promise((resolve, reject) => {
-            const signal = options?.signal;
-            let isAborted = false;
+      mockRestPut.mockImplementation((_path, options) => {
+        const currentIndex = callIndex++;
+        return new Promise((resolve, reject) => {
+          const signal = options?.signal;
+          let isAborted = false;
 
-            if (signal) {
-              signal.addEventListener('abort', () => {
-                isAborted = true;
-                abortedUpdates.push(currentIndex);
-                reject(new Error('Aborted'));
-              });
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              isAborted = true;
+              abortedUpdates.push(currentIndex);
+              reject(new Error('Aborted'));
+            });
+          }
+
+          setTimeout(() => {
+            if (!isAborted) {
+              completedUpdates++;
+              resolve({ success: true, messages: [] });
             }
-
-            setTimeout(() => {
-              if (!isAborted) {
-                completedUpdates++;
-                resolve({ success: true, messages: [] });
-              }
-            }, 50);
-          });
-        },
-      );
+          }, 50);
+        });
+      });
 
       // Trigger 5 rapid updates sequentially with catch to prevent unhandled rejections
       const promise1 = messageService

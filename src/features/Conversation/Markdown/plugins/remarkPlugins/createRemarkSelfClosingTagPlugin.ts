@@ -3,7 +3,7 @@ import { type Plugin } from 'unified';
 import { SKIP, visit } from 'unist-util-visit';
 
 // Create debugger instance
-const log = debug('lobe-markdown:remark-plugin:self-closing');
+const log = debug('ethos-markdown:remark-plugin:self-closing');
 
 const escapeRegExp = (str: string) => str.replaceAll(/[$()*+.?[\\\]^{|}]/g, '\\$&');
 

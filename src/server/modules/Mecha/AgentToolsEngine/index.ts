@@ -9,15 +9,19 @@
  * - Gets model capabilities from provided function
  * - No dependency on frontend stores (useToolStore, useAgentStore, etc.)
  */
-import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
-import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
-import { KnowledgeBaseManifest } from '@lobechat/builtin-tool-knowledge-base';
 import { LocalSystemManifest } from '@lobechat/builtin-tool-local-system';
-import { MemoryManifest } from '@lobechat/builtin-tool-memory';
-import { MessageManifest } from '@lobechat/builtin-tool-message';
-import { RemoteDeviceManifest } from '@lobechat/builtin-tool-remote-device';
-import { WebBrowsingManifest } from '@lobechat/builtin-tool-web-browsing';
-import { alwaysOnToolIds, builtinTools, defaultToolIds } from '@lobechat/builtin-tools';
+import {
+  AgentDocumentsManifest,
+  alwaysOnToolIds,
+  builtinTools,
+  CloudSandboxManifest,
+  defaultToolIds,
+  KnowledgeBaseManifest,
+  MemoryManifest,
+  MessageManifest,
+  RemoteDeviceManifest,
+  WebBrowsingManifest,
+} from '@lobechat/builtin-tools';
 import { createEnableChecker, type LobeToolManifest } from '@lobechat/context-engine';
 import { ToolsEngine } from '@lobechat/context-engine';
 import { type RuntimeEnvMode, type RuntimePlatform } from '@lobechat/types';
@@ -36,7 +40,7 @@ export type {
   ServerCreateAgentToolsEngineParams,
 } from './types';
 
-const log = debug('lobe-server:agent-tools-engine');
+const log = debug('ethos-server:agent-tools-engine');
 
 /**
  * Initialize ToolsEngine with server-side context
@@ -150,7 +154,7 @@ export const createServerAgentToolsEngine = (
   );
 
   return createServerToolsEngine(context, {
-    // Pass additional manifests (e.g., LobeHub Skills)
+    // Pass additional manifests (e.g., Ethos Skills)
     additionalManifests,
     // Add default tools based on configuration
     defaultToolIds,

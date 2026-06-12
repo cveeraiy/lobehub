@@ -6,7 +6,6 @@ import {
 } from '@lobechat/agent-gateway-client';
 import type { ConversationContext, ExecAgentResult } from '@lobechat/types';
 
-import { isDesktop } from '@/const/version';
 import { aiAgentService, type ResumeApprovalParam } from '@/services/aiAgent';
 import { messageService } from '@/services/message';
 import { topicService } from '@/services/topic';
@@ -247,7 +246,7 @@ export class GatewayActionImpl {
       // Tell the server this caller is a desktop Electron client so it can
       // enable `executor: 'client'` tools (local-system, stdio MCP) and
       // dispatch them back over the Agent Gateway WS.
-      clientRuntime: isDesktop ? 'desktop' : 'web',
+      clientRuntime: 'web',
       fileIds,
       parentMessageId,
       prompt: message,
@@ -292,7 +291,7 @@ export class GatewayActionImpl {
     this.#get().associateMessageWithOperation(result.assistantMessageId, gatewayOpId);
 
     // When the local operation is cancelled (e.g. user clicks stop), forward
-    // the interrupt directly to the server via the existing tRPC endpoint.
+    // the interrupt directly to the server via the REST agent endpoint.
     // Closure captures `result.operationId` (the server-side id) so we don't
     // depend on any metadata lookup. Fire-and-forget — errors are logged but
     // never block the local cancel flow.
@@ -372,7 +371,7 @@ export class GatewayActionImpl {
 
     this.#get().associateMessageWithOperation(assistantMessageId, gatewayOpId);
 
-    // Forward local-op cancellation to the server-side agent loop via tRPC.
+    // Forward local-op cancellation to the server-side agent loop via REST.
     // See note in executeGatewayAgent for details.
     this.#get().onOperationCancel(gatewayOpId, async () => {
       await aiAgentService

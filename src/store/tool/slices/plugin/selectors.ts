@@ -5,7 +5,7 @@ import { type InstallPluginMeta, type LobeToolCustomPlugin } from '@/types/tool/
 
 import { type ToolStoreState } from '../../initialState';
 
-const installedPlugins = (s: ToolStoreState) => s.installedPlugins;
+const installedPlugins = (s: ToolStoreState) => s.installedPlugins || [];
 
 const isPluginInstalled = (id: string) => (s: ToolStoreState) =>
   installedPlugins(s).some((i) => i.identifier === id);
@@ -32,7 +32,7 @@ const getPluginSettingsById = (id: string) => (s: ToolStoreState) =>
   getInstalledPluginById(id)(s)?.settings || {};
 
 const storeAndInstallPluginsIdList = (s: ToolStoreState) =>
-  s.installedPlugins.map((i) => i.identifier);
+  installedPlugins(s).map((i) => i.identifier);
 
 const installedPluginManifestList = (s: ToolStoreState) =>
   installedPlugins(s)

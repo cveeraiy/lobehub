@@ -27,11 +27,11 @@ const Nav = memo(() => {
   const isProfileActive = pathname.includes('/profile');
   const isChannelActive = pathname.includes('/channel');
   const router = useQueryRoute();
-  const { isAgentEditable } = useServerConfigStore(featureFlagsSelectors);
+  const { isAgentEditable, enableBotChannels } = useServerConfigStore(featureFlagsSelectors);
   const toggleCommandMenu = useGlobalStore((s) => s.toggleCommandMenu);
   const isHeterogeneousAgent = useAgentStore(agentSelectors.isCurrentAgentHeterogeneous);
   const hideProfile = !isAgentEditable;
-  const hideChannel = hideProfile || isHeterogeneousAgent;
+  const hideChannel = hideProfile || isHeterogeneousAgent || !enableBotChannels;
   const switchTopic = useChatStore((s) => s.switchTopic);
   const [openNewTopicOrSaveTopic] = useChatStore((s) => [s.openNewTopicOrSaveTopic]);
 

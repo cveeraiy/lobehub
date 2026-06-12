@@ -8,7 +8,7 @@ permissions:
 on:
   schedule:
     - cron: '0 */6 * * *' # every 6 hours
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   sync_latest_from_upstream:
@@ -43,9 +43,9 @@ jobs:
           title: '🚨 同步失败 | Sync Fail'
           labels: '🚨 Sync Fail'
           body: |
-            Due to a change in the workflow file of the [LobeChat][lobechat] upstream repository, GitHub has automatically suspended the scheduled automatic update. You need to manually sync your fork. Please refer to the detailed [Tutorial][tutorial-en-US] for instructions.
+            Due to a change in the workflow file of the [Ethos][lobechat] upstream repository, GitHub has automatically suspended the scheduled automatic update. You need to manually sync your fork. Please refer to the detailed [Tutorial][tutorial-en-US] for instructions.
 
-            由于 [LobeChat][lobechat] 上游仓库的 workflow 文件变更，导致 GitHub 自动暂停了本次自动更新，你需要手动 Sync Fork 一次，请查看 [详细教程][tutorial-zh-CN]
+            由于 [Ethos][lobechat] 上游仓库的 workflow 文件变更，导致 GitHub 自动暂停了本次自动更新，你需要手动 Sync Fork 一次，请查看 [详细教程][tutorial-zh-CN]
 
             ![](https://github-production-user-asset-6210df.s3.amazonaws.com/17870709/273954625-df80c890-0822-4ac2-95e6-c990785cbed5.png)
 

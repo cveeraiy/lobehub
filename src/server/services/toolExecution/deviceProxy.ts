@@ -1,4 +1,4 @@
-import { type DeviceAttachment } from '@lobechat/builtin-tool-remote-device';
+import { type DeviceAttachment } from '@lobechat/builtin-tools';
 import {
   type DeviceStatusResult,
   type DeviceSystemInfo,
@@ -8,7 +8,7 @@ import debug from 'debug';
 
 import { gatewayEnv } from '@/envs/gateway';
 
-const log = debug('lobe-server:device-proxy');
+const log = debug('ethos-server:device-proxy');
 
 export type { DeviceAttachment, DeviceStatusResult, DeviceSystemInfo };
 

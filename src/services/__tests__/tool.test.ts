@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { restClient } from '@/libs/rest';
+
 import { toolService } from '../tool';
 
 // Mocking modules and functions
@@ -10,13 +12,9 @@ vi.mock('@/store/global/helpers', () => ({
   },
 }));
 
-vi.mock('@/libs/trpc/client', () => ({
-  edgeClient: {
-    market: {
-      getLegacyPluginList: {
-        query: vi.fn(),
-      },
-    },
+vi.mock('@/libs/rest', () => ({
+  restClient: {
+    get: vi.fn(),
   },
 }));
 
@@ -25,6 +23,23 @@ beforeEach(() => {
 });
 
 describe('ToolService', () => {
+  describe('getOldPluginList', () => {
+    it('uses the REST discover plugin list endpoint', async () => {
+      vi.mocked(restClient.get).mockResolvedValueOnce({ items: [] });
+
+      await toolService.getOldPluginList({ page: 2, pageSize: 10, q: 'weather' });
+
+      expect(restClient.get).toHaveBeenCalledWith('/discover/plugin/list', {
+        params: {
+          locale: undefined,
+          page: 2,
+          pageSize: 10,
+          q: 'weather',
+        },
+      });
+    });
+  });
+
   describe('getToolManifest', () => {
     it('should return manifest', async () => {
       const manifestUrl = 'http://fake-url.com/manifest.json';
@@ -47,7 +62,7 @@ describe('ToolService', () => {
             },
           },
         ],
-        author: 'LobeHub',
+        author: 'Ethos',
         createAt: '2023-08-12',
         homepage: 'https://github.com/lobehub/chat-plugin-realtime-weather',
         identifier: 'realtime-weather',

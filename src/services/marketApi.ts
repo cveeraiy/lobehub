@@ -4,7 +4,7 @@ import {
   type AgentListResponse,
 } from '@lobehub/market-sdk';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { restClient } from '@/libs/rest';
 import { discoverService } from '@/services/discover';
 import {
   type AgentForkRequest,
@@ -18,19 +18,78 @@ import {
   type SkillSorts,
 } from '@/types/discover';
 
+interface SearchSkillResult {
+  currentPage: number;
+  items: Array<{
+    category?: string;
+    createdAt: string;
+    description: string;
+    identifier: string;
+    installCount: number;
+    name: string;
+    repository?: string;
+    sourceUrl?: string;
+    summary?: string;
+    updatedAt: string;
+    version?: string;
+  }>;
+  pageSize: number;
+  totalCount: number;
+}
+
 interface GetOwnAgentsParams {
   page?: number;
   pageSize?: number;
 }
 
+interface AgentOwnershipResult {
+  exists: boolean;
+  isOwner: boolean;
+  originalAgent: unknown | null;
+}
+
+interface AgentGroupOwnershipResult {
+  exists: boolean;
+  isOwner: boolean;
+  originalGroup: unknown | null;
+}
+
+interface PublishAgentResult {
+  identifier: string;
+  isNewAgent: boolean;
+  success: boolean;
+}
+
+interface PublishAgentGroupResult {
+  identifier: string;
+  isNewGroup: boolean;
+  success: boolean;
+}
+
+interface SubmitFeedbackParams {
+  clientInfo?: {
+    language?: string;
+    timezone?: string;
+    url?: string;
+    userAgent?: string;
+  };
+  email?: string;
+  message: string;
+  screenshotUrl?: string;
+  title: string;
+}
+
+interface SubmitFeedbackResult {
+  issueUrl?: string;
+  success: boolean;
+}
+
 export class MarketApiService {
   /**
-   * @deprecated This method is no longer needed as authentication is now handled
-   * automatically through tRPC middleware. Keeping for backward compatibility.
+   * @deprecated No-op: Authentication is now handled through REST auth headers.
    */
-
   setAccessToken(_token: string) {
-    // No-op: Authentication is now handled through tRPC authedProcedure middleware
+    // No-op
   }
 
   // Create new agent
@@ -43,15 +102,15 @@ export class MarketApiService {
     tokenUsage?: number;
     visibility?: 'public' | 'private' | 'internal';
   }): Promise<AgentCreateResponse> {
-    return lambdaClient.market.agent.createAgent.mutate(agentData);
+    return restClient.post('/market/agent', { body: agentData });
   }
 
   // Get agent detail by identifier
   async getAgentDetail(
     identifier: string,
   ): Promise<AgentItemDetail & { forkedFromAgentId?: string }> {
-    return lambdaClient.market.agent.getAgentDetail.query({
-      identifier,
+    return restClient.get('/market/agent/detail', {
+      params: { identifier },
     }) as Promise<AgentItemDetail>;
   }
 
@@ -63,6 +122,20 @@ export class MarketApiService {
     } catch {
       return false;
     }
+  }
+
+  async checkAgentOwnership(identifier: string): Promise<AgentOwnershipResult> {
+    return restClient.get('/market/agent/check-ownership', { params: { identifier } });
+  }
+
+  async publishOrCreateAgent(params: Record<string, any>): Promise<PublishAgentResult> {
+    return restClient.post('/market/agent/publish-or-create', {
+      body: {
+        ...params,
+        editor_data: params.editorData,
+        token_usage: params.tokenUsage,
+      },
+    });
   }
 
   // Create agent version
@@ -93,123 +166,126 @@ export class MarketApiService {
     tokenUsage?: number;
     url?: string;
   }) {
-    return lambdaClient.market.agent.createAgentVersion.mutate(versionData);
+    return restClient.post('/market/agent/version', { body: versionData });
   }
 
-  // Publish agent (make it visible in marketplace)
+  // Publish agent
   async publishAgent(identifier: string): Promise<void> {
-    await lambdaClient.market.agent.publishAgent.mutate({ identifier });
+    await restClient.post('/market/agent/publish', { body: { identifier } });
   }
 
-  // Unpublish agent (hide from marketplace, can be republished)
+  // Unpublish agent
   async unpublishAgent(identifier: string): Promise<void> {
-    await lambdaClient.market.agent.unpublishAgent.mutate({ identifier });
+    await restClient.post('/market/agent/unpublish', { body: { identifier } });
   }
 
-  // Deprecate agent (permanently hide, cannot be republished)
+  // Deprecate agent
   async deprecateAgent(identifier: string): Promise<void> {
-    await lambdaClient.market.agent.deprecateAgent.mutate({ identifier });
+    await restClient.post('/market/agent/deprecate', { body: { identifier } });
   }
 
-  // Get own agents (requires authentication)
+  // Get own agents
   async getOwnAgents(params?: GetOwnAgentsParams): Promise<AgentListResponse> {
-    return lambdaClient.market.agent.getOwnAgents.query(params) as Promise<AgentListResponse>;
+    return restClient.get('/market/agent/own', {
+      params: params as any,
+    }) as Promise<AgentListResponse>;
   }
 
   // ==================== Fork Agent API ====================
 
-  /**
-   * Fork an agent
-   * @param sourceIdentifier - Source agent identifier
-   * @param forkData - Fork request parameters
-   */
   async forkAgent(
     sourceIdentifier: string,
     forkData: AgentForkRequest,
   ): Promise<AgentForkResponse> {
-    return lambdaClient.market.agent.forkAgent.mutate({
-      sourceIdentifier,
-      ...forkData,
+    return restClient.post('/market/agent/fork', {
+      body: { sourceIdentifier, ...forkData },
     });
   }
 
-  /**
-   * Get all forks of an agent
-   * @param identifier - Agent identifier
-   */
   async getAgentForks(identifier: string): Promise<AgentForksResponse> {
-    return lambdaClient.market.agent.getAgentForks.query({ identifier });
+    return restClient.get('/market/agent/forks', { params: { identifier } });
   }
 
-  /**
-   * Get the fork source of an agent
-   * @param identifier - Agent identifier
-   * @returns Fork source information (null if not a fork)
-   */
   async getAgentForkSource(identifier: string): Promise<AgentForkSourceResponse> {
-    return lambdaClient.market.agent.getAgentForkSource.query({ identifier });
+    return restClient.get('/market/agent/fork-source', { params: { identifier } });
   }
 
   // ==================== Agent Group Status Management ====================
 
-  // Get agent group detail by identifier
   async getAgentGroupDetail(identifier: string): Promise<any> {
-    return lambdaClient.market.agentGroup.getAgentGroupDetail.query({
-      identifier,
-    }) as Promise<any>;
+    return restClient.get('/market/agent-group/detail', { params: { identifier } }) as Promise<any>;
+  }
+
+  async checkAgentGroupOwnership(identifier: string): Promise<AgentGroupOwnershipResult> {
+    return restClient.get('/market/agent-group/check-ownership', { params: { identifier } });
+  }
+
+  async publishOrCreateAgentGroup(params: Record<string, any>): Promise<PublishAgentGroupResult> {
+    return restClient.post('/market/agent-group/publish-or-create', {
+      body: {
+        ...params,
+        background_color: params.backgroundColor,
+        member_agents: params.memberAgents,
+      },
+    });
   }
 
   async publishAgentGroup(identifier: string): Promise<void> {
-    await lambdaClient.market.agentGroup.publishAgentGroup.mutate({ identifier });
+    await restClient.post('/market/agent-group/publish', { body: { identifier } });
   }
 
   async unpublishAgentGroup(identifier: string): Promise<void> {
-    await lambdaClient.market.agentGroup.unpublishAgentGroup.mutate({ identifier });
+    await restClient.post('/market/agent-group/unpublish', { body: { identifier } });
   }
 
   async deprecateAgentGroup(identifier: string): Promise<void> {
-    await lambdaClient.market.agentGroup.deprecateAgentGroup.mutate({ identifier });
+    await restClient.post('/market/agent-group/deprecate', { body: { identifier } });
+  }
+
+  async submitFeedback(params: SubmitFeedbackParams): Promise<SubmitFeedbackResult> {
+    return restClient.post('/market/feedback', {
+      body: {
+        client_info: params.clientInfo
+          ? {
+              language: params.clientInfo.language,
+              timezone: params.clientInfo.timezone,
+              url: params.clientInfo.url,
+              user_agent: params.clientInfo.userAgent,
+            }
+          : undefined,
+        email: params.email,
+        message: params.message,
+        screenshot_url: params.screenshotUrl,
+        title: params.title,
+      },
+    });
   }
 
   // ==================== Fork Agent Group API ====================
 
-  /**
-   * Fork an agent group
-   * @param sourceIdentifier - Source agent group identifier
-   * @param forkData - Fork request parameters
-   */
   async forkAgentGroup(
     sourceIdentifier: string,
     forkData: AgentGroupForkRequest,
   ): Promise<AgentGroupForkResponse> {
-    return lambdaClient.market.agentGroup.forkAgentGroup.mutate({
-      sourceIdentifier,
-      ...forkData,
+    return restClient.post('/market/agent-group/fork', {
+      body: { sourceIdentifier, ...forkData },
     });
   }
 
-  /**
-   * Get all forks of an agent group
-   * @param identifier - Agent group identifier
-   */
   async getAgentGroupForks(identifier: string): Promise<AgentGroupForksResponse> {
-    return lambdaClient.market.agentGroup.getAgentGroupForks.query({ identifier });
+    return restClient.get('/market/agent-group/forks', { params: { identifier } });
   }
 
-  /**
-   * Get the fork source of an agent group
-   * @param identifier - Agent group identifier
-   * @returns Fork source information (null if not a fork)
-   */
   async getAgentGroupForkSource(identifier: string): Promise<AgentGroupForkSourceResponse> {
-    return lambdaClient.market.agentGroup.getAgentGroupForkSource.query({ identifier });
+    return restClient.get('/market/agent-group/fork-source', { params: { identifier } });
   }
 
   // ==================== Skills API ====================
 
-  /**
-   * Search for skills in the LobeHub Market
-   */
+  async listCreds() {
+    return restClient.get('/market/creds/list');
+  }
+
   async searchSkill(params: {
     category?: string;
     locale?: string;
@@ -218,15 +294,12 @@ export class MarketApiService {
     pageSize?: number;
     q?: string;
     sort?: SkillSorts;
-  }) {
+  }): Promise<SearchSkillResult> {
     await discoverService.safeInjectMPToken();
 
-    return lambdaClient.market.skill.getSkillList.query(params);
+    return restClient.get<SearchSkillResult>('/market/skill/list', { params: params as any });
   }
 
-  /**
-   * Get skill download URL from market
-   */
   getSkillDownloadUrl(identifier: string): string {
     const marketBaseUrl = process.env.NEXT_PUBLIC_MARKET_BASE_URL || 'https://market.lobehub.com';
     return `${marketBaseUrl}/api/v1/skills/${identifier}/download`;

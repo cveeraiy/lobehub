@@ -3,6 +3,8 @@ import { chatConfigByIdSelectors } from '@/store/agent/selectors';
 import { getAiInfraStoreState } from '@/store/aiInfra';
 import { aiModelSelectors, aiProviderSelectors } from '@/store/aiInfra/selectors';
 
+const providersWithoutNativeSearchIntegration = new Set(['bedrock']);
+
 /**
  * Search configuration result
  */
@@ -47,11 +49,13 @@ export const getSearchConfig = (
     model,
     provider!,
   )(aiInfraStoreState);
+  const canUseNativeSearchIntegration = !providersWithoutNativeSearchIntegration.has(provider);
 
   const useModelSearch =
-    ((isProviderHasBuiltinSearch || isModelHasBuiltinSearch) && chatConfig.useModelBuiltinSearch) ||
-    isModelBuiltinSearchInternal ||
-    false;
+    canUseNativeSearchIntegration &&
+    (((isProviderHasBuiltinSearch || isModelHasBuiltinSearch) &&
+      chatConfig.useModelBuiltinSearch) ||
+      isModelBuiltinSearchInternal);
 
   const useApplicationBuiltinSearchTool = enabledSearch && !useModelSearch;
 

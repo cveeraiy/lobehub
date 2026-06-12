@@ -81,13 +81,9 @@ vi.mock('antd', () => {
   };
 });
 
-vi.mock('@/libs/trpc/client', () => ({
-  lambdaClient: {
-    market: {
-      socialProfile: {
-        claimResources: { mutate: vi.fn() },
-      },
-    },
+vi.mock('@/services/marketAuth', () => ({
+  marketAuthService: {
+    claimResources: vi.fn(),
   },
 }));
 

@@ -1,4 +1,6 @@
 export * from './bot';
+export * from './builtinAgents';
+export * from './builtinSkills';
 export * from './currency';
 export * from './desktop';
 export * from './desktopGlobalShortcuts';

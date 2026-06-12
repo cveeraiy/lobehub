@@ -107,13 +107,36 @@ describe('utils', () => {
       });
     });
 
-    it('should leave non-object schemas untouched', () => {
-      const stringSchema = { type: 'string' };
-      expect(normalizeToolParameters(stringSchema)).toBe(stringSchema);
+    it('should parse stringified object schemas', () => {
+      const result = normalizeToolParameters(
+        JSON.stringify({
+          properties: { q: { type: 'string' } },
+          type: 'object',
+        }),
+      );
+
+      expect(result).toEqual({
+        properties: { q: { type: 'string' } },
+        required: [],
+        type: 'object',
+      });
     });
 
-    it('should pass through undefined', () => {
-      expect(normalizeToolParameters(undefined)).toBeUndefined();
+    it('should replace non-object schemas with an empty object schema', () => {
+      const stringSchema = { type: 'string' };
+      expect(normalizeToolParameters(stringSchema)).toEqual({
+        properties: {},
+        required: [],
+        type: 'object',
+      });
+    });
+
+    it('should replace undefined with an empty object schema', () => {
+      expect(normalizeToolParameters(undefined)).toEqual({
+        properties: {},
+        required: [],
+        type: 'object',
+      });
     });
   });
 });

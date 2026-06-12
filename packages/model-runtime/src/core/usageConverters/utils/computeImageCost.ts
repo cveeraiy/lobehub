@@ -2,7 +2,7 @@ import { CREDITS_PER_DOLLAR } from '@lobechat/const/currency';
 import debug from 'debug';
 import type { FixedPricingUnit, LookupPricingUnit, Pricing } from 'model-bank';
 
-const log = debug('lobe-cost:computeImagePricing');
+const log = debug('ethos-cost:computeImagePricing');
 
 export interface ImageGenerationParams {
   // Other possible parameters for future extensions
@@ -40,7 +40,7 @@ export const computeImageCost = (
     return undefined;
   }
 
-  let pricePerImageInUSD = 0;
+  let pricePerImageInUSD: number;
   let lookupKey: string | undefined;
 
   switch (imageGenUnit.strategy) {

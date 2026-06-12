@@ -4,14 +4,14 @@ import { type ActionType, type ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { Button } from '@lobehub/ui';
 import { useMutation } from '@tanstack/react-query';
-import { Popconfirm, Switch } from 'antd';
+import { App, Popconfirm, Switch } from 'antd';
 import { createStaticStyles } from 'antd-style';
 import { Trash } from 'lucide-react';
 import { type FC } from 'react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { lambdaClient } from '@/libs/trpc/client';
+import { apiKeyService } from '@/services/apiKey';
 import { type ApiKeyItem, type CreateApiKeyParams, type UpdateApiKeyParams } from '@/types/apiKey';
 
 import { ApiKeyDisplay, ApiKeyModal, EditableCell } from './index';
@@ -39,12 +39,17 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 const ApiKey: FC = () => {
   const { t } = useTranslation('auth');
+  const { message } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
 
   const actionRef = useRef<ActionType>(null);
+  const showError = (error: unknown) => {
+    message.error(error instanceof Error ? error.message : t('apikey.message.operationFailed'));
+  };
 
   const createMutation = useMutation({
-    mutationFn: (params: CreateApiKeyParams) => lambdaClient.apiKey.createApiKey.mutate(params),
+    mutationFn: (params: CreateApiKeyParams) => apiKeyService.createApiKey(params),
+    onError: showError,
     onSuccess: () => {
       actionRef.current?.reload();
       setModalOpen(false);
@@ -53,14 +58,16 @@ const ApiKey: FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, params }: { id: string; params: UpdateApiKeyParams }) =>
-      lambdaClient.apiKey.updateApiKey.mutate({ id, value: params }),
+      apiKeyService.updateApiKey(id, params),
+    onError: showError,
     onSuccess: () => {
       actionRef.current?.reload();
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => lambdaClient.apiKey.deleteApiKey.mutate({ id }),
+    mutationFn: (id: string) => apiKeyService.deleteApiKey(id),
+    onError: showError,
     onSuccess: () => {
       actionRef.current?.reload();
     },
@@ -182,7 +189,7 @@ const ApiKey: FC = () => {
         rowKey="id"
         search={false}
         request={async () => {
-          const apiKeys = await lambdaClient.apiKey.getApiKeys.query();
+          const apiKeys = await apiKeyService.getApiKeys();
 
           return {
             data: apiKeys,

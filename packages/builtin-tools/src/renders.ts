@@ -1,42 +1,28 @@
-import {
-  LobeActivatorManifest,
-  LobeActivatorRenders,
-} from '@lobechat/builtin-tool-activator/client';
-import { AgentBuilderManifest } from '@lobechat/builtin-tool-agent-builder';
-import { AgentBuilderRenders } from '@lobechat/builtin-tool-agent-builder/client';
-import { AgentDocumentsManifest } from '@lobechat/builtin-tool-agent-documents';
-import { AgentDocumentsRenders } from '@lobechat/builtin-tool-agent-documents/client';
-import { AgentManagementManifest } from '@lobechat/builtin-tool-agent-management';
-import { AgentManagementRenders } from '@lobechat/builtin-tool-agent-management/client';
 import { ClaudeCodeIdentifier, ClaudeCodeRenders } from '@lobechat/builtin-tool-claude-code/client';
-import { CloudSandboxManifest } from '@lobechat/builtin-tool-cloud-sandbox';
-import { CloudSandboxRenders } from '@lobechat/builtin-tool-cloud-sandbox/client';
-import { GroupAgentBuilderManifest } from '@lobechat/builtin-tool-group-agent-builder';
-import { GroupAgentBuilderRenders } from '@lobechat/builtin-tool-group-agent-builder/client';
-import { GroupManagementManifest } from '@lobechat/builtin-tool-group-management';
-import { GroupManagementRenders } from '@lobechat/builtin-tool-group-management/client';
-import { GTDManifest, GTDRenders } from '@lobechat/builtin-tool-gtd/client';
-import {
-  KnowledgeBaseManifest,
-  KnowledgeBaseRenders,
-} from '@lobechat/builtin-tool-knowledge-base/client';
 import {
   LocalSystemManifest,
   LocalSystemRenders,
 } from '@lobechat/builtin-tool-local-system/client';
-import { MemoryManifest, MemoryRenders } from '@lobechat/builtin-tool-memory/client';
-import { MessageManifest, MessageRenders } from '@lobechat/builtin-tool-message/client';
-import { NotebookManifest, NotebookRenders } from '@lobechat/builtin-tool-notebook/client';
-import { SkillStoreManifest, SkillStoreRenders } from '@lobechat/builtin-tool-skill-store/client';
-import { SkillsManifest, SkillsRenders } from '@lobechat/builtin-tool-skills/client';
-import {
-  WebBrowsingManifest,
-  WebBrowsingRenders,
-} from '@lobechat/builtin-tool-web-browsing/client';
 import { RunCommandRender } from '@lobechat/shared-tool-ui/renders';
 import { type BuiltinRender } from '@lobechat/types';
 
+import { LobeActivatorManifest, LobeActivatorRenders } from './activator/client';
+import { AgentBuilderManifest, AgentBuilderRenders } from './agentBuilder/client';
+import { AgentDocumentsManifest } from './agentDocuments';
+import { AgentDocumentsRenders } from './agentDocuments/client';
+import { AgentManagementManifest, AgentManagementRenders } from './agentManagement/client';
+import { CloudSandboxManifest, CloudSandboxRenders } from './cloudSandbox/client';
 import { CodexRenders } from './codex';
+import { GroupAgentBuilderManifest, GroupAgentBuilderRenders } from './groupAgentBuilder/client';
+import { GroupManagementManifest, GroupManagementRenders } from './groupManagement/client';
+import { GTDManifest, GTDRenders } from './gtd/client';
+import { KnowledgeBaseManifest, KnowledgeBaseRenders } from './knowledgeBase/client';
+import { MemoryManifest, MemoryRenders } from './memory/client';
+import { MessageManifest, MessageRenders } from './message/client';
+import { NotebookManifest, NotebookRenders } from './notebook/client';
+import { SkillsManifest, SkillsRenders } from './skills/client';
+import { SkillStoreManifest, SkillStoreRenders } from './skillStore/client';
+import { WebBrowsingManifest, WebBrowsingRenders } from './webBrowsing/client';
 
 export interface BuiltinRenderRegistryEntry {
   apiName: string;

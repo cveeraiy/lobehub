@@ -1,10 +1,10 @@
 ---
 title: Testing Guide
 description: >-
-  Explore LobeHub's testing strategy, including unit testing with Vitest and
+  Explore Ethos's testing strategy, including unit testing with Vitest and
   end-to-end testing with Playwright + Cucumber.
 tags:
-  - LobeHub
+  - Ethos
   - Testing
   - Unit Testing
   - End-to-End Testing
@@ -14,7 +14,7 @@ tags:
 
 # Testing Guide
 
-LobeHub's testing strategy includes unit testing with [Vitest][vitest-url] and end-to-end (E2E) testing with Playwright + Cucumber. This guide covers how to write and run tests effectively.
+Ethos's testing strategy includes unit testing with [Vitest][vitest-url] and end-to-end (E2E) testing with Playwright + Cucumber. This guide covers how to write and run tests effectively.
 
 ## Overview
 
@@ -34,7 +34,7 @@ Our testing strategy includes:
 bunx vitest run --silent='passed-only' 'path/to/test.test.ts'
 
 # Run tests in a package (e.g., database)
-cd packages/database && bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
+bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
 
 # Type checking
 bun run type-check
@@ -247,11 +247,11 @@ For database and ORM tests in packages:
 
 ```bash
 # Client DB tests
-cd packages/database
+cd .
 bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
 
 # Server DB tests
-cd packages/database
+cd .
 TEST_SERVER_DB=1 bunx vitest run --silent='passed-only' 'src/models/user.test.ts'
 ```
 

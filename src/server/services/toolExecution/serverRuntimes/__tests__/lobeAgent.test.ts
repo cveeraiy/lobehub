@@ -1,4 +1,4 @@
-import { LobeAgentIdentifier, MAX_VISUAL_MEDIA_URLS } from '@lobechat/builtin-tool-lobe-agent';
+import { LobeAgentIdentifier, MAX_VISUAL_MEDIA_URLS } from '@lobechat/builtin-tools';
 import { createVisualFileRef } from '@lobechat/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -31,7 +31,7 @@ vi.mock('@/server/services/file', () => ({
   })),
 }));
 
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: (...args: any[]) => mockInitModelRuntimeFromDB(...args),
 }));
 

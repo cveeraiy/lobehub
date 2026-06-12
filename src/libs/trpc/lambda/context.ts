@@ -2,21 +2,18 @@ import { type Context as OtContext } from '@lobechat/observability-otel/api';
 import { type ClientSecretPayload } from '@lobechat/types';
 import { parse } from 'cookie';
 import debug from 'debug';
-import { type NextRequest } from 'next/server';
 
 import { auth } from '@/auth';
 import { getServerDB } from '@/database/core/db-adaptor';
 import { ApiKeyModel } from '@/database/models/apiKey';
-import { authEnv, LOBE_CHAT_OIDC_AUTH_HEADER } from '@/envs/auth';
 import { extractTraceContext } from '@/libs/observability/traceparent';
-import { validateOIDCJWT } from '@/libs/oidc-provider/jwt';
 import { isApiKeyExpired, validateApiKeyFormat } from '@/utils/apiKey';
 
 // Create context logger namespace
-const log = debug('lobe-trpc:lambda:context');
+const log = debug('ethos-trpc:lambda:context');
 const LOBE_CHAT_API_KEY_HEADER = 'X-API-Key';
 
-const extractClientIp = (request: NextRequest): string | undefined => {
+const extractClientIp = (request: Request): string | undefined => {
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
     const ip = forwardedFor.split(',')[0]?.trim();
@@ -67,7 +64,6 @@ export interface AuthContext {
   clientIp?: string | null;
   jwtPayload?: ClientSecretPayload | null;
   marketAccessToken?: string;
-  // Add OIDC authentication information
   oidcAuth?: OIDCAuth | null;
   resHeaders?: Headers;
   traceContext?: OtContext;
@@ -107,7 +103,7 @@ export type LambdaContext = Awaited<ReturnType<typeof createContextInner>>;
  * Creates context for an incoming request
  * @link https://trpc.io/docs/v11/context
  */
-export const createLambdaContext = async (request: NextRequest): Promise<LambdaContext> => {
+export const createLambdaContext = async (request: Request): Promise<LambdaContext> => {
   // we have a special header to debug the api endpoint in development mode
   // IT WON'T GO INTO PRODUCTION ANYMORE
   const isDebugApi = request.headers.get('lobe-auth-dev-backend-api') === '1';
@@ -165,46 +161,6 @@ export const createLambdaContext = async (request: NextRequest): Promise<LambdaC
   }
 
   let userId;
-  let oidcAuth;
-
-  // Prioritize checking for OIDC authentication (both standard Authorization and custom Oidc-Auth headers)
-  if (authEnv.ENABLE_OIDC) {
-    log('OIDC enabled, attempting OIDC authentication');
-    const oidcAuthToken = request.headers.get(LOBE_CHAT_OIDC_AUTH_HEADER);
-    log('Oidc-Auth header: %s', oidcAuthToken ? 'exists' : 'not found');
-
-    try {
-      if (oidcAuthToken) {
-        // Use direct JWT validation instead of database lookup
-        const tokenInfo = await validateOIDCJWT(oidcAuthToken);
-
-        oidcAuth = {
-          payload: tokenInfo.tokenData,
-          ...tokenInfo.tokenData, // Spread payload into oidcAuth
-          sub: tokenInfo.userId, // Use tokenData as payload
-        };
-        userId = tokenInfo.userId;
-        log('OIDC authentication successful, userId: %s', userId);
-
-        // If OIDC authentication is successful, return context immediately
-        log('OIDC authentication successful, creating context and returning');
-        return createContextInner({
-          oidcAuth,
-          ...commonContext,
-          traceContext,
-          userId,
-        });
-      }
-    } catch (error) {
-      // If OIDC authentication fails, log error and continue with other authentication methods
-      if (oidcAuthToken) {
-        log('OIDC authentication failed, error: %O', error);
-        console.error('OIDC authentication failed, trying other methods:', error);
-      }
-    }
-  }
-
-  // If OIDC is not enabled or validation fails, try Better Auth authentication
   log('Attempting Better Auth authentication');
   try {
     const session = await auth.api.getSession({

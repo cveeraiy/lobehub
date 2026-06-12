@@ -1,7 +1,6 @@
-import { type LobeChatDatabase } from '@lobechat/database';
-
 import { UserModel } from '@/database/models/user';
 import { type TrustedClientUserInfo } from '@/libs/trusted-client';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { trpc } from '../init';
 

@@ -1,5 +1,5 @@
-import { UserInteractionIdentifier } from '@lobechat/builtin-tool-user-interaction';
-import { UserInteractionExecutionRuntime } from '@lobechat/builtin-tool-user-interaction/executionRuntime';
+import { UserInteractionIdentifier } from '@lobechat/builtin-tools';
+import { UserInteractionExecutionRuntime } from '@lobechat/builtin-tools/userInteractionExecutionRuntime';
 
 import { type ServerRuntimeRegistration } from './types';
 

@@ -1,21 +1,16 @@
-import { isDesktop } from '@lobechat/const';
+// Desktop git IPC removed for enterprise web-only build
+interface WorkingTreePatch {
+  additions: number;
+  deletions: number;
+  filePath: string;
+  isBinary: boolean;
+  patch: string;
+  status: 'added' | 'copied' | 'deleted' | 'modified' | 'renamed' | 'unmerged' | 'untracked';
+  truncated: boolean;
+}
 
-import { useClientDataSWR } from '@/libs/swr';
-import { electronGitService } from '@/services/electron/git';
-
-/**
- * Single bulk fetch for every dirty file's unified diff patch. Replaces the
- * old N-call-per-file pattern — one IPC, one SWR cache key, the renderer
- * iterates the result. Mirrors the dirty-counts SWR shape (always-on, focus
- * revalidate) so opening the panel doesn't show a loading state when the
- * working tree has already been polled.
- */
-export const useWorkingTreePatches = (dirPath?: string) => {
-  const key = isDesktop && dirPath ? ['git-working-tree-patches', dirPath] : null;
-
-  return useClientDataSWR(key, () => electronGitService.getGitWorkingTreePatches(dirPath!), {
-    focusThrottleInterval: 5 * 1000,
-    revalidateOnFocus: true,
-    shouldRetryOnError: false,
-  });
-};
+export const useWorkingTreePatches = (_dirPath?: string) => ({
+  data: undefined as { patches: WorkingTreePatch[] } | undefined,
+  isLoading: false,
+  mutate: async () => undefined,
+});

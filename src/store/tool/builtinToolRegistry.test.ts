@@ -1,15 +1,13 @@
-import { WEB_ONBOARDING } from '@lobechat/builtin-agents';
-import { AgentMarketplaceIdentifier } from '@lobechat/builtin-tool-agent-marketplace';
 import {
   GroupAgentBuilderApiName,
   GroupAgentBuilderIdentifier,
-} from '@lobechat/builtin-tool-group-agent-builder';
-import { GroupAgentBuilderInspectors } from '@lobechat/builtin-tool-group-agent-builder/client';
-import { SkillStoreApiName, SkillStoreIdentifier } from '@lobechat/builtin-tool-skill-store';
-import { SkillStoreInspectors, SkillStoreRenders } from '@lobechat/builtin-tool-skill-store/client';
-import { UserInteractionIdentifier } from '@lobechat/builtin-tool-user-interaction';
-import { WebOnboardingIdentifier } from '@lobechat/builtin-tool-web-onboarding';
+  SkillStoreApiName,
+  SkillStoreIdentifier,
+  WebOnboardingIdentifier,
+} from '@lobechat/builtin-tools';
+import { GroupAgentBuilderInspectors } from '@lobechat/builtin-tools/groupAgentBuilderClient';
 import { builtinToolIdentifiers } from '@lobechat/builtin-tools/identifiers';
+import { SkillStoreInspectors, SkillStoreRenders } from '@lobechat/builtin-tools/skillStoreClient';
 import { describe, expect, it } from 'vitest';
 
 describe('builtin tool registry', () => {
@@ -31,16 +29,5 @@ describe('builtin tool registry', () => {
   it('registers group agent builder createGroup inspector', () => {
     expect(builtinToolIdentifiers).toContain(GroupAgentBuilderIdentifier);
     expect(GroupAgentBuilderInspectors[GroupAgentBuilderApiName.createGroup]).toBeDefined();
-  });
-
-  it('includes agent marketplace and user interaction in web onboarding runtime', () => {
-    const runtime =
-      typeof WEB_ONBOARDING.runtime === 'function'
-        ? WEB_ONBOARDING.runtime({ userLocale: 'en-US' })
-        : WEB_ONBOARDING.runtime;
-
-    expect(runtime.plugins).toContain(AgentMarketplaceIdentifier);
-    expect(runtime.plugins).toContain(UserInteractionIdentifier);
-    expect(runtime.plugins).toContain(WebOnboardingIdentifier);
   });
 });

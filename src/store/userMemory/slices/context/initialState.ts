@@ -1,4 +1,4 @@
-import { type DisplayContextMemory } from '@/database/repositories/userMemory';
+import { type DisplayContextMemory } from '@/types/userMemory';
 
 export interface ContextSliceState {
   contexts: DisplayContextMemory[];

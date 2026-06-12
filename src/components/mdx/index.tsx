@@ -6,7 +6,7 @@ import Markdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import CodeBlock from './CodeBlock';
-import Image from './Image';
+import Image from './Image.vite';
 import Link from './Link';
 
 export const Typography = ({

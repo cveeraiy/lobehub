@@ -4,20 +4,20 @@
  * Central registry for all builtin tool executors.
  * Executors are registered as class instances by identifier.
  */
-import { agentBuilderExecutor } from '@lobechat/builtin-tool-agent-builder/executor';
-import { agentManagementExecutor } from '@lobechat/builtin-tool-agent-management/executor';
-import { calculatorExecutor } from '@lobechat/builtin-tool-calculator/executor';
-import { cloudSandboxExecutor } from '@lobechat/builtin-tool-cloud-sandbox/executor';
-import { credsExecutor } from '@lobechat/builtin-tool-creds/executor';
-import { cronExecutor } from '@lobechat/builtin-tool-cron/executor';
-import { groupAgentBuilderExecutor } from '@lobechat/builtin-tool-group-agent-builder/executor';
-import { groupManagementExecutor } from '@lobechat/builtin-tool-group-management/executor';
-import { gtdExecutor } from '@lobechat/builtin-tool-gtd/executor';
-import { knowledgeBaseExecutor } from '@lobechat/builtin-tool-knowledge-base/executor';
-import { lobeAgentExecutor } from '@lobechat/builtin-tool-lobe-agent/executor';
 import { localSystemExecutor } from '@lobechat/builtin-tool-local-system/executor';
-import { memoryExecutor } from '@lobechat/builtin-tool-memory/executor';
-import { taskExecutor } from '@lobechat/builtin-tool-task/executor';
+import { agentBuilderExecutor } from '@lobechat/builtin-tools/agentBuilderExecutor';
+import { agentManagementExecutor } from '@lobechat/builtin-tools/agentManagementExecutor';
+import { calculatorExecutor } from '@lobechat/builtin-tools/calculatorExecutor';
+import { cloudSandboxExecutor } from '@lobechat/builtin-tools/cloudSandboxExecutor';
+import { credsExecutor } from '@lobechat/builtin-tools/credsExecutor';
+import { cronExecutor } from '@lobechat/builtin-tools/cronExecutor';
+import { groupAgentBuilderExecutor } from '@lobechat/builtin-tools/groupAgentBuilderExecutor';
+import { groupManagementExecutor } from '@lobechat/builtin-tools/groupManagementExecutor';
+import { gtdExecutor } from '@lobechat/builtin-tools/gtdExecutor';
+import { knowledgeBaseExecutor } from '@lobechat/builtin-tools/knowledgeBaseExecutor';
+import { lobeAgentExecutor } from '@lobechat/builtin-tools/lobeAgentExecutor';
+import { memoryExecutor } from '@lobechat/builtin-tools/memoryExecutor';
+import { taskExecutor } from '@lobechat/builtin-tools/taskExecutor';
 
 import type { BuiltinToolContext, BuiltinToolResult, IBuiltinToolExecutor } from '../types';
 import { activatorExecutor } from './lobe-activator';

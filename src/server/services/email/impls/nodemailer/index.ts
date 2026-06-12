@@ -8,7 +8,7 @@ import { emailEnv } from '@/envs/email';
 import { type EmailPayload, type EmailResponse, type EmailServiceImpl } from '../type';
 import { type NodemailerConfig } from './type';
 
-const log = debug('lobe-email:Nodemailer');
+const log = debug('ethos-email:Nodemailer');
 
 /**
  * Nodemailer implementation of the email service

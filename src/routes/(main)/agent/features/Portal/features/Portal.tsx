@@ -5,7 +5,8 @@ import { DraggablePanel } from '@lobehub/ui';
 import { createStaticStyles, useResponsive } from 'antd-style';
 import isEqual from 'fast-deep-equal';
 import { type PropsWithChildren } from 'react';
-import { Activity, memo, useState } from 'react';
+import * as React from 'react';
+import { memo, useState } from 'react';
 
 import {
   CHAT_PORTAL_MAX_WIDTH,
@@ -16,6 +17,8 @@ import { useChatStore } from '@/store/chat';
 import { chatPortalSelectors, portalThreadSelectors } from '@/store/chat/selectors';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
+
+const Activity = React.Activity as any;
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
   content: css`

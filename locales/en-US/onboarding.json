@@ -48,7 +48,7 @@
   "agent.telemetryHint": "You can also answer in your own words.",
   "agent.title": "Conversation Onboarding",
   "agent.welcome": "...hm? I just woke up — my mind's a blank. Who are you? And — what should I be called? I need a name too.",
-  "agent.welcome.footer": "Configure your Lobe AI Agent. It lives on your server, learns from every interaction, and becomes more powerful the longer it runs.",
+  "agent.welcome.footer": "Configure your Ethos AI Agent. It lives on your server, learns from every interaction, and becomes more powerful the longer it runs.",
   "agent.welcome.guide.growTogether.desc": "With each chat, I'll understand you better and become a stronger teammate over time.",
   "agent.welcome.guide.growTogether.title": "Grow with You",
   "agent.welcome.guide.knowYou.desc": "What's on your plate these days? A little context helps me support you better.",

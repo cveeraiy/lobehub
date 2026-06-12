@@ -4,7 +4,6 @@ import { memo, useLayoutEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
 import NotFound from '@/components/404';
-import NProgress from '@/components/NProgress';
 import ResourceManager from '@/features/ResourceManager';
 import Container from '@/routes/(main)/resource/library/features/Container';
 
@@ -44,7 +43,6 @@ MainContent.displayName = 'LibraryMainContent';
 const LibraryPage = memo(() => {
   return (
     <>
-      <NProgress />
       <Container>
         <MainContent />
       </Container>

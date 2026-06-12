@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { FieldSchema } from '@/server/services/bot/platforms/types';
+import type { FieldSchema } from '@/types/botPlatform';
 
 import {
   extractSettingsDefaults,

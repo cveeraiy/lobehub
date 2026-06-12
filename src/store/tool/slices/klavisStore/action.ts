@@ -3,7 +3,7 @@ import { produce } from 'immer';
 import { type SWRResponse } from 'swr';
 import useSWR from 'swr';
 
-import { lambdaClient, toolsClient } from '@/libs/trpc/client';
+import { klavisService } from '@/services/klavis';
 import { type StoreSetter } from '@/store/types';
 import { setNamespace } from '@/utils/storeDebug';
 
@@ -55,14 +55,11 @@ export class KlavisStoreActionImpl {
     );
 
     try {
-      // Call tRPC server interface to execute tool (use toolsClient for longer timeout)
-      const response = await toolsClient.klavis.callTool.mutate({
+      const response = await klavisService.callTool({
         serverUrl,
         toolArgs,
         toolName,
       });
-
-      console.info('toolsClient.klavis.callTool-response', response);
 
       this.#set(
         produce((draft: KlavisStoreState) => {
@@ -110,12 +107,19 @@ export class KlavisStoreActionImpl {
     );
 
     try {
-      // Call tRPC server interface to create single server instance
-      const response = await lambdaClient.klavis.createServerInstance.mutate({
+      // Call REST server interface to create a single server instance.
+      const response = (await klavisService.createServerInstance({
         identifier,
         serverName,
         userId,
-      });
+      })) as {
+        identifier: string;
+        instanceId: string;
+        isAuthenticated: boolean;
+        oauthUrl?: string;
+        serverName: string;
+        serverUrl: string;
+      };
 
       // Build server object
       const server: KlavisServer = {
@@ -183,9 +187,13 @@ export class KlavisStoreActionImpl {
 
     try {
       // First check server authentication status
-      const instanceStatus = await lambdaClient.klavis.getServerInstance.query({
+      const instanceStatus = (await klavisService.getServerInstance({
         instanceId: server.instanceId,
-      });
+      })) as {
+        authNeeded?: boolean;
+        error?: string | null;
+        isAuthenticated?: boolean;
+      };
 
       // If server returned an auth error (during polling), silently return
       // This happens when user is still in the process of authorizing
@@ -225,7 +233,7 @@ export class KlavisStoreActionImpl {
         );
 
         // Delete from database
-        await lambdaClient.klavis.deleteServerInstance.mutate({
+        await klavisService.deleteServerInstance({
           identifier,
           instanceId: server.instanceId,
         });
@@ -233,8 +241,7 @@ export class KlavisStoreActionImpl {
         return;
       }
 
-      // Authentication successful, get tool list (use toolsClient for longer timeout)
-      const response = await toolsClient.klavis.listTools.query({
+      const response = await klavisService.listTools({
         serverUrl: server.serverUrl,
       });
 
@@ -257,7 +264,7 @@ export class KlavisStoreActionImpl {
       );
 
       // Update tool list and authentication status in database
-      await lambdaClient.klavis.updateKlavisPlugin.mutate({
+      await klavisService.updateKlavisPlugin({
         identifier,
         instanceId: server.instanceId,
         isAuthenticated: true,
@@ -306,7 +313,7 @@ export class KlavisStoreActionImpl {
     // Delete from Klavis API and database
     if (server) {
       try {
-        await lambdaClient.klavis.deleteServerInstance.mutate({
+        await klavisService.deleteServerInstance({
           identifier,
           instanceId: server.instanceId,
         });
@@ -320,7 +327,7 @@ export class KlavisStoreActionImpl {
     return useSWR<KlavisTool[]>(
       serverName ? `klavis-server-tools-${serverName}` : null,
       async () => {
-        const response = await toolsClient.klavis.getTools.query({ serverName: serverName! });
+        const response = await klavisService.getTools({ serverName: serverName! });
         return (response.tools || []).map((tool: any) => ({
           description: tool.description,
           inputSchema: tool.inputSchema,
@@ -338,14 +345,14 @@ export class KlavisStoreActionImpl {
     return useSWR<KlavisServer[]>(
       enabled ? 'fetchUserKlavisServers' : null,
       async () => {
-        const klavisPlugins = await lambdaClient.klavis.getKlavisPlugins.query();
+        const klavisPlugins = await klavisService.getKlavisPlugins();
 
         if (klavisPlugins.length === 0) return [];
 
         // Filter plugins with klavis params
         const validPlugins = klavisPlugins.filter((plugin) => plugin.customParams?.klavis);
 
-        // Clean up deprecated Klavis servers (e.g., 'github' moved to LobeHub Skill)
+        // Clean up deprecated Klavis servers (e.g., 'github' moved to Ethos Skill)
         const deprecatedPlugins = validPlugins.filter(
           (plugin) => !VALID_KLAVIS_IDENTIFIERS.has(plugin.identifier),
         );
@@ -357,7 +364,7 @@ export class KlavisStoreActionImpl {
           // Try to delete remote instance first (if exists)
           if (instanceId) {
             try {
-              await lambdaClient.klavis.deleteServerInstance.mutate({
+              await klavisService.deleteServerInstance({
                 identifier: plugin.identifier,
                 instanceId,
               });
@@ -374,7 +381,7 @@ export class KlavisStoreActionImpl {
 
           // Remove local DB record (either no instanceId, or remote deletion failed)
           try {
-            await lambdaClient.klavis.removeKlavisPlugin.mutate({
+            await klavisService.removeKlavisPlugin({
               identifier: plugin.identifier,
             });
             console.info(

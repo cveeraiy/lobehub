@@ -1,5 +1,5 @@
-import type { ActivateToolsState } from '@lobechat/builtin-tool-activator';
-import { ActivatorApiName, LobeActivatorIdentifier } from '@lobechat/builtin-tool-activator';
+import type { ActivateToolsState } from '@lobechat/builtin-tools';
+import { ActivatorApiName, LobeActivatorIdentifier } from '@lobechat/builtin-tools';
 import { getBuiltinInspector } from '@lobechat/builtin-tools/inspectors';
 import type { ToolIntervention } from '@lobechat/types';
 import { safeParseJSON, safeParsePartialJSON } from '@lobechat/utils';

@@ -1,6 +1,5 @@
 'use client';
 
-import { isDesktop } from '@lobechat/const';
 import { Flexbox, Segmented, Text } from '@lobehub/ui';
 import { createStaticStyles, cx } from 'antd-style';
 import type { CSSProperties, ReactNode } from 'react';
@@ -62,7 +61,7 @@ const ModeSwitch = memo<ModeSwitchProps>(({ actions, className, showLabel = fals
   }, [location.pathname]);
 
   const options = useMemo(() => {
-    if (isDesktop || !serverConfigInit || !enableAgentOnboarding) return [];
+    if (!serverConfigInit || !enableAgentOnboarding) return [];
 
     return [
       { label: t('agent.modeSwitch.agent'), value: 'agent' as const },

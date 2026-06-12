@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Bot Python Migration'
+  short_description: 'Migrate chat bot platforms to Python one at a time.'
+  default_prompt: 'Use this skill to migrate one existing chat bot platform from the TypeScript runtime to the Python REST backend with parity checks.'

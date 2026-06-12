@@ -1,4 +1,3 @@
-import type { StepPresentationData } from '../agentRuntime/types';
 import { getExtremeAck } from './ackPhrases';
 import { type BotReplyLocale, formatDuration } from './platforms';
 
@@ -41,6 +40,21 @@ export function splitMessage(text: string, limit = DEFAULT_CHAR_LIMIT): string[]
 
 type ToolCallItem = { apiName: string; arguments?: string; identifier: string };
 type ToolResultItem = { apiName: string; identifier: string; isSuccess?: boolean; output?: string };
+
+interface StepPresentationData {
+  content?: string;
+  executionTimeMs?: number;
+  reasoning?: string;
+  stepType?: 'call_llm' | 'call_tool';
+  thinking?: boolean;
+  toolsCalling?: ToolCallItem[];
+  toolsResult?: ToolResultItem[];
+  totalCost?: number;
+  totalInputTokens?: number;
+  totalOutputTokens?: number;
+  totalSteps?: number;
+  totalTokens?: number;
+}
 
 export interface RenderStepParams extends StepPresentationData {
   elapsedMs?: number;

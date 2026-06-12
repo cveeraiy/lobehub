@@ -1,10 +1,11 @@
-import { headers } from 'next/headers';
-
 import { auth } from '@/auth';
 
-export const getUserAuth = async () => {
-  const currentHeaders = await headers();
-  const requestHeaders = Object.fromEntries(currentHeaders.entries());
+export const getUserAuth = async (request?: Request) => {
+  if (!request) {
+    return { betterAuth: undefined, userId: undefined };
+  }
+
+  const requestHeaders = Object.fromEntries(request.headers.entries());
 
   const session = await auth.api.getSession({
     headers: requestHeaders,

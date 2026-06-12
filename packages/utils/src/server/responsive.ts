@@ -1,18 +1,10 @@
-import { headers } from 'next/headers';
 import { UAParser } from 'ua-parser-js';
 
 /**
  * check mobile device in server
  */
-export const isMobileDevice = async () => {
-  if (typeof process === 'undefined') {
-    throw new Error('[Server method] you are importing a server-only module outside of server');
-  }
-
-  const { get } = await headers();
-  const ua = get('user-agent');
-
-  // console.debug(ua);
+export const isMobileDevice = (request: Request) => {
+  const ua = request.headers.get('user-agent');
   const device = new UAParser(ua || '').getDevice();
 
   return device.type === 'mobile';
@@ -21,19 +13,13 @@ export const isMobileDevice = async () => {
 /**
  * check mobile device in server
  */
-export const gerServerDeviceInfo = async () => {
-  if (typeof process === 'undefined') {
-    throw new Error('[Server method] you are importing a server-only module outside of server');
-  }
-
-  const { get } = await headers();
-  const ua = get('user-agent');
-
+export const gerServerDeviceInfo = (request: Request) => {
+  const ua = request.headers.get('user-agent');
   const parser = new UAParser(ua || '');
 
   return {
     browser: parser.getBrowser().name,
-    isMobile: isMobileDevice(),
+    isMobile: isMobileDevice(request),
     os: parser.getOS().name,
   };
 };

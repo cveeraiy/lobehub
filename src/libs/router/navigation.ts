@@ -27,9 +27,9 @@ export const useRouter = () => {
     () => ({
       back: () => navigate(-1),
       forward: () => navigate(1),
-      // Note: prefetch is not supported in React Router
       prefetch: () => {},
       push: (href: string) => navigate(href),
+      refresh: () => navigate(0),
       replace: (href: string) => navigate(href, { replace: true }),
     }),
     [navigate],

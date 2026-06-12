@@ -1,11 +1,10 @@
-import { type LobeChatDatabase } from '@lobechat/database';
 import debug from 'debug';
-import { type NextRequest } from 'next/server';
 
 import { LOBE_CHAT_AUTH_HEADER } from '@/envs/auth';
 import { KeyVaultsGateKeeper } from '@/server/modules/KeyVaultsEncrypt';
+import type { LobeChatDatabase } from '@/server/types/database';
 
-const log = debug('lobe-async:context');
+const log = debug('ethos-async:context');
 
 export interface AsyncAuthContext {
   authorizationToken?: string;
@@ -27,7 +26,7 @@ export const createAsyncContextInner = async (params?: {
 
 export type AsyncContext = Awaited<ReturnType<typeof createAsyncContextInner>>;
 
-export const createAsyncRouteContext = async (request: NextRequest): Promise<AsyncContext> => {
+export const createAsyncRouteContext = async (request: Request): Promise<AsyncContext> => {
   // for API-response caching see https://trpc.io/docs/v11/caching
 
   log('Creating async route context');
@@ -36,7 +35,7 @@ export const createAsyncRouteContext = async (request: NextRequest): Promise<Asy
   const lobeChatAuthorization = request.headers.get(LOBE_CHAT_AUTH_HEADER);
 
   log('Authorization header present: %s', !!authorization);
-  log('LobeChat auth header present: %s', !!lobeChatAuthorization);
+  log('Ethos auth header present: %s', !!lobeChatAuthorization);
 
   if (!authorization) {
     log('No authorization header found');
@@ -44,15 +43,15 @@ export const createAsyncRouteContext = async (request: NextRequest): Promise<Asy
   }
 
   if (!lobeChatAuthorization) {
-    log('No LobeChat authorization header found');
-    throw new Error('No LobeChat authorization header found');
+    log('No Ethos authorization header found');
+    throw new Error('No Ethos authorization header found');
   }
 
   try {
     log('Initializing KeyVaultsGateKeeper');
     const gateKeeper = await KeyVaultsGateKeeper.initWithEnvKey();
 
-    log('Decrypting LobeChat authorization');
+    log('Decrypting Ethos authorization');
     const { plaintext } = await gateKeeper.decrypt(lobeChatAuthorization);
 
     log('Parsing decrypted authorization data');

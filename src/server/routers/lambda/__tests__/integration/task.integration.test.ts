@@ -1,7 +1,8 @@
 // @vitest-environment node
-import { type LobeChatDatabase } from '@lobechat/database';
-import { getTestDB } from '@lobechat/database/test-utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { getTestDB } from '@/database/core/getTestDB';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { taskRouter } from '../../task';
 import {
@@ -18,15 +19,15 @@ vi.mock('@/database/core/db-adaptor', () => ({
   getServerDB: vi.fn(() => testDB),
 }));
 
-// Mock AiAgentService
+// Mock PythonAgentProxyService
 const mockExecAgent = vi.fn().mockResolvedValue({
   operationId: 'op_test',
   success: true,
   topicId: 'tpc_test',
 });
 const mockInterruptTask = vi.fn().mockResolvedValue({ success: true });
-vi.mock('@/server/services/aiAgent', () => ({
-  AiAgentService: vi.fn().mockImplementation(() => ({
+vi.mock('@/server/services/pythonAgentProxy', () => ({
+  PythonAgentProxyService: vi.fn().mockImplementation(() => ({
     execAgent: mockExecAgent,
     interruptTask: mockInterruptTask,
   })),
@@ -47,7 +48,7 @@ vi.mock('@/server/services/taskReview', () => ({
 }));
 
 // Mock initModelRuntimeFromDB
-vi.mock('@/server/modules/ModelRuntime', () => ({
+vi.mock('@/server/services/pythonModelRuntime', () => ({
   initModelRuntimeFromDB: vi.fn(),
 }));
 

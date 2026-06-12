@@ -1,8 +1,8 @@
-import { type Mock } from 'vitest';
+import type { Mock } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { lambdaClient } from '@/libs/trpc/client';
-import { type GlobalRuntimeConfig } from '@/types/serverConfig';
+import { restClient } from '@/libs/rest/client';
+import type { GlobalRuntimeConfig } from '@/types/serverConfig';
 
 import { globalService } from '../global';
 
@@ -12,13 +12,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-vi.mock('@/libs/trpc/client', () => {
+vi.mock('@/libs/rest/client', () => {
   return {
-    lambdaClient: {
-      config: {
-        getGlobalConfig: { query: vi.fn() },
-        getDefaultAgentConfig: { query: vi.fn() },
-      },
+    restClient: {
+      get: vi.fn(),
     },
   };
 });
@@ -79,18 +76,19 @@ describe('GlobalService', () => {
         serverConfig: { enabledOAuthSSO: true },
         serverFeatureFlags: {},
       } as GlobalRuntimeConfig;
-      vi.spyOn(lambdaClient.config.getGlobalConfig, 'query').mockResolvedValue(mockConfig);
+      vi.spyOn(restClient, 'get').mockResolvedValue(mockConfig);
 
       // Act
       const config = await globalService.getGlobalConfig();
 
       // Assert
       expect(config).toEqual(mockConfig);
+      expect(restClient.get).toHaveBeenCalledWith('/config/global');
     });
 
     it('should return the defaultAgentConfig when fetch is successful', async () => {
       // Arrange
-      vi.spyOn(lambdaClient.config.getDefaultAgentConfig, 'query').mockResolvedValue({
+      vi.spyOn(restClient, 'get').mockResolvedValue({
         model: 'gemini-pro',
       });
 
@@ -99,6 +97,7 @@ describe('GlobalService', () => {
 
       // Assert
       expect(config).toEqual({ model: 'gemini-pro' });
+      expect(restClient.get).toHaveBeenCalledWith('/config/default-agent');
     });
   });
 });

@@ -1,13 +1,4 @@
-// Auth/Next.js routes that must NOT go to SPA catch-all.
-// Shared between middleware (define-config.ts) and the client Link adapter.
-export const nextjsOnlyRoutes = [
-  '/signin',
-  '/signup',
-  '/auth-error',
-  '/reset-password',
-  '/verify-email',
-  '/oauth',
-  '/market-auth-callback',
-  '/discover',
-  '/welcome',
-];
+// Routes that must open as full-page navigation (not SPA client-side routing).
+// Post-migration: all routes are SPA now. This list is kept for the Link shim
+// but should be empty. Add paths here only if they require a hard navigation.
+export const nextjsOnlyRoutes: string[] = [];

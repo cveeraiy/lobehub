@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import ModelSwitchPanel from '@/features/ModelSwitchPanel';
 import ModelDetailPanel from '@/features/ModelSwitchPanel/components/ModelDetailPanel';
+import { resolveEnabledChatModelConfig } from '@/services/chat/mecha/modelFallback';
 import { useAgentStore } from '@/store/agent';
 import { agentByIdSelectors } from '@/store/agent/selectors';
 import { aiModelSelectors, useAiInfraStore } from '@/store/aiInfra';
@@ -59,14 +60,17 @@ const ModelSwitch = memo(() => {
   const isDevMode = useUserStore((s) => userGeneralSettingsSelectors.config(s).isDevMode);
 
   const agentId = useAgentId();
-  const [model, provider, updateAgentConfigById] = useAgentStore((s) => [
+  const [storedModel, storedProvider, updateAgentConfigById] = useAgentStore((s) => [
     agentByIdSelectors.getAgentModelById(agentId)(s),
     agentByIdSelectors.getAgentModelProviderById(agentId)(s),
     s.updateAgentConfigById,
   ]);
+  useAiInfraStore((s) => [s.enabledAiModels, s.enabledChatModelList]);
+
+  const { model, provider } = resolveEnabledChatModelConfig(storedModel, storedProvider);
 
   const isModelHasExtendParams = useAiInfraStore(
-    aiModelSelectors.isModelHasExtendParams(model, provider),
+    aiModelSelectors.isModelHasExtendParams(model ?? '', provider ?? ''),
   );
 
   const showExtendParams = isDevMode && isModelHasExtendParams;

@@ -1,7 +1,4 @@
-import { type BuiltinAgentSlug } from '@lobechat/builtin-agents';
-import { BUILTIN_AGENTS } from '@lobechat/builtin-agents';
-import { DEFAULT_AGENT_CONFIG } from '@lobechat/const';
-import { type LobeChatDatabase } from '@lobechat/database';
+import { BUILTIN_AGENT_SLUGS, type BuiltinAgentSlug, DEFAULT_AGENT_CONFIG } from '@lobechat/const';
 import { type AgentItem, type LobeAgentConfig } from '@lobechat/types';
 import { cleanObject, merge } from '@lobechat/utils';
 import debug from 'debug';
@@ -18,10 +15,20 @@ import {
   RedisKeys,
 } from '@/libs/redis';
 import { getServerDefaultAgentConfig } from '@/server/globalConfig';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import { type UpdateAgentResult } from './type';
 
-const log = debug('lobe-agent:service');
+const log = debug('ethos-agent:service');
+
+const BUILTIN_AGENT_AVATARS: Partial<Record<BuiltinAgentSlug, string>> = {
+  [BUILTIN_AGENT_SLUGS.agentBuilder]: '/avatars/agent-builder.png',
+  [BUILTIN_AGENT_SLUGS.groupAgentBuilder]: '/avatars/agent-builder.png',
+  [BUILTIN_AGENT_SLUGS.inbox]: '/avatars/lobe-ai.png',
+  [BUILTIN_AGENT_SLUGS.pageAgent]: '/avatars/doc-copilot.png',
+  [BUILTIN_AGENT_SLUGS.taskAgent]: '/avatars/lobe-ai.png',
+  [BUILTIN_AGENT_SLUGS.webOnboarding]: '/avatars/lobe-ai.png',
+};
 
 /**
  * Agent config with required id field.
@@ -67,7 +74,7 @@ export class AgentService {
    * 1. DEFAULT_AGENT_CONFIG (hardcoded defaults)
    * 2. Server's globalDefaultAgentConfig (from environment variable DEFAULT_AGENT_CONFIG)
    * 3. The actual agent config from database
-   * 4. Avatar from builtin-agents package definition (if available)
+   * 4. Avatar from the built-in agent runtime catalog (if available)
    *
    * This ensures the frontend always receives a complete config with model/provider.
    */
@@ -82,9 +89,9 @@ export class AgentService {
     if (!mergedConfig) return null;
 
     // Use builtin avatar as fallback only when DB has no custom avatar
-    const builtinAgent = BUILTIN_AGENTS[slug as BuiltinAgentSlug];
-    if (builtinAgent?.avatar && !mergedConfig.avatar) {
-      return { ...mergedConfig, avatar: builtinAgent.avatar };
+    const builtinAvatar = BUILTIN_AGENT_AVATARS[slug as BuiltinAgentSlug];
+    if (builtinAvatar && !mergedConfig.avatar) {
+      return { ...mergedConfig, avatar: builtinAvatar };
     }
 
     return mergedConfig;

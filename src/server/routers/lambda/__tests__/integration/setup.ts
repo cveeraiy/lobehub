@@ -17,9 +17,9 @@ export const createTestContext = (userId?: string) => ({
  */
 export const createTestUser = async (serverDB: LobeChatDatabase, userId?: string) => {
   const id = userId || uuid();
-  const { users } = await import('@/database/schemas');
+  const { sql } = await import('drizzle-orm');
 
-  await serverDB.insert(users).values({ id });
+  await serverDB.execute(sql`INSERT INTO "users" ("id") VALUES (${id}) ON CONFLICT DO NOTHING`);
 
   return id;
 };

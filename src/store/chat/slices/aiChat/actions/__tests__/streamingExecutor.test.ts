@@ -1028,7 +1028,7 @@ describe('StreamingExecutor actions', () => {
       );
     });
 
-    it('should not enable visual understanding when the active LobeHub model supports visual media natively', () => {
+    it('should not enable visual understanding when the active Ethos model supports visual media natively', () => {
       act(() => {
         useChatStore.setState({ internal_execAgentRuntime: realExecAgentRuntime });
       });
@@ -1229,6 +1229,51 @@ describe('StreamingExecutor actions', () => {
         expect.objectContaining({
           skipDefaultTools: undefined,
           excludeDefaultToolIds: undefined,
+        }),
+      );
+    });
+
+    it('should skip default tools for plain Bedrock chats', () => {
+      act(() => {
+        useChatStore.setState({ internal_execAgentRuntime: realExecAgentRuntime });
+      });
+
+      const { result } = renderHook(() => useChatStore());
+      const userMessage = {
+        id: TEST_IDS.USER_MESSAGE_ID,
+        role: 'user',
+        content: TEST_CONTENT.USER_MESSAGE,
+        sessionId: TEST_IDS.SESSION_ID,
+        topicId: TEST_IDS.TOPIC_ID,
+      } as UIChatMessage;
+
+      const generateToolsDetailed = vi.fn().mockReturnValue({
+        enabledManifests: [],
+        enabledToolIds: [],
+        tools: [],
+      });
+
+      vi.spyOn(agentConfigResolver, 'resolveAgentConfig').mockReturnValue({
+        agentConfig: createMockAgentConfig({ provider: ModelProvider.Bedrock }),
+        chatConfig: createMockChatConfig(),
+        isBuiltinAgent: false,
+        plugins: [],
+      });
+      vi.spyOn(toolEngineering, 'createAgentToolsEngine').mockReturnValue({
+        generateToolsDetailed,
+      } as any);
+
+      result.current.internal_createAgentState({
+        messages: [userMessage],
+        parentMessageId: userMessage.id,
+        agentId: TEST_IDS.SESSION_ID,
+        topicId: TEST_IDS.TOPIC_ID,
+      });
+
+      expect(generateToolsDetailed).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skipDefaultTools: true,
+          toolIds: undefined,
         }),
       );
     });

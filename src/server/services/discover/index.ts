@@ -3,7 +3,6 @@ import {
   DEFAULT_DISCOVER_ASSISTANT_ITEM,
   DEFAULT_DISCOVER_PLUGIN_ITEM,
   DEFAULT_DISCOVER_PROVIDER_ITEM,
-  isDesktop,
   KLAVIS_SERVER_TYPES,
 } from '@lobechat/const';
 import {
@@ -35,8 +34,6 @@ import {
 import {
   AssistantCategory,
   AssistantSorts,
-  CacheRevalidate,
-  CacheTag,
   McpCategory,
   McpSorts,
   ModelSorts,
@@ -72,7 +69,7 @@ import { AssistantStore } from '@/server/modules/AssistantStore';
 import { PluginStore } from '@/server/modules/PluginStore';
 import { MarketService } from '@/server/services/market';
 
-const log = debug('lobe-server:discover');
+const log = debug('ethos-server:discover');
 
 export interface DiscoverServiceOptions {
   /** Access token from OIDC flow (legacy) */
@@ -108,27 +105,16 @@ export class DiscoverService {
         return process.env.VERCEL_PROJECT_ID;
       }
 
-      // 2. Use machine-id for desktop
-      if (isDesktop) {
-        try {
-          // Dynamic import
-          const { machineId } = await import('node-machine-id');
-          return await machineId();
-        } catch (error) {
-          console.error('Failed to get machine-id:', error);
-        }
-      }
-
       return 'unknown-device';
     };
 
     const deviceId = await getDeviceId();
 
     const { client_id, client_secret } = await this.market.registerClient({
-      clientName: `LobeHub ${isDesktop ? 'Desktop' : 'Web'}`,
-      clientType: isDesktop ? 'desktop' : 'web',
+      clientName: 'Ethos Web',
+      clientType: 'web',
       deviceId,
-      platform: isDesktop ? process.platform : userAgent,
+      platform: userAgent,
       version: CURRENT_VERSION,
     });
 
@@ -785,17 +771,10 @@ export class DiscoverService {
     log('getMcpCategories: params=%O', params);
     const { locale } = params;
     const normalizedLocale = normalizeLocale(locale);
-    const result = await this.market.plugins.getCategories(
-      {
-        ...params,
-        locale: normalizedLocale,
-      },
-      {
-        next: {
-          revalidate: 3600,
-        },
-      },
-    );
+    const result = await this.market.plugins.getCategories({
+      ...params,
+      locale: normalizedLocale,
+    });
     log('getMcpCategories: returning %d categories', result.length);
     return result;
   };
@@ -808,14 +787,7 @@ export class DiscoverService {
     log('getMcpDetail: params=%O', params);
     const { locale } = params;
     const normalizedLocale = normalizeLocale(locale);
-    const mcp = await this.market.plugins.getPluginDetail(
-      { ...params, locale: normalizedLocale },
-      {
-        next: {
-          revalidate: 3600,
-        },
-      },
-    );
+    const mcp = await this.market.plugins.getPluginDetail({ ...params, locale: normalizedLocale });
 
     // Fetch related MCPs
     const list = await this.getMcpList({
@@ -841,20 +813,12 @@ export class DiscoverService {
       category as McpCategory,
     );
 
-    const result = await this.market.plugins.getPluginList(
-      {
-        ...params,
-        category: shouldOmitCategory ? undefined : category,
-        locale: normalizedLocale,
-        sort: shouldOmitCategory ? McpSorts.Recommended : sort,
-      },
-      {
-        next: {
-          revalidate: CacheRevalidate.List,
-          tags: [CacheTag.Discover, CacheTag.MCP],
-        },
-      },
-    );
+    const result = await this.market.plugins.getPluginList({
+      ...params,
+      category: shouldOmitCategory ? undefined : category,
+      locale: normalizedLocale,
+      sort: shouldOmitCategory ? McpSorts.Recommended : sort,
+    });
     log('getMcpList: returning %d items on page %d', result.items.length, result.currentPage);
     return result;
   };
@@ -863,18 +827,10 @@ export class DiscoverService {
     log('getMcpManifest: params=%O', params);
     const { locale } = params;
     const normalizedLocale = normalizeLocale(locale);
-    const result = await this.market.plugins.getPluginManifest(
-      {
-        ...params,
-        locale: normalizedLocale,
-      },
-      {
-        next: {
-          revalidate: CacheRevalidate.List,
-          tags: [CacheTag.Discover, CacheTag.MCP],
-        },
-      },
-    );
+    const result = await this.market.plugins.getPluginManifest({
+      ...params,
+      locale: normalizedLocale,
+    });
     log('getMcpManifest: returning manifest for %s', params.identifier);
     return result;
   };
@@ -1136,7 +1092,7 @@ export class DiscoverService {
     if (builtinTool) {
       log('getPluginDetail: found builtin tool for identifier=%s', identifier);
       const plugin: DiscoverPluginDetail = {
-        author: 'LobeHub',
+        author: 'Ethos',
         avatar: builtinTool.manifest.meta.avatar || '',
         category: undefined,
         createdAt: '',
@@ -1166,7 +1122,7 @@ export class DiscoverService {
         avatar: typeof klavisTool.icon === 'string' ? klavisTool.icon : '',
         category: undefined,
         createdAt: '',
-        description: `LobeHub Mcp Server: ${klavisTool.label}`,
+        description: `Ethos Mcp Server: ${klavisTool.label}`,
         homepage: 'https://klavis.ai',
         identifier: klavisTool.identifier,
         manifest: undefined,
@@ -1342,11 +1298,7 @@ export class DiscoverService {
           normalizedLocale === 'zh-CN' ? `${identifier}.zh-CN.mdx` : `${identifier}.mdx`,
         );
         log('getProviderDetail: readme URL=%s', readmeUrl);
-        const res = await fetch(readmeUrl, {
-          next: {
-            tags: [CacheTag.Discover, CacheTag.Providers],
-          },
-        });
+        const res = await fetch(readmeUrl);
 
         const data = await res.text();
         const { content } = matter(data);

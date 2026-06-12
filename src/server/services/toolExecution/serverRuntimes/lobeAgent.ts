@@ -1,4 +1,4 @@
-import type { VisualFileItem, VisualSourceMessage } from '@lobechat/builtin-tool-lobe-agent';
+import type { VisualFileItem, VisualSourceMessage } from '@lobechat/builtin-tools';
 import {
   buildAnalyzeVisualMediaContent,
   createUrlVisualFileItems,
@@ -9,8 +9,7 @@ import {
   normalizeAnalyzeVisualMediaInput,
   selectVisualFileItems,
   validateVisualMediaUrls,
-} from '@lobechat/builtin-tool-lobe-agent';
-import type { LobeChatDatabase } from '@lobechat/database';
+} from '@lobechat/builtin-tools';
 import type { ChatStreamPayload } from '@lobechat/model-runtime';
 import { consumeStreamUntilDone } from '@lobechat/model-runtime';
 import type { BuiltinServerRuntimeOutput } from '@lobechat/types';
@@ -18,8 +17,9 @@ import { LOBE_DEFAULT_MODEL_LIST } from 'model-bank';
 
 import { MessageModel } from '@/database/models/message';
 import { toolsEnv } from '@/envs/tools';
-import { initModelRuntimeFromDB } from '@/server/modules/ModelRuntime';
 import { FileService } from '@/server/services/file';
+import { initModelRuntimeFromDB } from '@/server/services/pythonModelRuntime';
+import type { LobeChatDatabase } from '@/server/types/database';
 
 import type { ServerRuntimeRegistration } from './types';
 
@@ -240,10 +240,10 @@ class LobeAgentExecutionRuntime {
 
     const response = await runtime.chat(payload, {
       callback: {
-        onCompletion: (data) => {
+        onCompletion: (data: any) => {
           usage = data.usage;
         },
-        onText: (text) => {
+        onText: (text: string) => {
           content += text;
         },
       },
